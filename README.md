@@ -21,6 +21,10 @@ This module is designed to extend the customization of icon packs throughout the
 * `No force shape`: This setting is specific to pixel launcher. Turning it on will prevent it from forcing a uniform icon shape.
 * `Icon pack settings`: This section controls whether to use "fallback" elements such as masks. Some icon packs include predefined masks or backgrounds that ensure all icons have a consistent shape or style, even for apps that don't have dedicated icons in the pack. You can choose to enable or disable them.
 
+## Known Issues
+* When clicking an app, Pixel Launcher triggers an animation, whose starting frame displays an icon with a white border.
+* Currently, this does not apply to the Clock and Calendar apps.
+
 ## Disclaimer
 > [!WARNING]
 > * Please note that this module may not be fully compatible with all custom ROMs. 
