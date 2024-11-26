@@ -34,15 +34,6 @@ class CustomIconPack(
 
     private val idCache = mutableMapOf<String, Int>()
 
-    fun getPackPackageName() = packPackageName
-
-    fun getComponentName(info: PackageItemInfo) =
-        if (info is ApplicationInfo) getComponentName(info.packageName) else ComponentName(
-            info.packageName, info.name
-        )
-
-    fun getComponentName(packageName: String) = pm.getLaunchIntentForPackage(packageName)?.component
-
     val label = pm.let { pm ->
         pm.getApplicationInfo(packPackageName, 0).loadLabel(pm).toString()
     }
@@ -151,11 +142,9 @@ class CustomIconPack(
                             val parsed = ComponentName.unflattenFromString(componentName)
                             if (parsed != null) {
                                 if (isCalendar) {
-                                    calendarMap[parsed] =
-                                        IconEntry(packPackageName, drawableName, IconType.Calendar)
+                                    calendarMap[parsed] = IconEntry(drawableName, IconType.Calendar)
                                 } else {
-                                    componentMap[parsed] =
-                                        IconEntry(packPackageName, drawableName, IconType.Normal)
+                                    componentMap[parsed] = IconEntry(drawableName, IconType.Normal)
                                 }
                             }
                         }
@@ -269,3 +258,16 @@ class CustomIconPack(
 }
 
 private operator fun XmlPullParser.get(key: String): String? = this.getAttributeValue(null, key)
+
+private var cip: CustomIconPack? = null
+
+fun getCip(pref: XSharedPreferences): CustomIconPack? {
+    if (cip == null) {
+        val packPackageName =
+            pref.getString("iconPack", "")?.takeIf { it.isNotEmpty() } ?: return null
+        cip = CustomIconPack(
+            AndroidAppHelper.currentApplication().packageManager, packPackageName, pref
+        ).apply { loadInternal() }
+    }
+    return cip
+}

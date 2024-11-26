@@ -1,11 +1,16 @@
 package com.richardluo.globalIconPack;
 
-import android.app.AndroidAppHelper;
+import static com.richardluo.globalIconPack.CustomIconPackKt.getCip;
+import static com.richardluo.globalIconPack.Utils.callIfContains;
+import static com.richardluo.globalIconPack.Utils.computeIfMissing;
+import static com.richardluo.globalIconPack.Utils.getComponentName;
+
 import android.content.ComponentName;
 import android.content.pm.ApplicationInfo;
+import android.content.pm.ComponentInfo;
+import android.content.pm.PackageItemInfo;
 import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
-import androidx.annotation.Nullable;
 import de.robv.android.xposed.IXposedHookLoadPackage;
 import de.robv.android.xposed.XC_MethodHook;
 import de.robv.android.xposed.XSharedPreferences;
@@ -13,6 +18,7 @@ import de.robv.android.xposed.XposedBridge;
 import de.robv.android.xposed.XposedHelpers;
 import de.robv.android.xposed.callbacks.XC_LoadPackage;
 import java.lang.reflect.Method;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.WeakHashMap;
 
@@ -37,10 +43,39 @@ public class XposedMain implements IXposedHookLoadPackage {
           });
     }
 
-    Map<Resources, ApplicationInfo> resourcesMap = new WeakHashMap<>();
-
-    Class<?> applicationPackageManager =
+    final Class<?> applicationPackageManager =
         XposedHelpers.findClass("android.app.ApplicationPackageManager", lpp.classLoader);
+
+    final Map<String, ComponentName> resIdToCN = new HashMap<>();
+
+    XposedBridge.hookAllMethods(
+        applicationPackageManager,
+        "loadUnbadgedItemIcon",
+        new XC_MethodHook() {
+          @Override
+          protected void beforeHookedMethod(MethodHookParam param) {
+            PackageItemInfo info = (PackageItemInfo) param.args[0];
+            if (info == null) return;
+            int resId = info.icon;
+            computeIfMissing(resIdToCN, getUniqueResId(info, resId), k -> getComponentName(info));
+          }
+        });
+
+    XposedBridge.hookAllMethods(
+        ComponentInfo.class,
+        "getIconResource",
+        new XC_MethodHook() {
+          @Override
+          protected void afterHookedMethod(MethodHookParam param) {
+            PackageItemInfo info = (PackageItemInfo) param.thisObject;
+            if (info == null) return;
+            int resId = (int) param.getResult();
+            computeIfMissing(resIdToCN, getUniqueResId(info, resId), k -> getComponentName(info));
+          }
+        });
+
+    final Map<Resources, ApplicationInfo> appInfoMap = new WeakHashMap<>();
+
     for (Method method : applicationPackageManager.getMethods()) {
       if ("getResourcesForApplication".equals(method.getName())
           && method.getParameterCount() >= 1
@@ -50,7 +85,7 @@ public class XposedMain implements IXposedHookLoadPackage {
             new XC_MethodHook() {
               @Override
               protected void afterHookedMethod(MethodHookParam param) {
-                resourcesMap.put((Resources) param.getResult(), (ApplicationInfo) param.args[0]);
+                appInfoMap.put((Resources) param.getResult(), (ApplicationInfo) param.args[0]);
               }
             });
     }
@@ -67,27 +102,29 @@ public class XposedMain implements IXposedHookLoadPackage {
                 param.args.length >= 2 && param.args[1] instanceof Integer
                     ? (int) param.args[1]
                     : 0;
-            CustomIconPack cip = getCip();
-            if (cip == null) return;
+            ApplicationInfo info = appInfoMap.get((Resources) param.thisObject);
+            if (info == null) return;
             int resId = (int) param.args[0];
-            ApplicationInfo appInfo = resourcesMap.get((Resources) param.thisObject);
-            if (appInfo == null) return;
-            if (resId == appInfo.icon) {
-              isAppIcon = true;
-              ComponentName cn = cip.getComponentName(appInfo);
-              if (cn == null) return;
-              IconEntry entry = cip.getIconEntry(cn);
-              if (entry != null) param.setResult(cip.getIcon(entry, density));
-            }
+            callIfContains(
+                resIdToCN,
+                getUniqueResId(info, resId),
+                cn -> {
+                  isAppIcon = true;
+                  if (cn == null) return;
+                  CustomIconPack cip = getCip(getPref());
+                  if (cip == null) return;
+                  IconEntry entry = cip.getIconEntry(cn);
+                  if (entry != null) param.setResult(cip.getIcon(entry, density));
+                });
           }
 
           @Override
           protected void afterHookedMethod(MethodHookParam param) {
             if (!isAppIcon) return;
-            CustomIconPack cip = getCip();
-            if (cip == null) return;
             Drawable baseIcon = (Drawable) param.getResult();
             if (baseIcon == null) return;
+            CustomIconPack cip = getCip(getPref());
+            if (cip == null) return;
             param.setResult(cip.generateIcon(baseIcon, density));
           }
         };
@@ -96,26 +133,17 @@ public class XposedMain implements IXposedHookLoadPackage {
   }
 
   private XSharedPreferences pref;
-  private CustomIconPack cip = null;
 
   XSharedPreferences getPref() {
-    if (pref == null) pref = new XSharedPreferences(BuildConfig.APPLICATION_ID);
-    if (!pref.getFile().canRead())
-      XposedBridge.log("Pref can not be read. Plz open global icon pack at least once");
+    if (pref == null) {
+      pref = new XSharedPreferences(BuildConfig.APPLICATION_ID);
+      if (!pref.getFile().canRead())
+        XposedBridge.log("Pref can not be read. Plz open global icon pack at least once.");
+    }
     return pref;
   }
 
-  @Nullable
-  CustomIconPack getCip() {
-    if (cip == null) {
-      XSharedPreferences pref = getPref();
-      String packPackageName = pref.getString("iconPack", "");
-      if (packPackageName.isEmpty()) return null;
-      cip =
-          new CustomIconPack(
-              AndroidAppHelper.currentApplication().getPackageManager(), packPackageName, pref);
-      cip.loadInternal();
-    }
-    return cip;
+  String getUniqueResId(PackageItemInfo info, int resId) {
+    return info.packageName + "#" + resId;
   }
 }
