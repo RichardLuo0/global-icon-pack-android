@@ -48,7 +48,7 @@ class CustomIconPack(
         val id = getDrawableId(iconEntry.name)
         if (id == 0) return null
         return try {
-            return getDrawableForDensity.invoke(packResources, id, iconDpi, null) as Drawable?
+            return getDrawableForDensity(packResources, id, iconDpi, null)
         } catch (_: Resources.NotFoundException) {
             null
         }
@@ -87,8 +87,9 @@ class CustomIconPack(
                                 val id = packResources.getIdentifier(
                                     imgName, "drawable", packPackageName
                                 )
-                                if (id != 0) iconBack =
-                                    getDrawable.invoke(packResources, id, null) as Drawable?
+                                if (id != 0) iconBack = getDrawable(
+                                    packResources, id, null
+                                )
                             }
                         }
                     }
@@ -101,8 +102,9 @@ class CustomIconPack(
                                 val id = packResources.getIdentifier(
                                     imgName, "drawable", packPackageName
                                 )
-                                if (id != 0) iconUpon =
-                                    getDrawable.invoke(packResources, id, null) as Drawable?
+                                if (id != 0) iconUpon = getDrawable(
+                                    packResources, id, null
+                                )
                             }
                         }
                     }
@@ -115,8 +117,9 @@ class CustomIconPack(
                                 val id = packResources.getIdentifier(
                                     imgName, "drawable", packPackageName
                                 )
-                                if (id != 0) iconMask =
-                                    getDrawable.invoke(packResources, id, null) as Drawable?
+                                if (id != 0) iconMask = getDrawable(
+                                    packResources, id, null
+                                )
                             }
                         }
                     }
