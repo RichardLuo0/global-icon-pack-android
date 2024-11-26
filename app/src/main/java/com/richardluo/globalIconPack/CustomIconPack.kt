@@ -1,9 +1,8 @@
 package com.richardluo.globalIconPack
 
 import android.annotation.SuppressLint
+import android.app.AndroidAppHelper
 import android.content.ComponentName
-import android.content.pm.ApplicationInfo
-import android.content.pm.PackageItemInfo
 import android.content.pm.PackageManager
 import android.content.res.Resources
 import android.graphics.drawable.Drawable
@@ -81,7 +80,7 @@ class CustomIconPack(
                 val isCalendar = name == "calendar"
                 when (name) {
                     "iconback" -> {
-                        if (pref.getBoolean("noIconBack", false)) continue
+                        if (!pref.getBoolean("iconBack", true)) continue
                         for (i in 0 until parseXml.attributeCount) {
                             if (parseXml.getAttributeName(i).startsWith("img")) {
                                 val imgName = parseXml.getAttributeValue(i)
@@ -95,7 +94,7 @@ class CustomIconPack(
                     }
 
                     "iconupon" -> {
-                        if (pref.getBoolean("noIconUpon", false)) continue
+                        if (!pref.getBoolean("iconUpon", true)) continue
                         for (i in 0 until parseXml.attributeCount) {
                             if (parseXml.getAttributeName(i).startsWith("img")) {
                                 val imgName = parseXml.getAttributeValue(i)
@@ -109,7 +108,7 @@ class CustomIconPack(
                     }
 
                     "iconmask" -> {
-                        if (pref.getBoolean("noIconMask", false)) continue
+                        if (!pref.getBoolean("iconMask", true)) continue
                         for (i in 0 until parseXml.attributeCount) {
                             if (parseXml.getAttributeName(i).startsWith("img")) {
                                 val imgName = parseXml.getAttributeValue(i)
@@ -123,7 +122,7 @@ class CustomIconPack(
                     }
 
                     "scale" -> {
-                        if (pref.getBoolean("noScale", false)) continue
+                        if (!pref.getBoolean("scale", true)) continue
                         scale = parseXml.getAttributeValue(null, "factor")?.toFloatOrNull() ?: 1f
                     }
 

@@ -25,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import kotlinx.coroutines.flow.MutableStateFlow
 import me.zhanghai.compose.preference.Preferences
 import me.zhanghai.compose.preference.ProvidePreferenceLocals
@@ -59,6 +60,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
 fun SampleScreen() {
+    val context = LocalContext.current
     val windowInsets = WindowInsets.safeDrawing
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     Scaffold(
@@ -66,7 +68,6 @@ fun SampleScreen() {
             .fillMaxSize()
             .nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
-            val context = LocalContext.current
             val appLabel = context.applicationInfo.loadLabel(context.packageManager).toString()
             TopAppBar(
                 title = { Text(text = appLabel) },
@@ -84,47 +85,47 @@ fun SampleScreen() {
         ) {
             preferenceCategory(
                 key = "general",
-                title = { Text(text = "General") },
+                title = { Text(text = stringResource(R.string.general)) },
             )
             textFieldPreference(
                 key = "iconPack",
                 defaultValue = "",
-                title = { Text(text = "Icon pack") },
+                title = { Text(text = stringResource(R.string.iconPack)) },
                 textToValue = { it },
-                summary = { Text(text = it) },
+                summary = { Text(text = it.ifEmpty { stringResource(R.string.iconPackSummary) }) },
             )
             switchPreference(
                 key = "noForceShape",
                 defaultValue = true,
-                title = { Text(text = "No force shape") },
-                summary = { Text(text = if (it) "On" else "Off") },
+                title = { Text(text = stringResource(R.string.noForceShape)) },
+                summary = { Text(text = stringResource(R.string.noForceShapeSummary)) },
             )
             preferenceCategory(
                 key = "iconPackSettings",
-                title = { Text(text = "Icon pack settings") },
+                title = { Text(text = stringResource(R.string.iconPackSettings)) },
             )
             switchPreference(
-                key = "noIconBack",
-                defaultValue = false,
-                title = { Text(text = "No icon back") },
+                key = "iconBack",
+                defaultValue = true,
+                title = { Text(text = stringResource(R.string.iconBack)) },
                 summary = { Text(text = if (it) "On" else "Off") },
             )
             switchPreference(
-                key = "noIconUpon",
-                defaultValue = false,
-                title = { Text(text = "No icon upon") },
+                key = "iconUpon",
+                defaultValue = true,
+                title = { Text(text = stringResource(R.string.iconUpon)) },
                 summary = { Text(text = if (it) "On" else "Off") },
             )
             switchPreference(
-                key = "noIconMask",
-                defaultValue = false,
-                title = { Text(text = "No icon mask") },
+                key = "iconMask",
+                defaultValue = true,
+                title = { Text(text = stringResource(R.string.iconMask)) },
                 summary = { Text(text = if (it) "On" else "Off") },
             )
             switchPreference(
-                key = "noScale",
-                defaultValue = false,
-                title = { Text(text = "No scale") },
+                key = "scale",
+                defaultValue = true,
+                title = { Text(text = stringResource(R.string.scale)) },
                 summary = { Text(text = if (it) "On" else "Off") },
             )
         }
