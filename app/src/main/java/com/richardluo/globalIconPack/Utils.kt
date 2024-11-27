@@ -1,24 +1,19 @@
-package com.richardluo.globalIconPack;
+package com.richardluo.globalIconPack
 
-import android.app.AndroidAppHelper;
-import android.content.ComponentName;
-import android.content.Intent;
-import android.content.pm.ApplicationInfo;
-import android.content.pm.PackageItemInfo;
+import androidx.annotation.CheckResult
+import de.robv.android.xposed.XC_MethodHook.MethodHookParam
+import de.robv.android.xposed.XposedBridge
 
-public class Utils {
+@Suppress("UNCHECKED_CAST")
+fun <R> callOriginalMethod(param: MethodHookParam): R {
+  return XposedBridge.invokeOriginalMethod(param.method, param.thisObject, param.args) as R
+}
 
-  public static ComponentName getComponentName(PackageItemInfo info) {
-    return info instanceof ApplicationInfo
-        ? getComponentName(info.packageName)
-        : new ComponentName(info.packageName, info.name);
-  }
+@CheckResult
+fun withHighByteSet(id: Int, flag: Int): Int {
+  return id and 0x00FFFFFF or flag
+}
 
-  public static ComponentName getComponentName(String packageName) {
-    Intent intent =
-        AndroidAppHelper.currentApplication()
-            .getPackageManager()
-            .getLaunchIntentForPackage(packageName);
-    return intent == null ? null : intent.getComponent();
-  }
+fun isHighTwoByte(id: Int, flag: Int): Boolean {
+  return (id and 0xff000000.toInt()) == flag
 }

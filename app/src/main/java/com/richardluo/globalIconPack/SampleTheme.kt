@@ -34,34 +34,35 @@ import androidx.core.view.WindowCompat
 
 @Composable
 fun SampleTheme(
-    darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = true,
-    content: @Composable () -> Unit,
+  darkTheme: Boolean = isSystemInDarkTheme(),
+  dynamicColor: Boolean = true,
+  content: @Composable () -> Unit,
 ) {
-    val context = LocalContext.current
-    val colorScheme = when {
-        dynamicColor -> {
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
-        }
+  val context = LocalContext.current
+  val colorScheme =
+    when {
+      dynamicColor -> {
+        if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+      }
 
-        darkTheme -> darkColorScheme()
-        else -> lightColorScheme()
+      darkTheme -> darkColorScheme()
+      else -> lightColorScheme()
     }
 
-    val view = LocalView.current
-    if (!view.isInEditMode) {
-        SideEffect {
-            val window = (context as Activity).window
-            WindowCompat.setDecorFitsSystemWindows(window, false)
-            val windowBackgroundColor = colorScheme.background.toArgb()
-            window.setBackgroundDrawable(ColorDrawable(windowBackgroundColor))
-            val insetsController = WindowCompat.getInsetsController(window, view)
-            window.statusBarColor = Color.Transparent.toArgb()
-            insetsController.isAppearanceLightStatusBars = !darkTheme
-            window.navigationBarColor = Color.Transparent.toArgb()
-            insetsController.isAppearanceLightNavigationBars = !darkTheme
-        }
+  val view = LocalView.current
+  if (!view.isInEditMode) {
+    SideEffect {
+      val window = (context as Activity).window
+      WindowCompat.setDecorFitsSystemWindows(window, false)
+      val windowBackgroundColor = colorScheme.background.toArgb()
+      window.setBackgroundDrawable(ColorDrawable(windowBackgroundColor))
+      val insetsController = WindowCompat.getInsetsController(window, view)
+      window.statusBarColor = Color.Transparent.toArgb()
+      insetsController.isAppearanceLightStatusBars = !darkTheme
+      window.navigationBarColor = Color.Transparent.toArgb()
+      insetsController.isAppearanceLightNavigationBars = !darkTheme
     }
+  }
 
-    MaterialTheme(colorScheme = colorScheme, content = content)
+  MaterialTheme(colorScheme = colorScheme, content = content)
 }

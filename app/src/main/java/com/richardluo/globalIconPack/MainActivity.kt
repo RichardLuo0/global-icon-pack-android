@@ -1,9 +1,7 @@
 package com.richardluo.globalIconPack
 
 import android.annotation.SuppressLint
-import android.content.Context
 import android.os.Bundle
-import android.preference.PreferenceManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.WindowInsets
@@ -37,97 +35,96 @@ import me.zhanghai.compose.preference.textFieldPreference
 @Composable
 @SuppressLint("WorldReadableFiles")
 fun worldPreferenceFlow(): MutableStateFlow<Preferences> {
-    val context = LocalContext.current
-    @Suppress("DEPRECATION") return context.getSharedPreferences(
-        PreferenceManager.getDefaultSharedPreferencesName(context), Context.MODE_WORLD_READABLE
-    ).getPreferenceFlow()
+  val context = LocalContext.current
+  return WorldPreference.getWritablePref(context).getPreferenceFlow()
 }
 
 class MainActivity : ComponentActivity() {
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContent {
-            SampleTheme {
-                ProvidePreferenceLocals(flow = worldPreferenceFlow()) {
-                    SampleScreen()
-                }
-            }
-        }
+  override fun onCreate(savedInstanceState: Bundle?) {
+    super.onCreate(savedInstanceState)
+    setContent {
+      SampleTheme { ProvidePreferenceLocals(flow = worldPreferenceFlow()) { SampleScreen() } }
     }
+  }
 }
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
 fun SampleScreen() {
-    val context = LocalContext.current
-    val windowInsets = WindowInsets.safeDrawing
-    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
-    Scaffold(
-        modifier = Modifier
-            .fillMaxSize()
-            .nestedScroll(scrollBehavior.nestedScrollConnection),
-        topBar = {
-            val appLabel = context.applicationInfo.loadLabel(context.packageManager).toString()
-            TopAppBar(
-                title = { Text(text = appLabel) },
-                modifier = Modifier.fillMaxWidth(),
-                windowInsets = windowInsets.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top),
-                scrollBehavior = scrollBehavior,
-            )
-        },
-        containerColor = Color.Transparent,
-        contentColor = contentColorFor(MaterialTheme.colorScheme.background),
-        contentWindowInsets = windowInsets,
-    ) { contentPadding ->
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(), contentPadding = contentPadding
-        ) {
-            preferenceCategory(
-                key = "general",
-                title = { Text(text = stringResource(R.string.general)) },
-            )
-            textFieldPreference(
-                key = "iconPack",
-                defaultValue = "",
-                title = { Text(text = stringResource(R.string.iconPack)) },
-                textToValue = { it },
-                summary = { Text(text = it.ifEmpty { stringResource(R.string.iconPackSummary) }) },
-            )
-            switchPreference(
-                key = "noForceShape",
-                defaultValue = true,
-                title = { Text(text = stringResource(R.string.noForceShape)) },
-                summary = { Text(text = stringResource(R.string.noForceShapeSummary)) },
-            )
-            preferenceCategory(
-                key = "iconPackSettings",
-                title = { Text(text = stringResource(R.string.iconPackSettings)) },
-            )
-            switchPreference(
-                key = "iconBack",
-                defaultValue = true,
-                title = { Text(text = stringResource(R.string.iconBack)) },
-                summary = { Text(text = if (it) "On" else "Off") },
-            )
-            switchPreference(
-                key = "iconUpon",
-                defaultValue = true,
-                title = { Text(text = stringResource(R.string.iconUpon)) },
-                summary = { Text(text = if (it) "On" else "Off") },
-            )
-            switchPreference(
-                key = "iconMask",
-                defaultValue = true,
-                title = { Text(text = stringResource(R.string.iconMask)) },
-                summary = { Text(text = if (it) "On" else "Off") },
-            )
-            switchPreference(
-                key = "scale",
-                defaultValue = true,
-                title = { Text(text = stringResource(R.string.scale)) },
-                summary = { Text(text = if (it) "On" else "Off") },
-            )
-        }
+  val context = LocalContext.current
+  val windowInsets = WindowInsets.safeDrawing
+  val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
+  Scaffold(
+    modifier = Modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
+    topBar = {
+      val appLabel = context.applicationInfo.loadLabel(context.packageManager).toString()
+      TopAppBar(
+        title = { Text(text = appLabel) },
+        modifier = Modifier.fillMaxWidth(),
+        windowInsets = windowInsets.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top),
+        scrollBehavior = scrollBehavior,
+      )
+    },
+    containerColor = Color.Transparent,
+    contentColor = contentColorFor(MaterialTheme.colorScheme.background),
+    contentWindowInsets = windowInsets,
+  ) { contentPadding ->
+    LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = contentPadding) {
+      preferenceCategory(key = "general", title = { Text(text = stringResource(R.string.general)) })
+      textFieldPreference(
+        key = "iconPack",
+        defaultValue = "",
+        title = { Text(text = stringResource(R.string.iconPack)) },
+        textToValue = { it },
+        summary = { Text(text = it.ifEmpty { stringResource(R.string.iconPackSummary) }) },
+      )
+
+      preferenceCategory(
+        key = "pixelSettings",
+        title = { Text(text = stringResource(R.string.pixelLauncherSettings)) },
+      )
+      switchPreference(
+        key = "noForceShape",
+        defaultValue = true,
+        title = { Text(text = stringResource(R.string.noForceShape)) },
+        summary = { Text(text = stringResource(R.string.noForceShapeSummary)) },
+      )
+      switchPreference(
+        key = "forceClockAndCalendarFromIconPack",
+        defaultValue = true,
+        title = { Text(text = stringResource(R.string.forceClockAndCalendarFromIconPack)) },
+        summary = { Text(text = if (it) "On" else "Off") },
+      )
+
+      preferenceCategory(
+        key = "iconPackSettings",
+        title = { Text(text = stringResource(R.string.iconPackSettings)) },
+      )
+      switchPreference(
+        key = "iconBack",
+        defaultValue = true,
+        title = { Text(text = stringResource(R.string.iconBack)) },
+        summary = { Text(text = if (it) "On" else "Off") },
+      )
+      switchPreference(
+        key = "iconUpon",
+        defaultValue = true,
+        title = { Text(text = stringResource(R.string.iconUpon)) },
+        summary = { Text(text = if (it) "On" else "Off") },
+      )
+      switchPreference(
+        key = "iconMask",
+        defaultValue = true,
+        title = { Text(text = stringResource(R.string.iconMask)) },
+        summary = { Text(text = if (it) "On" else "Off") },
+      )
+      switchPreference(
+        key = "scale",
+        defaultValue = true,
+        title = { Text(text = stringResource(R.string.scale)) },
+        summary = { Text(text = if (it) "On" else "Off") },
+      )
     }
+  }
 }

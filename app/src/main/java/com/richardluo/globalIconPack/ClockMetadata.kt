@@ -1,7 +1,10 @@
 package com.richardluo.globalIconPack
 
-typealias ClockId = String
-
 data class ClockMetadata(
-    val clockId: ClockId,
+  val hourLayerIndex: Int,
+  val minuteLayerIndex: Int,
+  val secondLayerIndex: Int,
+  val defaultHour: Int,
+  val defaultMinute: Int,
+  val defaultSecond: Int,
 )

@@ -1,38 +1,42 @@
-package com.richardluo.globalIconPack.reflect;
+package com.richardluo.globalIconPack.reflect
 
-import android.graphics.drawable.Drawable;
-import de.robv.android.xposed.XposedBridge;
-import de.robv.android.xposed.XposedHelpers;
-import java.lang.reflect.Method;
+import android.content.res.Resources
+import android.content.res.Resources.Theme
+import android.graphics.drawable.Drawable
+import de.robv.android.xposed.XposedBridge
+import de.robv.android.xposed.XposedHelpers
+import java.lang.reflect.Method
 
-public class Resources {
-  public static final Method getDrawableForDensity =
-      XposedHelpers.findMethodExact(
-          android.content.res.Resources.class,
-          "getDrawableForDensity",
-          int.class,
-          int.class,
-          android.content.res.Resources.Theme.class);
-
-  public static Drawable getDrawable(
-      android.content.res.Resources resources,
-      int resId,
-      android.content.res.Resources.Theme theme) {
-    return getDrawableForDensity(resources, resId, 0, theme);
+object Resources {
+  val getDrawableForDensity: Method by lazy {
+    XposedHelpers.findMethodExact(
+      Resources::class.java,
+      "getDrawableForDensity",
+      Int::class.javaPrimitiveType,
+      Int::class.javaPrimitiveType,
+      Theme::class.java,
+    )
   }
 
-  public static Drawable getDrawableForDensity(
-      android.content.res.Resources resources,
-      int resId,
-      int iconDpi,
-      android.content.res.Resources.Theme theme) {
+  fun getDrawable(thisObj: Resources, resId: Int, theme: Theme?): Drawable? {
+    return getDrawableForDensity(thisObj, resId, 0, theme)
+  }
+
+  fun getDrawableForDensity(
+    thisObj: Resources,
+    resId: Int,
+    iconDpi: Int,
+    theme: Theme?,
+  ): Drawable? {
     try {
-      return (Drawable)
-          XposedBridge.invokeOriginalMethod(
-              getDrawableForDensity, resources, new Object[] {resId, iconDpi, theme});
-    } catch (Exception e) {
-      XposedBridge.log(e);
-      return null;
+      return XposedBridge.invokeOriginalMethod(
+        getDrawableForDensity,
+        thisObj,
+        arrayOf(resId, iconDpi, theme),
+      ) as Drawable
+    } catch (e: Exception) {
+      XposedBridge.log(e)
+      return null
     }
   }
 }
