@@ -9,6 +9,7 @@ class XposedMain : IXposedHookLoadPackage {
 
   override fun handleLoadPackage(lpp: LoadPackageParam) {
     if (!lpp.isFirstApplication) return
+    if (BuildConfig.APPLICATION_ID == lpp.packageName) return
 
     when (lpp.packageName) {
       "com.google.android.apps.nexuslauncher" -> hookList.forEach { it.onHookPixelLauncher(lpp) }

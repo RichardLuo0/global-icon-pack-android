@@ -215,7 +215,9 @@ fun getCip(): CustomIconPack? {
     val pref = WorldPreference.getReadablePref()
     val packPackageName = pref.getString("iconPack", "")?.takeIf { it.isNotEmpty() } ?: return null
     AndroidAppHelper.currentApplication()?.packageManager?.let {
-      cip = CustomIconPack(it, packPackageName, pref).apply { loadInternal() }
+      runCatching { cip = CustomIconPack(it, packPackageName, pref).apply { loadInternal() } }
+        .exceptionOrNull()
+        ?.let { XposedBridge.log("This app might not have the permission to query packages.\n$it") }
       cip
     }
   } else cip
