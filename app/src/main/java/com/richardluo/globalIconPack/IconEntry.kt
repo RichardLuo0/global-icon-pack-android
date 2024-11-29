@@ -16,8 +16,8 @@ data class IconEntry(
       IconType.Calendar ->
         cip.getIcon("$name${Calendar.getInstance().get(Calendar.DAY_OF_MONTH)}", iconDpi)
       IconType.Clock ->
-        cip.getIcon(name, iconDpi)?.let {
-          ClockDrawableWrapper.from(it, clockMetadata ?: return null)
+        letAll(cip.getIcon(name, iconDpi), clockMetadata) { icon, metadata ->
+          ClockDrawableWrapper.from(icon, metadata) ?: icon
         }
     }
   }

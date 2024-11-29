@@ -7,9 +7,9 @@ import android.content.Intent.ACTION_TIMEZONE_CHANGED
 import android.content.Intent.ACTION_TIME_CHANGED
 import android.os.Process
 import android.os.UserManager
+import com.richardluo.globalIconPack.reflect.ReflectHelper
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XposedBridge
-import de.robv.android.xposed.XposedHelpers
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 
 class CalendarAndClockHook : Hook {
@@ -18,35 +18,33 @@ class CalendarAndClockHook : Hook {
     val clocks = mutableSetOf<String>()
 
     val forceClockAndCalendarFromIconPack =
-      WorldPreference.getReadablePref().getBoolean("forceClockAndCalendarFromIconPack", true)
+      WorldPreference.getReadablePref().getBoolean("forceLoadClockAndCalendar", true)
 
-    val iconProvider =
-      XposedHelpers.findClass("com.android.launcher3.icons.IconProvider", lpp.classLoader)
-    val mCalendar = XposedHelpers.findField(iconProvider, "mCalendar")
-    val mClock = XposedHelpers.findField(iconProvider, "mClock")
+    val iconProvider = ReflectHelper.findClass("com.android.launcher3.icons.IconProvider", lpp)
+    val mCalendar = iconProvider?.let { ReflectHelper.findField(it, "mCalendar") }
+    val mClock = iconProvider?.let { ReflectHelper.findField(it, "mClock") }
     XposedBridge.hookAllMethods(
       iconProvider,
       "getIconWithOverrides",
       object : XC_MethodHook() {
         override fun beforeHookedMethod(param: MethodHookParam) {
           if (forceClockAndCalendarFromIconPack) {
-            mCalendar[param.thisObject] = null
-            mClock[param.thisObject] = null
+            mCalendar?.set(param.thisObject, null)
+            mClock?.set(param.thisObject, null)
           }
 
           val cip = getCip() ?: return
           val packageName = param.args[0] as String
           val density = param.args[1] as Int
-          val cn = getComponentName(packageName)
-          val entry = cip.getIconEntry(cn) ?: return
+          val entry = cip.getIconEntry(getComponentName(packageName)) ?: return
           when (entry.type) {
             IconType.Calendar -> {
               calendars.add(packageName)
-              param.result = entry.getIcon(cip, density)
+              param.result = cip.getIcon(entry, density)
             }
             IconType.Clock -> {
               clocks.add(packageName)
-              param.result = entry.getIcon(cip, density)
+              param.result = cip.getIcon(entry, density)
             }
             else -> return
           }
@@ -55,11 +53,8 @@ class CalendarAndClockHook : Hook {
     )
 
     val iconChangeReceiver =
-      XposedHelpers.findClass(
-        "com.android.launcher3.icons.IconProvider\$IconChangeReceiver",
-        lpp.classLoader,
-      )
-    val mCallbackField = XposedHelpers.findField(iconChangeReceiver, "mCallback")
+      ReflectHelper.findClass("com.android.launcher3.icons.IconProvider\$IconChangeReceiver", lpp)
+    val mCallbackField = iconChangeReceiver?.let { ReflectHelper.findField(it, "mCallback") }
     XposedBridge.hookAllMethods(
       iconChangeReceiver,
       "onReceive",
@@ -67,7 +62,7 @@ class CalendarAndClockHook : Hook {
         override fun beforeHookedMethod(param: MethodHookParam) {
           val context = param.args[0] as Context
           val intent = param.args[1] as Intent
-          val mCallback = mCallbackField.get(param.thisObject) ?: return
+          val mCallback = mCallbackField?.get(param.thisObject) ?: return
           when (intent.action) {
             ACTION_TIMEZONE_CHANGED -> {
               changeClockIcon(mCallback)
@@ -85,14 +80,14 @@ class CalendarAndClockHook : Hook {
 
         fun changeClockIcon(mCallback: Any) {
           for (clock in clocks) {
-            XposedHelpers.callMethod(mCallback, "onAppIconChanged", clock, Process.myUserHandle())
+            ReflectHelper.callMethod(mCallback, "onAppIconChanged", clock, Process.myUserHandle())
           }
         }
 
         fun changeCalendarIcon(context: Context, mCallback: Any) {
           for (user in context.getSystemService(UserManager::class.java).getUserProfiles()) {
             for (calendar in calendars) {
-              XposedHelpers.callMethod(mCallback, "onAppIconChanged", calendar, user)
+              ReflectHelper.callMethod(mCallback, "onAppIconChanged", calendar, user)
             }
           }
         }

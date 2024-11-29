@@ -15,9 +15,10 @@ object WorldPreference {
   fun getReadablePref(): SharedPreferences {
     if (!::pref.isInitialized)
       pref =
-        XSharedPreferences(BuildConfig.APPLICATION_ID).apply {
-          if (!file.canRead())
+        XSharedPreferences(BuildConfig.APPLICATION_ID).also {
+          if (!it.file.canRead())
             XposedBridge.log("Pref can not be read. Plz open global icon pack at least once.")
+          else XposedBridge.log("loaded pref: " + it.file.path)
         }
     return pref
   }

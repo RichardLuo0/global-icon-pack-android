@@ -60,19 +60,15 @@ class ReplaceIcon : Hook {
           return when {
             isHighTwoByte(resId, IN_CIP) -> {
               param.args[0] = withHighByteSet(resId, CIP_DEFAULT)
-              // TODO Better way to do this? Original id has been lost
+              // Original id has been lost
               cip?.getIcon(param.args[0] as Int, density)
             }
             isHighTwoByte(resId, NOT_IN_CIP) -> {
               param.args[0] = withHighByteSet(resId, ANDROID_DEFAULT)
-              cip?.let { generateIcon(it, param, density) }
+              callOriginalMethod<Drawable?>(param)?.let { cip?.genIconFrom(it) }
             }
             else -> callOriginalMethod(param)
           }
-        }
-
-        fun generateIcon(cip: CustomIconPack, param: MethodHookParam, density: Int): Drawable? {
-          return callOriginalMethod<Drawable?>(param)?.let { cip.genIconFrom(it, density) }
         }
       }
     XposedBridge.hookMethod(getDrawableForDensity, replaceIcon)

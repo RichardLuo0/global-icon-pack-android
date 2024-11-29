@@ -4,12 +4,11 @@ import android.content.res.Resources
 import android.content.res.Resources.Theme
 import android.graphics.drawable.Drawable
 import de.robv.android.xposed.XposedBridge
-import de.robv.android.xposed.XposedHelpers
 import java.lang.reflect.Method
 
 object Resources {
-  val getDrawableForDensity: Method by lazy {
-    XposedHelpers.findMethodExact(
+  val getDrawableForDensity: Method? by lazy {
+    ReflectHelper.findMethodFirstMatch(
       Resources::class.java,
       "getDrawableForDensity",
       Int::class.javaPrimitiveType,
@@ -28,15 +27,16 @@ object Resources {
     iconDpi: Int,
     theme: Theme?,
   ): Drawable? {
-    try {
-      return XposedBridge.invokeOriginalMethod(
-        getDrawableForDensity,
-        thisObj,
-        arrayOf(resId, iconDpi, theme),
-      ) as Drawable
-    } catch (e: Exception) {
-      XposedBridge.log(e)
-      return null
-    }
+    return runCatching {
+        XposedBridge.invokeOriginalMethod(
+          getDrawableForDensity,
+          thisObj,
+          arrayOf(resId, iconDpi, theme),
+        ) as Drawable
+      }
+      .getOrElse {
+        XposedBridge.log(it)
+        null
+      }
   }
 }

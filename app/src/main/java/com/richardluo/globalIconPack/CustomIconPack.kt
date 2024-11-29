@@ -8,8 +8,10 @@ import android.content.pm.ApplicationInfo
 import android.content.pm.PackageItemInfo
 import android.content.pm.PackageManager
 import android.content.res.XmlResourceParser
+import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
 import android.util.Xml
+import androidx.core.graphics.drawable.toBitmap
 import com.richardluo.globalIconPack.reflect.Resources.getDrawable
 import com.richardluo.globalIconPack.reflect.Resources.getDrawableForDensity
 import de.robv.android.xposed.XposedBridge
@@ -18,19 +20,21 @@ import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserException
 import org.xmlpull.v1.XmlPullParserFactory
 
-class CustomIconPack(
-  private val pm: PackageManager,
-  private val packPackageName: String,
-  private val pref: SharedPreferences,
-) {
+class CustomIconPack(private val pm: PackageManager, private val pref: SharedPreferences) {
+  private val packPackageName =
+    pref.getString("iconPack", "")?.takeIf { it.isNotEmpty() }
+      ?: throw Exception("No icon pack set")
   private val packResources = pm.getResourcesForApplication(packPackageName)
   private val indexMap = mutableMapOf<ComponentName, Int>()
   private val iconEntryList = mutableListOf<IconEntry?>()
 
-  private var iconBack: Drawable? = null
-  private var iconUpon: Drawable? = null
-  private var iconMask: Drawable? = null
-  private var scale: Float = 1f
+  // Fallback settings from icon pack
+  private var iconBack: Bitmap? = null
+  private var iconUpon: Bitmap? = null
+  private var iconMask: Bitmap? = null
+  private var iconScale: Float = 1f
+
+  private var globalScale: Float = pref.getFloat("scale", 1f)
 
   private val idCache = mutableMapOf<String, Int>()
 
@@ -40,7 +44,8 @@ class CustomIconPack(
 
   fun getId(cn: ComponentName) = indexMap[cn]
 
-  fun getIcon(iconEntry: IconEntry, iconDpi: Int): Drawable? = iconEntry.getIcon(this, iconDpi)
+  fun getIcon(iconEntry: IconEntry, iconDpi: Int): Drawable? =
+    iconEntry.getIcon(this, iconDpi)?.let { IconHelper.makeAdaptive(it, globalScale) }
 
   fun getIcon(id: Int, iconDpi: Int): Drawable? = getIconEntry(id)?.let { getIcon(it, iconDpi) }
 
@@ -53,8 +58,15 @@ class CustomIconPack(
   fun getDrawableId(name: String) =
     idCache.getOrPut(name) { packResources.getIdentifier(name, "drawable", packPackageName) }
 
-  fun genIconFrom(baseIcon: Drawable, iconDpi: Int) =
-    IconHelper.processIcon(packResources, baseIcon, iconDpi, iconBack, iconUpon, iconMask, scale)
+  fun genIconFrom(baseIcon: Drawable) =
+    IconHelper.processIcon(
+      packResources,
+      baseIcon,
+      iconBack,
+      iconUpon,
+      iconMask,
+      iconScale * globalScale,
+    )
 
   @SuppressLint("DiscouragedApi")
   fun loadInternal() {
@@ -75,7 +87,7 @@ class CustomIconPack(
               if (parseXml.getAttributeName(i).startsWith("img")) {
                 val imgName = parseXml.getAttributeValue(i)
                 val id = packResources.getIdentifier(imgName, "drawable", packPackageName)
-                if (id != 0) iconBack = getDrawable(packResources, id, null)
+                if (id != 0) iconBack = getDrawable(packResources, id, null)?.toBitmap()
               }
             }
           }
@@ -86,7 +98,7 @@ class CustomIconPack(
               if (parseXml.getAttributeName(i).startsWith("img")) {
                 val imgName = parseXml.getAttributeValue(i)
                 val id = packResources.getIdentifier(imgName, "drawable", packPackageName)
-                if (id != 0) iconUpon = getDrawable(packResources, id, null)
+                if (id != 0) iconUpon = getDrawable(packResources, id, null)?.toBitmap()
               }
             }
           }
@@ -97,14 +109,14 @@ class CustomIconPack(
               if (parseXml.getAttributeName(i).startsWith("img")) {
                 val imgName = parseXml.getAttributeValue(i)
                 val id = packResources.getIdentifier(imgName, "drawable", packPackageName)
-                if (id != 0) iconMask = getDrawable(packResources, id, null)
+                if (id != 0) iconMask = getDrawable(packResources, id, null)?.toBitmap()
               }
             }
           }
 
           "scale" -> {
-            if (!pref.getBoolean("scale", true)) continue
-            scale = parseXml.getAttributeValue(null, "factor")?.toFloatOrNull() ?: 1f
+            if (!pref.getBoolean("iconScale", true)) continue
+            iconScale = parseXml.getAttributeValue(null, "factor")?.toFloatOrNull() ?: 1f
           }
 
           "item" -> {
@@ -208,19 +220,18 @@ class CustomIconPack(
 
 private operator fun XmlPullParser.get(key: String): String? = this.getAttributeValue(null, key)
 
-private lateinit var cip: CustomIconPack
+private var cip: CustomIconPack? = null
 
 fun getCip(): CustomIconPack? {
-  return if (!::cip.isInitialized) {
+  if (cip == null) {
     val pref = WorldPreference.getReadablePref()
-    val packPackageName = pref.getString("iconPack", "")?.takeIf { it.isNotEmpty() } ?: return null
     AndroidAppHelper.currentApplication()?.packageManager?.let {
-      runCatching { cip = CustomIconPack(it, packPackageName, pref).apply { loadInternal() } }
+      runCatching { cip = CustomIconPack(it, pref).apply { loadInternal() } }
         .exceptionOrNull()
-        ?.let { XposedBridge.log("This app might not have the permission to query packages.\n$it") }
-      cip
+        ?.let { XposedBridge.log(it) }
     }
-  } else cip
+  }
+  return cip
 }
 
 fun getComponentName(info: PackageItemInfo): ComponentName {

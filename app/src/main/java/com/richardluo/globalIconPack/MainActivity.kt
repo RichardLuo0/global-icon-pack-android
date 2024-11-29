@@ -29,6 +29,7 @@ import me.zhanghai.compose.preference.Preferences
 import me.zhanghai.compose.preference.ProvidePreferenceLocals
 import me.zhanghai.compose.preference.getPreferenceFlow
 import me.zhanghai.compose.preference.preferenceCategory
+import me.zhanghai.compose.preference.sliderPreference
 import me.zhanghai.compose.preference.switchPreference
 import me.zhanghai.compose.preference.textFieldPreference
 
@@ -79,21 +80,30 @@ fun SampleScreen() {
         textToValue = { it },
         summary = { Text(text = it.ifEmpty { stringResource(R.string.iconPackSummary) }) },
       )
-
-      preferenceCategory(
-        key = "pixelSettings",
-        title = { Text(text = stringResource(R.string.pixelLauncherSettings)) },
-      )
       switchPreference(
         key = "noForceShape",
         defaultValue = true,
         title = { Text(text = stringResource(R.string.noForceShape)) },
         summary = { Text(text = stringResource(R.string.noForceShapeSummary)) },
       )
+
+      preferenceCategory(
+        key = "pixelLauncherSettings",
+        title = { Text(text = stringResource(R.string.pixelLauncherSettings)) },
+      )
+      sliderPreference(
+        key = "scale",
+        defaultValue = 1f,
+        valueRange = 0f..1.5f,
+        valueSteps = 29,
+        valueText = { Text(text = "%.2f".format(it)) },
+        title = { Text(text = stringResource(R.string.scale)) },
+        summary = { Text(text = stringResource(R.string.scaleSummary)) },
+      )
       switchPreference(
-        key = "forceClockAndCalendarFromIconPack",
+        key = "forceLoadClockAndCalendar",
         defaultValue = true,
-        title = { Text(text = stringResource(R.string.forceClockAndCalendarFromIconPack)) },
+        title = { Text(text = stringResource(R.string.forceLoadClockAndCalendar)) },
         summary = { Text(text = if (it) "On" else "Off") },
       )
 
@@ -120,9 +130,9 @@ fun SampleScreen() {
         summary = { Text(text = if (it) "On" else "Off") },
       )
       switchPreference(
-        key = "scale",
+        key = "iconScale",
         defaultValue = true,
-        title = { Text(text = stringResource(R.string.scale)) },
+        title = { Text(text = stringResource(R.string.iconScale)) },
         summary = { Text(text = if (it) "On" else "Off") },
       )
     }

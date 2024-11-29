@@ -1,5 +1,6 @@
 package com.richardluo.globalIconPack
 
+import android.app.AndroidAppHelper
 import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.Canvas
@@ -7,69 +8,129 @@ import android.graphics.Paint
 import android.graphics.PorterDuff
 import android.graphics.PorterDuffXfermode
 import android.graphics.Rect
+import android.graphics.drawable.AdaptiveIconDrawable
+import android.graphics.drawable.AdaptiveIconDrawable.getExtraInsetFraction
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
+import android.graphics.drawable.InsetDrawable
 import androidx.core.graphics.drawable.toBitmap
-import kotlin.math.roundToInt
 
 object IconHelper {
+  /**
+   * CustomAdaptiveIconDrawable only works correctly for launcher and system ui. Otherwise it maybe
+   * clipped by adaptive icon mask, but we don't know how to efficiently convert Bitmap to Path.
+   * Also there will be a black background in settings app list. I don't know why.
+   */
+  class CustomAdaptiveIconDrawable(
+    background: Drawable?,
+    foreground: Drawable?,
+    private val back: Bitmap?,
+    private val upon: Bitmap?,
+    private val mask: Bitmap?,
+    private val scale: Float = 1f,
+  ) : UnClipAdaptiveIconDrawable(background, foreground) {
+    private val paint =
+      Paint(Paint.ANTI_ALIAS_FLAG or Paint.DITHER_FLAG or Paint.FILTER_BITMAP_FLAG)
+
+    override fun draw(canvas: Canvas) {
+      drawIcon(canvas, paint, bounds, back, upon, mask, scale) { super.draw(canvas) }
+    }
+
+    override fun setAlpha(alpha: Int) {
+      super.setAlpha(alpha)
+      paint.alpha = alpha
+    }
+  }
+
+  private val isAdaptiveIconUsed: Boolean by lazy {
+    when (AndroidAppHelper.currentPackageName()) {
+      "com.google.android.apps.nexuslauncher",
+      "com.android.systemui" -> true
+      else -> false
+    }
+  }
+
   fun processIcon(
     res: Resources,
-    baseIcon: Drawable,
-    size: Int,
-    back: Drawable?,
-    upon: Drawable?,
-    mask: Drawable?,
+    drawable: Drawable,
+    back: Bitmap?,
+    upon: Bitmap?,
+    mask: Bitmap?,
     scale: Float = 1f,
-  ): Drawable {
-    val width = if (size == 0) baseIcon.intrinsicWidth else size
-    val height = if (size == 0) baseIcon.intrinsicHeight else size
+  ): Drawable =
+    if (!isAdaptiveIconUsed) {
+      val width = drawable.intrinsicWidth
+      val height = drawable.intrinsicHeight
+      val bounds = Rect(0, 0, width, height)
+      val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+      val canvas = Canvas(bitmap)
+      val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.DITHER_FLAG or Paint.FILTER_BITMAP_FLAG)
+      // Do not pass scale because BitmapDrawable will scale anyway
+      drawIcon(canvas, paint, bounds, back, upon, mask) {
+        val maskBmp = drawable.toBitmap()
+        canvas.drawBitmap(maskBmp, null, bounds, paint)
+      }
+      BitmapDrawable(res, bitmap)
+    } else if (drawable is AdaptiveIconDrawable)
+      CustomAdaptiveIconDrawable(drawable.background, drawable.foreground, back, upon, mask, scale)
+    else CustomAdaptiveIconDrawable(null, createScaledDrawable(drawable), back, upon, mask, scale)
 
-    val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-
-    val canvas = Canvas(bitmap)
-    val paint = Paint()
-    paint.isAntiAlias = true
-    paint.isFilterBitmap = true
-    paint.isDither = true
-
-    var inBounds: Rect
-    var outBounds: Rect
-
-    val icon = baseIcon.toBitmap(width, height)
-
-    inBounds = Rect(0, 0, icon.width, icon.height)
-    outBounds =
-      Rect(
-        (bitmap.width * (1 - scale) * 0.5).roundToInt(),
-        (bitmap.height * (1 - scale) * 0.5).roundToInt(),
-        (bitmap.width - bitmap.width * (1 - scale) * 0.5).roundToInt(),
-        (bitmap.height - bitmap.height * (1 - scale) * 0.5).roundToInt(),
+  fun makeAdaptive(drawable: Drawable, scale: Float = 1f) =
+    if (!isAdaptiveIconUsed || drawable is AdaptiveIconDrawable) drawable
+    else
+      CustomAdaptiveIconDrawable(
+        null,
+        createScaledDrawable(drawable, (1 - getExtraInsetFraction()) * scale),
+        null,
+        null,
+        null,
       )
-    canvas.drawBitmap(icon, inBounds, outBounds, paint)
 
-    if (mask != null) {
+  fun drawIcon(
+    canvas: Canvas,
+    paint: Paint,
+    bounds: Rect,
+    back: Bitmap?,
+    upon: Bitmap?,
+    mask: Bitmap?,
+    scale: Float = 1f,
+    drawBaseIcon: () -> Unit,
+  ) {
+    if (bounds.width() < 0) return
+    if (bounds.height() < 0) return
+
+    drawBaseIcon()
+
+    mask?.let {
       paint.xfermode = PorterDuffXfermode(PorterDuff.Mode.DST_OUT)
-      val maskBmp = mask.toBitmap(width, height)
-      inBounds = Rect(0, 0, maskBmp.width, maskBmp.height)
-      outBounds = Rect(0, 0, bitmap.width, bitmap.height)
-      canvas.drawBitmap(maskBmp, inBounds, outBounds, paint)
-    }
-    if (upon != null) {
-      paint.xfermode = PorterDuffXfermode(PorterDuff.Mode.SRC_OVER)
-      val maskBmp = upon.toBitmap(width, height)
-      inBounds = Rect(0, 0, maskBmp.width, maskBmp.height)
-      outBounds = Rect(0, 0, bitmap.width, bitmap.height)
-      canvas.drawBitmap(maskBmp, inBounds, outBounds, paint)
-    }
-    if (back != null) {
-      paint.xfermode = PorterDuffXfermode(PorterDuff.Mode.DST_OVER)
-      val maskBmp = back.toBitmap(width, height)
-      inBounds = Rect(0, 0, maskBmp.width, maskBmp.height)
-      outBounds = Rect(0, 0, bitmap.width, bitmap.height)
-      canvas.drawBitmap(maskBmp, inBounds, outBounds, paint)
+      canvas.drawBitmap(it, null, bounds, paint)
     }
 
-    return BitmapDrawable(res, bitmap)
+    upon?.let {
+      paint.xfermode = PorterDuffXfermode(PorterDuff.Mode.SRC_OVER)
+      canvas.drawBitmap(it, null, bounds, paint)
+    }
+
+    back?.let {
+      paint.xfermode = PorterDuffXfermode(PorterDuff.Mode.DST_OVER)
+      canvas.drawBitmap(it, null, bounds, paint)
+    }
+
+    canvas.scale(scale, scale, bounds.width() / 2f, bounds.height() / 2f)
+  }
+
+  fun createScaledDrawable(main: Drawable, scale: Float = 1 - getExtraInsetFraction()): Drawable {
+    val h = main.intrinsicHeight.toFloat()
+    val w = main.intrinsicWidth.toFloat()
+    var scaleX = scale
+    var scaleY = scale
+    if (h > w && w > 0) {
+      scaleX *= w / h
+    } else if (w > h && h > 0) {
+      scaleY *= h / w
+    }
+    scaleX = (1 - scaleX) / 2
+    scaleY = (1 - scaleY) / 2
+    return InsetDrawable(main, scaleX, scaleY, scaleX, scaleY)
   }
 }

@@ -5,14 +5,17 @@
     <string name="iconPack">Icon pack</string>
     <string name="iconPackSummary">The package name to be used as icon pack.</string>
 
-    <string name="pixelLauncherSettings">Pixel Launcher Settings</string>
     <string name="noForceShape">No force shape</string>
-    <string name="noForceShapeSummary">Prevent pixel launcher from forcing a uniform icon shape.</string>
-    <string name="forceClockAndCalendarFromIconPack">Load clock and calendar from icon pack</string>
+    <string name="noForceShapeSummary">Prevent some apps from forcing a uniform icon shape.</string>
+
+    <string name="pixelLauncherSettings">Pixel Launcher Settings</string>
+    <string name="scale">Scale</string>
+    <string name="scaleSummary">A scale applied to all icons</string>
+    <string name="forceLoadClockAndCalendar">Force load clock and calendar</string>
 
     <string name="iconPackSettings">Icon pack settings</string>
     <string name="iconBack">Icon back</string>
     <string name="iconUpon">Icon upon</string>
     <string name="iconMask">Icon mask</string>
-    <string name="scale">Scale</string>
+    <string name="iconScale">Scale</string>
 </resources>
