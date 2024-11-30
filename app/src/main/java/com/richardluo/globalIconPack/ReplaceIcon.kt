@@ -1,6 +1,5 @@
 package com.richardluo.globalIconPack
 
-import android.app.Instrumentation
 import android.content.pm.ActivityInfo
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageItemInfo
@@ -24,18 +23,7 @@ class ReplaceIcon : Hook {
   }
 
   override fun onHookApp(lpp: XC_LoadPackage.LoadPackageParam) {
-    var cip: CustomIconPack? = null
-
-    // Pre init to avoid ApplicationInfo constructor creates loop with getResourcesForApplication()
-    ReflectHelper.hookAllMethods(
-      Instrumentation::class.java,
-      "callApplicationOnCreate",
-      object : XC_MethodHook() {
-        override fun beforeHookedMethod(param: MethodHookParam?) {
-          cip = getCip()
-        }
-      },
-    )
+    val packPackageName = WorldPreference.getReadablePref().getString("iconPack", "") ?: ""
 
     // Resource id always starts with 0x7f, use it to indict that this is an icon
     // Assume the icon res id is only used in getDrawable()
@@ -43,10 +31,12 @@ class ReplaceIcon : Hook {
       object : XC_MethodHook() {
         override fun afterHookedMethod(param: MethodHookParam) {
           val info = param.thisObject as PackageItemInfo
-          if (info.icon != 0)
-            info.icon =
-              cip?.getId(getComponentName(info))?.let { withHighByteSet(it, IN_CIP) }
-                ?: withHighByteSet(info.icon, NOT_IN_CIP)
+          if (info.icon != 0 && info.packageName nREqual packPackageName)
+            getCip()?.let { cip ->
+              info.icon =
+                cip.getId(getComponentName(info))?.let { withHighByteSet(it, IN_CIP) }
+                  ?: withHighByteSet(info.icon, NOT_IN_CIP)
+            }
         }
       }
     ReflectHelper.hookAllConstructors(ApplicationInfo::class.java, replaceIconResId)
@@ -61,11 +51,11 @@ class ReplaceIcon : Hook {
             isHighTwoByte(resId, IN_CIP) -> {
               param.args[0] = withHighByteSet(resId, CIP_DEFAULT)
               // Original id has been lost
-              cip?.getIcon(param.args[0] as Int, density)
+              getCip()?.getIcon(param.args[0] as Int, density)
             }
             isHighTwoByte(resId, NOT_IN_CIP) -> {
               param.args[0] = withHighByteSet(resId, ANDROID_DEFAULT)
-              callOriginalMethod<Drawable?>(param)?.let { cip?.genIconFrom(it) }
+              callOriginalMethod<Drawable?>(param)?.let { getCip()?.genIconFrom(it) ?: it }
             }
             else -> callOriginalMethod(param)
           }

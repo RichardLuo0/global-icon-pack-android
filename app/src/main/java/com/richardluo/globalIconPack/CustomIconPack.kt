@@ -16,11 +16,12 @@ import com.richardluo.globalIconPack.reflect.Resources.getDrawable
 import com.richardluo.globalIconPack.reflect.Resources.getDrawableForDensity
 import de.robv.android.xposed.XposedBridge
 import java.io.IOException
+import kotlin.concurrent.Volatile
 import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserException
 import org.xmlpull.v1.XmlPullParserFactory
 
-class CustomIconPack(private val pm: PackageManager, private val pref: SharedPreferences) {
+class CustomIconPack(pm: PackageManager, private val pref: SharedPreferences) {
   private val packPackageName =
     pref.getString("iconPack", "")?.takeIf { it.isNotEmpty() }
       ?: throw Exception("No icon pack set")
@@ -189,18 +190,18 @@ class CustomIconPack(private val pm: PackageManager, private val pref: SharedPre
     }
   }
 
+  @SuppressLint("DiscouragedApi")
   private fun getXml(name: String): XmlPullParser? {
     try {
-      @SuppressLint("DiscouragedApi")
-      val resourceId = packResources.getIdentifier(name, "xml", packPackageName)
-      return if (0 != resourceId) {
-        pm.getXml(packPackageName, resourceId, null)
-      } else {
-        val factory = XmlPullParserFactory.newInstance()
-        val parser = factory.newPullParser()
-        parser.setInput(packResources.assets.open("$name.xml"), Xml.Encoding.UTF_8.toString())
-        parser
-      }
+      return packResources
+        .getIdentifier(name, "xml", packPackageName)
+        .takeIf { 0 != it }
+        ?.let { packResources.getXml(it) }
+        ?: run {
+          XmlPullParserFactory.newInstance().newPullParser().apply {
+            setInput(packResources.assets.open("$name.xml"), Xml.Encoding.UTF_8.toString())
+          }
+        }
     } catch (_: PackageManager.NameNotFoundException) {} catch (_: IOException) {} catch (
       _: XmlPullParserException) {}
     return null
@@ -220,15 +221,19 @@ class CustomIconPack(private val pm: PackageManager, private val pref: SharedPre
 
 private operator fun XmlPullParser.get(key: String): String? = this.getAttributeValue(null, key)
 
-private var cip: CustomIconPack? = null
+@Volatile private var cip: CustomIconPack? = null
 
 fun getCip(): CustomIconPack? {
   if (cip == null) {
-    val pref = WorldPreference.getReadablePref()
-    AndroidAppHelper.currentApplication()?.packageManager?.let {
-      runCatching { cip = CustomIconPack(it, pref).apply { loadInternal() } }
-        .exceptionOrNull()
-        ?.let { XposedBridge.log(it) }
+    synchronized(CustomIconPack::class) {
+      if (cip == null) {
+        val pref = WorldPreference.getReadablePref()
+        AndroidAppHelper.currentApplication()?.packageManager?.let {
+          runCatching { cip = CustomIconPack(it, pref).apply { loadInternal() } }
+            .exceptionOrNull()
+            ?.let { XposedBridge.log(it) }
+        }
+      }
     }
   }
   return cip

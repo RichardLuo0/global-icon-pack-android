@@ -52,3 +52,11 @@ fun <T, R> Method.call(thisObj: Any?, vararg param: Any?, block: (T) -> R) =
 
 fun Method.call(thisObj: Any?, vararg param: Any?, block: () -> Unit) =
   call<Unit, Unit>(thisObj, param) { block() }
+
+infix fun String.rEqual(other: String): Boolean {
+  if (length != other.length) return false
+  for (i in other.indices) if (this[length - 1 - i] != other[length - 1 - i]) return false
+  return true
+}
+
+infix fun String.nREqual(other: String) = !rEqual(other)
