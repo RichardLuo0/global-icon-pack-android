@@ -1,6 +1,6 @@
 package com.richardluo.globalIconPack
 
-import android.graphics.Canvas
+import android.app.AndroidAppHelper
 import android.graphics.Path
 import android.graphics.Rect
 import android.graphics.drawable.AdaptiveIconDrawable
@@ -9,39 +9,55 @@ import com.richardluo.globalIconPack.WorldPreference.getReadablePref
 import com.richardluo.globalIconPack.reflect.BaseIconFactory
 import com.richardluo.globalIconPack.reflect.ReflectHelper
 import de.robv.android.xposed.XC_MethodHook
-import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
+import java.lang.reflect.Method
 
 class NoForceShape : Hook {
 
   override fun onHookPixelLauncher(lpp: LoadPackageParam) {
     if (!initIfEnabled(lpp)) return
 
-    XposedBridge.hookAllMethods(
+    ReflectHelper.hookAllMethods(
       BaseIconFactory.clazz,
-      "normalizeAndWrapToAdaptiveIcon",
-      object : XC_MethodHook() {
-        override fun beforeHookedMethod(param: MethodHookParam) {
-          param.args[1] = false
-        }
-      },
+      mapOf(
+        "normalizeAndWrapToAdaptiveIcon" to
+          object : XC_MethodHook() {
+            override fun beforeHookedMethod(param: MethodHookParam) {
+              param.args[1] = false
+            }
+          },
+        // Fix FloatingIconView and DragView
+        "wrapToAdaptiveIcon" to
+          object : XC_MethodHook() {
+            override fun beforeHookedMethod(param: MethodHookParam) {
+              (param.args[0] as Drawable?)?.let {
+                if (it !is AdaptiveIconDrawable)
+                  param.result =
+                    UnmaskAdaptiveIconDrawable(null, IconHelper.createScaledDrawable(it))
+              }
+            }
+          },
+      ),
     )
-    // Fix the FloatingIconView and the DragView
-    XposedBridge.hookAllMethods(
-      BaseIconFactory.clazz,
-      "wrapToAdaptiveIcon",
-      object : XC_MethodHook() {
-        override fun beforeHookedMethod(param: MethodHookParam) {
-          (param.args[0] as Drawable?)?.let {
-            if (it !is AdaptiveIconDrawable)
-              param.result = UnmaskAdaptiveIconDrawable(null, IconHelper.createScaledDrawable(it))
-          }
+    // Fix FloatingIconView
+    val getScaleM: Method? =
+      ReflectHelper.findMethodFirstMatch(
+        "com.android.launcher3.icons.IconNormalizer",
+        lpp,
+        "getScale",
+        Drawable::class.java,
+      )
+    val obtainM: Method? =
+      ReflectHelper.findMethodFirstMatch("com.android.launcher3.icons.LauncherIcons", lpp, "obtain")
+    fun getScale(drawable: Drawable) =
+      obtainM?.call<Any, Float?>(null, AndroidAppHelper.currentApplication()) { factory ->
+        letAll(BaseIconFactory.getNormalizer, getScaleM) { getNormalizer, getScale ->
+          getScale.call(getNormalizer.call(factory), drawable, null, null, null)
         }
-      },
-    )
+      }
     val floatingIconView =
-      ReflectHelper.findClass("com.android.launcher3.views.FloatingIconView", lpp)
-    XposedBridge.hookAllMethods(
+      ReflectHelper.findClassThrow("com.android.launcher3.views.FloatingIconView", lpp)
+    ReflectHelper.hookAllMethods(
       floatingIconView,
       "setIcon",
       object : XC_MethodHook() {
@@ -50,7 +66,7 @@ class NoForceShape : Hook {
           if (drawable is UnmaskAdaptiveIconDrawable) {
             // https://cs.android.com/android/platform/superproject/+/android14-qpr3-release:packages/apps/Launcher3/src/com/android/launcher3/views/FloatingIconView.java;l=441
             val original = drawable.foreground
-            BaseIconFactory.getScale(original)?.let { scale ->
+            getScale(original)?.let { scale ->
               val blurSizeOutline = 2
               val bounds =
                 Rect(
@@ -74,7 +90,7 @@ class NoForceShape : Hook {
 
     // Fix splash screen
     // This is used when icon is not adaptive icon
-    XposedBridge.hookAllMethods(
+    ReflectHelper.hookAllMethods(
       BaseIconFactory.clazz,
       "normalizeAndWrapToAdaptiveIcon",
       object : XC_MethodHook() {
@@ -87,33 +103,13 @@ class NoForceShape : Hook {
         }
       },
     )
-    // This is used if its a adaptive icon. Only foreground drawable will be used
-    val adaptiveForegroundDrawable =
-      ReflectHelper.findClass(
-        "com.android.wm.shell.startingsurface.SplashscreenIconDrawableFactory\$AdaptiveForegroundDrawable",
-        lpp,
-      )
-    val mForegroundDrawable =
-      adaptiveForegroundDrawable?.let { ReflectHelper.findField(it, "mForegroundDrawable") }
-    XposedBridge.hookAllMethods(
-      adaptiveForegroundDrawable,
-      "draw",
-      object : XC_MethodHook() {
-        override fun beforeHookedMethod(param: MethodHookParam) {
-          mForegroundDrawable?.getAs<Drawable>(param.thisObject) {
-            it.draw(param.args[0] as Canvas)
-            param.result = null
-          }
-        }
-      },
-    )
   }
 
   override fun onHookSettings(lpp: LoadPackageParam) {
     if (!initIfEnabled(lpp)) return
 
     // Fix recent app list
-    XposedBridge.hookAllMethods(
+    ReflectHelper.hookAllMethods(
       BaseIconFactory.clazz,
       "normalizeAndWrapToAdaptiveIcon",
       object : XC_MethodHook() {

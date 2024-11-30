@@ -11,17 +11,18 @@ import android.graphics.PorterDuff
 import android.graphics.PorterDuffXfermode
 import android.graphics.Rect
 import android.graphics.drawable.AdaptiveIconDrawable
-import android.graphics.drawable.AdaptiveIconDrawable.getExtraInsetFraction
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.InsetDrawable
 import androidx.core.graphics.drawable.toBitmap
 
 object IconHelper {
+  const val ADAPTIVE_ICON_VIEWPORT_SCALE = 72f / 108f
+
   /**
-   * CustomAdaptiveIconDrawable only works correctly for launcher and system ui. Otherwise it maybe
-   * clipped by adaptive icon mask, but we don't know how to efficiently convert Bitmap to Path.
-   * Also there will be a black background in settings app list. I don't know why.
+   * CustomAdaptiveIconDrawable only works correctly for launcher. Otherwise it maybe clipped by
+   * adaptive icon mask, but we don't know how to efficiently convert Bitmap to Path. Also there
+   * will be a black background in settings app list. I don't know why.
    */
   class CustomAdaptiveIconDrawable(
     background: Drawable?,
@@ -46,7 +47,7 @@ object IconHelper {
 
   private val isUseAdaptiveIcon: Boolean by lazy {
     when (val packageName = AndroidAppHelper.currentPackageName()) {
-      "com.android.systemui" -> true
+      "com.android.systemui" -> false
       "com.android.settings" -> false
       else -> {
         // Query if it is a launcher app
@@ -94,7 +95,7 @@ object IconHelper {
     else
       CustomAdaptiveIconDrawable(
         null,
-        createScaledDrawable(drawable, (1 - getExtraInsetFraction()) * scale),
+        createScaledDrawable(drawable, ADAPTIVE_ICON_VIEWPORT_SCALE * scale),
         null,
         null,
         null,
@@ -133,9 +134,12 @@ object IconHelper {
     canvas.scale(scale, scale, bounds.width() / 2f, bounds.height() / 2f)
   }
 
-  fun createScaledDrawable(main: Drawable, scale: Float = 1 - getExtraInsetFraction()): Drawable {
-    val h = main.intrinsicHeight.toFloat()
-    val w = main.intrinsicWidth.toFloat()
+  fun createScaledDrawable(
+    drawable: Drawable,
+    scale: Float = ADAPTIVE_ICON_VIEWPORT_SCALE,
+  ): Drawable {
+    val h = drawable.intrinsicHeight.toFloat()
+    val w = drawable.intrinsicWidth.toFloat()
     var scaleX = scale
     var scaleY = scale
     if (h > w && w > 0) {
@@ -145,6 +149,6 @@ object IconHelper {
     }
     scaleX = (1 - scaleX) / 2
     scaleY = (1 - scaleY) / 2
-    return InsetDrawable(main, scaleX, scaleY, scaleX, scaleY)
+    return InsetDrawable(drawable, scaleX, scaleY, scaleX, scaleY)
   }
 }

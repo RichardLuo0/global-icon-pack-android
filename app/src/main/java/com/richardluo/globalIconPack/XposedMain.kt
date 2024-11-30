@@ -9,6 +9,7 @@ class XposedMain : IXposedHookLoadPackage {
   override fun handleLoadPackage(lpp: LoadPackageParam) {
     if (!lpp.isFirstApplication) return
     if (BuildConfig.APPLICATION_ID == lpp.packageName) return
+    if (lpp.processName != lpp.packageName) return
 
     hookList.forEach { it.onHookApp(lpp) }
 

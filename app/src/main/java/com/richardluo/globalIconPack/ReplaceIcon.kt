@@ -6,10 +6,10 @@ import android.content.pm.ApplicationInfo
 import android.content.pm.PackageItemInfo
 import android.graphics.drawable.Drawable
 import com.richardluo.globalIconPack.reflect.ClockDrawableWrapper
+import com.richardluo.globalIconPack.reflect.ReflectHelper
 import com.richardluo.globalIconPack.reflect.Resources.getDrawableForDensity
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XC_MethodReplacement
-import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.callbacks.XC_LoadPackage
 
 private const val IN_CIP = 0xff000000.toInt()
@@ -27,7 +27,7 @@ class ReplaceIcon : Hook {
     var cip: CustomIconPack? = null
 
     // Pre init to avoid ApplicationInfo constructor creates loop with getResourcesForApplication()
-    XposedBridge.hookAllMethods(
+    ReflectHelper.hookAllMethods(
       Instrumentation::class.java,
       "callApplicationOnCreate",
       object : XC_MethodHook() {
@@ -49,8 +49,8 @@ class ReplaceIcon : Hook {
                 ?: withHighByteSet(info.icon, NOT_IN_CIP)
         }
       }
-    XposedBridge.hookAllConstructors(ApplicationInfo::class.java, replaceIconResId)
-    XposedBridge.hookAllConstructors(ActivityInfo::class.java, replaceIconResId)
+    ReflectHelper.hookAllConstructors(ApplicationInfo::class.java, replaceIconResId)
+    ReflectHelper.hookAllConstructors(ActivityInfo::class.java, replaceIconResId)
 
     val replaceIcon: XC_MethodReplacement =
       object : XC_MethodReplacement() {
@@ -71,6 +71,6 @@ class ReplaceIcon : Hook {
           }
         }
       }
-    XposedBridge.hookMethod(getDrawableForDensity, replaceIcon)
+    getDrawableForDensity?.let { ReflectHelper.hookMethod(it, replaceIcon) }
   }
 }

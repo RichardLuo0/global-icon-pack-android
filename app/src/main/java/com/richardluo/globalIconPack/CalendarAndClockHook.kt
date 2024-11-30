@@ -9,7 +9,6 @@ import android.os.Process
 import android.os.UserManager
 import com.richardluo.globalIconPack.reflect.ReflectHelper
 import de.robv.android.xposed.XC_MethodHook
-import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 
 class CalendarAndClockHook : Hook {
@@ -20,10 +19,10 @@ class CalendarAndClockHook : Hook {
     val forceClockAndCalendarFromIconPack =
       WorldPreference.getReadablePref().getBoolean("forceLoadClockAndCalendar", true)
 
-    val iconProvider = ReflectHelper.findClass("com.android.launcher3.icons.IconProvider", lpp)
-    val mCalendar = iconProvider?.let { ReflectHelper.findField(it, "mCalendar") }
-    val mClock = iconProvider?.let { ReflectHelper.findField(it, "mClock") }
-    XposedBridge.hookAllMethods(
+    val iconProvider = ReflectHelper.findClassThrow("com.android.launcher3.icons.IconProvider", lpp)
+    val mCalendar = iconProvider.let { ReflectHelper.findField(it, "mCalendar") }
+    val mClock = iconProvider.let { ReflectHelper.findField(it, "mClock") }
+    ReflectHelper.hookAllMethods(
       iconProvider,
       "getIconWithOverrides",
       object : XC_MethodHook() {
@@ -53,9 +52,12 @@ class CalendarAndClockHook : Hook {
     )
 
     val iconChangeReceiver =
-      ReflectHelper.findClass("com.android.launcher3.icons.IconProvider\$IconChangeReceiver", lpp)
-    val mCallbackField = iconChangeReceiver?.let { ReflectHelper.findField(it, "mCallback") }
-    XposedBridge.hookAllMethods(
+      ReflectHelper.findClassThrow(
+        "com.android.launcher3.icons.IconProvider\$IconChangeReceiver",
+        lpp,
+      )
+    val mCallbackField = iconChangeReceiver.let { ReflectHelper.findField(it, "mCallback") }
+    ReflectHelper.hookAllMethods(
       iconChangeReceiver,
       "onReceive",
       object : XC_MethodHook() {

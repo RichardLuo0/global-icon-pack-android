@@ -3,6 +3,7 @@ package com.richardluo.globalIconPack.reflect
 import android.graphics.drawable.Drawable
 import android.os.Bundle
 import com.richardluo.globalIconPack.ClockMetadata
+import com.richardluo.globalIconPack.call
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 import java.lang.reflect.Method
 import java.util.function.IntFunction
@@ -38,13 +39,13 @@ object ClockDrawableWrapper {
       bundle.putInt("com.android.launcher3.DEFAULT_HOUR", metadata.defaultHour)
       bundle.putInt("com.android.launcher3.DEFAULT_MINUTE", metadata.defaultMinute)
       bundle.putInt("com.android.launcher3.DEFAULT_SECOND", metadata.defaultSecond)
-      it.invoke(
+      it.call(
         null,
         bundle,
         object : IntFunction<Drawable> {
           override fun apply(dummy: Int): Drawable = drawable
         },
-      ) as Drawable?
+      )
     }
   }
 }
