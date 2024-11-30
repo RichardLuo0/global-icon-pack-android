@@ -10,11 +10,12 @@ class XposedMain : IXposedHookLoadPackage {
     if (!lpp.isFirstApplication) return
     if (BuildConfig.APPLICATION_ID == lpp.packageName) return
 
+    hookList.forEach { it.onHookApp(lpp) }
+
     when (lpp.packageName) {
       "com.google.android.apps.nexuslauncher" -> hookList.forEach { it.onHookPixelLauncher(lpp) }
       "com.android.systemui" -> hookList.forEach { it.onHookSystemUI(lpp) }
+      "com.android.settings" -> hookList.forEach { it.onHookSettings(lpp) }
     }
-
-    hookList.forEach { it.onHookApp(lpp) }
   }
 }

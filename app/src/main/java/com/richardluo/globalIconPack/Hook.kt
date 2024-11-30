@@ -8,4 +8,6 @@ interface Hook {
   fun onHookPixelLauncher(lpp: LoadPackageParam) {}
 
   fun onHookSystemUI(lpp: LoadPackageParam) {}
+
+  fun onHookSettings(lpp: LoadPackageParam) {}
 }
