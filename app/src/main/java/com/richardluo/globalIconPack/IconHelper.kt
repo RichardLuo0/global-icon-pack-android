@@ -1,6 +1,8 @@
 package com.richardluo.globalIconPack
 
 import android.app.AndroidAppHelper
+import android.content.Intent
+import android.content.pm.PackageManager
 import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.Canvas
@@ -42,11 +44,23 @@ object IconHelper {
     }
   }
 
-  private val isAdaptiveIconUsed: Boolean by lazy {
-    when (AndroidAppHelper.currentPackageName()) {
-      "com.google.android.apps.nexuslauncher",
+  private val isUseAdaptiveIcon: Boolean by lazy {
+    when (val packageName = AndroidAppHelper.currentPackageName()) {
       "com.android.systemui" -> true
-      else -> false
+      "com.android.settings" -> false
+      else -> {
+        // Query if it is a launcher app
+        val intent =
+          Intent().apply {
+            setPackage(packageName)
+            setAction(Intent.ACTION_MAIN)
+            addCategory(Intent.CATEGORY_HOME)
+          }
+        AndroidAppHelper.currentApplication()
+          .packageManager
+          .resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY)
+          .let { it?.activityInfo != null }
+      }
     }
   }
 
@@ -58,7 +72,7 @@ object IconHelper {
     mask: Bitmap?,
     scale: Float = 1f,
   ): Drawable =
-    if (!isAdaptiveIconUsed) {
+    if (!isUseAdaptiveIcon) {
       val width = drawable.intrinsicWidth
       val height = drawable.intrinsicHeight
       val bounds = Rect(0, 0, width, height)
@@ -76,7 +90,7 @@ object IconHelper {
     else CustomAdaptiveIconDrawable(null, createScaledDrawable(drawable), back, upon, mask, scale)
 
   fun makeAdaptive(drawable: Drawable, scale: Float = 1f) =
-    if (!isAdaptiveIconUsed || drawable is AdaptiveIconDrawable) drawable
+    if (!isUseAdaptiveIcon || drawable is AdaptiveIconDrawable) drawable
     else
       CustomAdaptiveIconDrawable(
         null,
