@@ -17,7 +17,7 @@ jobs:
           java-version: '19'
           distribution: 'temurin'
           cache: gradle
-  
+
       - name: Write sign info
         run: |
           if [ ! -z "${{ secrets.KEYSTORE }}" ]; then
@@ -27,10 +27,13 @@ jobs:
             echo storeFile='${{ github.workspace }}/key.jks' >> keystore.properties
             echo ${{ secrets.KEYSTORE }} | base64 --decode > ${{ github.workspace }}/key.jks
           fi
-  
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
       - name: Build with Gradle
-        run: gradle assembleRelease
-  
+        run: ./gradlew assembleRelease
+
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v4
         with:
