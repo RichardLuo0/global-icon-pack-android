@@ -238,9 +238,8 @@ fun getCip(): CustomIconPack? {
   return cip
 }
 
-fun getComponentName(info: PackageItemInfo): ComponentName {
-  return if (info is ApplicationInfo) getComponentName(info.packageName)
+fun getComponentName(info: PackageItemInfo): ComponentName =
+  if (info is ApplicationInfo) getComponentName(info.packageName)
   else ComponentName(info.packageName, info.name)
-}
 
 fun getComponentName(packageName: String): ComponentName = ComponentName(packageName, "")

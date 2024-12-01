@@ -86,6 +86,12 @@ fun SampleScreen() {
         title = { Text(text = stringResource(R.string.noForceShape)) },
         summary = { Text(text = stringResource(R.string.noForceShapeSummary)) },
       )
+      switchPreference(
+        key = "iconPackAsFallback",
+        defaultValue = false,
+        title = { Text(text = stringResource(R.string.iconPackAsFallback)) },
+        summary = { Text(text = stringResource(R.string.iconPackAsFallbackSummary)) },
+      )
 
       preferenceCategory(
         key = "pixelLauncherSettings",

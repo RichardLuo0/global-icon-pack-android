@@ -4,13 +4,14 @@
     <string name="general">General</string>
     <string name="iconPack">Icon pack</string>
     <string name="iconPackSummary">The package name to be used as icon pack.</string>
-
     <string name="noForceShape">No force shape</string>
     <string name="noForceShapeSummary">Remove the white background behind irregular icon.</string>
+    <string name="iconPackAsFallback">Icon pack as fallback</string>
+    <string name="iconPackAsFallbackSummary">Still use icon pack when activity name does not match.</string>
 
     <string name="pixelLauncherSettings">Pixel Launcher Settings</string>
     <string name="scale">Scale</string>
-    <string name="scaleSummary">A scale applied to all icons</string>
+    <string name="scaleSummary">Scale applied to all icons.</string>
     <string name="forceLoadClockAndCalendar">Force load clock and calendar icon</string>
 
     <string name="iconPackSettings">Icon pack settings</string>

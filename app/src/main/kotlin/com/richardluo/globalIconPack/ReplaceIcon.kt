@@ -24,6 +24,8 @@ class ReplaceIcon : Hook {
 
   override fun onHookApp(lpp: XC_LoadPackage.LoadPackageParam) {
     val packPackageName = WorldPreference.getReadablePref().getString("iconPack", "") ?: ""
+    val iconPackAsFallback =
+      WorldPreference.getReadablePref().getBoolean("iconPackAsFallback", false)
 
     // Resource id always starts with 0x7f, use it to indict that this is an icon
     // Assume the icon res id is only used in getDrawable()
@@ -33,9 +35,11 @@ class ReplaceIcon : Hook {
           val info = param.thisObject as PackageItemInfo
           if (info.icon != 0 && info.packageName nREqual packPackageName)
             getCip()?.let { cip ->
+              val id =
+                cip.getId(getComponentName(info))
+                  ?: if (iconPackAsFallback) cip.getId(getComponentName(info.packageName)) else null
               info.icon =
-                cip.getId(getComponentName(info))?.let { withHighByteSet(it, IN_CIP) }
-                  ?: withHighByteSet(info.icon, NOT_IN_CIP)
+                id?.let { withHighByteSet(it, IN_CIP) } ?: withHighByteSet(info.icon, NOT_IN_CIP)
             }
         }
       }
