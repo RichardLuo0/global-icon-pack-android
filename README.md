@@ -12,14 +12,10 @@ This module is designed to extend the customization of icon packs throughout the
 
 ## Installation
 1. Install the apk. 
-2. Open Global Icon Pack. Remember to fill the `Icon pack` settings with an icon pack package name.
-3. Select the recommend apps in lsposed (Other launcher/apps may also work, depending on the api they use)
-4. For pixel launcher and probably other similar launcher 3 based launcher, you will need to delete `/data/data/com.google.android.apps.nexuslauncher/databases/app_icons.db` and then restart the launcher through its settings page.
-
-## Settings
-* `Icon pack`: The package name to be used as icon pack.
-* `No force shape`: This setting is specific to pixel launcher. Turning it on will prevent it from forcing a uniform icon shape.
-* `Icon pack settings`: This section controls whether to use "fallback" elements such as masks. Some icon packs include predefined masks or backgrounds that ensure all icons have a consistent shape or style, even for apps that don't have dedicated icons in the pack. You can choose to enable or disable them.
+2. Select the recommend apps in lsposed (Other launcher/apps may also work, depending on the api they use)
+3. Open Global Icon Pack. Fill the `Icon pack` settings with an icon pack package name.
+4. For pixel launcher and probably other similar launcher 3 based launcher, you will need to delete `/data/data/com.google.android.apps.nexuslauncher/databases/app_icons.db` then restart the launcher through its settings page.
+5. Recent screen will use your default launcher unless you use quickswitch. So you will need to select pixel launcher for that to work.
 
 ## Known Issues
 * ~~When clicking an app, Pixel Launcher triggers an animation, whose starting frame displays an icon with a white border.~~

@@ -118,28 +118,10 @@ fun SampleScreen() {
         title = { Text(text = stringResource(R.string.iconPackSettings)) },
       )
       switchPreference(
-        key = "iconBack",
+        key = "iconFallback",
         defaultValue = true,
-        title = { Text(text = stringResource(R.string.iconBack)) },
-        summary = { Text(text = if (it) "On" else "Off") },
-      )
-      switchPreference(
-        key = "iconUpon",
-        defaultValue = true,
-        title = { Text(text = stringResource(R.string.iconUpon)) },
-        summary = { Text(text = if (it) "On" else "Off") },
-      )
-      switchPreference(
-        key = "iconMask",
-        defaultValue = true,
-        title = { Text(text = stringResource(R.string.iconMask)) },
-        summary = { Text(text = if (it) "On" else "Off") },
-      )
-      switchPreference(
-        key = "iconScale",
-        defaultValue = true,
-        title = { Text(text = stringResource(R.string.iconScale)) },
-        summary = { Text(text = if (it) "On" else "Off") },
+        title = { Text(text = stringResource(R.string.iconFallback)) },
+        summary = { Text(text = stringResource(R.string.iconFallbackSummary)) },
       )
     }
   }

@@ -29,9 +29,9 @@ class CustomIconPack(pm: PackageManager, private val pref: SharedPreferences) {
   private val iconEntryList = mutableListOf<IconEntry?>()
 
   // Fallback settings from icon pack
-  private var iconBack: Bitmap? = null
-  private var iconUpon: Bitmap? = null
-  private var iconMask: Bitmap? = null
+  private var iconBacks = mutableListOf<Bitmap>()
+  private var iconUpons = mutableListOf<Bitmap>()
+  private var iconMasks = mutableListOf<Bitmap>()
   private var iconScale: Float = 1f
 
   private var globalScale: Float = pref.getFloat("scale", 1f)
@@ -62,9 +62,9 @@ class CustomIconPack(pm: PackageManager, private val pref: SharedPreferences) {
     IconHelper.processIcon(
       packResources,
       baseIcon,
-      iconBack,
-      iconUpon,
-      iconMask,
+      iconBacks.randomOrNull(),
+      iconUpons.randomOrNull(),
+      iconMasks.randomOrNull(),
       iconScale * globalScale,
     )
 
@@ -75,83 +75,47 @@ class CustomIconPack(pm: PackageManager, private val pref: SharedPreferences) {
     val compStartLength = compStart.length
     val compEnd = "}"
     val compEndLength = compEnd.length
+
+    fun addFallback(parseXml: XmlPullParser, list: MutableList<Bitmap>) {
+      if (!pref.getBoolean("iconFallback", true)) return
+      for (i in 0 until parseXml.attributeCount) if (parseXml.getAttributeName(i).startsWith("img"))
+        packResources
+          .getIdentifier(parseXml.getAttributeValue(i), "drawable", packPackageName)
+          .takeIf { it != 0 }
+          ?.let { getDrawable(packResources, it, null)?.toBitmap() }
+          ?.let { list.add(it) }
+    }
+
+    fun addIcon(parseXml: XmlPullParser, iconType: IconType) {
+      var componentName: String = parseXml["component"] ?: return
+      val drawableName =
+        parseXml[if (iconType == IconType.Calendar) "prefix" else "drawable"] ?: return
+      if (componentName.startsWith(compStart) && componentName.endsWith(compEnd)) {
+        componentName =
+          componentName.substring(compStartLength, componentName.length - compEndLength)
+      }
+      ComponentName.unflattenFromString(componentName)?.let { cn ->
+        val iconEntry = IconEntry(drawableName, iconType)
+        addIconEntry(cn, iconEntry)
+        // TODO Use the first icon as app icon. I don't see a better way.
+        addIconEntry(getComponentName(cn.packageName), iconEntry)
+      }
+    }
+
     try {
       val clockMetaMap = mutableMapOf<String, Int>()
       while (parseXml.next() != XmlPullParser.END_DOCUMENT) {
         if (parseXml.eventType != XmlPullParser.START_TAG) continue
-        val name = parseXml.name
-        when (name) {
-          "iconback" -> {
-            if (!pref.getBoolean("iconBack", true)) continue
-            for (i in 0 until parseXml.attributeCount) {
-              if (parseXml.getAttributeName(i).startsWith("img")) {
-                val imgName = parseXml.getAttributeValue(i)
-                val id = packResources.getIdentifier(imgName, "drawable", packPackageName)
-                if (id != 0) iconBack = getDrawable(packResources, id, null)?.toBitmap()
-              }
-            }
-          }
-
-          "iconupon" -> {
-            if (!pref.getBoolean("iconUpon", true)) continue
-            for (i in 0 until parseXml.attributeCount) {
-              if (parseXml.getAttributeName(i).startsWith("img")) {
-                val imgName = parseXml.getAttributeValue(i)
-                val id = packResources.getIdentifier(imgName, "drawable", packPackageName)
-                if (id != 0) iconUpon = getDrawable(packResources, id, null)?.toBitmap()
-              }
-            }
-          }
-
-          "iconmask" -> {
-            if (!pref.getBoolean("iconMask", true)) continue
-            for (i in 0 until parseXml.attributeCount) {
-              if (parseXml.getAttributeName(i).startsWith("img")) {
-                val imgName = parseXml.getAttributeValue(i)
-                val id = packResources.getIdentifier(imgName, "drawable", packPackageName)
-                if (id != 0) iconMask = getDrawable(packResources, id, null)?.toBitmap()
-              }
-            }
-          }
-
+        when (parseXml.name) {
+          "iconback" -> addFallback(parseXml, iconBacks)
+          "iconupon" -> addFallback(parseXml, iconUpons)
+          "iconmask" -> addFallback(parseXml, iconMasks)
           "scale" -> {
-            if (!pref.getBoolean("iconScale", true)) continue
+            if (!pref.getBoolean("iconFallback", true)) continue
             iconScale = parseXml.getAttributeValue(null, "factor")?.toFloatOrNull() ?: 1f
           }
-
-          "item" -> {
-            var componentName: String? = parseXml["component"]
-            val drawableName = parseXml["drawable"]
-            if (componentName != null && drawableName != null) {
-              if (componentName.startsWith(compStart) && componentName.endsWith(compEnd)) {
-                componentName =
-                  componentName.substring(compStartLength, componentName.length - compEndLength)
-              }
-              ComponentName.unflattenFromString(componentName)?.let { cn ->
-                val iconEntry = IconEntry(drawableName, IconType.Normal)
-                addIconEntry(cn, iconEntry)
-                // TODO Use the first icon as app icon. I don't see a better way.
-                addIconEntry(getComponentName(cn.packageName), iconEntry)
-              }
-            }
-          }
-
-          "calendar" -> {
-            var componentName: String? = parseXml["component"]
-            val drawableName = parseXml["prefix"]
-            if (componentName != null && drawableName != null) {
-              if (componentName.startsWith(compStart) && componentName.endsWith(compEnd)) {
-                componentName =
-                  componentName.substring(compStartLength, componentName.length - compEndLength)
-              }
-              ComponentName.unflattenFromString(componentName)?.let { cn ->
-                val iconEntry = IconEntry(drawableName, IconType.Calendar)
-                addIconEntry(cn, iconEntry)
-                addIconEntry(getComponentName(cn.packageName), iconEntry)
-              }
-            }
-          }
-
+          "item" -> addIcon(parseXml, IconType.Normal)
+          "calendar" -> addIcon(parseXml, IconType.Calendar)
           "dynamic-clock" -> {
             val drawableName = parseXml["drawable"]
             if (drawableName != null) {
