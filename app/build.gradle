@@ -50,5 +50,5 @@ dependencies {
     implementation libs.preference
     implementation libs.material3
 
-    compileOnly(libs.xposed.api)
+    compileOnly(fileTree("libs") { include("api-82.jar") })
 }
