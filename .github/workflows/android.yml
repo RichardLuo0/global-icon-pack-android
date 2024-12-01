@@ -10,32 +10,30 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
-    - name: set up JDK 11
-      uses: actions/setup-java@v4
-      with:
-        java-version: '19'
-        distribution: 'temurin'
-        cache: gradle
-
-    - name: Write sign info
-      run: |
-        if [ ! -z "${{ secrets.KEYSTORE }}" ]; then
-          echo storePassword='${{ secrets.KEYSTORE_PASSWORD }}' >> keystore.properties
-          echo keyAlias='${{ secrets.KEY_ALIAS }}' >> keystore.properties
-          echo keyPassword='${{ secrets.KEY_PASSWORD }}' >> keystore.properties
-          echo storeFile='${{ github.workspace }}/key.jks' >> keystore.properties
-          echo ${{ secrets.KEYSTORE }} | base64 --decode > ${{ github.workspace }}/key.jks
-        fi
-
-    - name: Grant execute permission for gradlew
-      run: chmod +x gradlew
-    - name: Build with Gradle
-      run: ./gradlew assembleRelease
-
-    - name: Upload a Build Artifact
-      uses: actions/upload-artifact@v4
-      with:
-        name: "release"
-        path: app/build/outputs/apk/release/*.apk
-        if-no-files-found: error
+      - uses: actions/checkout@v4
+      - name: set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: '19'
+          distribution: 'temurin'
+          cache: gradle
+  
+      - name: Write sign info
+        run: |
+          if [ ! -z "${{ secrets.KEYSTORE }}" ]; then
+            echo storePassword='${{ secrets.KEYSTORE_PASSWORD }}' >> keystore.properties
+            echo keyAlias='${{ secrets.KEY_ALIAS }}' >> keystore.properties
+            echo keyPassword='${{ secrets.KEY_PASSWORD }}' >> keystore.properties
+            echo storeFile='${{ github.workspace }}/key.jks' >> keystore.properties
+            echo ${{ secrets.KEYSTORE }} | base64 --decode > ${{ github.workspace }}/key.jks
+          fi
+  
+      - name: Build with Gradle
+        run: gradle assembleRelease
+  
+      - name: Upload a Build Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: "release"
+          path: app/build/outputs/apk/release/*.apk
+          if-no-files-found: error
