@@ -36,20 +36,21 @@ class CalendarAndClockHook : Hook {
     ReflectHelper.hookAllMethods(
       iconProvider,
       "getIconWithOverrides",
+      arrayOf(String::class.java, Int::class.java),
       object : XC_MethodHook() {
         override fun beforeHookedMethod(param: MethodHookParam) {
           val cip = getCip() ?: return
           val packageName = param.args[0] as String
-          val density = param.args[1] as Int
+          val iconDpi = param.args[1] as Int
           val entry = cip.getIconEntry(getComponentName(packageName)) ?: return
           when (entry.type) {
             IconType.Calendar -> {
               calendars.add(packageName)
-              param.result = cip.getIcon(entry, density)
+              param.result = cip.getIcon(entry, iconDpi)
             }
             IconType.Clock -> {
               clocks.add(packageName)
-              param.result = cip.getIcon(entry, density)
+              param.result = cip.getIcon(entry, iconDpi)
             }
             else -> return
           }
