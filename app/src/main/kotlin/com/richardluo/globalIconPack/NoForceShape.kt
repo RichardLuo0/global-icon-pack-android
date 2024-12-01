@@ -28,7 +28,7 @@ class NoForceShape : Hook {
       arrayOf(Drawable::class.java),
       object : XC_MethodHook() {
         override fun beforeHookedMethod(param: MethodHookParam) {
-          (param.args[0] as Drawable?)?.let {
+          param.args[0].asType<Drawable?>()?.let {
             if (it !is AdaptiveIconDrawable) {
               param.result = UnmaskAdaptiveIconDrawable(null, IconHelper.createScaledDrawable(it))
             }
@@ -79,7 +79,7 @@ class NoForceShape : Hook {
       arrayOf(Drawable::class.java),
       object : XC_MethodHook() {
         override fun beforeHookedMethod(param: MethodHookParam) {
-          (param.args[0] as Drawable?)?.let {
+          param.args[0].asType<Drawable?>()?.let {
             if (it !is AdaptiveIconDrawable) {
               param.args[0] = UnmaskAdaptiveIconDrawable(null, IconHelper.createScaledDrawable(it))
             }
@@ -100,7 +100,7 @@ class NoForceShape : Hook {
       arrayOf(Drawable::class.java),
       object : XC_MethodHook() {
         override fun beforeHookedMethod(param: MethodHookParam) {
-          (param.args[0] as Drawable?)?.let {
+          param.args[0].asType<Drawable?>()?.let {
             if (it !is AdaptiveIconDrawable) {
               param.args[0] = UnmaskAdaptiveIconDrawable(null, IconHelper.createScaledDrawable(it))
             }

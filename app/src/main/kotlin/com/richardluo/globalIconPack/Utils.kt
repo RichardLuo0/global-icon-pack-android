@@ -66,3 +66,5 @@ fun <T> Array<T>.rGet(i: Int) = this[if (i >= 0) i else size + i]
 fun <T> Array<T>.rSet(i: Int, obj: T) {
   this[if (i >= 0) i else size + i] = obj
 }
+
+@Suppress("UNCHECKED_CAST") fun <T> Any.asType() = this as T
