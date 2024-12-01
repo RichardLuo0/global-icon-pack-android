@@ -11,7 +11,7 @@
     <string name="pixelLauncherSettings">Pixel Launcher Settings</string>
     <string name="scale">Scale</string>
     <string name="scaleSummary">A scale applied to all icons</string>
-    <string name="forceLoadClockAndCalendar">Force load clock and calendar</string>
+    <string name="forceLoadClockAndCalendar">Force load clock and calendar icon</string>
 
     <string name="iconPackSettings">Icon pack settings</string>
     <string name="iconBack">Icon back</string>

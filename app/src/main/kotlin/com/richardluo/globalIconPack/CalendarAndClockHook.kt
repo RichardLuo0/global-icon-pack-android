@@ -1,5 +1,6 @@
 package com.richardluo.globalIconPack
 
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
 import android.content.Intent.ACTION_DATE_CHANGED
@@ -13,25 +14,30 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 
 class CalendarAndClockHook : Hook {
   override fun onHookPixelLauncher(lpp: LoadPackageParam) {
+    if (!WorldPreference.getReadablePref().getBoolean("forceLoadClockAndCalendar", true)) return
+
     val calendars = mutableSetOf<String>()
     val clocks = mutableSetOf<String>()
 
-    val forceClockAndCalendarFromIconPack =
-      WorldPreference.getReadablePref().getBoolean("forceLoadClockAndCalendar", true)
-
     val iconProvider = ReflectHelper.findClassThrow("com.android.launcher3.icons.IconProvider", lpp)
-    val mCalendar = iconProvider.let { ReflectHelper.findField(it, "mCalendar") }
-    val mClock = iconProvider.let { ReflectHelper.findField(it, "mClock") }
+    val mCalendar = ReflectHelper.findField(iconProvider, "mCalendar")
+    val mClock = ReflectHelper.findField(iconProvider, "mClock")
+    ReflectHelper.hookAllConstructors(
+      iconProvider,
+      object : XC_MethodHook() {
+        override fun afterHookedMethod(param: MethodHookParam) {
+          mCalendar?.getAs<ComponentName>(param.thisObject)?.let { calendars.add(it.packageName) }
+          mClock?.getAs<ComponentName>(param.thisObject)?.let { clocks.add(it.packageName) }
+          mCalendar?.set(param.thisObject, null)
+          mClock?.set(param.thisObject, null)
+        }
+      },
+    )
     ReflectHelper.hookAllMethods(
       iconProvider,
       "getIconWithOverrides",
       object : XC_MethodHook() {
         override fun beforeHookedMethod(param: MethodHookParam) {
-          if (forceClockAndCalendarFromIconPack) {
-            mCalendar?.set(param.thisObject, null)
-            mClock?.set(param.thisObject, null)
-          }
-
           val cip = getCip() ?: return
           val packageName = param.args[0] as String
           val density = param.args[1] as Int
