@@ -60,3 +60,9 @@ infix fun String.rEqual(other: String): Boolean {
 }
 
 infix fun String.nREqual(other: String) = !rEqual(other)
+
+fun <T> Array<T>.rGet(i: Int) = this[if (i >= 0) i else size + i]
+
+fun <T> Array<T>.rSet(i: Int, obj: T) {
+  this[if (i >= 0) i else size + i] = obj
+}

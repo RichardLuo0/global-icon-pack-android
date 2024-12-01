@@ -49,6 +49,10 @@ open class UnClipAdaptiveIconDrawable(background: Drawable?, foreground: Drawabl
     }
   }
 
+  protected fun drawClip(canvas: Canvas) {
+    return super.draw(canvas)
+  }
+
   protected fun getFullBoundsPath() = Path().apply { addRect(getFullBounds(), Path.Direction.CW) }
 
   protected fun getFullBounds() =

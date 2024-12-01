@@ -8,6 +8,7 @@ object BaseIconFactory {
     private set
 
   var getNormalizer: Method? = null
+    private set
 
   fun initWithLauncher3(lpp: LoadPackageParam) {
     clazz = ReflectHelper.findClassThrow("com.android.launcher3.icons.BaseIconFactory", lpp)

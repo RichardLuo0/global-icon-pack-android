@@ -82,7 +82,7 @@ fun SampleScreen() {
       )
       switchPreference(
         key = "noForceShape",
-        defaultValue = true,
+        defaultValue = false,
         title = { Text(text = stringResource(R.string.noForceShape)) },
         summary = { Text(text = stringResource(R.string.noForceShapeSummary)) },
       )

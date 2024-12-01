@@ -11,34 +11,32 @@ import java.lang.reflect.Method
 
 // Not cached
 object ReflectHelper {
-  fun findClass(className: String, lpp: LoadPackageParam? = null): Class<*>? {
-    return runCatching { XposedHelpers.findClass(className, lpp?.classLoader) }
+  fun findClass(className: String, lpp: LoadPackageParam? = null) =
+    runCatching { XposedHelpers.findClass(className, lpp?.classLoader) }
       .getOrElse {
         log(it)
         null
       }
-  }
 
   fun findClassThrow(className: String, lpp: LoadPackageParam? = null): Class<*> {
     return XposedHelpers.findClass(className, lpp?.classLoader)
   }
+
+  private fun Method.match(methodName: String, parameterTypes: Array<out Class<*>?>) =
+    this.name == methodName &&
+      this.parameterTypes.size >= parameterTypes.size &&
+      this.parameterTypes.zip(parameterTypes).all { (param, expected) ->
+        expected == null || param.isAssignableFrom(expected)
+      }
 
   fun findMethodFirstMatch(
     clazz: Class<*>,
     methodName: String,
     vararg parameterTypes: Class<*>?,
   ): Method? {
-    return (runCatching { clazz.getDeclaredMethod(methodName, *parameterTypes) }.getOrNull()
-        ?: run {
-          clazz.declaredMethods.firstOrNull { method ->
-            method.name == methodName &&
-              method.parameterTypes.size >= parameterTypes.size &&
-              method.parameterTypes.zip(parameterTypes).all { (param, expected) ->
-                expected == null || param::class.java.isAssignableFrom(expected)
-              }
-          }
-        })
-      ?.apply { isAccessible = true }
+    return runCatching { clazz.getDeclaredMethod(methodName, *parameterTypes) }.getOrNull()
+      ?: run { clazz.declaredMethods.firstOrNull { it.match(methodName, parameterTypes) } }
+        ?.apply { isAccessible = true }
       ?: run {
         log("No method $methodName is found on class ${clazz.name}")
         null
@@ -56,30 +54,26 @@ object ReflectHelper {
   fun hookAllMethods(
     clazz: Class<*>,
     methodName: String,
+    parameterTypes: Array<Class<*>?>,
     hook: XC_MethodHook,
-  ): MutableSet<XC_MethodHook.Unhook>? {
-    return XposedBridge.hookAllMethods(clazz, methodName, hook).also {
-      if (it.size <= 0) log("No methods $methodName are found on class ${clazz.name}")
-    }
-  }
+  ) =
+    runCatching {
+        clazz.declaredMethods
+          .filter { it.match(methodName, parameterTypes) }
+          .also { if (it.isEmpty()) log("No method $methodName is found on class ${clazz.name}") }
+          .forEach { XposedBridge.hookMethod(it, hook) }
+      }
+      .getOrElse {
+        log(it)
+        null
+      }
 
-  fun hookAllMethods(
-    clazz: Class<*>,
-    hookMap: Map<String, XC_MethodHook>,
-  ): MutableSet<XC_MethodHook.Unhook> {
-    val unhooks = mutableSetOf<XC_MethodHook.Unhook>()
-    val notHooked = hookMap.keys.toMutableSet()
-    for (method in clazz.getDeclaredMethods()) hookMap[method.name]?.let {
-      unhooks.add(XposedBridge.hookMethod(method, it))
-      notHooked.remove(method.name)
-    }
-    for (methodName in notHooked) log("No methods $methodName are found on class ${clazz.name}")
-    return unhooks
-  }
+  fun hookAllMethods(clazz: Class<*>, methodName: String, hook: XC_MethodHook) =
+    hookAllMethods(clazz, methodName, arrayOf(), hook)
 
   fun hookAllConstructors(clazz: Class<*>, hook: XC_MethodHook) =
     XposedBridge.hookAllConstructors(clazz, hook).also {
-      if (it.size <= 0) log("No constructors are found on class ${clazz.name}")
+      if (it.isEmpty()) log("No constructors are found on class ${clazz.name}")
     }
 
   fun hookMethod(method: Method, hook: XC_MethodHook) = XposedBridge.hookMethod(method, hook)

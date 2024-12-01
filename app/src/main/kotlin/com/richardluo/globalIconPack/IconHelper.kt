@@ -7,7 +7,6 @@ import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Paint
-import android.graphics.Path
 import android.graphics.PorterDuff
 import android.graphics.PorterDuffXfermode
 import android.graphics.Rect
@@ -16,14 +15,9 @@ import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.InsetDrawable
 import androidx.core.graphics.drawable.toBitmap
-import com.richardluo.globalIconPack.reflect.ReflectHelper
 
 object IconHelper {
   const val ADAPTIVE_ICON_VIEWPORT_SCALE = 72f / 108f
-
-  private val mMaskScaleOnlyF by lazy {
-    ReflectHelper.findField(AdaptiveIconDrawable::class.java, "mMaskScaleOnly")
-  }
 
   /**
    * CustomAdaptiveIconDrawable only works correctly for launcher. Otherwise it maybe clipped by
@@ -36,6 +30,7 @@ object IconHelper {
     private val back: Bitmap?,
     private val upon: Bitmap?,
     private val mask: Bitmap?,
+    private val forceClip: Boolean = false,
     private val scale: Float = 1f,
   ) : UnClipAdaptiveIconDrawable(background, foreground) {
     private val paint =
@@ -43,9 +38,10 @@ object IconHelper {
 
     override fun draw(canvas: Canvas) {
       drawIcon(canvas, paint, bounds, back, upon, mask, scale) {
-        // Use original mask if mask is not presented
-        if (mask != null) draw(canvas)
-        else mMaskScaleOnlyF?.getAs<Path>(this)?.let { draw(canvas, it) } ?: draw(canvas)
+        if (forceClip) {
+          // Use original mask if mask is not presented
+          if (mask != null) super.draw(canvas) else super.drawClip(canvas)
+        } else super.draw(canvas)
       }
     }
 
@@ -97,8 +93,25 @@ object IconHelper {
       }
       BitmapDrawable(res, bitmap)
     } else if (drawable is AdaptiveIconDrawable)
-      CustomAdaptiveIconDrawable(drawable.background, drawable.foreground, back, upon, mask, scale)
-    else CustomAdaptiveIconDrawable(null, createScaledDrawable(drawable), back, upon, mask, scale)
+      CustomAdaptiveIconDrawable(
+        drawable.background,
+        drawable.foreground,
+        back,
+        upon,
+        mask,
+        true,
+        scale,
+      )
+    else
+      CustomAdaptiveIconDrawable(
+        null,
+        createScaledDrawable(drawable),
+        back,
+        upon,
+        mask,
+        true,
+        scale,
+      )
 
   fun makeAdaptive(drawable: Drawable, scale: Float = 1f) =
     if (!isUseAdaptiveIcon || drawable is AdaptiveIconDrawable) drawable
@@ -109,6 +122,7 @@ object IconHelper {
         null,
         null,
         null,
+        false,
       )
 
   fun drawIcon(

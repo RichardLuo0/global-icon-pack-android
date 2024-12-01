@@ -6,7 +6,7 @@
     <string name="iconPackSummary">The package name to be used as icon pack.</string>
 
     <string name="noForceShape">No force shape</string>
-    <string name="noForceShapeSummary">Prevent some apps from forcing a uniform icon shape.</string>
+    <string name="noForceShapeSummary">Remove the white background behind irregular icon.</string>
 
     <string name="pixelLauncherSettings">Pixel Launcher Settings</string>
     <string name="scale">Scale</string>

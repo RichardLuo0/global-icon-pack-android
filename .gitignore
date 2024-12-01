@@ -8,5 +8,5 @@
 .externalNativeBuild
 .cxx
 local.properties
-./keystore.properties
+/keystore.properties
 /.kotlin/*
