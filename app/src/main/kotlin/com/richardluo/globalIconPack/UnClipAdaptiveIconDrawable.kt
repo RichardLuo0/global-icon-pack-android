@@ -26,6 +26,10 @@ open class UnClipAdaptiveIconDrawable(background: Drawable?, foreground: Drawabl
   AdaptiveIconDrawable(background, foreground) {
 
   override fun draw(canvas: Canvas) {
+    draw(canvas, Path().apply { addRect(RectF(bounds), Path.Direction.CW) })
+  }
+
+  fun draw(canvas: Canvas, path: Path) {
     val mLayersBitmap = mLayersBitmapF?.getAs<Bitmap>(this) ?: return
     val mCanvas = mCanvasF?.getAs<Canvas>(this) ?: return
     val mPaint = mPaintF?.getAs<Paint>(this) ?: return
@@ -40,7 +44,7 @@ open class UnClipAdaptiveIconDrawable(background: Drawable?, foreground: Drawabl
     }
     canvas.apply {
       translate(bounds.left.toFloat(), bounds.top.toFloat())
-      drawPath(Path().apply { addRect(RectF(bounds), Path.Direction.CW) }, mPaint)
+      drawPath(path, mPaint)
       translate(-bounds.left.toFloat(), -bounds.top.toFloat())
     }
   }
