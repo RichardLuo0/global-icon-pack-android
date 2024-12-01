@@ -14,7 +14,6 @@ import android.util.Xml
 import androidx.core.graphics.drawable.toBitmap
 import com.richardluo.globalIconPack.reflect.Resources.getDrawable
 import com.richardluo.globalIconPack.reflect.Resources.getDrawableForDensity
-import de.robv.android.xposed.XposedBridge
 import java.io.IOException
 import kotlin.concurrent.Volatile
 import org.xmlpull.v1.XmlPullParser
@@ -186,7 +185,7 @@ class CustomIconPack(pm: PackageManager, private val pref: SharedPreferences) {
         }
       }
     } catch (e: Exception) {
-      XposedBridge.log(e)
+      log(e)
     }
   }
 
@@ -231,7 +230,7 @@ fun getCip(): CustomIconPack? {
         AndroidAppHelper.currentApplication()?.packageManager?.let {
           runCatching { cip = CustomIconPack(it, pref).apply { loadInternal() } }
             .exceptionOrNull()
-            ?.let { XposedBridge.log(it) }
+            ?.let { log(it) }
         }
       }
     }

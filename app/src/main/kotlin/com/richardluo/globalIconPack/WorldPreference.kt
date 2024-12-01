@@ -7,7 +7,6 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.preference.PreferenceManager
 import de.robv.android.xposed.XSharedPreferences
-import de.robv.android.xposed.XposedBridge
 
 object WorldPreference {
   private lateinit var pref: SharedPreferences
@@ -17,8 +16,8 @@ object WorldPreference {
       pref =
         XSharedPreferences(BuildConfig.APPLICATION_ID).also {
           if (!it.file.canRead())
-            XposedBridge.log("Pref can not be read. Plz open global icon pack at least once.")
-          else XposedBridge.log("loaded pref: " + it.file.path)
+            log("Pref can not be read. Plz open global icon pack at least once.")
+          else log("loaded pref: " + it.file.path)
         }
     return pref
   }

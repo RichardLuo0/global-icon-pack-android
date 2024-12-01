@@ -1,6 +1,7 @@
 package com.richardluo.globalIconPack.reflect
 
 import com.richardluo.globalIconPack.call
+import com.richardluo.globalIconPack.log
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedHelpers
@@ -13,7 +14,7 @@ object ReflectHelper {
   fun findClass(className: String, lpp: LoadPackageParam? = null): Class<*>? {
     return runCatching { XposedHelpers.findClass(className, lpp?.classLoader) }
       .getOrElse {
-        XposedBridge.log(it)
+        log(it)
         null
       }
   }
@@ -39,7 +40,7 @@ object ReflectHelper {
         })
       ?.apply { isAccessible = true }
       ?: run {
-        XposedBridge.log("No method $methodName is found on class ${clazz.name}")
+        log("No method $methodName is found on class ${clazz.name}")
         null
       }
   }
@@ -58,7 +59,7 @@ object ReflectHelper {
     hook: XC_MethodHook,
   ): MutableSet<XC_MethodHook.Unhook>? {
     return XposedBridge.hookAllMethods(clazz, methodName, hook).also {
-      if (it.size <= 0) XposedBridge.log("No methods $methodName are found on class ${clazz.name}")
+      if (it.size <= 0) log("No methods $methodName are found on class ${clazz.name}")
     }
   }
 
@@ -72,15 +73,13 @@ object ReflectHelper {
       unhooks.add(XposedBridge.hookMethod(method, it))
       notHooked.remove(method.name)
     }
-    for (methodName in notHooked) XposedBridge.log(
-      "No methods $methodName are found on class ${clazz.name}"
-    )
+    for (methodName in notHooked) log("No methods $methodName are found on class ${clazz.name}")
     return unhooks
   }
 
   fun hookAllConstructors(clazz: Class<*>, hook: XC_MethodHook) =
     XposedBridge.hookAllConstructors(clazz, hook).also {
-      if (it.size <= 0) XposedBridge.log("No constructors are found on class ${clazz.name}")
+      if (it.size <= 0) log("No constructors are found on class ${clazz.name}")
     }
 
   fun hookMethod(method: Method, hook: XC_MethodHook) = XposedBridge.hookMethod(method, hook)
@@ -92,7 +91,7 @@ object ReflectHelper {
           .call<T>(thisObj, *args)
       }
       .getOrElse {
-        XposedBridge.log(it)
+        log(it)
         null
       }
   }
