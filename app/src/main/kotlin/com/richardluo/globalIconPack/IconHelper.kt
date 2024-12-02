@@ -50,6 +50,9 @@ object IconHelper {
     }
   }
 
+  // A dummy class to indict this is processed
+  class ProcessedBitmapDrawable(res: Resources, bitmap: Bitmap) : BitmapDrawable(res, bitmap)
+
   fun processIconToBitmap(
     res: Resources,
     drawable: Drawable,
@@ -68,7 +71,7 @@ object IconHelper {
       val maskBmp = drawable.toBitmap()
       canvas.drawBitmap(maskBmp, null, bounds, paint)
     }
-    return BitmapDrawable(res, bitmap)
+    return ProcessedBitmapDrawable(res, bitmap)
   }
 
   fun processIcon(

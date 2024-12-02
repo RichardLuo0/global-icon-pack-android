@@ -29,7 +29,7 @@ class NoForceShape : Hook {
       object : XC_MethodHook() {
         override fun beforeHookedMethod(param: MethodHookParam) {
           param.args[0].asType<Drawable?>()?.let {
-            if (it !is AdaptiveIconDrawable) {
+            if (it is IconHelper.ProcessedBitmapDrawable) {
               param.args[0] = UnClipAdaptiveIconDrawable(null, IconHelper.createScaledDrawable(it))
             }
           }
