@@ -45,6 +45,11 @@ class CustomIconPack(pm: PackageManager, private val pref: SharedPreferences) {
 
   fun getId(cn: ComponentName) = indexMap[cn]
 
+  fun getPackIcon(resId: Int, iconDpi: Int) =
+    getDrawableForDensity(packResources, resId, iconDpi, null)?.let {
+      if (isUseAdaptiveIcon) IconHelper.makeAdaptive(it, globalScale) else it
+    }
+
   fun getIcon(iconEntry: IconEntry, iconDpi: Int): Drawable? =
     iconEntry.getIcon(this, iconDpi)?.let {
       if (isUseAdaptiveIcon) IconHelper.makeAdaptive(it, globalScale) else it

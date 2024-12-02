@@ -8,7 +8,7 @@ import de.robv.android.xposed.XposedBridge
 import java.lang.reflect.Method
 
 object Resources {
-  val getDrawableForDensity: Method? by lazy {
+  val getDrawableForDensityM: Method? by lazy {
     ReflectHelper.findMethodFirstMatch(
       Resources::class.java,
       "getDrawableForDensity",
@@ -30,7 +30,7 @@ object Resources {
   ): Drawable? {
     return runCatching {
         XposedBridge.invokeOriginalMethod(
-          getDrawableForDensity,
+          getDrawableForDensityM,
           thisObj,
           arrayOf(resId, iconDpi, theme),
         ) as Drawable
