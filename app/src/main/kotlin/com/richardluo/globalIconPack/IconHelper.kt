@@ -1,8 +1,5 @@
 package com.richardluo.globalIconPack
 
-import android.app.AndroidAppHelper
-import android.content.Intent
-import android.content.pm.PackageManager
 import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.Canvas
@@ -51,48 +48,35 @@ object IconHelper {
     }
   }
 
-  private val isUseAdaptiveIcon: Boolean by lazy {
-    when (val packageName = AndroidAppHelper.currentPackageName()) {
-      "com.android.systemui" -> false
-      "com.android.settings" -> false
-      else -> {
-        // Query if it is a launcher app
-        val intent =
-          Intent().apply {
-            setPackage(packageName)
-            setAction(Intent.ACTION_MAIN)
-            addCategory(Intent.CATEGORY_HOME)
-          }
-        AndroidAppHelper.currentApplication()
-          .packageManager
-          .resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY)
-          .let { it?.activityInfo != null }
-      }
+  fun processIconAsBitmap(
+    res: Resources,
+    drawable: Drawable,
+    back: Bitmap?,
+    upon: Bitmap?,
+    mask: Bitmap?,
+  ): BitmapDrawable {
+    val width = drawable.intrinsicWidth
+    val height = drawable.intrinsicHeight
+    val bounds = Rect(0, 0, width, height)
+    val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(bitmap)
+    val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.DITHER_FLAG or Paint.FILTER_BITMAP_FLAG)
+    // Do not pass scale because BitmapDrawable will scale anyway
+    drawIcon(canvas, paint, bounds, back, upon, mask) {
+      val maskBmp = drawable.toBitmap()
+      canvas.drawBitmap(maskBmp, null, bounds, paint)
     }
+    return BitmapDrawable(res, bitmap)
   }
 
   fun processIcon(
-    res: Resources,
     drawable: Drawable,
     back: Bitmap?,
     upon: Bitmap?,
     mask: Bitmap?,
     scale: Float = 1f,
   ): Drawable =
-    if (!isUseAdaptiveIcon) {
-      val width = drawable.intrinsicWidth
-      val height = drawable.intrinsicHeight
-      val bounds = Rect(0, 0, width, height)
-      val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-      val canvas = Canvas(bitmap)
-      val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.DITHER_FLAG or Paint.FILTER_BITMAP_FLAG)
-      // Do not pass scale because BitmapDrawable will scale anyway
-      drawIcon(canvas, paint, bounds, back, upon, mask) {
-        val maskBmp = drawable.toBitmap()
-        canvas.drawBitmap(maskBmp, null, bounds, paint)
-      }
-      BitmapDrawable(res, bitmap)
-    } else if (drawable is AdaptiveIconDrawable)
+    if (drawable is AdaptiveIconDrawable)
       CustomAdaptiveIconDrawable(
         drawable.background,
         drawable.foreground,
@@ -114,15 +98,16 @@ object IconHelper {
       )
 
   fun makeAdaptive(drawable: Drawable, scale: Float = 1f) =
-    if (!isUseAdaptiveIcon || drawable is AdaptiveIconDrawable) drawable
+    if (drawable is AdaptiveIconDrawable) drawable
     else
       CustomAdaptiveIconDrawable(
         null,
-        createScaledDrawable(drawable, ADAPTIVE_ICON_VIEWPORT_SCALE * scale),
+        createScaledDrawable(drawable),
         null,
         null,
         null,
         false,
+        scale,
       )
 
   fun drawIcon(

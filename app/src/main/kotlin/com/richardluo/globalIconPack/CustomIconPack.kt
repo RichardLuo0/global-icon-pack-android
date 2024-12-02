@@ -3,6 +3,7 @@ package com.richardluo.globalIconPack
 import android.annotation.SuppressLint
 import android.app.AndroidAppHelper
 import android.content.ComponentName
+import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageItemInfo
@@ -45,7 +46,9 @@ class CustomIconPack(pm: PackageManager, private val pref: SharedPreferences) {
   fun getId(cn: ComponentName) = indexMap[cn]
 
   fun getIcon(iconEntry: IconEntry, iconDpi: Int): Drawable? =
-    iconEntry.getIcon(this, iconDpi)?.let { IconHelper.makeAdaptive(it, globalScale) }
+    iconEntry.getIcon(this, iconDpi)?.let {
+      if (isUseAdaptiveIcon) IconHelper.makeAdaptive(it, globalScale) else it
+    }
 
   fun getIcon(id: Int, iconDpi: Int): Drawable? = getIconEntry(id)?.let { getIcon(it, iconDpi) }
 
@@ -59,14 +62,22 @@ class CustomIconPack(pm: PackageManager, private val pref: SharedPreferences) {
     idCache.getOrPut(name) { packResources.getIdentifier(name, "drawable", packPackageName) }
 
   fun genIconFrom(baseIcon: Drawable) =
-    IconHelper.processIcon(
-      packResources,
-      baseIcon,
-      iconBacks.randomOrNull(),
-      iconUpons.randomOrNull(),
-      iconMasks.randomOrNull(),
-      iconScale * globalScale,
-    )
+    if (isUseAdaptiveIcon)
+      IconHelper.processIcon(
+        baseIcon,
+        iconBacks.randomOrNull(),
+        iconUpons.randomOrNull(),
+        iconMasks.randomOrNull(),
+        iconScale * globalScale,
+      )
+    else
+      IconHelper.processIconAsBitmap(
+        packResources,
+        baseIcon,
+        iconBacks.randomOrNull(),
+        iconUpons.randomOrNull(),
+        iconMasks.randomOrNull(),
+      )
 
   @SuppressLint("DiscouragedApi")
   fun loadInternal() {
@@ -207,3 +218,23 @@ fun getComponentName(info: PackageItemInfo): ComponentName =
   else ComponentName(info.packageName, info.name)
 
 fun getComponentName(packageName: String): ComponentName = ComponentName(packageName, "")
+
+private val isUseAdaptiveIcon: Boolean by lazy {
+  when (val packageName = AndroidAppHelper.currentPackageName()) {
+    "com.android.systemui" -> false
+    "com.android.settings" -> false
+    else -> {
+      // Query if it is a launcher app
+      val intent =
+        Intent().apply {
+          setPackage(packageName)
+          setAction(Intent.ACTION_MAIN)
+          addCategory(Intent.CATEGORY_HOME)
+        }
+      AndroidAppHelper.currentApplication()
+        .packageManager
+        .resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY)
+        .let { it?.activityInfo != null }
+    }
+  }
+}
