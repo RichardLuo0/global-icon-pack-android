@@ -50,9 +50,6 @@ object IconHelper {
     }
   }
 
-  // A dummy class to indict this is processed
-  class ProcessedBitmapDrawable(res: Resources, bitmap: Bitmap) : BitmapDrawable(res, bitmap)
-
   fun processIconToBitmap(
     res: Resources,
     drawable: Drawable,
@@ -71,7 +68,7 @@ object IconHelper {
       val maskBmp = drawable.toBitmap()
       canvas.drawBitmap(maskBmp, null, bounds, paint)
     }
-    return ProcessedBitmapDrawable(res, bitmap)
+    return BitmapDrawable(res, bitmap)
   }
 
   fun processIcon(
@@ -92,7 +89,11 @@ object IconHelper {
         true,
         scale,
       )
-    else processIconToBitmap(res, drawable, back, upon, mask, scale)
+    else
+      UnClipAdaptiveIconDrawable(
+        null,
+        createScaledDrawable(processIconToBitmap(res, drawable, back, upon, mask, scale)),
+      )
 
   fun makeAdaptive(drawable: Drawable, scale: Float = 1f) =
     if (drawable is AdaptiveIconDrawable) drawable
