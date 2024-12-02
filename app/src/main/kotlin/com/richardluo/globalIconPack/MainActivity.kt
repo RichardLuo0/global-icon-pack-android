@@ -94,8 +94,8 @@ fun SampleScreen() {
       )
 
       preferenceCategory(
-        key = "pixelLauncherSettings",
-        title = { Text(text = stringResource(R.string.pixelLauncherSettings)) },
+        key = "launcherSettings",
+        title = { Text(text = stringResource(R.string.launcherSettings)) },
       )
       sliderPreference(
         key = "scale",

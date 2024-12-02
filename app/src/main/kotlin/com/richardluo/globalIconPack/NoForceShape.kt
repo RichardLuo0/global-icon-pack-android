@@ -21,6 +21,21 @@ class NoForceShape : Hook {
     val getScale = getGetScale(lpp)
 
     commonHook()
+    // Remove white border
+    ReflectHelper.hookAllMethods(
+      BaseIconFactory.clazz,
+      "normalizeAndWrapToAdaptiveIcon",
+      arrayOf(Drawable::class.java),
+      object : XC_MethodHook() {
+        override fun beforeHookedMethod(param: MethodHookParam) {
+          param.args[0].asType<Drawable?>()?.let {
+            if (it !is AdaptiveIconDrawable) {
+              param.args[0] = UnClipAdaptiveIconDrawable(null, IconHelper.createScaledDrawable(it))
+            }
+          }
+        }
+      },
+    )
     // Fix FloatingIconView and DragView
     ReflectHelper.hookAllMethods(
       BaseIconFactory.clazz,
@@ -112,7 +127,7 @@ class NoForceShape : Hook {
 
   @Suppress("LocalVariableName")
   private fun commonHook() {
-    // Remove shadow because the icon may have its own shadow
+    // Remove shadow because icons may have its own shadow
     val MODE_DEFAULT = 0
     val MODE_WITH_SHADOW = 2
     val MODE_HARDWARE = 3

@@ -14,7 +14,7 @@ This module is designed to extend the customization of icon packs throughout the
 1. Install the apk. 
 2. Select the recommend apps in lsposed (Other launcher/apps may also work, depending on the api they use)
 3. Open Global Icon Pack. Fill the `Icon pack` settings with an icon pack package name.
-4. For pixel launcher and probably other similar launcher 3 based launcher, you will need to delete `/data/data/com.google.android.apps.nexuslauncher/databases/app_icons.db` then restart the launcher through its settings page.
+4. For pixel launcher and probably other similar launcher 3 based launcher, you will need to delete `/data/data/com.google.android.apps.nexuslauncher/databases/app_icons.db` then restart the launcher. Everytime you change settings, do this again.
 5. Recent screen will use your default launcher unless you use quickswitch. So you will need to select pixel launcher for that to work.
 
 ## Known Issues

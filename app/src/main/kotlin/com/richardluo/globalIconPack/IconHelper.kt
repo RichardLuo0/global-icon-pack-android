@@ -14,7 +14,9 @@ import android.graphics.drawable.InsetDrawable
 import androidx.core.graphics.drawable.toBitmap
 
 object IconHelper {
-  const val ADAPTIVE_ICON_VIEWPORT_SCALE = 72f / 108f
+  val ADAPTIVE_ICON_VIEWPORT_SCALE by lazy {
+    1 / (1 + 2 * AdaptiveIconDrawable.getExtraInsetFraction())
+  }
 
   /**
    * CustomAdaptiveIconDrawable only works correctly for launcher. Otherwise it maybe clipped by
@@ -48,12 +50,13 @@ object IconHelper {
     }
   }
 
-  fun processIconAsBitmap(
+  fun processIconToBitmap(
     res: Resources,
     drawable: Drawable,
     back: Bitmap?,
     upon: Bitmap?,
     mask: Bitmap?,
+    scale: Float = 1f,
   ): BitmapDrawable {
     val width = drawable.intrinsicWidth
     val height = drawable.intrinsicHeight
@@ -61,8 +64,7 @@ object IconHelper {
     val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
     val canvas = Canvas(bitmap)
     val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.DITHER_FLAG or Paint.FILTER_BITMAP_FLAG)
-    // Do not pass scale because BitmapDrawable will scale anyway
-    drawIcon(canvas, paint, bounds, back, upon, mask) {
+    drawIcon(canvas, paint, bounds, back, upon, mask, scale) {
       val maskBmp = drawable.toBitmap()
       canvas.drawBitmap(maskBmp, null, bounds, paint)
     }
@@ -70,6 +72,7 @@ object IconHelper {
   }
 
   fun processIcon(
+    res: Resources,
     drawable: Drawable,
     back: Bitmap?,
     upon: Bitmap?,
@@ -86,16 +89,7 @@ object IconHelper {
         true,
         scale,
       )
-    else
-      CustomAdaptiveIconDrawable(
-        null,
-        createScaledDrawable(drawable),
-        back,
-        upon,
-        mask,
-        true,
-        scale,
-      )
+    else processIconToBitmap(res, drawable, back, upon, mask, scale)
 
   fun makeAdaptive(drawable: Drawable, scale: Float = 1f) =
     if (drawable is AdaptiveIconDrawable) drawable

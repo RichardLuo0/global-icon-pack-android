@@ -30,7 +30,6 @@ class ReplaceIcon : Hook {
 
     // Resource id always starts with 0x7f, use it to indict that this is an icon
     // Assume the icon res id is only used in getDrawable()
-
     val replaceIconResId =
       object : XC_MethodHook() {
         override fun afterHookedMethod(param: MethodHookParam) {

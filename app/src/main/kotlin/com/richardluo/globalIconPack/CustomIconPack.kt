@@ -47,12 +47,12 @@ class CustomIconPack(pm: PackageManager, private val pref: SharedPreferences) {
 
   fun getPackIcon(resId: Int, iconDpi: Int) =
     getDrawableForDensity(packResources, resId, iconDpi, null)?.let {
-      if (isUseAdaptiveIcon) IconHelper.makeAdaptive(it, globalScale) else it
+      if (isLauncher) IconHelper.makeAdaptive(it, globalScale) else it
     }
 
   fun getIcon(iconEntry: IconEntry, iconDpi: Int): Drawable? =
     iconEntry.getIcon(this, iconDpi)?.let {
-      if (isUseAdaptiveIcon) IconHelper.makeAdaptive(it, globalScale) else it
+      if (isLauncher) IconHelper.makeAdaptive(it, globalScale) else it
     }
 
   fun getIcon(id: Int, iconDpi: Int): Drawable? = getIconEntry(id)?.let { getIcon(it, iconDpi) }
@@ -67,22 +67,25 @@ class CustomIconPack(pm: PackageManager, private val pref: SharedPreferences) {
     idCache.getOrPut(name) { packResources.getIdentifier(name, "drawable", packPackageName) }
 
   fun genIconFrom(baseIcon: Drawable) =
-    if (isUseAdaptiveIcon)
+    if (isLauncher)
       IconHelper.processIcon(
+        packResources,
         baseIcon,
         iconBacks.randomOrNull(),
         iconUpons.randomOrNull(),
         iconMasks.randomOrNull(),
         iconScale * globalScale,
       )
-    else
-      IconHelper.processIconAsBitmap(
+    else {
+      // Do not pass scale because BitmapDrawable will scale anyway
+      IconHelper.processIconToBitmap(
         packResources,
         baseIcon,
         iconBacks.randomOrNull(),
         iconUpons.randomOrNull(),
         iconMasks.randomOrNull(),
       )
+    }
 
   @SuppressLint("DiscouragedApi")
   fun loadInternal() {
@@ -224,7 +227,7 @@ fun getComponentName(info: PackageItemInfo): ComponentName =
 
 fun getComponentName(packageName: String): ComponentName = ComponentName(packageName, "")
 
-private val isUseAdaptiveIcon: Boolean by lazy {
+val isLauncher: Boolean by lazy {
   when (val packageName = AndroidAppHelper.currentPackageName()) {
     "com.android.systemui" -> false
     "com.android.settings" -> false
