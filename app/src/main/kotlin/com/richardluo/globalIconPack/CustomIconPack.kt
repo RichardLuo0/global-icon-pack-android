@@ -205,6 +205,8 @@ private operator fun XmlPullParser.get(key: String): String? = this.getAttribute
 
 @Volatile private var cip: CustomIconPack? = null
 
+fun isCipInitialized() = cip != null
+
 fun getCip(): CustomIconPack? {
   if (cip == null) {
     synchronized(CustomIconPack::class) {

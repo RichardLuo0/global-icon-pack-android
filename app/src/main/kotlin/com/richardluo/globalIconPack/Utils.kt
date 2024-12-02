@@ -59,7 +59,7 @@ infix fun String.rEqual(other: String): Boolean {
   return true
 }
 
-infix fun String.nREqual(other: String) = !rEqual(other)
+infix fun String.rNEqual(other: String) = !rEqual(other)
 
 fun <T> Array<T>.rGet(i: Int) = this[if (i >= 0) i else size + i]
 
