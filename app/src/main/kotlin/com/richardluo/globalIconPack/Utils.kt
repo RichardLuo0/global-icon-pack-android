@@ -4,12 +4,17 @@ import androidx.annotation.CheckResult
 import de.robv.android.xposed.XC_MethodHook.MethodHookParam
 import de.robv.android.xposed.XposedBridge
 import java.lang.reflect.Field
+import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 
 @Suppress("UNCHECKED_CAST")
-fun <R> callOriginalMethod(param: MethodHookParam): R {
-  return XposedBridge.invokeOriginalMethod(param.method, param.thisObject, param.args) as R
-}
+fun <R> callOriginalMethod(param: MethodHookParam): R? =
+  runCatching { XposedBridge.invokeOriginalMethod(param.method, param.thisObject, param.args) as R }
+    .getOrElse {
+      throw if (it is InvocationTargetException) {
+        it.targetException
+      } else it
+    }
 
 @CheckResult
 fun withHighByteSet(id: Int, flag: Int): Int {
