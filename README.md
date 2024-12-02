@@ -6,7 +6,7 @@ Some launchers support icon packs. However the icons are usually not consistent 
 This module is designed to extend the customization of icon packs throughout the entire system.
 
 ## Requirements
-* AOSP based OS (I only tested on android 14)
+* AOSP based OS (I tested on android 14, 15)
 * Magisk
 * LSPosed
 
