@@ -15,6 +15,6 @@
     <string name="forceLoadClockAndCalendar">Force load clock and calendar icon</string>
 
     <string name="iconPackSettings">Icon pack settings</string>
-    <string name="iconFallback">Fallback</string>
+    <string name="iconFallback">Generate fallback icons</string>
     <string name="iconFallbackSummary">Apply background, mask, and scale from the icon pack to apps without dedicated icons.</string>
 </resources>
