@@ -18,11 +18,6 @@ object IconHelper {
     1 / (1 + 2 * AdaptiveIconDrawable.getExtraInsetFraction())
   }
 
-  /**
-   * CustomAdaptiveIconDrawable only works correctly for launcher. Otherwise it maybe clipped by
-   * adaptive icon mask, but we don't know how to efficiently convert Bitmap to Path. Also there
-   * will be a black background in settings app list. I don't know why.
-   */
   class CustomAdaptiveIconDrawable(
     background: Drawable?,
     foreground: Drawable?,

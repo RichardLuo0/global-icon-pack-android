@@ -3,7 +3,6 @@ package com.richardluo.globalIconPack
 import android.annotation.SuppressLint
 import android.app.AndroidAppHelper
 import android.content.ComponentName
-import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageItemInfo
@@ -15,11 +14,11 @@ import android.util.Xml
 import androidx.core.graphics.drawable.toBitmap
 import com.richardluo.globalIconPack.reflect.Resources.getDrawable
 import com.richardluo.globalIconPack.reflect.Resources.getDrawableForDensity
-import java.io.IOException
-import kotlin.concurrent.Volatile
 import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserException
 import org.xmlpull.v1.XmlPullParserFactory
+import java.io.IOException
+import kotlin.concurrent.Volatile
 
 class CustomIconPack(pm: PackageManager, private val pref: SharedPreferences) {
   private val packPackageName =
@@ -47,7 +46,7 @@ class CustomIconPack(pm: PackageManager, private val pref: SharedPreferences) {
 
   fun getIcon(iconEntry: IconEntry, iconDpi: Int): Drawable? =
     iconEntry.getIcon(this, iconDpi)?.let {
-      if (isLauncher) IconHelper.makeAdaptive(it, globalScale) else it
+      if (useAdaptive) IconHelper.makeAdaptive(it, globalScale) else it
     }
 
   fun getIcon(id: Int, iconDpi: Int): Drawable? = getIconEntry(id)?.let { getIcon(it, iconDpi) }
@@ -62,7 +61,7 @@ class CustomIconPack(pm: PackageManager, private val pref: SharedPreferences) {
     idCache.getOrPut(name) { packResources.getIdentifier(name, "drawable", packPackageName) }
 
   fun genIconFrom(baseIcon: Drawable) =
-    if (isLauncher)
+    if (useAdaptive)
       IconHelper.processIcon(
         packResources,
         baseIcon,
@@ -228,22 +227,14 @@ fun getComponentName(info: PackageItemInfo): ComponentName =
 
 fun getComponentName(packageName: String): ComponentName = ComponentName(packageName, "")
 
-val isLauncher: Boolean by lazy {
-  when (val packageName = AndroidAppHelper.currentPackageName()) {
-    "com.android.systemui" -> false
+/**
+ * CustomAdaptiveIconDrawable does not work correctly for settings. It maybe clipped by adaptive
+ * icon mask, but we don't know how to efficiently convert Bitmap to Path. Also there will be a
+ * black background in app list. However I don't know why.
+ */
+private val useAdaptive: Boolean by lazy {
+  when (AndroidAppHelper.currentPackageName()) {
     "com.android.settings" -> false
-    else -> {
-      // Query if it is a launcher app
-      val intent =
-        Intent().apply {
-          setPackage(packageName)
-          setAction(Intent.ACTION_MAIN)
-          addCategory(Intent.CATEGORY_HOME)
-        }
-      AndroidAppHelper.currentApplication()
-        .packageManager
-        .resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY)
-        .let { it?.activityInfo != null }
-    }
+    else -> true
   }
 }
