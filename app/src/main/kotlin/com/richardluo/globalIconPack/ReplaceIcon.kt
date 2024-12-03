@@ -8,7 +8,6 @@ import com.richardluo.globalIconPack.reflect.ClockDrawableWrapper
 import com.richardluo.globalIconPack.reflect.ReflectHelper
 import com.richardluo.globalIconPack.reflect.Resources.getDrawableForDensityM
 import de.robv.android.xposed.XC_MethodHook
-import de.robv.android.xposed.XC_MethodReplacement
 import de.robv.android.xposed.callbacks.XC_LoadPackage
 
 private const val IN_CIP = 0xff000000.toInt()
@@ -48,9 +47,15 @@ class ReplaceIcon : Hook {
     ReflectHelper.hookAllConstructors(ApplicationInfo::class.java, replaceIconResId)
     ReflectHelper.hookAllConstructors(ActivityInfo::class.java, replaceIconResId)
 
-    val replaceIcon: XC_MethodReplacement =
-      object : XC_MethodReplacement() {
-        override fun replaceHookedMethod(param: MethodHookParam): Drawable? {
+    val replaceIcon: XC_MethodHook =
+      object : XC_MethodHook() {
+        override fun beforeHookedMethod(param: MethodHookParam) {
+          runCatching { param.result = replaceHookedMethod(param) }
+            .exceptionOrNull()
+            ?.let { param.throwable = it }
+        }
+
+        fun replaceHookedMethod(param: MethodHookParam): Drawable? {
           val resId = param.args[0] as Int
           val density = param.args[1] as Int
           return when {
