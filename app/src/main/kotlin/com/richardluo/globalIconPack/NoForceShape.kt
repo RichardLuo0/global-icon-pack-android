@@ -6,6 +6,7 @@ import android.graphics.Rect
 import android.graphics.RectF
 import android.graphics.drawable.AdaptiveIconDrawable
 import android.graphics.drawable.Drawable
+import android.os.Build
 import com.richardluo.globalIconPack.WorldPreference.getReadablePref
 import com.richardluo.globalIconPack.reflect.BaseIconFactory
 import com.richardluo.globalIconPack.reflect.BaseIconFactory.getNormalizer
@@ -17,6 +18,8 @@ import java.lang.reflect.Method
 class NoForceShape : Hook {
 
   override fun onHookPixelLauncher(lpp: LoadPackageParam) {
+    if (Build.VERSION.SDK_INT >= 35) return
+
     if (!initIfEnabled(lpp)) return
     val getScale = getGetScale(lpp)
 
