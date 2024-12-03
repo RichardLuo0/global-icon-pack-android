@@ -63,10 +63,7 @@ object ReflectHelper {
           .also { if (it.isEmpty()) log("No method $methodName is found on class ${clazz.name}") }
           .forEach { XposedBridge.hookMethod(it, hook) }
       }
-      .getOrElse {
-        log(it)
-        null
-      }
+      .getOrElse { log(it) }
 
   fun hookAllMethods(clazz: Class<*>, methodName: String, hook: XC_MethodHook) =
     hookAllMethods(clazz, methodName, arrayOf(), hook)

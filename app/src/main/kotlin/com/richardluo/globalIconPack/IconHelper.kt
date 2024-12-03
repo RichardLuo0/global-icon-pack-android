@@ -105,7 +105,18 @@ object IconHelper {
     }
 
   fun makeAdaptive(drawable: Drawable, scale: Float = 1f) =
-    if (drawable is AdaptiveIconDrawable) drawable
+    if (drawable is AdaptiveIconDrawable)
+      if (scale == 1f) drawable
+      else
+        CustomAdaptiveIconDrawable(
+          drawable.background,
+          drawable.foreground,
+          null,
+          null,
+          null,
+          true,
+          scale,
+        )
     else
       UnClipAdaptiveIconDrawable(
         null,
