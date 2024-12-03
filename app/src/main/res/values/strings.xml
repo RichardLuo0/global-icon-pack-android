@@ -17,4 +17,6 @@
     <string name="iconPackSettings">Icon pack settings</string>
     <string name="iconFallback">Generate fallback icons</string>
     <string name="iconFallbackSummary">Apply background, mask, and scale from the icon pack to apps without dedicated icons.</string>
+    <string name="iconFallbackScale">Replace fallback scale</string>
+    <string name="iconFallbackScaleSummary">Use a new value for the fallback scale. Set to 0 to use the value from icon pack.</string>
 </resources>

@@ -29,7 +29,7 @@ open class UnClipAdaptiveIconDrawable(background: Drawable?, foreground: Drawabl
     draw(canvas, Path().apply { addRect(RectF(bounds), Path.Direction.CW) })
   }
 
-  fun draw(canvas: Canvas, path: Path) {
+  protected fun draw(canvas: Canvas, path: Path) {
     val mLayersBitmap = mLayersBitmapF?.getAs<Bitmap>(this) ?: return
     val mCanvas = mCanvasF?.getAs<Canvas>(this) ?: return
     val mPaint = mPaintF?.getAs<Paint>(this) ?: return

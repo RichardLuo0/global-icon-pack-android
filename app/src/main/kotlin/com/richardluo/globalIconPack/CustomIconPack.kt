@@ -45,11 +45,6 @@ class CustomIconPack(pm: PackageManager, private val pref: SharedPreferences) {
 
   fun getId(cn: ComponentName) = indexMap[cn]
 
-  fun getPackIcon(resId: Int, iconDpi: Int) =
-    getDrawableForDensity(packResources, resId, iconDpi, null)?.let {
-      if (isLauncher) IconHelper.makeAdaptive(it, globalScale) else it
-    }
-
   fun getIcon(iconEntry: IconEntry, iconDpi: Int): Drawable? =
     iconEntry.getIcon(this, iconDpi)?.let {
       if (isLauncher) IconHelper.makeAdaptive(it, globalScale) else it
@@ -74,7 +69,8 @@ class CustomIconPack(pm: PackageManager, private val pref: SharedPreferences) {
         iconBacks.randomOrNull(),
         iconUpons.randomOrNull(),
         iconMasks.randomOrNull(),
-        iconScale * globalScale,
+        iconScale,
+        globalScale,
       )
     else {
       // Do not pass scale because BitmapDrawable will scale anyway
@@ -131,7 +127,10 @@ class CustomIconPack(pm: PackageManager, private val pref: SharedPreferences) {
           "iconmask" -> addFallback(parseXml, iconMasks)
           "scale" -> {
             if (!pref.getBoolean("iconFallback", true)) continue
-            iconScale = parseXml.getAttributeValue(null, "factor")?.toFloatOrNull() ?: 1f
+            iconScale =
+              pref.getFloat("iconFallbackScale", 0f).takeIf { it != 0f }
+                ?: parseXml.getAttributeValue(null, "factor")?.toFloatOrNull()
+                ?: 1f
           }
           "item" -> addIcon(parseXml, IconType.Normal)
           "calendar" -> addIcon(parseXml, IconType.Calendar)

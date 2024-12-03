@@ -123,6 +123,15 @@ fun SampleScreen() {
         title = { Text(text = stringResource(R.string.iconFallback)) },
         summary = { Text(text = stringResource(R.string.iconFallbackSummary)) },
       )
+      sliderPreference(
+        key = "iconFallbackScale",
+        defaultValue = 0f,
+        valueRange = 0f..1.5f,
+        valueSteps = 29,
+        valueText = { Text(text = "%.2f".format(it)) },
+        title = { Text(text = stringResource(R.string.iconFallbackScale)) },
+        summary = { Text(text = stringResource(R.string.iconFallbackScaleSummary)) },
+      )
     }
   }
 }
