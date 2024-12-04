@@ -7,6 +7,7 @@ import android.graphics.drawable.Drawable
 import com.richardluo.globalIconPack.reflect.ClockDrawableWrapper
 import com.richardluo.globalIconPack.reflect.ReflectHelper
 import com.richardluo.globalIconPack.reflect.Resources.getDrawableForDensityM
+import de.robv.android.xposed.IXposedHookZygoteInit.StartupParam
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.callbacks.XC_LoadPackage
 
@@ -21,7 +22,9 @@ class ReplaceIcon : Hook {
     ClockDrawableWrapper.initWithPixelLauncher(lpp)
   }
 
-  override fun onHookApp(lpp: XC_LoadPackage.LoadPackageParam) {
+  override fun onInitZygote(sp: StartupParam) {
+    initCipInZygote()
+
     val packPackageName = WorldPreference.getReadablePref().getString("iconPack", "") ?: ""
     val iconPackAsFallback =
       WorldPreference.getReadablePref().getBoolean("iconPackAsFallback", false)

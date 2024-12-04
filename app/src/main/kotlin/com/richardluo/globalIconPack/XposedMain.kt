@@ -1,10 +1,15 @@
 package com.richardluo.globalIconPack
 
 import de.robv.android.xposed.IXposedHookLoadPackage
+import de.robv.android.xposed.IXposedHookZygoteInit
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 
-class XposedMain : IXposedHookLoadPackage {
+class XposedMain : IXposedHookLoadPackage, IXposedHookZygoteInit {
   private val hookList = arrayOf(ReplaceIcon(), NoForceShape(), CalendarAndClockHook())
+
+  override fun initZygote(sp: IXposedHookZygoteInit.StartupParam) {
+    if (!sp.startsSystemServer) hookList.forEach { it.onInitZygote(sp) }
+  }
 
   override fun handleLoadPackage(lpp: LoadPackageParam) {
     if (!lpp.isFirstApplication) return

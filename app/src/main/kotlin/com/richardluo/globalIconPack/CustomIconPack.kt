@@ -3,15 +3,19 @@ package com.richardluo.globalIconPack
 import android.annotation.SuppressLint
 import android.app.AndroidAppHelper
 import android.content.ComponentName
+import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageItemInfo
 import android.content.pm.PackageManager
+import android.content.res.Resources
 import android.content.res.XmlResourceParser
 import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
+import android.os.IBinder
 import android.util.Xml
 import androidx.core.graphics.drawable.toBitmap
+import com.richardluo.globalIconPack.reflect.ReflectHelper
 import com.richardluo.globalIconPack.reflect.Resources.getDrawable
 import com.richardluo.globalIconPack.reflect.Resources.getDrawableForDensity
 import java.io.IOException
@@ -20,11 +24,16 @@ import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserException
 import org.xmlpull.v1.XmlPullParserFactory
 
-class CustomIconPack(pm: PackageManager, private val pref: SharedPreferences) {
+class CustomIconPack(
+  private val pref: SharedPreferences,
+  getResources: (packageName: String) -> Resources?,
+) {
   private val packPackageName =
     pref.getString("iconPack", "")?.takeIf { it.isNotEmpty() }
       ?: throw Exception("No icon pack set")
-  private val packResources = pm.getResourcesForApplication(packPackageName)
+  private val packResources =
+    getResources(packPackageName) ?: throw Exception("Icon pack is invalid")
+
   private val indexMap = mutableMapOf<ComponentName, Int>()
   private val iconEntryList = mutableListOf<IconEntry?>()
 
@@ -205,13 +214,74 @@ private operator fun XmlPullParser.get(key: String): String? = this.getAttribute
 
 fun isCipInitialized() = cip != null
 
+@SuppressLint("PrivateApi")
+fun initCipInZygote() {
+  if (cip != null) return
+  runCatching {
+      val sm = Class.forName("android.os.ServiceManager")
+      ReflectHelper.findMethodFirstMatch(sm, "getService", String::class.java)?.let { getService ->
+        getService.call<IBinder?>(sm, "package")?.let {
+          val pm =
+            ReflectHelper.findMethodFirstMatch(
+                "android.content.pm.IPackageManager\$Stub",
+                null,
+                "asInterface",
+              )
+              ?.invoke(null, it) ?: return
+          val getApplicationInfo =
+            ReflectHelper.findMethodFirstMatch(
+              "android.content.pm.IPackageManager",
+              null,
+              "getApplicationInfo",
+            ) ?: return
+          val rmC = ReflectHelper.findClassThrow("android.app.ResourcesManager")
+          val rm = ReflectHelper.findMethodFirstMatch(rmC, "getInstance")?.invoke(null)
+          val getResources = ReflectHelper.findMethodFirstMatch(rmC, "getResources")
+          cip =
+            CustomIconPack(WorldPreference.getReadablePref()) { packageName ->
+                val info =
+                  getApplicationInfo.call<ApplicationInfo>(
+                    pm,
+                    packageName,
+                    PackageManager.GET_SHARED_LIBRARY_FILES.toLong(),
+                    0,
+                  )
+                getResources?.call(
+                  rm,
+                  null,
+                  info.publicSourceDir,
+                  info.splitPublicSourceDirs,
+                  ReflectHelper.findField(ApplicationInfo::class.java, "resourceDirs")?.get(info),
+                  ReflectHelper.findField(ApplicationInfo::class.java, "overlayPaths")?.get(info),
+                  info.sharedLibraryFiles,
+                  null,
+                  null,
+                  null,
+                  Thread.currentThread().contextClassLoader,
+                  null,
+                )
+              }
+              .apply { loadInternal() }
+        }
+      }
+    }
+    .exceptionOrNull()
+    ?.let { log(it) }
+}
+
 fun getCip(): CustomIconPack? {
   if (cip == null) {
     synchronized(CustomIconPack::class) {
       if (cip == null) {
-        val pref = WorldPreference.getReadablePref()
-        AndroidAppHelper.currentApplication()?.packageManager?.let {
-          runCatching { cip = CustomIconPack(it, pref).apply { loadInternal() } }
+        AndroidAppHelper.currentApplication()?.packageManager?.let { pm ->
+          runCatching {
+              cip =
+                CustomIconPack(WorldPreference.getReadablePref()) {
+                    pm.getResourcesForApplication(it)
+                  }
+                  .apply { loadInternal() }
+              log("cip initialized in app")
+            }
             .exceptionOrNull()
             ?.let { log(it) }
         }
