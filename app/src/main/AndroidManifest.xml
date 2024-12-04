@@ -15,7 +15,7 @@
             android:value="true" />
         <meta-data
             android:name="xposeddescription"
-            android:value="Fcm proxy" />
+            android:value="Apply icon pack globally" />
         <meta-data
             android:name="xposedminversion"
             android:value="93" />
