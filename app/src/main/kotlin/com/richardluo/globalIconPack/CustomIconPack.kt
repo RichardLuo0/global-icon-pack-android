@@ -228,14 +228,25 @@ fun getComponentName(info: PackageItemInfo): ComponentName =
 fun getComponentName(packageName: String): ComponentName = ComponentName(packageName, "")
 
 /**
- * CustomAdaptiveIconDrawable does not work correctly for settings. It maybe clipped by adaptive
- * icon mask, but we don't know how to efficiently convert Bitmap to Path. Also there will be a
- * black background in app list. However I don't know why.
+ * CustomAdaptiveIconDrawable does not work correctly for some apps. It maybe clipped by adaptive
+ * icon mask or show black background, but we don't know how to efficiently convert Bitmap to Path.
  */
 private val useAdaptive: Boolean by lazy {
-  when (AndroidAppHelper.currentPackageName()) {
+  when (val packageName = AndroidAppHelper.currentPackageName()) {
     "com.android.settings" -> false
     "com.android.systemui" -> false
-    else -> true
+    else -> {
+      // Query if it is a launcher app
+      val intent =
+        Intent().apply {
+          setPackage(packageName)
+          setAction(Intent.ACTION_MAIN)
+          addCategory(Intent.CATEGORY_HOME)
+        }
+      AndroidAppHelper.currentApplication()
+        .packageManager
+        .resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY)
+        .let { it?.activityInfo != null }
+    }
   }
 }
