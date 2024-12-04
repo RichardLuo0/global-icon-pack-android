@@ -14,11 +14,11 @@ import android.util.Xml
 import androidx.core.graphics.drawable.toBitmap
 import com.richardluo.globalIconPack.reflect.Resources.getDrawable
 import com.richardluo.globalIconPack.reflect.Resources.getDrawableForDensity
+import java.io.IOException
+import kotlin.concurrent.Volatile
 import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserException
 import org.xmlpull.v1.XmlPullParserFactory
-import java.io.IOException
-import kotlin.concurrent.Volatile
 
 class CustomIconPack(pm: PackageManager, private val pref: SharedPreferences) {
   private val packPackageName =
@@ -235,6 +235,7 @@ fun getComponentName(packageName: String): ComponentName = ComponentName(package
 private val useAdaptive: Boolean by lazy {
   when (AndroidAppHelper.currentPackageName()) {
     "com.android.settings" -> false
+    "com.android.systemui" -> false
     else -> true
   }
 }
