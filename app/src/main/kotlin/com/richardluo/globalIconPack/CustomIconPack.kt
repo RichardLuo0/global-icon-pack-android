@@ -305,6 +305,7 @@ private val useAdaptive: Boolean by lazy {
   when (val packageName = AndroidAppHelper.currentPackageName()) {
     "com.android.settings" -> false
     "com.android.systemui" -> false
+    "com.android.intentresolver" -> true
     else -> {
       // Query if it is a launcher app
       val intent =

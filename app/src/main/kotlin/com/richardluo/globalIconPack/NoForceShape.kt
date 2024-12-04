@@ -23,7 +23,7 @@ class NoForceShape : Hook {
     if (!initIfEnabled(lpp)) return
     val getScale = getGetScale(lpp)
 
-    commonHook()
+    removeShadow()
     // Fix FloatingIconView and DragView
     ReflectHelper.hookAllMethods(
       BaseIconFactory.clazz,
@@ -40,40 +40,40 @@ class NoForceShape : Hook {
       },
     )
     // Fix FloatingIconView
-    val floatingIconView =
-      ReflectHelper.findClassThrow("com.android.launcher3.views.FloatingIconView", lpp)
-    ReflectHelper.hookAllMethods(
-      floatingIconView,
-      "setIcon",
-      object : XC_MethodHook() {
-        override fun beforeHookedMethod(param: MethodHookParam) {
-          val drawable = param.args[0] as Drawable
-          if (drawable is UnmaskAdaptiveIconDrawable) {
-            // https://cs.android.com/android/platform/superproject/+/android14-qpr3-release:packages/apps/Launcher3/src/com/android/launcher3/views/FloatingIconView.java;l=441
-            val original = drawable.foreground
-            getScale(null, original, null, null, null)?.let { scale ->
-              val blurSizeOutline = 2
-              val bounds =
-                Rect(
-                  0,
-                  0,
-                  original.intrinsicWidth + blurSizeOutline,
-                  original.intrinsicHeight + blurSizeOutline,
-                )
-              bounds.inset(blurSizeOutline / 2, blurSizeOutline / 2)
-              val cx: Float = bounds.exactCenterX()
-              param.args[3] = Math.round(cx + (bounds.left - cx) * scale)
+    ReflectHelper.findClass("com.android.launcher3.views.FloatingIconView", lpp)?.let {
+      ReflectHelper.hookAllMethods(
+        it,
+        "setIcon",
+        object : XC_MethodHook() {
+          override fun beforeHookedMethod(param: MethodHookParam) {
+            val drawable = param.args[0] as Drawable
+            if (drawable is UnmaskAdaptiveIconDrawable) {
+              // https://cs.android.com/android/platform/superproject/+/android14-qpr3-release:packages/apps/Launcher3/src/com/android/launcher3/views/FloatingIconView.java;l=441
+              val original = drawable.foreground
+              getScale(null, original, null, null, null)?.let { scale ->
+                val blurSizeOutline = 2
+                val bounds =
+                  Rect(
+                    0,
+                    0,
+                    original.intrinsicWidth + blurSizeOutline,
+                    original.intrinsicHeight + blurSizeOutline,
+                  )
+                bounds.inset(blurSizeOutline / 2, blurSizeOutline / 2)
+                val cx: Float = bounds.exactCenterX()
+                param.args[3] = Math.round(cx + (bounds.left - cx) * scale)
+              }
             }
           }
-        }
-      },
-    )
+        },
+      )
+    }
   }
 
   override fun onHookSystemUI(lpp: LoadPackageParam) {
     if (!initIfEnabled(lpp)) return
 
-    commonHook()
+    removeShadow()
     // Fix splash screen
     // This is used when icon is not adaptive icon
     ReflectHelper.hookAllMethods(
@@ -95,7 +95,7 @@ class NoForceShape : Hook {
   override fun onHookSettings(lpp: LoadPackageParam) {
     if (!initIfEnabled(lpp)) return
 
-    commonHook()
+    removeShadow()
     // Fix recent app list
     ReflectHelper.hookAllMethods(
       BaseIconFactory.clazz,
@@ -114,7 +114,7 @@ class NoForceShape : Hook {
   }
 
   @Suppress("LocalVariableName")
-  private fun commonHook() {
+  private fun removeShadow() {
     // Remove shadow because icons may have its own shadow
     val MODE_DEFAULT = 0
     val MODE_WITH_SHADOW = 2

@@ -3,6 +3,7 @@ package com.richardluo.globalIconPack
 import android.content.pm.ActivityInfo
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageItemInfo
+import android.content.pm.ResolveInfo
 import android.graphics.drawable.Drawable
 import com.richardluo.globalIconPack.reflect.ClockDrawableWrapper
 import com.richardluo.globalIconPack.reflect.ReflectHelper
@@ -41,7 +42,8 @@ class ReplaceIcon : Hook {
             getCip()?.let { cip ->
               val id =
                 cip.getId(getComponentName(info))
-                  ?: if (iconPackAsFallback) cip.getId(getComponentName(info.packageName)) else null
+                  ?: if (iconPackAsFallback) cip.getId(getComponentName(info.packageName))
+                  else return
               info.icon =
                 id?.let { withHighByteSet(it, IN_CIP) } ?: withHighByteSet(info.icon, NOT_IN_CIP)
             }
@@ -49,6 +51,22 @@ class ReplaceIcon : Hook {
       }
     ReflectHelper.hookAllConstructors(ApplicationInfo::class.java, replaceIconResId)
     ReflectHelper.hookAllConstructors(ActivityInfo::class.java, replaceIconResId)
+
+    // Hook resolve info icon
+    val iconResourceIdF = ReflectHelper.findField(ResolveInfo::class.java, "iconResourceId")
+    ReflectHelper.hookAllConstructors(
+      ResolveInfo::class.java,
+      object : XC_MethodHook() {
+        override fun afterHookedMethod(param: MethodHookParam) {
+          val info = param.thisObject as ResolveInfo
+          // Simply set to be the same as ActivityInfo
+          info.activityInfo?.let {
+            if (info.icon != 0) info.icon = it.icon
+            iconResourceIdF?.set(info, it.icon)
+          }
+        }
+      },
+    )
 
     val replaceIcon: XC_MethodHook =
       object : XC_MethodHook() {

@@ -3,6 +3,9 @@
     <string-array name="xposedscope">>
         <item>com.android.settings</item>
         <item>com.google.android.apps.nexuslauncher</item>
+        <!--splash screen-->
         <item>com.android.systemui</item>
+        <!--share menu-->
+        <item>com.android.intentresolver</item>
     </string-array>
 </resources>
