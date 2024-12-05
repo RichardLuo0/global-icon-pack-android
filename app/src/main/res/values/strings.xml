@@ -22,6 +22,7 @@
     <string name="iconPackScale">Scale</string>
 
     <string name="moreOptions">More options</string>
+    <string name="restartSettings">Restart Settings</string>
     <string name="restartSystemUI">Restart SystemUI</string>
     <string name="restartShareMenu">Restart Share Menu</string>
     <string name="restartPixelLauncher">Clear DB &amp; Restart Pixel Launcher</string>

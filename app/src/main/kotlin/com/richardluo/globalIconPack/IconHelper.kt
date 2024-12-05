@@ -3,6 +3,7 @@ package com.richardluo.globalIconPack
 import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.graphics.Matrix
 import android.graphics.Paint
 import android.graphics.PorterDuff
 import android.graphics.PorterDuffXfermode
@@ -25,8 +26,13 @@ object IconHelper {
     private val upon: Bitmap?,
     private val mask: Bitmap?,
     private val forceClip: Boolean = false,
-    private val scale: Float = 1f,
-  ) : UnClipAdaptiveIconDrawable(background, foreground) {
+    private val iconScale: Float,
+    private val scale: Float,
+  ) :
+    UnClipAdaptiveIconDrawable(
+      background?.let { createScaledDrawable(it, iconScale) },
+      foreground?.let { createScaledDrawable(it, iconScale) },
+    ) {
     private val paint =
       Paint(Paint.ANTI_ALIAS_FLAG or Paint.DITHER_FLAG or Paint.FILTER_BITMAP_FLAG)
 
@@ -34,7 +40,16 @@ object IconHelper {
       drawIcon(canvas, paint, bounds, back, upon, mask, scale) {
         if (forceClip) {
           // Use original mask if mask is not presented
-          if (mask != null) super.draw(canvas) else super.drawClip(canvas)
+          if (mask != null) super.draw(canvas)
+          else {
+            getMask()
+              ?.apply {
+                val matrix = Matrix()
+                matrix.setScale(iconScale, iconScale)
+                transform(matrix)
+              }
+              ?.let { super.draw(canvas, it) } ?: super.drawClip(canvas)
+          }
         } else super.draw(canvas)
       }
     }
@@ -45,12 +60,16 @@ object IconHelper {
     }
   }
 
+  // For marking only
+  class ProcessedBitmapDrawable(res: Resources, bitmap: Bitmap) : BitmapDrawable(res, bitmap)
+
   fun processIconToBitmap(
     res: Resources,
     drawable: Drawable,
     back: Bitmap?,
     upon: Bitmap?,
     mask: Bitmap?,
+    iconScale: Float = 1f,
     scale: Float = 1f,
   ): BitmapDrawable {
     val width = drawable.intrinsicWidth
@@ -60,9 +79,10 @@ object IconHelper {
     val canvas = Canvas(bitmap)
     val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.DITHER_FLAG or Paint.FILTER_BITMAP_FLAG)
     drawIcon(canvas, paint, bounds, back, upon, mask, scale) {
-      canvas.drawBitmap(drawable.toBitmap(), null, bounds, paint)
+      val scaledDrawable = createScaledDrawable(drawable, iconScale)
+      canvas.drawBitmap(scaledDrawable.toBitmap(), null, bounds, paint)
     }
-    return BitmapDrawable(res, bitmap)
+    return ProcessedBitmapDrawable(res, bitmap)
   }
 
   fun processIcon(
@@ -76,27 +96,29 @@ object IconHelper {
   ): Drawable =
     if (drawable is AdaptiveIconDrawable)
       CustomAdaptiveIconDrawable(
-        createScaledDrawable(drawable.background, iconScale),
-        createScaledDrawable(drawable.foreground, iconScale),
+        drawable.background,
+        drawable.foreground,
         back,
         upon,
         mask,
         true,
+        iconScale,
         scale,
       )
     else if (mask != null)
       CustomAdaptiveIconDrawable(
         null,
-        createScaledDrawable(drawable, ADAPTIVE_ICON_VIEWPORT_SCALE * iconScale),
+        createScaledDrawable(drawable),
         back,
         upon,
         mask,
         true,
+        iconScale,
         scale,
       )
     else {
       // Let app handle the rest
-      processIconToBitmap(res, drawable, back, upon, null, iconScale * scale)
+      processIconToBitmap(res, drawable, back, upon, null, iconScale, scale)
     }
 
   fun makeAdaptive(drawable: Drawable, scale: Float = 1f) =
@@ -110,6 +132,7 @@ object IconHelper {
           null,
           null,
           true,
+          1f,
           scale,
         )
     else
@@ -132,7 +155,7 @@ object IconHelper {
     if (bounds.height() < 0) return
 
     canvas.clipRect(bounds)
-    canvas.scale(scale, scale, bounds.width() / 2f, bounds.height() / 2f)
+    canvas.scale(scale, scale, bounds.exactCenterX(), bounds.exactCenterY())
 
     drawBaseIcon()
 

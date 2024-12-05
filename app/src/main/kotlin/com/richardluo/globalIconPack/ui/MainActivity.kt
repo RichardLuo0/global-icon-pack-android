@@ -125,7 +125,8 @@ fun SampleScreen() {
                     duration = SnackbarDuration.Long,
                   )
                 else {
-                  val error = "code: ${result.code} err: ${result.err.joinToString("\n")}"
+                  val error =
+                    "code: ${result.code} err: ${result.err.joinToString("\n")} out: ${result.out.joinToString("\n")}"
                   logInApp(error)
                   snackbarState.showSnackbar(
                     "❌ $error",
@@ -150,8 +151,12 @@ fun SampleScreen() {
           }
           DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
             DropdownMenuItem(
+              text = { Text(stringResource(R.string.restartSettings)) },
+              onClick = runCommand("am force-stop com.android.settings"),
+            )
+            DropdownMenuItem(
               text = { Text(stringResource(R.string.restartSystemUI)) },
-              onClick = runCommand("am force-stop com.android.systemui"),
+              onClick = runCommand("killall com.android.systemui"),
             )
             DropdownMenuItem(
               text = { Text(stringResource(R.string.restartShareMenu)) },
@@ -161,8 +166,7 @@ fun SampleScreen() {
               text = { Text(stringResource(R.string.restartPixelLauncher)) },
               onClick =
                 runCommand(
-                  "rm /data/data/com.google.android.apps.nexuslauncher/databases/app_icons.db",
-                  "am force-stop com.google.android.apps.nexuslauncher",
+                  "rm -f /data/data/com.google.android.apps.nexuslauncher/databases/app_icons.db && am force-stop com.google.android.apps.nexuslauncher"
                 ),
             )
             DropdownMenuItem(

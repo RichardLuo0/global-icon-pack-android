@@ -6,12 +6,12 @@ import android.graphics.Rect
 import android.graphics.RectF
 import android.graphics.drawable.AdaptiveIconDrawable
 import android.graphics.drawable.Drawable
-import android.os.Build
 import com.richardluo.globalIconPack.WorldPreference.getReadablePref
 import com.richardluo.globalIconPack.reflect.BaseIconFactory
 import com.richardluo.globalIconPack.reflect.BaseIconFactory.getNormalizer
 import com.richardluo.globalIconPack.reflect.ReflectHelper
 import de.robv.android.xposed.XC_MethodHook
+import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 import java.lang.reflect.Method
 
@@ -21,8 +21,18 @@ class NoForceShape : Hook {
     if (!initIfEnabled(lpp)) return
 
     removeShadow()
+    XposedBridge.hookAllMethods(
+      BaseIconFactory.clazz,
+      "normalizeAndWrapToAdaptiveIcon",
+      object : XC_MethodHook() {
+        override fun beforeHookedMethod(param: MethodHookParam) {
+          param.args[0].asType<Drawable?>()?.let {
+            if (it is IconHelper.ProcessedBitmapDrawable) param.args[0] = it.unMask()
+          }
+        }
+      },
+    )
     // Fix FloatingIconView and DragView
-    if (Build.VERSION.SDK_INT >= 35) return
     ReflectHelper.hookAllMethods(
       BaseIconFactory.clazz,
       "wrapToAdaptiveIcon",
@@ -30,9 +40,7 @@ class NoForceShape : Hook {
       object : XC_MethodHook() {
         override fun beforeHookedMethod(param: MethodHookParam) {
           param.args[0].asType<Drawable?>()?.let {
-            if (it !is AdaptiveIconDrawable) {
-              param.result = UnmaskAdaptiveIconDrawable(null, IconHelper.createScaledDrawable(it))
-            }
+            if (it is IconHelper.ProcessedBitmapDrawable) param.result = it.unMask()
           }
         }
       },
@@ -82,9 +90,7 @@ class NoForceShape : Hook {
       object : XC_MethodHook() {
         override fun beforeHookedMethod(param: MethodHookParam) {
           param.args[0].asType<Drawable?>()?.let {
-            if (it !is AdaptiveIconDrawable) {
-              param.args[0] = UnmaskAdaptiveIconDrawable(null, IconHelper.createScaledDrawable(it))
-            }
+            if (it is IconHelper.ProcessedBitmapDrawable) param.args[0] = it.unMask()
           }
         }
       },
@@ -179,6 +185,9 @@ class NoForceShape : Hook {
       override fun getChangingConfigurations(): Int = 0
     }
   }
+
+  fun IconHelper.ProcessedBitmapDrawable.unMask() =
+    UnmaskAdaptiveIconDrawable(null, IconHelper.createScaledDrawable(this))
 
   private fun initIfEnabled(lpp: LoadPackageParam): Boolean {
     return getReadablePref().getBoolean(PrefKey.NO_FORCE_SHAPE, false).also {

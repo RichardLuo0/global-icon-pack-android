@@ -21,12 +21,23 @@ private val mCanvasF by lazy {
   ReflectHelper.findField(AdaptiveIconDrawable::class.java, "mCanvas")
 }
 private val mPaintF by lazy { ReflectHelper.findField(AdaptiveIconDrawable::class.java, "mPaint") }
+private val mMaskScaleOnly by lazy {
+  ReflectHelper.findField(AdaptiveIconDrawable::class.java, "mMaskScaleOnly")
+}
 
 open class UnClipAdaptiveIconDrawable(background: Drawable?, foreground: Drawable?) :
   AdaptiveIconDrawable(background, foreground) {
 
   override fun draw(canvas: Canvas) {
-    draw(canvas, Path().apply { addRect(RectF(bounds), Path.Direction.CW) })
+    draw(
+      canvas,
+      Path().apply {
+        addRect(
+          RectF(0f, 0f, bounds.width().toFloat(), bounds.height().toFloat()),
+          Path.Direction.CW,
+        )
+      },
+    )
   }
 
   protected fun draw(canvas: Canvas, path: Path) {
@@ -49,9 +60,9 @@ open class UnClipAdaptiveIconDrawable(background: Drawable?, foreground: Drawabl
     }
   }
 
-  protected fun drawClip(canvas: Canvas) {
-    return super.draw(canvas)
-  }
+  protected fun drawClip(canvas: Canvas) = super.draw(canvas)
+
+  protected fun getMask() = mMaskScaleOnly?.getAs<Path>(this)
 
   protected fun getFullBoundsPath() = Path().apply { addRect(getFullBounds(), Path.Direction.CW) }
 

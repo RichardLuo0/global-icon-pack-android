@@ -79,13 +79,14 @@ class CustomIconPack(
         globalScale,
       )
     else {
-      // Do not pass scale because BitmapDrawable will scale anyway
+      // Do not pass global scale because BitmapDrawable will scale anyway
       IconHelper.processIconToBitmap(
         packResources,
         baseIcon,
         iconBacks.randomOrNull(),
         iconUpons.randomOrNull(),
         iconMasks.randomOrNull(),
+        iconScale,
       )
     }
 
@@ -99,7 +100,7 @@ class CustomIconPack(
 
     val iconFallback = pref.getBoolean(PrefKey.ICON_FALLBACK, true)
     val enableOverrideIconFallback = pref.getBoolean(PrefKey.OVERRIDE_ICON_FALLBACK, false)
-    if (enableOverrideIconFallback) {
+    if (iconFallback && enableOverrideIconFallback) {
       iconScale = pref.getFloat(PrefKey.ICON_PACK_SCALE, 1f)
     }
 
