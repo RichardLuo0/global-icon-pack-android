@@ -29,7 +29,7 @@ class CustomIconPack(
   getResources: (packageName: String) -> Resources?,
 ) {
   private val packPackageName =
-    pref.getString("iconPack", "")?.takeIf { it.isNotEmpty() }
+    pref.getString(PrefKey.ICON_PACK, "")?.takeIf { it.isNotEmpty() }
       ?: throw Exception("No icon pack set")
   private val packResources =
     getResources(packPackageName) ?: throw Exception("Icon pack is invalid")
@@ -43,7 +43,7 @@ class CustomIconPack(
   private var iconMasks = mutableListOf<Bitmap>()
   private var iconScale: Float = 1f
 
-  private var globalScale: Float = pref.getFloat("scale", 1f)
+  private var globalScale: Float = pref.getFloat(PrefKey.SCALE, 1f)
 
   private val idCache = mutableMapOf<String, Int>()
 
@@ -99,8 +99,14 @@ class CustomIconPack(
     val compEnd = "}"
     val compEndLength = compEnd.length
 
+    val iconFallback = pref.getBoolean(PrefKey.ICON_FALLBACK, true)
+    val enableOverrideIconFallback = pref.getBoolean(PrefKey.OVERRIDE_ICON_FALLBACK, false)
+    if (enableOverrideIconFallback) {
+      iconScale = pref.getFloat(PrefKey.ICON_PACK_SCALE, 1f)
+    }
+
     fun addFallback(parseXml: XmlPullParser, list: MutableList<Bitmap>) {
-      if (!pref.getBoolean("iconFallback", true)) return
+      if (!iconFallback) return
       for (i in 0 until parseXml.attributeCount) if (parseXml.getAttributeName(i).startsWith("img"))
         packResources
           .getIdentifier(parseXml.getAttributeValue(i), "drawable", packPackageName)
@@ -134,11 +140,9 @@ class CustomIconPack(
           "iconupon" -> addFallback(parseXml, iconUpons)
           "iconmask" -> addFallback(parseXml, iconMasks)
           "scale" -> {
-            if (!pref.getBoolean("iconFallback", true)) continue
-            iconScale =
-              pref.getFloat("iconFallbackScale", 0f).takeIf { it != 0f }
-                ?: parseXml.getAttributeValue(null, "factor")?.toFloatOrNull()
-                ?: 1f
+            if (!iconFallback) continue
+            if (!enableOverrideIconFallback)
+              iconScale = parseXml.getAttributeValue(null, "factor")?.toFloatOrNull() ?: 1f
           }
           "item" -> addIcon(parseXml, IconType.Normal)
           "calendar" -> addIcon(parseXml, IconType.Calendar)

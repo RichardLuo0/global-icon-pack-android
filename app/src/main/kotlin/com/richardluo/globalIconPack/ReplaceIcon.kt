@@ -26,9 +26,9 @@ class ReplaceIcon : Hook {
   override fun onInitZygote(sp: StartupParam) {
     initCipInZygote()
 
-    val packPackageName = WorldPreference.getReadablePref().getString("iconPack", "") ?: ""
+    val packPackageName = WorldPreference.getReadablePref().getString(PrefKey.ICON_PACK, "") ?: ""
     val iconPackAsFallback =
-      WorldPreference.getReadablePref().getBoolean("iconPackAsFallback", false)
+      WorldPreference.getReadablePref().getBoolean(PrefKey.ICON_PACK_AS_FALLBACK, false)
 
     // Resource id always starts with 0x7f, use it to indict that this is an icon
     // Assume the icon res id is only used in getDrawable()

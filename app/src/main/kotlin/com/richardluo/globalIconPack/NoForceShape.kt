@@ -181,7 +181,7 @@ class NoForceShape : Hook {
   }
 
   private fun initIfEnabled(lpp: LoadPackageParam): Boolean {
-    return getReadablePref().getBoolean("noForceShape", false).also {
+    return getReadablePref().getBoolean(PrefKey.NO_FORCE_SHAPE, false).also {
       if (it) BaseIconFactory.initWithLauncher3(lpp)
     }
   }

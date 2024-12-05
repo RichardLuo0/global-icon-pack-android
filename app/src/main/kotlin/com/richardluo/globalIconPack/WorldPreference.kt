@@ -8,6 +8,19 @@ import android.content.SharedPreferences
 import android.preference.PreferenceManager
 import de.robv.android.xposed.XSharedPreferences
 
+object PrefKey {
+  const val ICON_PACK = "iconPack"
+  const val NO_FORCE_SHAPE = "noForceShape"
+  const val ICON_PACK_AS_FALLBACK = "iconPackAsFallback"
+
+  const val SCALE = "scale"
+  const val FORCE_LOAD_CLOCK_AND_CALENDAR = "forceLoadClockAndCalendar"
+
+  const val ICON_FALLBACK = "iconFallback"
+  const val OVERRIDE_ICON_FALLBACK = "overrideIconFallback"
+  const val ICON_PACK_SCALE = "iconPackScale"
+}
+
 object WorldPreference {
   private lateinit var pref: SharedPreferences
 

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.richardluo.globalIconPack
+package com.richardluo.globalIconPack.ui
 
 import android.app.Activity
 import android.graphics.drawable.ColorDrawable
@@ -26,7 +26,6 @@ import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
@@ -57,9 +56,7 @@ fun SampleTheme(
       val windowBackgroundColor = colorScheme.background.toArgb()
       window.setBackgroundDrawable(ColorDrawable(windowBackgroundColor))
       val insetsController = WindowCompat.getInsetsController(window, view)
-      window.statusBarColor = Color.Transparent.toArgb()
       insetsController.isAppearanceLightStatusBars = !darkTheme
-      window.navigationBarColor = Color.Transparent.toArgb()
       insetsController.isAppearanceLightNavigationBars = !darkTheme
     }
   }

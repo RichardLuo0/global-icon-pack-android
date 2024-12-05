@@ -1,37 +1,56 @@
-package com.richardluo.globalIconPack
+package com.richardluo.globalIconPack.ui
 
 import android.annotation.SuppressLint
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.content.pm.ResolveInfo
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.only
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.selection.selectable
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.unit.dp
+import com.richardluo.globalIconPack.PrefKey
+import com.richardluo.globalIconPack.R
+import com.richardluo.globalIconPack.WorldPreference
 import kotlinx.coroutines.flow.MutableStateFlow
 import me.zhanghai.compose.preference.Preferences
 import me.zhanghai.compose.preference.ProvidePreferenceLocals
+import me.zhanghai.compose.preference.SwitchPreference
 import me.zhanghai.compose.preference.getPreferenceFlow
 import me.zhanghai.compose.preference.preferenceCategory
+import me.zhanghai.compose.preference.rememberPreferenceState
 import me.zhanghai.compose.preference.sliderPreference
 import me.zhanghai.compose.preference.switchPreference
-import me.zhanghai.compose.preference.textFieldPreference
 
 @Composable
 @SuppressLint("WorldReadableFiles")
@@ -77,17 +96,16 @@ fun SampleScreen() {
         key = "iconPack",
         defaultValue = "",
         title = { Text(text = stringResource(R.string.iconPack)) },
-        textToValue = { it },
         summary = { Text(text = it.ifEmpty { stringResource(R.string.iconPackSummary) }) },
       )
       switchPreference(
-        key = "noForceShape",
+        key = PrefKey.NO_FORCE_SHAPE,
         defaultValue = false,
         title = { Text(text = stringResource(R.string.noForceShape)) },
         summary = { Text(text = stringResource(R.string.noForceShapeSummary)) },
       )
       switchPreference(
-        key = "iconPackAsFallback",
+        key = PrefKey.ICON_PACK_AS_FALLBACK,
         defaultValue = false,
         title = { Text(text = stringResource(R.string.iconPackAsFallback)) },
         summary = { Text(text = stringResource(R.string.iconPackAsFallbackSummary)) },
@@ -98,7 +116,7 @@ fun SampleScreen() {
         title = { Text(text = stringResource(R.string.launcherSettings)) },
       )
       sliderPreference(
-        key = "scale",
+        key = PrefKey.SCALE,
         defaultValue = 1f,
         valueRange = 0f..1.5f,
         valueSteps = 29,
@@ -107,7 +125,7 @@ fun SampleScreen() {
         summary = { Text(text = stringResource(R.string.scaleSummary)) },
       )
       switchPreference(
-        key = "forceLoadClockAndCalendar",
+        key = PrefKey.FORCE_LOAD_CLOCK_AND_CALENDAR,
         defaultValue = true,
         title = { Text(text = stringResource(R.string.forceLoadClockAndCalendar)) },
         summary = { Text(text = if (it) "On" else "Off") },
@@ -118,7 +136,7 @@ fun SampleScreen() {
         title = { Text(text = stringResource(R.string.iconPackSettings)) },
       )
       switchPreference(
-        key = "iconFallback",
+        key = PrefKey.ICON_FALLBACK,
         defaultValue = true,
         title = { Text(text = stringResource(R.string.iconFallback)) },
         summary = { Text(text = stringResource(R.string.iconFallbackSummary)) },
@@ -131,6 +149,27 @@ fun SampleScreen() {
         valueText = { Text(text = "%.2f".format(it)) },
         title = { Text(text = stringResource(R.string.iconFallbackScale)) },
         summary = { Text(text = stringResource(R.string.iconFallbackScaleSummary)) },
+      item {
+        val enableState = rememberPreferenceState(PrefKey.OVERRIDE_ICON_FALLBACK, false)
+        val enabled by enableState
+        SwitchPreference(
+          state = enableState,
+          title = { Text(text = stringResource(R.string.overrideIconFallback)) },
+          summary = { Text(text = stringResource(R.string.overrideIconFallbackSummary)) },
+        )
+        ComposableSliderPreference(
+          enabled = { enabled },
+          key = PrefKey.ICON_PACK_SCALE,
+          defaultValue = 1f,
+          valueRange = 0f..1.5f,
+          valueSteps = 29,
+          valueText = { Text(text = "%.2f".format(it)) },
+          title = { Text(text = stringResource(R.string.iconPackScale)) },
+        )
+      }
+    }
+  }
+}
       )
     }
   }
