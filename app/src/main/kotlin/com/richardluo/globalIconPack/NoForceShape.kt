@@ -90,7 +90,7 @@ class NoForceShape : Hook {
       object : XC_MethodHook() {
         override fun beforeHookedMethod(param: MethodHookParam) {
           param.args[0].asType<Drawable?>()?.let {
-            if (it is IconHelper.ProcessedBitmapDrawable) param.args[0] = it.unMask()
+            if (it !is AdaptiveIconDrawable) param.args[0] = createUnMask(it)
           }
         }
       },
@@ -109,9 +109,7 @@ class NoForceShape : Hook {
       object : XC_MethodHook() {
         override fun beforeHookedMethod(param: MethodHookParam) {
           param.args[0].asType<Drawable?>()?.let {
-            if (it !is AdaptiveIconDrawable) {
-              param.args[0] = UnmaskAdaptiveIconDrawable(null, IconHelper.createScaledDrawable(it))
-            }
+            if (it !is AdaptiveIconDrawable) param.args[0] = createUnMask(it)
           }
         }
       },
@@ -186,8 +184,10 @@ class NoForceShape : Hook {
     }
   }
 
-  fun IconHelper.ProcessedBitmapDrawable.unMask() =
-    UnmaskAdaptiveIconDrawable(null, IconHelper.createScaledDrawable(this))
+  fun IconHelper.ProcessedBitmapDrawable.unMask() = createUnMask(this)
+
+  fun createUnMask(drawable: Drawable) =
+    UnmaskAdaptiveIconDrawable(null, IconHelper.createScaledDrawable(drawable))
 
   private fun initIfEnabled(lpp: LoadPackageParam): Boolean {
     return getReadablePref().getBoolean(PrefKey.NO_FORCE_SHAPE, false).also {
