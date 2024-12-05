@@ -92,9 +92,25 @@ fun SampleScreen() {
   ) { contentPadding ->
     LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = contentPadding) {
       preferenceCategory(key = "general", title = { Text(text = stringResource(R.string.general)) })
-      textFieldPreference(
-        key = "iconPack",
+      lazyListPreference(
+        key = PrefKey.ICON_PACK,
         defaultValue = "",
+        load = {
+          mutableMapOf<String, String>().apply {
+            val pm = context.packageManager
+            listOf(
+                "app.lawnchair.icons.THEMED_ICON",
+                "org.adw.ActivityStarter.THEMES",
+                "com.novalauncher.THEME",
+              )
+              .forEach { action ->
+                pm.queryIntentActivities(Intent(action), 0).forEach { put(pm, it) }
+              }
+          }
+        },
+        item = { value, currentValue, valueMap, onClick ->
+          IconPackItem(value, currentValue, valueMap, onClick)
+        },
         title = { Text(text = stringResource(R.string.iconPack)) },
         summary = { Text(text = it.ifEmpty { stringResource(R.string.iconPackSummary) }) },
       )
@@ -141,14 +157,6 @@ fun SampleScreen() {
         title = { Text(text = stringResource(R.string.iconFallback)) },
         summary = { Text(text = stringResource(R.string.iconFallbackSummary)) },
       )
-      sliderPreference(
-        key = "iconFallbackScale",
-        defaultValue = 0f,
-        valueRange = 0f..1.5f,
-        valueSteps = 29,
-        valueText = { Text(text = "%.2f".format(it)) },
-        title = { Text(text = stringResource(R.string.iconFallbackScale)) },
-        summary = { Text(text = stringResource(R.string.iconFallbackScaleSummary)) },
       item {
         val enableState = rememberPreferenceState(PrefKey.OVERRIDE_ICON_FALLBACK, false)
         val enabled by enableState
@@ -170,6 +178,40 @@ fun SampleScreen() {
     }
   }
 }
+
+private fun MutableMap<String, String>.put(pm: PackageManager, resolveInfo: ResolveInfo) =
+  resolveInfo.activityInfo.applicationInfo.let { put(it.packageName, it.loadLabel(pm).toString()) }
+
+@Composable
+private fun IconPackItem(
+  value: String,
+  currentValue: String,
+  valueMap: Map<String, String>,
+  onClick: () -> Unit,
+) {
+  val selected = value == currentValue
+  Row(
+    modifier =
+      Modifier.fillMaxWidth()
+        .heightIn(min = 48.dp)
+        .selectable(selected, true, Role.RadioButton, onClick)
+        .padding(horizontal = 24.dp, vertical = 8.dp),
+    verticalAlignment = Alignment.CenterVertically,
+  ) {
+    RadioButton(selected = selected, onClick = null)
+    Spacer(modifier = Modifier.width(24.dp))
+    Column(modifier = Modifier.fillMaxWidth()) {
+      Text(
+        text = valueMap[value] ?: "Unknown app",
+        color = MaterialTheme.colorScheme.onSurface,
+        style = MaterialTheme.typography.bodyLarge,
+        maxLines = 1,
+      )
+      Text(
+        text = value,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        style = MaterialTheme.typography.bodyMedium,
+        maxLines = 1,
       )
     }
   }
