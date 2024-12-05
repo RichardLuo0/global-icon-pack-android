@@ -4,6 +4,7 @@ kotlin = "2.0.21"
 core-ktx = "1.15.0"
 activity = "1.9.3"
 material3 = "1.3.1"
+libsu = "6.0.0"
 #junit = "4.13.2"
 #junitVersion = "1.2.1"
 #espressoCore = "3.6.1"
@@ -13,6 +14,7 @@ core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "core-ktx
 activity = { group = "androidx.activity", name = "activity-compose", version.ref = "activity" }
 preference = { group = "me.zhanghai.compose.preference", name = "library", version = "1.1.1" }
 material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "material3" }
+libsu = { group = "com.github.topjohnwu.libsu", name = "core", version.ref = "libsu" }
 #junit = { group = "junit", name = "junit", version.ref = "junit" }
 #ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 #espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }

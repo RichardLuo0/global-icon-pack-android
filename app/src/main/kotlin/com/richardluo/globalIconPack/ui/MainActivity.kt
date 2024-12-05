@@ -67,7 +67,7 @@ import androidx.core.graphics.drawable.toBitmap
 import com.richardluo.globalIconPack.PrefKey
 import com.richardluo.globalIconPack.R
 import com.richardluo.globalIconPack.WorldPreference
-import com.richardluo.globalIconPack.log
+import com.richardluo.globalIconPack.logInApp
 import com.topjohnwu.superuser.Shell
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
@@ -103,6 +103,8 @@ fun SampleScreen() {
   val context = LocalContext.current
   val windowInsets = WindowInsets.safeDrawing
   val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
+  val scope = rememberCoroutineScope()
+  val snackbarState = remember { SnackbarHostState() }
   Scaffold(
     modifier = Modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
     topBar = {
@@ -112,8 +114,74 @@ fun SampleScreen() {
         modifier = Modifier.fillMaxWidth(),
         windowInsets = windowInsets.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top),
         scrollBehavior = scrollBehavior,
+        actions = {
+          val onShellResult =
+            Shell.ResultCallback { result ->
+              scope.launch {
+                if (result.isSuccess)
+                  snackbarState.showSnackbar(
+                    "✅ ${context.getString(R.string.RestartedSuccessfully)}",
+                    withDismissAction = true,
+                    duration = SnackbarDuration.Long,
+                  )
+                else {
+                  val error = "code: ${result.code} err: ${result.err.joinToString("\n")}"
+                  logInApp(error)
+                  snackbarState.showSnackbar(
+                    "❌ $error",
+                    withDismissAction = true,
+                    duration = SnackbarDuration.Long,
+                  )
+                }
+              }
+            }
+
+          var expanded by remember { mutableStateOf(false) }
+
+          fun runCommand(vararg cmd: String): () -> Unit {
+            return {
+              Shell.cmd(*cmd).submit(onShellResult)
+              expanded = false
+            }
+          }
+
+          IconButton(onClick = { expanded = !expanded }) {
+            Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.moreOptions))
+          }
+          DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            DropdownMenuItem(
+              text = { Text(stringResource(R.string.restartSystemUI)) },
+              onClick = runCommand("am force-stop com.android.systemui"),
+            )
+            DropdownMenuItem(
+              text = { Text(stringResource(R.string.restartShareMenu)) },
+              onClick = runCommand("am force-stop com.android.intentresolver"),
+            )
+            DropdownMenuItem(
+              text = { Text(stringResource(R.string.restartPixelLauncher)) },
+              onClick =
+                runCommand(
+                  "rm /data/data/com.google.android.apps.nexuslauncher/databases/app_icons.db",
+                  "am force-stop com.google.android.apps.nexuslauncher",
+                ),
+            )
+            DropdownMenuItem(
+              text = { Text(stringResource(R.string.openGithub)) },
+              onClick = {
+                context.startActivity(
+                  Intent(
+                    Intent.ACTION_VIEW,
+                    Uri.parse("https://github.com/RichardLuo0/global-icon-pack-android"),
+                  )
+                )
+                expanded = false
+              },
+            )
+          }
+        },
       )
     },
+    snackbarHost = { SnackbarHost(hostState = snackbarState) },
     containerColor = Color.Transparent,
     contentColor = contentColorFor(MaterialTheme.colorScheme.background),
     contentWindowInsets = windowInsets,

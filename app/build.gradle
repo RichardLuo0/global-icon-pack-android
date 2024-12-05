@@ -52,8 +52,6 @@ android {
 }
 
 dependencies {
-//    implementation libs.appcompat
-//    implementation libs.material
 //    testImplementation libs.junit
 //    androidTestImplementation libs.ext.junit
 //    androidTestImplementation libs.espresso.core
@@ -63,4 +61,5 @@ dependencies {
     implementation libs.material3
 
     compileOnly(fileTree("libs") { include("api-82.jar") })
+    implementation libs.libsu
 }
