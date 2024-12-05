@@ -45,7 +45,7 @@ object IconHelper {
             getMask()
               ?.apply {
                 val matrix = Matrix()
-                matrix.setScale(iconScale, iconScale)
+                matrix.setScale(iconScale, iconScale, bounds.width() / 2f, bounds.height() / 2f)
                 transform(matrix)
               }
               ?.let { super.draw(canvas, it) } ?: super.drawClip(canvas)
