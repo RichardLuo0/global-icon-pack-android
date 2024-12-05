@@ -12,10 +12,8 @@ import android.content.res.Resources
 import android.content.res.XmlResourceParser
 import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
-import android.os.IBinder
 import android.util.Xml
 import androidx.core.graphics.drawable.toBitmap
-import com.richardluo.globalIconPack.reflect.ReflectHelper
 import com.richardluo.globalIconPack.reflect.Resources.getDrawable
 import com.richardluo.globalIconPack.reflect.Resources.getDrawableForDensity
 import java.io.IOException
@@ -218,60 +216,61 @@ private operator fun XmlPullParser.get(key: String): String? = this.getAttribute
 
 fun isCipInitialized() = cip != null
 
-@SuppressLint("PrivateApi")
-fun initCipInZygote() {
-  if (cip != null) return
-  runCatching {
-      val sm = Class.forName("android.os.ServiceManager")
-      ReflectHelper.findMethodFirstMatch(sm, "getService", String::class.java)?.let { getService ->
-        getService.call<IBinder?>(sm, "package")?.let {
-          val pm =
-            ReflectHelper.findMethodFirstMatch(
-                "android.content.pm.IPackageManager\$Stub",
-                null,
-                "asInterface",
-              )
-              ?.invoke(null, it) ?: return
-          val getApplicationInfo =
-            ReflectHelper.findMethodFirstMatch(
-              "android.content.pm.IPackageManager",
-              null,
-              "getApplicationInfo",
-            ) ?: return
-          val rmC = ReflectHelper.findClassThrow("android.app.ResourcesManager")
-          val rm = ReflectHelper.findMethodFirstMatch(rmC, "getInstance")?.invoke(null)
-          val getResources = ReflectHelper.findMethodFirstMatch(rmC, "getResources")
-          cip =
-            CustomIconPack(WorldPreference.getReadablePref()) { packageName ->
-                val info =
-                  getApplicationInfo.call<ApplicationInfo>(
-                    pm,
-                    packageName,
-                    PackageManager.GET_SHARED_LIBRARY_FILES.toLong(),
-                    0,
-                  )
-                getResources?.call(
-                  rm,
-                  null,
-                  info.publicSourceDir,
-                  info.splitPublicSourceDirs,
-                  ReflectHelper.findField(ApplicationInfo::class.java, "resourceDirs")?.get(info),
-                  ReflectHelper.findField(ApplicationInfo::class.java, "overlayPaths")?.get(info),
-                  info.sharedLibraryFiles,
-                  null,
-                  null,
-                  null,
-                  Thread.currentThread().contextClassLoader,
-                  null,
-                )
-              }
-              .apply { loadInternal() }
-        }
-      }
-    }
-    .exceptionOrNull()
-    ?.let { log(it) }
-}
+// @SuppressLint("PrivateApi")
+// fun initCipInZygote() {
+//  if (cip != null) return
+//  runCatching {
+//      val sm = Class.forName("android.os.ServiceManager")
+//      val getService =
+//        ReflectHelper.findMethodFirstMatch(sm, "getService", String::class.java) ?: return
+//      getService.call<IBinder?>(sm, "package")?.let {
+//        val pm =
+//          ReflectHelper.findMethodFirstMatch(
+//              "android.content.pm.IPackageManager\$Stub",
+//              null,
+//              "asInterface",
+//            )
+//            ?.invoke(null, it) ?: return
+//        val getApplicationInfo =
+//          ReflectHelper.findMethodFirstMatch(
+//            "android.content.pm.IPackageManager",
+//            null,
+//            "getApplicationInfo",
+//          ) ?: return
+//        val rmC = ReflectHelper.findClassThrow("android.app.ResourcesManager")
+//        val rm = ReflectHelper.findMethodFirstMatch(rmC, "getInstance")?.invoke(null)
+//        val getResources = ReflectHelper.findMethodFirstMatch(rmC, "getResources")
+//        cip =
+//          CustomIconPack(WorldPreference.getReadablePref()) { packageName ->
+//              val info =
+//                getApplicationInfo.call<ApplicationInfo>(
+//                  pm,
+//                  packageName,
+//                  PackageManager.GET_SHARED_LIBRARY_FILES.toLong(),
+//                  0,
+//                )
+//              getResources?.call(
+//                rm,
+//                null,
+//                info.publicSourceDir,
+//                info.splitPublicSourceDirs,
+//                ReflectHelper.findField(ApplicationInfo::class.java, "resourceDirs")?.get(info),
+//                ReflectHelper.findField(ApplicationInfo::class.java, "overlayPaths")?.get(info),
+//                info.sharedLibraryFiles,
+//                null,
+//                null,
+//                null,
+//                Thread.currentThread().contextClassLoader,
+//                null,
+//              )
+//            }
+//            .apply { loadInternal() }
+//      }
+//      log("cip initialized in zygote")
+//    }
+//    .exceptionOrNull()
+//    ?.let { log(it) }
+// }
 
 fun getCip(): CustomIconPack? {
   if (cip == null) {
@@ -284,7 +283,6 @@ fun getCip(): CustomIconPack? {
                     pm.getResourcesForApplication(it)
                   }
                   .apply { loadInternal() }
-              log("cip initialized in app")
             }
             .exceptionOrNull()
             ?.let { log(it) }
