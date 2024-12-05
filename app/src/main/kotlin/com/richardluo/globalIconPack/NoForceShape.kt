@@ -18,13 +18,11 @@ import java.lang.reflect.Method
 class NoForceShape : Hook {
 
   override fun onHookPixelLauncher(lpp: LoadPackageParam) {
-    if (Build.VERSION.SDK_INT >= 35) return
-
     if (!initIfEnabled(lpp)) return
-    val getScale = getGetScale(lpp)
 
     removeShadow()
     // Fix FloatingIconView and DragView
+    if (Build.VERSION.SDK_INT >= 35) return
     ReflectHelper.hookAllMethods(
       BaseIconFactory.clazz,
       "wrapToAdaptiveIcon",
@@ -40,6 +38,7 @@ class NoForceShape : Hook {
       },
     )
     // Fix FloatingIconView
+    val getScale = getGetScale(lpp)
     ReflectHelper.findClass("com.android.launcher3.views.FloatingIconView", lpp)?.let {
       ReflectHelper.hookAllMethods(
         it,
