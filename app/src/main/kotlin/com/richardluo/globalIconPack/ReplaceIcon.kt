@@ -5,16 +5,25 @@ import android.content.pm.ApplicationInfo
 import android.content.pm.PackageItemInfo
 import android.content.pm.ResolveInfo
 import android.graphics.drawable.Drawable
+import com.richardluo.globalIconPack.iconPack.getComponentName
+import com.richardluo.globalIconPack.iconPack.getIp
+import com.richardluo.globalIconPack.iconPack.isIpInitialized
 import com.richardluo.globalIconPack.reflect.ClockDrawableWrapper
 import com.richardluo.globalIconPack.reflect.ReflectHelper
 import com.richardluo.globalIconPack.reflect.Resources.getDrawableForDensityM
+import com.richardluo.globalIconPack.utils.PrefKey
+import com.richardluo.globalIconPack.utils.WorldPreference
+import com.richardluo.globalIconPack.utils.callOriginalMethod
+import com.richardluo.globalIconPack.utils.isHighTwoByte
+import com.richardluo.globalIconPack.utils.rNEqual
+import com.richardluo.globalIconPack.utils.withHighByteSet
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 
-private const val IN_CIP = 0xff000000.toInt()
-private const val NOT_IN_CIP = 0xfe000000.toInt()
+private const val IN_IP = 0xff000000.toInt()
+private const val NOT_IN_IP = 0xfe000000.toInt()
 private const val ANDROID_DEFAULT = 0x7f000000
-private const val CIP_DEFAULT = 0x00000000
+private const val IP_DEFAULT = 0x00000000
 
 class ReplaceIcon : Hook {
   override fun onHookPixelLauncher(lpp: LoadPackageParam) {
@@ -34,15 +43,15 @@ class ReplaceIcon : Hook {
         override fun afterHookedMethod(param: MethodHookParam) {
           val info = param.thisObject as PackageItemInfo
           if (info.icon == 0) return
-          // Avoid recursively call getCip()
-          if (isCipInitialized() || info.packageName rNEqual packPackageName)
-            getCip()?.let { cip ->
+          // Avoid recursively call getIp()
+          if (isIpInitialized() || info.packageName rNEqual packPackageName)
+            getIp()?.let { ip ->
               val id =
-                cip.getId(getComponentName(info))
-                  ?: if (iconPackAsFallback) cip.getId(getComponentName(info.packageName))
+                ip.getId(getComponentName(info))
+                  ?: if (iconPackAsFallback) ip.getId(getComponentName(info.packageName))
                   else return
               info.icon =
-                id?.let { withHighByteSet(it, IN_CIP) } ?: withHighByteSet(info.icon, NOT_IN_CIP)
+                id?.let { withHighByteSet(it, IN_IP) } ?: withHighByteSet(info.icon, NOT_IN_IP)
             }
         }
       }
@@ -77,14 +86,14 @@ class ReplaceIcon : Hook {
           val resId = param.args[0] as Int
           val density = param.args[1] as Int
           return when {
-            isHighTwoByte(resId, IN_CIP) -> {
-              val id = withHighByteSet(resId, CIP_DEFAULT)
+            isHighTwoByte(resId, IN_IP) -> {
+              val id = withHighByteSet(resId, IP_DEFAULT)
               // Original id has been lost
-              getCip()?.getIcon(id, density)
+              getIp()?.getIcon(id, density)
             }
-            isHighTwoByte(resId, NOT_IN_CIP) -> {
+            isHighTwoByte(resId, NOT_IN_IP) -> {
               param.args[0] = withHighByteSet(resId, ANDROID_DEFAULT)
-              callOriginalMethod<Drawable?>(param)?.let { getCip()?.genIconFrom(it) ?: it }
+              callOriginalMethod<Drawable?>(param)?.let { getIp()?.genIconFrom(it) ?: it }
             }
             else -> callOriginalMethod(param)
           }

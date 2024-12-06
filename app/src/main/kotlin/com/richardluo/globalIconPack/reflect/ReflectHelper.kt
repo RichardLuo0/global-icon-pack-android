@@ -1,7 +1,7 @@
 package com.richardluo.globalIconPack.reflect
 
-import com.richardluo.globalIconPack.call
-import com.richardluo.globalIconPack.log
+import com.richardluo.globalIconPack.utils.call
+import com.richardluo.globalIconPack.utils.log
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedHelpers

@@ -2,8 +2,8 @@ package com.richardluo.globalIconPack.reflect
 
 import android.graphics.drawable.Drawable
 import android.os.Bundle
-import com.richardluo.globalIconPack.ClockMetadata
-import com.richardluo.globalIconPack.call
+import com.richardluo.globalIconPack.iconPack.ClockMetadata
+import com.richardluo.globalIconPack.utils.call
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 import java.lang.reflect.Method
 import java.util.function.IntFunction

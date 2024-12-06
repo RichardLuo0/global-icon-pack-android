@@ -1,4 +1,4 @@
-package com.richardluo.globalIconPack
+package com.richardluo.globalIconPack.iconPack
 
 import android.content.res.Resources
 import android.graphics.Bitmap
@@ -13,6 +13,7 @@ import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.InsetDrawable
 import androidx.core.graphics.drawable.toBitmap
+import com.richardluo.globalIconPack.UnClipAdaptiveIconDrawable
 
 object IconHelper {
   val ADAPTIVE_ICON_VIEWPORT_SCALE by lazy {

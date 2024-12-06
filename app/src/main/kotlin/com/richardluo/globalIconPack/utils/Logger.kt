@@ -1,4 +1,4 @@
-package com.richardluo.globalIconPack
+package com.richardluo.globalIconPack.utils
 
 import android.app.Application
 import android.util.Log

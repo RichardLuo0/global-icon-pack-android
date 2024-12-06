@@ -64,10 +64,10 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
-import com.richardluo.globalIconPack.PrefKey
+import com.richardluo.globalIconPack.utils.PrefKey
 import com.richardluo.globalIconPack.R
-import com.richardluo.globalIconPack.WorldPreference
-import com.richardluo.globalIconPack.logInApp
+import com.richardluo.globalIconPack.utils.WorldPreference
+import com.richardluo.globalIconPack.utils.logInApp
 import com.topjohnwu.superuser.Shell
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch

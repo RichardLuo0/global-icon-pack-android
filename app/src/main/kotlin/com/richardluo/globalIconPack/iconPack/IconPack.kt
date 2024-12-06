@@ -1,4 +1,4 @@
-package com.richardluo.globalIconPack
+package com.richardluo.globalIconPack.iconPack
 
 import android.annotation.SuppressLint
 import android.app.AndroidAppHelper
@@ -16,13 +16,16 @@ import android.util.Xml
 import androidx.core.graphics.drawable.toBitmap
 import com.richardluo.globalIconPack.reflect.Resources.getDrawable
 import com.richardluo.globalIconPack.reflect.Resources.getDrawableForDensity
+import com.richardluo.globalIconPack.utils.PrefKey
+import com.richardluo.globalIconPack.utils.WorldPreference
+import com.richardluo.globalIconPack.utils.log
 import java.io.IOException
 import kotlin.concurrent.Volatile
 import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserException
 import org.xmlpull.v1.XmlPullParserFactory
 
-class CustomIconPack(
+class IconPack(
   private val pref: SharedPreferences,
   getResources: (packageName: String) -> Resources?,
 ) {
@@ -43,8 +46,6 @@ class CustomIconPack(
 
   private var globalScale: Float = pref.getFloat(PrefKey.SCALE, 1f)
 
-  private val idCache = mutableMapOf<String, Int>()
-
   fun getIconEntry(cn: ComponentName) = indexMap[cn]?.let { iconEntryList.getOrNull(it) }
 
   fun getIconEntry(id: Int): IconEntry? = iconEntryList.getOrNull(id)
@@ -62,6 +63,8 @@ class CustomIconPack(
     getDrawableId(resName)
       .takeIf { it != 0 }
       ?.let { getDrawableForDensity(packResources, it, iconDpi, null) }
+
+  private val idCache = mutableMapOf<String, Int>()
 
   @SuppressLint("DiscouragedApi")
   fun getDrawableId(name: String) =
@@ -213,76 +216,18 @@ class CustomIconPack(
 
 private operator fun XmlPullParser.get(key: String): String? = this.getAttributeValue(null, key)
 
-@Volatile private var cip: CustomIconPack? = null
+@Volatile private var ip: IconPack? = null
 
-fun isCipInitialized() = cip != null
+fun isIpInitialized() = ip != null
 
-// @SuppressLint("PrivateApi")
-// fun initCipInZygote() {
-//  if (cip != null) return
-//  runCatching {
-//      val sm = Class.forName("android.os.ServiceManager")
-//      val getService =
-//        ReflectHelper.findMethodFirstMatch(sm, "getService", String::class.java) ?: return
-//      getService.call<IBinder?>(sm, "package")?.let {
-//        val pm =
-//          ReflectHelper.findMethodFirstMatch(
-//              "android.content.pm.IPackageManager\$Stub",
-//              null,
-//              "asInterface",
-//            )
-//            ?.invoke(null, it) ?: return
-//        val getApplicationInfo =
-//          ReflectHelper.findMethodFirstMatch(
-//            "android.content.pm.IPackageManager",
-//            null,
-//            "getApplicationInfo",
-//          ) ?: return
-//        val rmC = ReflectHelper.findClassThrow("android.app.ResourcesManager")
-//        val rm = ReflectHelper.findMethodFirstMatch(rmC, "getInstance")?.invoke(null)
-//        val getResources = ReflectHelper.findMethodFirstMatch(rmC, "getResources")
-//        cip =
-//          CustomIconPack(WorldPreference.getReadablePref()) { packageName ->
-//              val info =
-//                getApplicationInfo.call<ApplicationInfo>(
-//                  pm,
-//                  packageName,
-//                  PackageManager.GET_SHARED_LIBRARY_FILES.toLong(),
-//                  0,
-//                )
-//              getResources?.call(
-//                rm,
-//                null,
-//                info.publicSourceDir,
-//                info.splitPublicSourceDirs,
-//                ReflectHelper.findField(ApplicationInfo::class.java, "resourceDirs")?.get(info),
-//                ReflectHelper.findField(ApplicationInfo::class.java, "overlayPaths")?.get(info),
-//                info.sharedLibraryFiles,
-//                null,
-//                null,
-//                null,
-//                Thread.currentThread().contextClassLoader,
-//                null,
-//              )
-//            }
-//            .apply { loadInternal() }
-//      }
-//      log("cip initialized in zygote")
-//    }
-//    .exceptionOrNull()
-//    ?.let { log(it) }
-// }
-
-fun getCip(): CustomIconPack? {
-  if (cip == null) {
-    synchronized(CustomIconPack::class) {
-      if (cip == null) {
+fun getIp(): IconPack? {
+  if (ip == null) {
+    synchronized(IconPack::class) {
+      if (ip == null) {
         AndroidAppHelper.currentApplication()?.packageManager?.let { pm ->
           runCatching {
-              cip =
-                CustomIconPack(WorldPreference.getReadablePref()) {
-                    pm.getResourcesForApplication(it)
-                  }
+              ip =
+                IconPack(WorldPreference.getReadablePref()) { pm.getResourcesForApplication(it) }
                   .apply { loadInternal() }
             }
             .exceptionOrNull()
@@ -291,7 +236,7 @@ fun getCip(): CustomIconPack? {
       }
     }
   }
-  return cip
+  return ip
 }
 
 fun getComponentName(info: PackageItemInfo): ComponentName =

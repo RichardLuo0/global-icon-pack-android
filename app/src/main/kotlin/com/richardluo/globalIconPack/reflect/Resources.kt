@@ -3,7 +3,7 @@ package com.richardluo.globalIconPack.reflect
 import android.content.res.Resources
 import android.content.res.Resources.Theme
 import android.graphics.drawable.Drawable
-import com.richardluo.globalIconPack.log
+import com.richardluo.globalIconPack.utils.log
 import de.robv.android.xposed.XposedBridge
 import java.lang.reflect.Method
 

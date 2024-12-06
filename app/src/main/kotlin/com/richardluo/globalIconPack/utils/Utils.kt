@@ -1,4 +1,4 @@
-package com.richardluo.globalIconPack
+package com.richardluo.globalIconPack.utils
 
 import androidx.annotation.CheckResult
 import de.robv.android.xposed.XC_MethodHook.MethodHookParam

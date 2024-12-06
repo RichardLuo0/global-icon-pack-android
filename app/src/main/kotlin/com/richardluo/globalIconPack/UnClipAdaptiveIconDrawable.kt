@@ -10,6 +10,7 @@ import android.graphics.Shader
 import android.graphics.drawable.AdaptiveIconDrawable
 import android.graphics.drawable.Drawable
 import com.richardluo.globalIconPack.reflect.ReflectHelper
+import com.richardluo.globalIconPack.utils.getAs
 
 private val mLayersBitmapF by lazy {
   ReflectHelper.findField(AdaptiveIconDrawable::class.java, "mLayersBitmap")

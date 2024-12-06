@@ -1,11 +1,12 @@
 @file:Suppress("DEPRECATION")
 
-package com.richardluo.globalIconPack
+package com.richardluo.globalIconPack.utils
 
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.SharedPreferences
 import android.preference.PreferenceManager
+import com.richardluo.globalIconPack.BuildConfig
 import de.robv.android.xposed.XSharedPreferences
 
 object PrefKey {
@@ -25,7 +26,7 @@ object WorldPreference {
   private lateinit var pref: SharedPreferences
 
   fun getReadablePref(): SharedPreferences {
-    if (!::pref.isInitialized)
+    if (!WorldPreference::pref.isInitialized)
       pref =
         XSharedPreferences(BuildConfig.APPLICATION_ID).also {
           if (!it.file.canRead())
@@ -36,7 +37,7 @@ object WorldPreference {
 
   @SuppressLint("WorldReadableFiles")
   fun getWritablePref(context: Context): SharedPreferences {
-    if (!::pref.isInitialized)
+    if (!WorldPreference::pref.isInitialized)
       pref =
         context.getSharedPreferences(
           PreferenceManager.getDefaultSharedPreferencesName(context),
