@@ -1,4 +1,4 @@
-package com.richardluo.globalIconPack.iconPack
+package com.richardluo.globalIconPack.utils
 
 import android.content.res.Resources
 import android.graphics.Bitmap

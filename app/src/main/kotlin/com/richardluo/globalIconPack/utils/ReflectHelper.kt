@@ -1,7 +1,5 @@
-package com.richardluo.globalIconPack.reflect
+package com.richardluo.globalIconPack.utils
 
-import com.richardluo.globalIconPack.utils.call
-import com.richardluo.globalIconPack.utils.log
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedHelpers
@@ -12,11 +10,7 @@ import java.lang.reflect.Method
 // Not cached
 object ReflectHelper {
   fun findClass(className: String, lpp: LoadPackageParam? = null) =
-    runCatching { XposedHelpers.findClass(className, lpp?.classLoader) }
-      .getOrElse {
-        log(it)
-        null
-      }
+    runCatching { XposedHelpers.findClass(className, lpp?.classLoader) }.getOrNull { log(it) }
 
   fun findClassThrow(className: String, lpp: LoadPackageParam? = null): Class<*> {
     return XposedHelpers.findClass(className, lpp?.classLoader)
@@ -81,10 +75,7 @@ object ReflectHelper {
         XposedHelpers.findMethodBestMatch(thisObj.javaClass, methodName, *args)
           .call<T>(thisObj, *args)
       }
-      .getOrElse {
-        log(it)
-        null
-      }
+      .getOrNull { log(it) }
   }
 
   fun callMethod(thisObj: Any, methodName: String, vararg args: Any) =

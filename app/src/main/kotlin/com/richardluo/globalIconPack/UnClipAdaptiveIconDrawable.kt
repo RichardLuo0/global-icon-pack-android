@@ -9,7 +9,7 @@ import android.graphics.RectF
 import android.graphics.Shader
 import android.graphics.drawable.AdaptiveIconDrawable
 import android.graphics.drawable.Drawable
-import com.richardluo.globalIconPack.reflect.ReflectHelper
+import com.richardluo.globalIconPack.utils.ReflectHelper
 import com.richardluo.globalIconPack.utils.getAs
 
 private val mLayersBitmapF by lazy {

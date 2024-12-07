@@ -6,12 +6,11 @@ import android.graphics.Rect
 import android.graphics.RectF
 import android.graphics.drawable.AdaptiveIconDrawable
 import android.graphics.drawable.Drawable
-import com.richardluo.globalIconPack.utils.WorldPreference.getReadablePref
-import com.richardluo.globalIconPack.iconPack.IconHelper
 import com.richardluo.globalIconPack.reflect.BaseIconFactory
 import com.richardluo.globalIconPack.reflect.BaseIconFactory.getNormalizer
-import com.richardluo.globalIconPack.reflect.ReflectHelper
-import com.richardluo.globalIconPack.utils.PrefKey
+import com.richardluo.globalIconPack.utils.IconHelper
+import com.richardluo.globalIconPack.utils.ReflectHelper
+import com.richardluo.globalIconPack.utils.WorldPreference.getPrefInMod
 import com.richardluo.globalIconPack.utils.asType
 import com.richardluo.globalIconPack.utils.call
 import com.richardluo.globalIconPack.utils.letAll
@@ -197,7 +196,7 @@ class NoForceShape : Hook {
     UnmaskAdaptiveIconDrawable(null, IconHelper.createScaledDrawable(drawable))
 
   private fun initIfEnabled(lpp: LoadPackageParam): Boolean {
-    return getReadablePref().getBoolean(PrefKey.NO_FORCE_SHAPE, false).also {
+    return getPrefInMod().getBoolean(PrefKey.NO_FORCE_SHAPE, false).also {
       if (it) BaseIconFactory.initWithLauncher3(lpp)
     }
   }

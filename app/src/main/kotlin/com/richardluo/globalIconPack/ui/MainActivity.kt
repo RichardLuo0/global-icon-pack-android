@@ -1,10 +1,8 @@
 package com.richardluo.globalIconPack.ui
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
-import android.content.pm.ResolveInfo
-import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -61,20 +59,28 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
-import com.richardluo.globalIconPack.utils.PrefKey
+import com.richardluo.globalIconPack.MODE_LOCAL
+import com.richardluo.globalIconPack.MODE_PROVIDER
+import com.richardluo.globalIconPack.PrefKey
 import com.richardluo.globalIconPack.R
+import com.richardluo.globalIconPack.iconPack.IconPackApp
+import com.richardluo.globalIconPack.iconPack.IconPackApps
+import com.richardluo.globalIconPack.iconPack.database.WritableIconPackDB
 import com.richardluo.globalIconPack.utils.WorldPreference
 import com.richardluo.globalIconPack.utils.logInApp
 import com.topjohnwu.superuser.Shell
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import me.zhanghai.compose.preference.Preferences
 import me.zhanghai.compose.preference.ProvidePreferenceLocals
 import me.zhanghai.compose.preference.SwitchPreference
 import me.zhanghai.compose.preference.getPreferenceFlow
+import me.zhanghai.compose.preference.listPreference
 import me.zhanghai.compose.preference.preferenceCategory
 import me.zhanghai.compose.preference.rememberPreferenceState
 import me.zhanghai.compose.preference.sliderPreference
@@ -82,9 +88,9 @@ import me.zhanghai.compose.preference.switchPreference
 
 @Composable
 @SuppressLint("WorldReadableFiles")
-fun worldPreferenceFlow(): MutableStateFlow<Preferences> {
+private fun worldPreferenceFlow(): MutableStateFlow<Preferences> {
   val context = LocalContext.current
-  return WorldPreference.getWritablePref(context).getPreferenceFlow()
+  return WorldPreference.getPrefInApp(context).getPreferenceFlow()
 }
 
 class MainActivity : ComponentActivity() {
@@ -100,6 +106,9 @@ class MainActivity : ComponentActivity() {
     setContent {
       SampleTheme { ProvidePreferenceLocals(flow = worldPreferenceFlow()) { SampleScreen() } }
     }
+    // Init db
+    val ctx = this
+    runBlocking { launch { WritableIconPackDB(ctx) } }
   }
 }
 
@@ -198,22 +207,18 @@ fun SampleScreen() {
   ) { contentPadding ->
     LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = contentPadding) {
       preferenceCategory(key = "general", title = { Text(stringResource(R.string.general)) })
+      listPreference(
+        key = PrefKey.MODE,
+        defaultValue = MODE_PROVIDER,
+        values = listOf(MODE_PROVIDER, MODE_LOCAL),
+        valueToText = { AnnotatedString(modeToDesc(context, it)) },
+        title = { Text(stringResource(R.string.mode)) },
+        summary = { Text(modeToDesc(context, it)) },
+      )
       lazyListPreference(
         key = PrefKey.ICON_PACK,
         defaultValue = "",
-        load = {
-          mutableMapOf<String, IconPack>().apply {
-            val pm = context.packageManager
-            listOf(
-                "app.lawnchair.icons.THEMED_ICON",
-                "org.adw.ActivityStarter.THEMES",
-                "com.novalauncher.THEME",
-              )
-              .forEach { action ->
-                pm.queryIntentActivities(Intent(action), 0).forEach { put(pm, it) }
-              }
-          }
-        },
+        load = { IconPackApps.load(context) },
         item = { value, currentValue, valueMap, onClick ->
           IconPackItem(value, currentValue, valueMap, onClick)
         },
@@ -285,18 +290,18 @@ fun SampleScreen() {
   }
 }
 
-data class IconPack(val label: String, val icon: Drawable)
-
-private fun MutableMap<String, IconPack>.put(pm: PackageManager, resolveInfo: ResolveInfo) =
-  resolveInfo.activityInfo.applicationInfo.let {
-    put(it.packageName, IconPack(it.loadLabel(pm).toString(), it.loadIcon(pm)))
+fun modeToDesc(context: Context, mode: String) =
+  when (mode) {
+    MODE_PROVIDER -> context.getString(R.string.modeProvider)
+    MODE_LOCAL -> context.getString(R.string.modeLocal)
+    else -> mode
   }
 
 @Composable
 private fun IconPackItem(
   value: String,
   currentValue: String,
-  valueMap: Map<String, IconPack>,
+  valueMap: Map<String, IconPackApp>,
   onClick: () -> Unit,
 ) {
   val selected = value == currentValue

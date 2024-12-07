@@ -9,23 +9,10 @@ import android.preference.PreferenceManager
 import com.richardluo.globalIconPack.BuildConfig
 import de.robv.android.xposed.XSharedPreferences
 
-object PrefKey {
-  const val ICON_PACK = "iconPack"
-  const val NO_FORCE_SHAPE = "noForceShape"
-  const val ICON_PACK_AS_FALLBACK = "iconPackAsFallback"
-
-  const val SCALE = "scale"
-  const val FORCE_LOAD_CLOCK_AND_CALENDAR = "forceLoadClockAndCalendar"
-
-  const val ICON_FALLBACK = "iconFallback"
-  const val OVERRIDE_ICON_FALLBACK = "overrideIconFallback"
-  const val ICON_PACK_SCALE = "iconPackScale"
-}
-
 object WorldPreference {
   private lateinit var pref: SharedPreferences
 
-  fun getReadablePref(): SharedPreferences {
+  fun getPrefInMod(): SharedPreferences {
     if (!WorldPreference::pref.isInitialized)
       pref =
         XSharedPreferences(BuildConfig.APPLICATION_ID).also {
@@ -36,7 +23,7 @@ object WorldPreference {
   }
 
   @SuppressLint("WorldReadableFiles")
-  fun getWritablePref(context: Context): SharedPreferences {
+  fun getPrefInApp(context: Context): SharedPreferences {
     if (!WorldPreference::pref.isInitialized)
       pref =
         context.getSharedPreferences(

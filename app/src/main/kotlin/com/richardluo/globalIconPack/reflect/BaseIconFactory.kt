@@ -1,5 +1,6 @@
 package com.richardluo.globalIconPack.reflect
 
+import com.richardluo.globalIconPack.utils.ReflectHelper
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 import java.lang.reflect.Method
 

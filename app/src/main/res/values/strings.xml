@@ -2,6 +2,9 @@
     <string name="appName">Global Icon Pack</string>
 
     <string name="general">General</string>
+    <string name="mode">Mode</string>
+    <string name="modeProvider">Provider mode: This app supplies data to hooked apps.</string>
+    <string name="modeLocal">Local mode: Hooked apps reload icon pack on each launch.</string>
     <string name="iconPack">Icon pack</string>
     <string name="iconPackSummary">The package name to be used as icon pack.</string>
     <string name="noForceShape">No force shape</string>

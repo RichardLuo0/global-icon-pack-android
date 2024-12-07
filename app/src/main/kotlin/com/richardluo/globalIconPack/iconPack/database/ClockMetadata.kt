@@ -1,4 +1,4 @@
-package com.richardluo.globalIconPack.iconPack
+package com.richardluo.globalIconPack.iconPack.database
 
 data class ClockMetadata(
   val hourLayerIndex: Int,

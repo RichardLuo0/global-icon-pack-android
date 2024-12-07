@@ -1,15 +1,17 @@
 package com.richardluo.globalIconPack.utils
 
-import android.app.Application
+import android.app.AndroidAppHelper
 import android.util.Log
 import de.robv.android.xposed.XposedBridge
 
 private const val TAG = "[Global Icon Pack]"
 
-val currentProcessName: String by lazy { Application.getProcessName() }
+val currentPackageName: String by lazy { AndroidAppHelper.currentPackageName() }
 
-fun log(text: String) = XposedBridge.log("$TAG $currentProcessName: $text")
+fun log(text: String) = XposedBridge.log("$TAG $currentPackageName: $text")
 
-fun log(t: Throwable) = XposedBridge.log("$TAG $currentProcessName: ${t.stackTraceToString()}")
+fun log(t: Throwable) = XposedBridge.log("$TAG $currentPackageName: ${t.stackTraceToString()}")
 
-fun logInApp(text: String) = Log.e("LSPosed-Bridge", "$TAG $currentProcessName: $text")
+fun logInApp(text: String) = Log.i("LSPosed-Bridge", "$TAG $text")
+
+fun logInApp(t: Throwable) = Log.e("LSPosed-Bridge", "$TAG ${t.stackTraceToString()}")

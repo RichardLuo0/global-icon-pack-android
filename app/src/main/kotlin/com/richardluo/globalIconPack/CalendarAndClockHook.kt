@@ -8,11 +8,10 @@ import android.content.Intent.ACTION_TIMEZONE_CHANGED
 import android.content.Intent.ACTION_TIME_CHANGED
 import android.os.Process
 import android.os.UserManager
-import com.richardluo.globalIconPack.iconPack.IconType
+import com.richardluo.globalIconPack.iconPack.database.IconType
 import com.richardluo.globalIconPack.iconPack.getComponentName
-import com.richardluo.globalIconPack.iconPack.getIp
-import com.richardluo.globalIconPack.reflect.ReflectHelper
-import com.richardluo.globalIconPack.utils.PrefKey
+import com.richardluo.globalIconPack.iconPack.getIP
+import com.richardluo.globalIconPack.utils.ReflectHelper
 import com.richardluo.globalIconPack.utils.WorldPreference
 import com.richardluo.globalIconPack.utils.getAs
 import de.robv.android.xposed.XC_MethodHook
@@ -20,7 +19,7 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 
 class CalendarAndClockHook : Hook {
   override fun onHookPixelLauncher(lpp: LoadPackageParam) {
-    if (!WorldPreference.getReadablePref().getBoolean(PrefKey.NO_FORCE_SHAPE, true)) return
+    if (!WorldPreference.getPrefInMod().getBoolean(PrefKey.NO_FORCE_SHAPE, true)) return
 
     val calendars = mutableSetOf<String>()
     val clocks = mutableSetOf<String>()
@@ -45,7 +44,7 @@ class CalendarAndClockHook : Hook {
       arrayOf(String::class.java, Int::class.java),
       object : XC_MethodHook() {
         override fun beforeHookedMethod(param: MethodHookParam) {
-          val ip = getIp() ?: return
+          val ip = getIP() ?: return
           val packageName = param.args[0] as String
           val iconDpi = param.args[1] as Int
           val entry = ip.getIconEntry(getComponentName(packageName)) ?: return

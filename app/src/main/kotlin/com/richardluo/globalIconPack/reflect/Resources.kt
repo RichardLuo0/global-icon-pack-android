@@ -3,6 +3,8 @@ package com.richardluo.globalIconPack.reflect
 import android.content.res.Resources
 import android.content.res.Resources.Theme
 import android.graphics.drawable.Drawable
+import com.richardluo.globalIconPack.utils.ReflectHelper
+import com.richardluo.globalIconPack.utils.getOrNull
 import com.richardluo.globalIconPack.utils.log
 import de.robv.android.xposed.XposedBridge
 import java.lang.reflect.Method
@@ -18,10 +20,6 @@ object Resources {
     )
   }
 
-  fun getDrawable(thisObj: Resources, resId: Int, theme: Theme?): Drawable? {
-    return getDrawableForDensity(thisObj, resId, 0, theme)
-  }
-
   fun getDrawableForDensity(
     thisObj: Resources,
     resId: Int,
@@ -35,9 +33,6 @@ object Resources {
           arrayOf(resId, iconDpi, theme),
         ) as Drawable
       }
-      .getOrElse {
-        log(it)
-        null
-      }
+      .getOrNull { log(it) }
   }
 }

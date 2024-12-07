@@ -6,16 +6,12 @@ import android.content.pm.PackageItemInfo
 import android.content.pm.ResolveInfo
 import android.graphics.drawable.Drawable
 import com.richardluo.globalIconPack.iconPack.getComponentName
-import com.richardluo.globalIconPack.iconPack.getIp
-import com.richardluo.globalIconPack.iconPack.isIpInitialized
+import com.richardluo.globalIconPack.iconPack.getIP
 import com.richardluo.globalIconPack.reflect.ClockDrawableWrapper
-import com.richardluo.globalIconPack.reflect.ReflectHelper
 import com.richardluo.globalIconPack.reflect.Resources.getDrawableForDensityM
-import com.richardluo.globalIconPack.utils.PrefKey
-import com.richardluo.globalIconPack.utils.WorldPreference
+import com.richardluo.globalIconPack.utils.ReflectHelper
 import com.richardluo.globalIconPack.utils.callOriginalMethod
 import com.richardluo.globalIconPack.utils.isHighTwoByte
-import com.richardluo.globalIconPack.utils.rNEqual
 import com.richardluo.globalIconPack.utils.withHighByteSet
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
@@ -32,27 +28,24 @@ class ReplaceIcon : Hook {
   }
 
   override fun onHookApp(lpp: LoadPackageParam) {
-    val packPackageName = WorldPreference.getReadablePref().getString(PrefKey.ICON_PACK, "") ?: ""
-    val iconPackAsFallback =
-      WorldPreference.getReadablePref().getBoolean(PrefKey.ICON_PACK_AS_FALLBACK, false)
-
     // Resource id always starts with 0x7f, use it to indict that this is an icon
     // Assume the icon res id is only used in getDrawable()
+    val isInReplaceIconResId = ThreadLocal.withInitial { false }
     val replaceIconResId =
       object : XC_MethodHook() {
         override fun afterHookedMethod(param: MethodHookParam) {
+          // Avoid recursive call
+          if (isInReplaceIconResId.get() == true) return
+          isInReplaceIconResId.set(true)
+
           val info = param.thisObject as PackageItemInfo
-          if (info.icon == 0) return
-          // Avoid recursively call getIp()
-          if (isIpInitialized() || info.packageName rNEqual packPackageName)
-            getIp()?.let { ip ->
-              val id =
-                ip.getId(getComponentName(info))
-                  ?: if (iconPackAsFallback) ip.getId(getComponentName(info.packageName))
-                  else return
-              info.icon =
-                id?.let { withHighByteSet(it, IN_IP) } ?: withHighByteSet(info.icon, NOT_IN_IP)
-            }
+          if (info.icon != 0) {
+            info.icon =
+              getIP()?.getId(getComponentName(info))?.let { withHighByteSet(it, IN_IP) }
+                ?: withHighByteSet(info.icon, NOT_IN_IP)
+          }
+
+          isInReplaceIconResId.set(false)
         }
       }
     ReflectHelper.hookAllConstructors(ApplicationInfo::class.java, replaceIconResId)
@@ -89,11 +82,11 @@ class ReplaceIcon : Hook {
             isHighTwoByte(resId, IN_IP) -> {
               val id = withHighByteSet(resId, IP_DEFAULT)
               // Original id has been lost
-              getIp()?.getIcon(id, density)
+              getIP()?.getIcon(id, density)
             }
             isHighTwoByte(resId, NOT_IN_IP) -> {
               param.args[0] = withHighByteSet(resId, ANDROID_DEFAULT)
-              callOriginalMethod<Drawable?>(param)?.let { getIp()?.genIconFrom(it) ?: it }
+              callOriginalMethod<Drawable?>(param)?.let { getIP()?.genIconFrom(it) ?: it }
             }
             else -> callOriginalMethod(param)
           }

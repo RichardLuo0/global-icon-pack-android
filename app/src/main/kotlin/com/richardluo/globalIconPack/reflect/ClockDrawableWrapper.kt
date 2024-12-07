@@ -2,30 +2,25 @@ package com.richardluo.globalIconPack.reflect
 
 import android.graphics.drawable.Drawable
 import android.os.Bundle
-import com.richardluo.globalIconPack.iconPack.ClockMetadata
+import com.richardluo.globalIconPack.iconPack.database.ClockMetadata
+import com.richardluo.globalIconPack.utils.ReflectHelper
 import com.richardluo.globalIconPack.utils.call
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 import java.lang.reflect.Method
 import java.util.function.IntFunction
 
 object ClockDrawableWrapper {
-  private var clazz: Class<*>? = null
-
   private var forExtras: Method? = null
 
   fun initWithPixelLauncher(lpp: LoadPackageParam) {
-    clazz =
-      (clazz ?: ReflectHelper.findClass("com.android.launcher3.icons.ClockDrawableWrapper", lpp))
-        ?.also {
-          forExtras =
-            forExtras
-              ?: ReflectHelper.findMethodFirstMatch(
-                it,
-                "forExtras",
-                Bundle::class.java,
-                IntFunction::class.java,
-              )
-        }
+    forExtras =
+      ReflectHelper.findMethodFirstMatch(
+        "com.android.launcher3.icons.ClockDrawableWrapper",
+        lpp,
+        "forExtras",
+        Bundle::class.java,
+        IntFunction::class.java,
+      )
   }
 
   fun from(drawable: Drawable, metadata: ClockMetadata): Drawable? {

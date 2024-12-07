@@ -42,16 +42,16 @@ inline fun <T1 : Any, T2 : Any, T3 : Any, T4 : Any, R> letAll(
 @Suppress("UNCHECKED_CAST") fun <T> Field.getAs(thisObj: Any?) = get(thisObj) as T
 
 @Suppress("UNCHECKED_CAST")
-fun <T, R> Field.getAs(thisObj: Any?, block: (T) -> R) = block.invoke(get(thisObj) as T)
+inline fun <T, R> Field.getAs(thisObj: Any?, block: (T) -> R) = block.invoke(get(thisObj) as T)
 
 @Suppress("UNCHECKED_CAST")
 fun <T> Method.call(thisObj: Any?, vararg param: Any?) = invoke(thisObj, *param) as T
 
 @Suppress("UNCHECKED_CAST")
-fun <T, R> Method.call(thisObj: Any?, vararg param: Any?, block: (T) -> R) =
+inline fun <T, R> Method.call(thisObj: Any?, vararg param: Any?, block: (T) -> R) =
   block(invoke(thisObj, *param) as T)
 
-fun Method.call(thisObj: Any?, vararg param: Any?, block: () -> Unit) =
+inline fun Method.call(thisObj: Any?, vararg param: Any?, block: () -> Unit) =
   call<Unit, Unit>(thisObj, param) { block() }
 
 infix fun String.rEqual(other: String): Boolean {
@@ -69,3 +69,11 @@ fun <T> Array<T>.rSet(i: Int, obj: T) {
 }
 
 @Suppress("UNCHECKED_CAST") fun <T> Any.asType() = this as T
+
+inline fun <T> Result<T>.getOrNull(block: (Throwable) -> Unit) = getOrElse {
+  block(it)
+  null
+}
+
+inline fun <K, V> MutableMap<K, V?>.getOrPutNullable(key: K, defaultValue: () -> V?) =
+  if (containsKey(key)) get(key) else defaultValue().also { put(key, it) }
