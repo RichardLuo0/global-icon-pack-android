@@ -1,8 +1,10 @@
 package com.richardluo.globalIconPack.ui
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -106,6 +108,12 @@ class MainActivity : ComponentActivity() {
     setContent {
       SampleTheme { ProvidePreferenceLocals(flow = worldPreferenceFlow()) { SampleScreen() } }
     }
+    // Ask for notification permission used for foreground service
+    if (
+      checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) !=
+        PackageManager.PERMISSION_GRANTED
+    )
+      requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 200)
     // Init db
     val ctx = this
     runBlocking { launch { WritableIconPackDB(ctx) } }

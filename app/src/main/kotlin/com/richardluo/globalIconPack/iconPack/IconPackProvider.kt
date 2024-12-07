@@ -3,6 +3,7 @@ package com.richardluo.globalIconPack.iconPack
 import android.content.ComponentName
 import android.content.ContentProvider
 import android.content.ContentValues
+import android.content.Intent
 import android.net.Uri
 import com.richardluo.globalIconPack.iconPack.database.ReadableIconPackDB
 import com.richardluo.globalIconPack.utils.getOrNull
@@ -18,7 +19,7 @@ class IconPackProvider : ContentProvider() {
   }
 
   override fun onCreate(): Boolean {
-    logInApp("IconPackProvider: on create")
+    context!!.startForegroundService(Intent(context!!, KeepAliveService::class.java))
     return true
   }
 
