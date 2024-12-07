@@ -17,6 +17,8 @@ data class FallbackSettings(
     ByteArrayOutputStream().also { ObjectOutputStream(it).writeObject(this) }.toByteArray()
 
   companion object {
+    private const val serialVersionUID = 1L
+
     fun from(data: ByteArray) =
       ObjectInputStream(ByteArrayInputStream(data)).readObject() as FallbackSettings
   }

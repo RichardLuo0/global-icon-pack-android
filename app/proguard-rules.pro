@@ -21,3 +21,5 @@
 #-renamesourcefileattribute SourceFile
 
 -keep class com.richardluo.globalIconPack.XposedMain
+-keep class com.richardluo.globalIconPack.iconPack.database.FallbackSettings
+-keep class com.richardluo.globalIconPack.iconPack.database.IconEntry
