@@ -8,6 +8,7 @@ import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteDatabase.OpenParams
 import android.database.sqlite.SQLiteOpenHelper
 import android.database.sqlite.SQLiteStatement
+import com.richardluo.globalIconPack.MODE_PROVIDER
 import com.richardluo.globalIconPack.PrefKey
 import com.richardluo.globalIconPack.iconPack.IconPackApps
 import com.richardluo.globalIconPack.iconPack.loadIconPack
@@ -32,6 +33,7 @@ class WritableIconPackDB(private val context: Context, path: String = "iconPack.
   }
 
   override fun onSharedPreferenceChanged(pref: SharedPreferences, key: String?) {
+    if (pref.getString(PrefKey.MODE, MODE_PROVIDER) != MODE_PROVIDER) return
     if (key != PrefKey.ICON_PACK) return
     val pack =
       pref.getString(PrefKey.ICON_PACK, "")?.takeIf { it.isNotEmpty() }
