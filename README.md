@@ -18,8 +18,7 @@ This module is designed to extend the customization of icon packs throughout the
 5. Recent screen will use your default launcher unless you use quickswitch. So you will need to select pixel launcher for that to work.
 
 ## Known Issues
-* ~~When clicking an app, Pixel Launcher triggers an animation, whose starting frame displays an icon with a white border.~~
-* ~~Currently, this does not apply to the Clock and Calendar apps.~~
+* If the launcher is slow to boot or crashes, switch to 'local' mode.
 
 ## Disclaimer
 > [!WARNING]
