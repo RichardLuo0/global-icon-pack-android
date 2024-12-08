@@ -1,5 +1,6 @@
 package com.richardluo.globalIconPack.utils
 
+import android.content.SharedPreferences
 import androidx.annotation.CheckResult
 import de.robv.android.xposed.XC_MethodHook.MethodHookParam
 import de.robv.android.xposed.XposedBridge
@@ -77,3 +78,10 @@ inline fun <T> Result<T>.getOrNull(block: (Throwable) -> Unit) = getOrElse {
 
 inline fun <K, V> MutableMap<K, V?>.getOrPutNullable(key: K, defaultValue: () -> V?) =
   if (containsKey(key)) get(key) else defaultValue().also { put(key, it) }
+
+fun SharedPreferences.registerAndCallOnSharedPreferenceChangeListener(
+  listener: SharedPreferences.OnSharedPreferenceChangeListener,
+  key: String,
+) =
+  also { listener.onSharedPreferenceChanged(it, key) }
+    .registerOnSharedPreferenceChangeListener(listener)

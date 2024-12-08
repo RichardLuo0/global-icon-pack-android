@@ -10,6 +10,7 @@ import android.content.Intent
 import android.content.pm.ServiceInfo
 
 private const val CHANNEL_ID: String = "IconPackProvider"
+private const val STOP_FOREGROUND: String = "STOP_FOREGROUND"
 
 class KeepAliveService : Service() {
 
@@ -17,15 +18,26 @@ class KeepAliveService : Service() {
     fun startForeground(context: Context) {
       runCatching { context.startForegroundService(Intent(context, KeepAliveService::class.java)) }
     }
+
+    fun stopForeground(context: Context) {
+      context.startService(
+        Intent(context, KeepAliveService::class.java).apply { action = STOP_FOREGROUND }
+      )
+    }
   }
 
   override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-    createNotificationChannel()
-    val builder: Notification.Builder =
-      Notification.Builder(this, CHANNEL_ID)
-        .setContentTitle("Providing icon pack to hooked apps")
-        .setAutoCancel(true)
-    startForeground(1, builder.build(), ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
+    when (intent?.action) {
+      STOP_FOREGROUND -> stopForeground(STOP_FOREGROUND_REMOVE)
+      else -> {
+        createNotificationChannel()
+        val builder: Notification.Builder =
+          Notification.Builder(this, CHANNEL_ID)
+            .setContentTitle("Providing icon pack to hooked apps")
+            .setAutoCancel(true)
+        startForeground(1, builder.build(), ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
+      }
+    }
     return START_STICKY
   }
 
@@ -43,6 +55,9 @@ class KeepAliveService : Service() {
 class BootReceiver : BroadcastReceiver() {
 
   override fun onReceive(context: Context, intent: Intent?) {
-    if (intent?.action == Intent.ACTION_BOOT_COMPLETED) KeepAliveService.startForeground(context)
+    when (intent?.action) {
+      Intent.ACTION_BOOT_COMPLETED,
+      Intent.ACTION_LOCKED_BOOT_COMPLETED -> KeepAliveService.startForeground(context)
+    }
   }
 }

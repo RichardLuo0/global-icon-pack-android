@@ -19,6 +19,7 @@
     <application
         android:allowBackup="false"
         android:dataExtractionRules="@xml/data_extraction_rules"
+        android:directBootAware="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/appName"
         android:roundIcon="@mipmap/ic_launcher_round"
@@ -51,22 +52,26 @@
         <provider
             android:name=".iconPack.IconPackProvider"
             android:authorities="com.richardluo.globalIconPack.IconPackProvider"
+            android:directBootAware="true"
             android:exported="true"
             tools:ignore="ExportedContentProvider" />
         <service
             android:name=".iconPack.KeepAliveService"
+            android:directBootAware="true"
             android:foregroundServiceType="specialUse">
             <property
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="To keep icon pack provider alive" />
         </service>
+        <!-- Start service on boot in provider mode -->
         <receiver
             android:name=".iconPack.BootReceiver"
+            android:directBootAware="true"
             android:exported="true">
             <intent-filter android:priority="999">
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
             </intent-filter>
         </receiver>
     </application>
-
 </manifest>

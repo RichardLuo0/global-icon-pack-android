@@ -5,36 +5,27 @@ import android.content.ContentValues
 import android.content.Context
 import android.content.SharedPreferences
 import android.database.sqlite.SQLiteDatabase
-import android.database.sqlite.SQLiteDatabase.OpenParams
 import android.database.sqlite.SQLiteOpenHelper
 import android.database.sqlite.SQLiteStatement
 import com.richardluo.globalIconPack.MODE_PROVIDER
 import com.richardluo.globalIconPack.PrefKey
 import com.richardluo.globalIconPack.iconPack.IconPackApps
 import com.richardluo.globalIconPack.iconPack.loadIconPack
-import com.richardluo.globalIconPack.utils.WorldPreference
 import com.richardluo.globalIconPack.utils.logInApp
-import java.io.File
 
 data class Icon(val componentName: ComponentName, val entry: IconEntry)
 
-class WritableIconPackDB(private val context: Context, path: String = "iconPack.db") :
-  SQLiteOpenHelper(context, path, null, 1), SharedPreferences.OnSharedPreferenceChangeListener {
-  private val db by lazy { writableDatabase }
-
-  init {
-    WorldPreference.getPrefInApp(context)
-      .also { onSharedPreferenceChanged(it, PrefKey.ICON_PACK) }
-      .registerOnSharedPreferenceChangeListener(this)
-  }
+class IconPackDB(private val context: Context, path: String = "iconPack.db") :
+  SQLiteOpenHelper(context.createDeviceProtectedStorageContext(), path, null, 1),
+  SharedPreferences.OnSharedPreferenceChangeListener {
 
   override fun onCreate(db: SQLiteDatabase) {
     db.execSQL("CREATE TABLE IF NOT EXISTS \"fallbacks\" (pack TEXT PRIMARY KEY, fallback BLOB)")
   }
 
   override fun onSharedPreferenceChanged(pref: SharedPreferences, key: String?) {
-    if (pref.getString(PrefKey.MODE, MODE_PROVIDER) != MODE_PROVIDER) return
     if (key != PrefKey.ICON_PACK) return
+    if (pref.getString(PrefKey.MODE, MODE_PROVIDER) != MODE_PROVIDER) return
     val pack =
       pref.getString(PrefKey.ICON_PACK, "")?.takeIf { it.isNotEmpty() }
         ?: run {
@@ -42,10 +33,16 @@ class WritableIconPackDB(private val context: Context, path: String = "iconPack.
           return
         }
     val packUpdateTime = context.packageManager.getPackageInfo(pack, 0).lastUpdateTime
-    db.rawQuery("select DISTINCT tbl_name from sqlite_master where tbl_name=?", arrayOf(pack)).use {
-      if (it.count > 0 && packUpdateTime < context.getDatabasePath(db.path).lastModified()) return
-    }
-    db.apply {
+    writableDatabase
+      .rawQuery("select DISTINCT tbl_name from sqlite_master where tbl_name=?", arrayOf(pack))
+      .use {
+        if (
+          it.count > 0 &&
+            packUpdateTime < context.getDatabasePath(writableDatabase.path).lastModified()
+        )
+          return
+      }
+    writableDatabase.apply {
       beginTransaction()
       // Create tables
       execSQL("CREATE TABLE IF NOT EXISTS \"$pack\" (packageName TEXT, className TEXT, entry BLOB)")
@@ -81,8 +78,11 @@ class WritableIconPackDB(private val context: Context, path: String = "iconPack.
     logInApp("database: $pack updated")
   }
 
+  fun getFallbackSettings(pack: String) =
+    readableDatabase.query("fallbacks", null, "pack=?", arrayOf(pack), null, null, null, "1")
+
   fun insertFallbackSettings(pack: String, fs: FallbackSettings) {
-    db.insertWithOnConflict(
+    writableDatabase.insertWithOnConflict(
       "fallbacks",
       null,
       ContentValues().apply {
@@ -93,10 +93,30 @@ class WritableIconPackDB(private val context: Context, path: String = "iconPack.
     )
   }
 
+  private fun getIconExact(pack: String, cn: ComponentName) =
+    readableDatabase.rawQuery(
+      "SELECT entry FROM \"$pack\" WHERE packageName=? and className=? LIMIT 1",
+      arrayOf(cn.packageName, cn.className),
+    )
+
+  private fun getIconFallback(pack: String, cn: ComponentName) =
+    readableDatabase.rawQuery(
+      "SELECT entry FROM \"$pack\" WHERE packageName=? ORDER BY " +
+        "CASE " +
+        "  WHEN className = \"${cn.className}\" THEN 1 " +
+        "  WHEN className = \"\" THEN 2 " +
+        "  ELSE 3 " +
+        "END LIMIT 1",
+      arrayOf(cn.packageName),
+    )
+
+  fun getIcon(pack: String, cn: ComponentName, fallback: Boolean = false) =
+    if (fallback) getIconFallback(pack, cn) else getIconExact(pack, cn)
+
   fun insertIcon(pack: String, icons: List<Icon>) {
     val insertIcon: SQLiteStatement =
-      db.compileStatement("INSERT OR REPLACE INTO \"$pack\" VALUES(?, ?, ?)")
-    db.apply {
+      writableDatabase.compileStatement("INSERT OR REPLACE INTO \"$pack\" VALUES(?, ?, ?)")
+    writableDatabase.apply {
       beginTransaction()
       runCatching {
         for (icon in icons) {
@@ -116,35 +136,4 @@ class WritableIconPackDB(private val context: Context, path: String = "iconPack.
   }
 
   override fun onUpgrade(db: SQLiteDatabase?, oldVersion: Int, newVersion: Int) {}
-}
-
-class ReadableIconPackDB(file: File) {
-  private val db =
-    SQLiteDatabase.openDatabase(
-      file,
-      OpenParams.Builder().setOpenFlags(SQLiteDatabase.OPEN_READONLY).build(),
-    )
-
-  fun getFallbackSettings(pack: String) =
-    db.query("fallbacks", null, "pack=?", arrayOf(pack), null, null, null, "1")
-
-  private fun getIconExact(pack: String, cn: ComponentName) =
-    db.rawQuery(
-      "SELECT entry FROM \"$pack\" WHERE packageName=? and className=? LIMIT 1",
-      arrayOf(cn.packageName, cn.className),
-    )
-
-  private fun getIconFallback(pack: String, cn: ComponentName) =
-    db.rawQuery(
-      "SELECT entry FROM \"$pack\" WHERE packageName=? ORDER BY " +
-        "CASE " +
-        "  WHEN className = \"${cn.className}\" THEN 1 " +
-        "  WHEN className = \"\" THEN 2 " +
-        "  ELSE 3 " +
-        "END LIMIT 1",
-      arrayOf(cn.packageName),
-    )
-
-  fun getIcon(pack: String, cn: ComponentName, fallback: Boolean = false) =
-    if (fallback) getIconFallback(pack, cn) else getIconExact(pack, cn)
 }

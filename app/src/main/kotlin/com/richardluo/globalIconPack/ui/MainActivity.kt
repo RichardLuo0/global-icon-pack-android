@@ -1,10 +1,8 @@
 package com.richardluo.globalIconPack.ui
 
-import android.Manifest
-import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
+import android.content.SharedPreferences
 import android.net.Uri
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -71,14 +69,11 @@ import com.richardluo.globalIconPack.PrefKey
 import com.richardluo.globalIconPack.R
 import com.richardluo.globalIconPack.iconPack.IconPackApp
 import com.richardluo.globalIconPack.iconPack.IconPackApps
-import com.richardluo.globalIconPack.iconPack.database.WritableIconPackDB
 import com.richardluo.globalIconPack.utils.WorldPreference
 import com.richardluo.globalIconPack.utils.logInApp
+import com.richardluo.globalIconPack.utils.registerAndCallOnSharedPreferenceChangeListener
 import com.topjohnwu.superuser.Shell
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import me.zhanghai.compose.preference.Preferences
 import me.zhanghai.compose.preference.ProvidePreferenceLocals
 import me.zhanghai.compose.preference.SwitchPreference
 import me.zhanghai.compose.preference.getPreferenceFlow
@@ -88,13 +83,6 @@ import me.zhanghai.compose.preference.rememberPreferenceState
 import me.zhanghai.compose.preference.sliderPreference
 import me.zhanghai.compose.preference.switchPreference
 
-@Composable
-@SuppressLint("WorldReadableFiles")
-private fun worldPreferenceFlow(): MutableStateFlow<Preferences> {
-  val context = LocalContext.current
-  return WorldPreference.getPrefInApp(context).getPreferenceFlow()
-}
-
 class MainActivity : ComponentActivity() {
 
   companion object {
@@ -103,20 +91,21 @@ class MainActivity : ComponentActivity() {
     }
   }
 
+  private lateinit var pref: SharedPreferences
+  private val modeChangeListener = ModeChangeListener(this)
+
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
+    pref = WorldPreference.getPrefInApp(this)
+    pref.registerAndCallOnSharedPreferenceChangeListener(modeChangeListener, PrefKey.MODE)
     setContent {
-      SampleTheme { ProvidePreferenceLocals(flow = worldPreferenceFlow()) { SampleScreen() } }
+      SampleTheme { ProvidePreferenceLocals(flow = pref.getPreferenceFlow()) { SampleScreen() } }
     }
-    // Ask for notification permission used for foreground service
-    if (
-      checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) !=
-        PackageManager.PERMISSION_GRANTED
-    )
-      requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 200)
-    // Init db
-    val ctx = this
-    runBlocking { launch { WritableIconPackDB(ctx) } }
+  }
+
+  override fun onDestroy() {
+    super.onDestroy()
+    pref.unregisterOnSharedPreferenceChangeListener(modeChangeListener)
   }
 }
 

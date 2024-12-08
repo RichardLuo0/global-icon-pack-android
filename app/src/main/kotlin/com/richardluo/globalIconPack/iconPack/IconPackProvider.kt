@@ -3,13 +3,14 @@ package com.richardluo.globalIconPack.iconPack
 import android.content.ComponentName
 import android.content.ContentProvider
 import android.content.ContentValues
+import android.database.Cursor
 import android.net.Uri
-import com.richardluo.globalIconPack.iconPack.database.ReadableIconPackDB
+import com.richardluo.globalIconPack.iconPack.database.IconPackDB
 import com.richardluo.globalIconPack.utils.getOrNull
 import com.richardluo.globalIconPack.utils.logInApp
 
 class IconPackProvider : ContentProvider() {
-  private val iconPackDB by lazy { ReadableIconPackDB(context!!.getDatabasePath("iconPack.db")) }
+  private val iconPackDB by lazy { IconPackDB(context!!) }
 
   companion object {
     const val AUTHORITIES = "com.richardluo.globalIconPack.IconPackProvider"
@@ -18,7 +19,6 @@ class IconPackProvider : ContentProvider() {
   }
 
   override fun onCreate(): Boolean {
-    KeepAliveService.startForeground(context!!)
     return true
   }
 
@@ -28,8 +28,9 @@ class IconPackProvider : ContentProvider() {
     selection: String?,
     selectionArgs: Array<out String>?,
     sortOrder: String?,
-  ) =
-    when (uri.path?.removePrefix("/")) {
+  ): Cursor? {
+    startForegroundAsNeeded()
+    return when (uri.path?.removePrefix("/")) {
       FALLBACKS ->
         if (selectionArgs != null && selectionArgs.isNotEmpty())
           runCatching { iconPackDB.getFallbackSettings(selectionArgs[0]) }
@@ -48,6 +49,16 @@ class IconPackProvider : ContentProvider() {
         else null
       else -> null
     }
+  }
+
+  private var isServiceStarted = false
+
+  private fun startForegroundAsNeeded() {
+    if (!isServiceStarted) {
+      KeepAliveService.startForeground(context!!)
+      isServiceStarted = true
+    }
+  }
 
   override fun getType(uri: Uri): String? = null
 
