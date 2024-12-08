@@ -8,24 +8,30 @@ android {
     namespace 'com.richardluo.globalIconPack'
     compileSdk 35
 
+    def versionProps = new Properties()
+    versionProps.load(new FileInputStream("$project.rootDir/version.properties"))
+    int major = versionProps['majorVersion'] as Integer
+    int minor = versionProps['minorVersion'] as Integer
+    int patch = versionProps['patchVersion'] as Integer
+
     defaultConfig {
         applicationId "com.richardluo.globalIconPack"
         minSdk 34
         targetSdk 35
-        versionCode 1
-        versionName "1.0"
+        versionCode major * 10000 + minor * 100 + patch
+        versionName "${major}.${minor}.${patch}"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
-    def keystoreProperties = new Properties()
-    keystoreProperties.load(new FileInputStream("keystore.properties"))
+    def keystoreProps = new Properties()
+    keystoreProps.load(new FileInputStream("$project.rootDir/keystore.properties"))
     signingConfigs {
         release {
-            keyAlias keystoreProperties['keyAlias']
-            keyPassword keystoreProperties['keyPassword']
-            storeFile file(keystoreProperties['storeFile'])
-            storePassword keystoreProperties['storePassword']
+            keyAlias keystoreProps['keyAlias']
+            keyPassword keystoreProps['keyPassword']
+            storeFile file(keystoreProps['storeFile'])
+            storePassword keystoreProps['storePassword']
         }
     }
 

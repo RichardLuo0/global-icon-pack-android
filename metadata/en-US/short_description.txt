@@ -1,0 +1,1 @@
+An Xposed module for applying icon packs globally

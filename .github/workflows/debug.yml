@@ -1,4 +1,4 @@
-name: Testing CI
+name: Debug CI
 
 on:
   push:
@@ -18,6 +18,10 @@ jobs:
           distribution: 'temurin'
           cache: gradle
 
+      - uses: ashutoshgngwr/validate-fastlane-supply-metadata@v2
+        with:
+          fastlaneDir: ./metadata
+
       - name: Write sign info
         run: |
           if [ ! -z "${{ secrets.KEYSTORE }}" ]; then
@@ -29,7 +33,7 @@ jobs:
           fi
 
       - name: Build with Gradle
-        run: gradle assembleRelease
+        run: gradle assembleDebug
 
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v4
