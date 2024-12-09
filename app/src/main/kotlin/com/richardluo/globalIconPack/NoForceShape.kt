@@ -10,6 +10,7 @@ import com.richardluo.globalIconPack.reflect.BaseIconFactory
 import com.richardluo.globalIconPack.reflect.BaseIconFactory.getNormalizer
 import com.richardluo.globalIconPack.utils.IconHelper
 import com.richardluo.globalIconPack.utils.ReflectHelper
+import com.richardluo.globalIconPack.utils.UnClipAdaptiveIconDrawable
 import com.richardluo.globalIconPack.utils.WorldPreference.getPrefInMod
 import com.richardluo.globalIconPack.utils.asType
 import com.richardluo.globalIconPack.utils.call
