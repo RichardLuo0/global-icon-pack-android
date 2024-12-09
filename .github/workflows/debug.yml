@@ -14,7 +14,7 @@ jobs:
       - name: set up JDK
         uses: actions/setup-java@v4
         with:
-          java-version: '19'
+          java-version: '21'
           distribution: 'temurin'
           cache: gradle
 
@@ -33,7 +33,7 @@ jobs:
           fi
 
       - name: Build with Gradle
-        run: gradle assembleDebug
+        run: chmod +x gradlew && ./gradlew assembleDebug
 
       - name: Upload a Build Artifact
         uses: actions/upload-artifact@v4
