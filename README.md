@@ -1,9 +1,20 @@
 # global-icon-pack-android
-An xposed module to apply icon pack globally
+An Xposed module for applying icon packs globally
+
+![GitHub Repo stars](https://img.shields.io/github/stars/RichardLuo0/global-icon-pack-android?style=for-the-badge&color=%23FF9800)
+![IzzyOnDroid](https://img.shields.io/endpoint?url=https://apt.izzysoft.de/fdroid/api/v1/shield/com.richardluo.globalIconPack&style=for-the-badge&color=%234CAF50)
 
 Some launchers support icon packs. However the icons are usually not consistent across the whole system. For example, while the app icons may change on the home screen, the Settings page and the Recent Apps screen often retain the default icons, not reflecting the updated look.
 
 This module is designed to extend the customization of icon packs throughout the entire system.
+
+[<img src="https://gitlab.com/IzzyOnDroid/repo/-/raw/master/assets/IzzyOnDroid.png" alt="Get it on IzzyOnDroid" height="80">](https://apt.izzysoft.de/fdroid/index/apk/com.richardluo.globalIconPack)
+
+## Preview
+<img src="metadata/en-US/images/phoneScreenshots/1.png" width="200" /> |
+<img src="metadata/en-US/images/phoneScreenshots/2.png" width="200" /> |
+<img src="metadata/en-US/images/phoneScreenshots/3.png" width="200" /> |
+<img src="metadata/en-US/images/phoneScreenshots/4.png" width="200" />
 
 ## Requirements
 * AOSP based OS (I tested on android 14, 15)
