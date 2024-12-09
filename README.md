@@ -11,9 +11,9 @@ This module is designed to extend the customization of icon packs throughout the
 [<img src="https://gitlab.com/IzzyOnDroid/repo/-/raw/master/assets/IzzyOnDroid.png" alt="Get it on IzzyOnDroid" height="80">](https://apt.izzysoft.de/fdroid/index/apk/com.richardluo.globalIconPack)
 
 ## Preview
-<img src="metadata/en-US/images/phoneScreenshots/1.png" width="200" /> |
-<img src="metadata/en-US/images/phoneScreenshots/2.png" width="200" /> |
-<img src="metadata/en-US/images/phoneScreenshots/3.png" width="200" /> |
+<img src="metadata/en-US/images/phoneScreenshots/1.png" width="200" />
+<img src="metadata/en-US/images/phoneScreenshots/2.png" width="200" />
+<img src="metadata/en-US/images/phoneScreenshots/3.png" width="200" />
 <img src="metadata/en-US/images/phoneScreenshots/4.png" width="200" />
 
 ## Requirements
