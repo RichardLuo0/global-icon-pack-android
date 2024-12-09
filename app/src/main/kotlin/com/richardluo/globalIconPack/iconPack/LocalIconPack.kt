@@ -48,11 +48,11 @@ class LocalIconPack(
 }
 
 data class IconPackInfo(
-  val iconBacks: List<String>,
-  val iconUpons: List<String>,
-  val iconMasks: List<String>,
-  val iconScale: Float,
-  val iconEntryMap: MutableMap<ComponentName, IconEntry>,
+  val iconBacks: MutableList<String> = mutableListOf(),
+  val iconUpons: MutableList<String> = mutableListOf(),
+  val iconMasks: MutableList<String> = mutableListOf(),
+  var iconScale: Float = 1f,
+  val iconEntryMap: MutableMap<ComponentName, IconEntry> = mutableMapOf(),
 )
 
 @SuppressLint("DiscouragedApi")
@@ -62,11 +62,8 @@ internal fun loadIconPack(
   iconFallback: Boolean,
   isInMod: Boolean = false,
 ): IconPackInfo? {
-  val iconBacks = mutableListOf<String>()
-  val iconUpons = mutableListOf<String>()
-  val iconMasks = mutableListOf<String>()
-  var iconScale = 1f
-  val iconEntryMap = mutableMapOf<ComponentName, IconEntry>()
+  val info = IconPackInfo()
+  val iconEntryMap = info.iconEntryMap
 
   val parseXml = getXml(resources, pack, "appfilter") ?: return null
   val compStart = "ComponentInfo{"
@@ -105,12 +102,12 @@ internal fun loadIconPack(
     while (parseXml.next() != XmlPullParser.END_DOCUMENT) {
       if (parseXml.eventType != XmlPullParser.START_TAG) continue
       when (parseXml.name) {
-        "iconback" -> addFallback(parseXml, iconBacks)
-        "iconupon" -> addFallback(parseXml, iconUpons)
-        "iconmask" -> addFallback(parseXml, iconMasks)
+        "iconback" -> addFallback(parseXml, info.iconBacks)
+        "iconupon" -> addFallback(parseXml, info.iconUpons)
+        "iconmask" -> addFallback(parseXml, info.iconMasks)
         "scale" -> {
           if (!iconFallback) continue
-          iconScale = parseXml.getAttributeValue(null, "factor")?.toFloatOrNull() ?: 1f
+          info.iconScale = parseXml.getAttributeValue(null, "factor")?.toFloatOrNull() ?: 1f
         }
         "item" -> addIcon(parseXml, IconType.Normal)
         "calendar" -> addIcon(parseXml, IconType.Calendar)
@@ -140,7 +137,7 @@ internal fun loadIconPack(
   } catch (e: Exception) {
     if (isInMod) log(e) else logInApp(e)
   }
-  return IconPackInfo(iconBacks, iconUpons, iconMasks, iconScale, iconEntryMap)
+  return info
 }
 
 @SuppressLint("DiscouragedApi")
