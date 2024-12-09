@@ -1,4 +1,6 @@
-# global-icon-pack-android
+ <img width="200" height="200" style="display: block; border-radius: 9999px;" src="metadata/en-US/images/logo.png">
+
+# Global Icon Pack
 An Xposed module for applying icon packs globally
 
 ![GitHub Repo stars](https://img.shields.io/github/stars/RichardLuo0/global-icon-pack-android?style=for-the-badge&color=%23FF9800)
@@ -11,10 +13,12 @@ This module is designed to extend the customization of icon packs throughout the
 [<img src="https://gitlab.com/IzzyOnDroid/repo/-/raw/master/assets/IzzyOnDroid.png" alt="Get it on IzzyOnDroid" height="80">](https://apt.izzysoft.de/fdroid/index/apk/com.richardluo.globalIconPack)
 
 ## Preview
-<img src="metadata/en-US/images/phoneScreenshots/1.png" width="200" />
-<img src="metadata/en-US/images/phoneScreenshots/2.png" width="200" />
-<img src="metadata/en-US/images/phoneScreenshots/3.png" width="200" />
-<img src="metadata/en-US/images/phoneScreenshots/4.png" width="200" />
+<div>
+    <img src="metadata/en-US/images/phoneScreenshots/1.png" width="200" />
+    <img src="metadata/en-US/images/phoneScreenshots/2.png" width="200" />
+    <img src="metadata/en-US/images/phoneScreenshots/3.png" width="200" />
+    <img src="metadata/en-US/images/phoneScreenshots/4.png" width="200" />
+</div>
 
 ## Requirements
 * AOSP based OS (I tested on android 14, 15)
