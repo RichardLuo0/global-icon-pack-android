@@ -1,4 +1,4 @@
- <img width="200" height="200" style="display: block; border-radius: 9999px;" src="metadata/en-US/images/logo.png">
+ <img width="200" height="200" style="display: block; border-radius: 9999px;" src="metadata/en-US/images/icon.png">
 
 # Global Icon Pack
 An Xposed module for applying icon packs globally
