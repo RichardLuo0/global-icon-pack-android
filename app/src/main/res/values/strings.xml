@@ -28,6 +28,7 @@
     <string name="restartSystemUI">Restart SystemUI</string>
     <string name="restartPixelLauncher">Clear DB &amp; Restart Pixel Launcher</string>
     <string name="restartOthers">Restart Others</string>
+    <string name="openCrowdin">Help with localization</string>
     <string name="openGithub">Github</string>
     <string name="RestartedSuccessfully">Restarted successfully</string>
 </resources>

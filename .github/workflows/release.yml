@@ -4,11 +4,15 @@ on:
   workflow_dispatch:
 
 jobs:
+  download-translation:
+    uses: ./crowdin_download.yml
+
   build:
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
+
       - name: set up JDK
         uses: actions/setup-java@v4
         with:

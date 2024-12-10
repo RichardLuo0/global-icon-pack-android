@@ -84,6 +84,18 @@ fun MainDropdownMenu(snackbarState: SnackbarHostState) {
         ),
     )
     DropdownMenuItem(
+      text = { Text(stringResource(R.string.openCrowdin)) },
+      onClick = {
+        context.startActivity(
+          Intent(
+            Intent.ACTION_VIEW,
+            Uri.parse("https://crowdin.com/project/global-icon-pack-android"),
+          )
+        )
+        expanded = false
+      },
+    )
+    DropdownMenuItem(
       text = { Text(stringResource(R.string.openGithub)) },
       onClick = {
         context.startActivity(
