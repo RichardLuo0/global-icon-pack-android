@@ -5,7 +5,7 @@ on:
 
 jobs:
   download-translation:
-    uses: .github/workflows/crowdin_download.yml
+    uses: ./.github/workflows/crowdin_download.yml
 
   build:
     runs-on: ubuntu-latest
