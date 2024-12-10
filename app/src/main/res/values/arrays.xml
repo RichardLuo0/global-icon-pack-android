@@ -7,5 +7,7 @@
         <item>com.android.systemui</item>
         <!--share menu-->
         <item>com.android.intentresolver</item>
+        <!--permission controller-->
+        <item>com.android.permissioncontroller</item>
     </string-array>
 </resources>
