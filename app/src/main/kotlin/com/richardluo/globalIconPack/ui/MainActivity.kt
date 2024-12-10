@@ -287,64 +287,9 @@ fun SampleScreen() {
   }
 }
 
-fun modeToDesc(context: Context, mode: String) =
+private fun modeToDesc(context: Context, mode: String) =
   when (mode) {
     MODE_PROVIDER -> context.getString(R.string.modeProvider)
     MODE_LOCAL -> context.getString(R.string.modeLocal)
     else -> mode
   }
-
-@Composable
-private fun IconPackItem(
-  value: String,
-  currentValue: String,
-  valueMap: Map<String, IconPackApp>,
-  onClick: () -> Unit,
-) {
-  val selected = value == currentValue
-  val iconPack = valueMap[value]
-  Row(
-    modifier =
-      Modifier.fillMaxWidth()
-        .height(IntrinsicSize.Min)
-        .selectable(selected, true, Role.RadioButton, onClick)
-        .padding(horizontal = 24.dp, vertical = 8.dp),
-    verticalAlignment = Alignment.CenterVertically,
-  ) {
-    RadioButton(selected = selected, onClick = null)
-    Spacer(modifier = Modifier.width(12.dp))
-    Box(modifier = Modifier.fillMaxHeight().aspectRatio(1f)) {
-      iconPack?.icon?.let {
-        Image(
-          bitmap = it.toBitmap().asImageBitmap(),
-          contentDescription = value,
-          modifier = Modifier.matchParentSize(),
-          contentScale = ContentScale.Crop,
-        )
-      }
-        ?: Image(
-          painter = painterResource(android.R.drawable.sym_def_app_icon),
-          contentDescription = value,
-          modifier = Modifier.matchParentSize(),
-          contentScale = ContentScale.Crop,
-        )
-    }
-    Spacer(modifier = Modifier.width(12.dp))
-    Column(modifier = Modifier.fillMaxWidth()) {
-      Text(
-        iconPack?.label ?: "Unknown label",
-        color = MaterialTheme.colorScheme.onSurface,
-        style = MaterialTheme.typography.bodyLarge,
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis,
-      )
-      Text(
-        value,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        style = MaterialTheme.typography.bodyMedium,
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis,
-      )
-    }
-  }
-}
