@@ -6,16 +6,25 @@ on:
   workflow_dispatch:
 
 jobs:
-  download-translation:
-    uses: ./.github/workflows/crowdin_download.yml
-
   build:
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
 
-      - name: set up JDK
+      - name: Download translations
+        uses: crowdin/github-action@v2
+        with:
+          upload_translations: false
+          upload_sources: false
+          download_translations: true
+          create_pull_request: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CROWDIN_PROJECT_ID: ${{ secrets.CROWDIN_PROJECT_ID }}
+          CROWDIN_PERSONAL_TOKEN: ${{ secrets.CROWDIN_PERSONAL_TOKEN }}
+
+      - name: Set up JDK
         uses: actions/setup-java@v4
         with:
           java-version: '21'
