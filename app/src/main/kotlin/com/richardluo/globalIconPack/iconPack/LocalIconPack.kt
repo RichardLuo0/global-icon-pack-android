@@ -26,13 +26,6 @@ class LocalIconPack(
   private val indexMap = mutableMapOf<ComponentName, Int>()
   private val iconEntryList = mutableListOf<IconEntry?>()
 
-  override fun getIconEntry(cn: ComponentName) = indexMap[cn]?.let { iconEntryList.getOrNull(it) }
-
-  override fun getIconEntry(id: Int): IconEntry? = iconEntryList.getOrNull(id)
-
-  override fun getId(cn: ComponentName) =
-    indexMap[cn] ?: if (iconPackAsFallback) indexMap[getComponentName(cn.packageName)] else null
-
   init {
     loadIconPack(resources, pack, iconFallback, isInMod)?.let { info ->
       this.iconBacks = info.iconBacks.mapNotNull { getIcon(it)?.toBitmap() }
@@ -45,6 +38,13 @@ class LocalIconPack(
       }
     }
   }
+
+  override fun getIconEntry(cn: ComponentName) = indexMap[cn]?.let { iconEntryList.getOrNull(it) }
+
+  override fun getIconEntry(id: Int): IconEntry? = iconEntryList.getOrNull(id)
+
+  override fun getId(cn: ComponentName) =
+    indexMap[cn] ?: if (iconPackAsFallback) indexMap[getComponentName(cn.packageName)] else null
 }
 
 data class IconPackInfo(
@@ -65,7 +65,7 @@ internal fun loadIconPack(
   val info = IconPackInfo()
   val iconEntryMap = info.iconEntryMap
 
-  val parseXml = getXml(resources, pack, "appfilter") ?: return null
+  val parseXml = getXml(resources, pack) ?: return null
   val compStart = "ComponentInfo{"
   val compStartLength = compStart.length
   val compEnd = "}"
@@ -92,7 +92,7 @@ internal fun loadIconPack(
     ComponentName.unflattenFromString(componentName)?.let { cn ->
       val iconEntry = IconEntry(drawableName, iconType)
       addIconEntry(cn, iconEntry)
-      // TODO Use the first icon as app icon. I don't see a better way.
+      // Use the first icon as app icon. I don't see a better way.
       addIconEntry(getComponentName(cn.packageName), iconEntry)
     }
   }
@@ -141,10 +141,10 @@ internal fun loadIconPack(
 }
 
 @SuppressLint("DiscouragedApi")
-private fun getXml(resources: Resources, pack: String, name: String): XmlPullParser? {
+private fun getXml(resources: Resources, pack: String): XmlPullParser? {
   try {
     return resources
-      .getIdentifier(name, "xml", pack)
+      .getIdentifier("appfilter", "xml", pack)
       .takeIf { 0 != it }
       ?.let { resources.getXml(it) }
       ?: run {

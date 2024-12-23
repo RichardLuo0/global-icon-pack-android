@@ -71,7 +71,7 @@ dependencies {
     implementation libs.activity
     implementation libs.preference
     implementation libs.material3
+    implementation libs.libsu
 
     compileOnly(fileTree("libs") { include("api-82.jar") })
-    implementation libs.libsu
 }

@@ -27,5 +27,5 @@
     <string name="restartOthers">重启其他app</string>
     <string name="openCrowdin">协助本地化</string>
     <string name="openGithub">Github</string>
-    <string name="RestartedSuccessfully">重启成功</string>
+    <string name="restartedSuccessfully">重启成功</string>
 </resources>

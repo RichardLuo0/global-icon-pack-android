@@ -33,7 +33,7 @@ fun MainDropdownMenu(snackbarState: SnackbarHostState) {
       scope.launch {
         if (result.isSuccess)
           snackbarState.showSnackbar(
-            "✅ ${context.getString(R.string.RestartedSuccessfully)}",
+            "✅ ${context.getString(R.string.restartedSuccessfully)}",
             withDismissAction = true,
             duration = SnackbarDuration.Long,
           )

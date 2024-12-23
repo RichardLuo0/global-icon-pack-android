@@ -20,5 +20,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Global Icon Pack"
+rootProject.name = 'Global Icon Pack'
 include ':app'

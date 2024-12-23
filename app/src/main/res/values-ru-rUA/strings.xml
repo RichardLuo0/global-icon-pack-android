@@ -27,5 +27,5 @@
     <string name="restartOthers">crwdns50:0crwdne50:0</string>
     <string name="openCrowdin">crwdns56:0crwdne56:0</string>
     <string name="openGithub">crwdns52:0crwdne52:0</string>
-    <string name="RestartedSuccessfully">crwdns54:0crwdne54:0</string>
+    <string name="restartedSuccessfully">crwdns54:0crwdne54:0</string>
 </resources>
