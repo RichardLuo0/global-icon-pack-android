@@ -3,21 +3,19 @@ package com.richardluo.globalIconPack.iconPack.database
 import android.content.ComponentName
 import android.content.ContentValues
 import android.content.Context
-import android.content.SharedPreferences
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import android.database.sqlite.SQLiteStatement
-import com.richardluo.globalIconPack.MODE_PROVIDER
 import com.richardluo.globalIconPack.PrefKey
 import com.richardluo.globalIconPack.iconPack.IconPackApps
 import com.richardluo.globalIconPack.iconPack.loadIconPack
-import com.richardluo.globalIconPack.utils.logInApp
+import com.richardluo.globalIconPack.utils.WorldPreference
+import com.richardluo.globalIconPack.utils.log
 
 data class Icon(val componentName: ComponentName, val entry: IconEntry)
 
 class IconPackDB(private val context: Context, path: String = "iconPack.db") :
-  SQLiteOpenHelper(context.createDeviceProtectedStorageContext(), path, null, 1),
-  SharedPreferences.OnSharedPreferenceChangeListener {
+  SQLiteOpenHelper(context.createDeviceProtectedStorageContext(), path, null, 2) {
 
   override fun onCreate(db: SQLiteDatabase) {
     db.execSQL("CREATE TABLE IF NOT EXISTS \"fallbacks\" (pack TEXT PRIMARY KEY, fallback BLOB)")
@@ -78,8 +76,8 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
   fun getFallbackSettings(pack: String) =
     readableDatabase.query("fallbacks", null, "pack=?", arrayOf(pack), null, null, null, "1")
 
-  fun insertFallbackSettings(pack: String, fs: FallbackSettings) {
-    writableDatabase.insertWithOnConflict(
+  private fun insertFallbackSettings(db: SQLiteDatabase, pack: String, fs: FallbackSettings) {
+    db.insertWithOnConflict(
       "fallbacks",
       null,
       ContentValues().apply {
@@ -110,10 +108,10 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
   fun getIcon(pack: String, cn: ComponentName, fallback: Boolean = false) =
     if (fallback) getIconFallback(pack, cn) else getIconExact(pack, cn)
 
-  fun insertIcon(pack: String, icons: List<Icon>) {
+  private fun insertIcon(db: SQLiteDatabase, pack: String, icons: List<Icon>) {
     val insertIcon: SQLiteStatement =
-      writableDatabase.compileStatement("INSERT OR REPLACE INTO \"$pack\" VALUES(?, ?, ?)")
-    writableDatabase.apply {
+      db.compileStatement("INSERT OR REPLACE INTO \"$pack\" VALUES(?, ?, ?)")
+    db.apply {
       beginTransaction()
       runCatching {
         for (icon in icons) {
@@ -132,5 +130,15 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
     }
   }
 
-  override fun onUpgrade(db: SQLiteDatabase?, oldVersion: Int, newVersion: Int) {}
+  override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
+    db.apply {
+      rawQuery(
+          "SELECT 'DROP TABLE ' || name || ';' FROM sqlite_master " +
+            "WHERE type = 'table' AND name != 'fallbacks'",
+          null,
+        )
+        .close()
+      WorldPreference.getPrefInApp(context).getString(PrefKey.ICON_PACK, "")?.let { update(db, it) }
+    }
+  }
 }
