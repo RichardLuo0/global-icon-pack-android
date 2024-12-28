@@ -27,5 +27,5 @@
     <string name="restartOthers">Andere neustarten</string>
     <string name="openCrowdin">Hilf bei der Übersetzung mit</string>
     <string name="openGithub">Github</string>
-    <string name="RestartedSuccessfully">Neustart erfolgreich</string>
+    <string name="restartedSuccessfully">Neustart erfolgreich</string>
 </resources>
