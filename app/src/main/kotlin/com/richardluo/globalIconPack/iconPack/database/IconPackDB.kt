@@ -23,26 +23,22 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
     db.execSQL("CREATE TABLE IF NOT EXISTS \"fallbacks\" (pack TEXT PRIMARY KEY, fallback BLOB)")
   }
 
-  override fun onSharedPreferenceChanged(pref: SharedPreferences, key: String?) {
-    if (key != PrefKey.ICON_PACK) return
-    if (pref.getString(PrefKey.MODE, MODE_PROVIDER) != MODE_PROVIDER) return
+  fun onIconPackChange(pack: String) {
+    update(writableDatabase, pack)
+  }
+
+  private fun update(db: SQLiteDatabase, inputPack: String) {
     val pack =
-      pref.getString(PrefKey.ICON_PACK, "")?.takeIf { it.isNotEmpty() }
+      inputPack.takeIf { it.isNotEmpty() }
         ?: run {
           log("No icon pack set")
           return
         }
     val packUpdateTime = context.packageManager.getPackageInfo(pack, 0).lastUpdateTime
-    writableDatabase
-      .rawQuery("select DISTINCT tbl_name from sqlite_master where tbl_name=?", arrayOf(pack))
-      .use {
-        if (
-          it.count > 0 &&
-            packUpdateTime < context.getDatabasePath(writableDatabase.path).lastModified()
-        )
-          return
-      }
-    writableDatabase.apply {
+    db.rawQuery("select DISTINCT tbl_name from sqlite_master where tbl_name=?", arrayOf(pack)).use {
+      if (it.count > 0 && packUpdateTime < context.getDatabasePath(db.path).lastModified()) return
+    }
+    db.apply {
       beginTransaction()
       // Create tables
       execSQL("CREATE TABLE IF NOT EXISTS \"$pack\" (packageName TEXT, className TEXT, entry BLOB)")
@@ -54,9 +50,10 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
       val packResources = context.packageManager.getResourcesForApplication(pack)
       loadIconPack(packResources, pack, iconFallback = true).let { info ->
         // Insert icons
-        insertIcon(pack, info.iconEntryMap.map { (cn, entry) -> Icon(cn, entry) })
+        insertIcon(db, pack, info.iconEntryMap.map { (cn, entry) -> Icon(cn, entry) })
         // Insert fallback
         insertFallbackSettings(
+          db,
           pack,
           FallbackSettings(info.iconBacks, info.iconUpons, info.iconMasks, info.iconScale),
         )

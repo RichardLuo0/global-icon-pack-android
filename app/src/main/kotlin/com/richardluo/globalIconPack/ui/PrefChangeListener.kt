@@ -10,20 +10,14 @@ import com.richardluo.globalIconPack.PrefKey
 import com.richardluo.globalIconPack.iconPack.BootReceiver
 import com.richardluo.globalIconPack.iconPack.KeepAliveService
 import com.richardluo.globalIconPack.iconPack.database.IconPackDB
-import com.richardluo.globalIconPack.utils.registerAndCallOnSharedPreferenceChangeListener
 
-class ModeChangeListener(private val activity: Activity, private val pref: SharedPreferences) {
+class PrefChangeListener(private val activity: Activity, private val pref: SharedPreferences) {
   private val iconPackChangeListener by lazy { IconPackDB(activity) }
 
-  fun onChange(value: String) {
+  fun onModeChange(value: String) {
     when (value) {
       MODE_PROVIDER -> {
         KeepAliveService.startForeground(activity)
-        // Init db
-        pref.registerAndCallOnSharedPreferenceChangeListener(
-          iconPackChangeListener,
-          PrefKey.ICON_PACK,
-        )
         // Ask for notification permission used for foreground service
         if (
           activity.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) !=
@@ -39,7 +33,6 @@ class ModeChangeListener(private val activity: Activity, private val pref: Share
       }
       else -> {
         KeepAliveService.stopForeground(activity)
-        pref.unregisterOnSharedPreferenceChangeListener(iconPackChangeListener)
         activity.packageManager.setComponentEnabledSetting(
           ComponentName(activity, BootReceiver::class.java),
           PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
@@ -47,5 +40,10 @@ class ModeChangeListener(private val activity: Activity, private val pref: Share
         )
       }
     }
+  }
+
+  fun onIconPackChange(pack: String) {
+    if (pref.getString(PrefKey.MODE, MODE_PROVIDER) == MODE_PROVIDER)
+      iconPackChangeListener.onIconPackChange(pack)
   }
 }

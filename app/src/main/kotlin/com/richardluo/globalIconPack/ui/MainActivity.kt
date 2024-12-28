@@ -53,7 +53,6 @@ import me.zhanghai.compose.preference.listPreference
 import me.zhanghai.compose.preference.preference
 import me.zhanghai.compose.preference.preferenceCategory
 import me.zhanghai.compose.preference.rememberPreferenceState
-import me.zhanghai.compose.preference.sliderPreference
 import me.zhanghai.compose.preference.switchPreference
 
 class MainActivity : ComponentActivity() {
@@ -78,7 +77,7 @@ class MainActivity : ComponentActivity() {
       } else
         SampleTheme {
           ProvidePreferenceLocals(flow = pref.getPreferenceFlow()) {
-            SampleScreen(ModeChangeListener(this, pref))
+            SampleScreen(PrefChangeListener(this, pref))
           }
         }
     }
@@ -86,7 +85,7 @@ class MainActivity : ComponentActivity() {
 
   @Composable
   @OptIn(ExperimentalMaterial3Api::class)
-  private fun SampleScreen(modeChangeListener: ModeChangeListener) {
+  private fun SampleScreen(listener: PrefChangeListener) {
     val context = this
     val windowInsets = WindowInsets.safeDrawing
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
@@ -108,6 +107,9 @@ class MainActivity : ComponentActivity() {
       contentColor = contentColorFor(MaterialTheme.colorScheme.background),
       contentWindowInsets = windowInsets,
     ) { contentPadding ->
+      var loading by remember { mutableStateOf(false) }
+      if (loading) LoadingDialog()
+
       LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = contentPadding) {
         preferenceCategory(key = "general", title = { Text(stringResource(R.string.general)) })
         listPreference(
@@ -120,13 +122,11 @@ class MainActivity : ComponentActivity() {
           rememberState = {
             rememberPreferenceState(PrefKey.MODE, MODE_PROVIDER).also {
               val value by it
-              var loading by remember { mutableStateOf(true) }
               LaunchedEffect(value) {
                 loading = true
-                lifecycleScope.async { modeChangeListener.onChange(value) }.await()
+                lifecycleScope.async { listener.onModeChange(value) }.await()
                 loading = false
               }
-              if (loading) LoadingDialog()
             }
           },
         )
@@ -139,6 +139,16 @@ class MainActivity : ComponentActivity() {
           },
           title = { Text(stringResource(R.string.iconPack)) },
           summary = { Text(it.ifEmpty { stringResource(R.string.iconPackSummary) }) },
+          rememberState = {
+            rememberPreferenceState(PrefKey.ICON_PACK, "").also {
+              val value by it
+              LaunchedEffect(value) {
+                loading = true
+                lifecycleScope.async { listener.onIconPackChange(value) }.await()
+                loading = false
+              }
+            }
+          },
         )
         switchPreference(
           key = PrefKey.NO_FORCE_SHAPE,
