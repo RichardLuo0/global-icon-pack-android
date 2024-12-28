@@ -7,14 +7,12 @@ import android.graphics.RectF
 import android.graphics.drawable.AdaptiveIconDrawable
 import android.graphics.drawable.Drawable
 import com.richardluo.globalIconPack.reflect.BaseIconFactory
-import com.richardluo.globalIconPack.reflect.BaseIconFactory.getNormalizer
 import com.richardluo.globalIconPack.utils.IconHelper
 import com.richardluo.globalIconPack.utils.ReflectHelper
 import com.richardluo.globalIconPack.utils.UnClipAdaptiveIconDrawable
 import com.richardluo.globalIconPack.utils.WorldPreference.getPrefInMod
 import com.richardluo.globalIconPack.utils.asType
 import com.richardluo.globalIconPack.utils.call
-import com.richardluo.globalIconPack.utils.letAll
 import com.richardluo.globalIconPack.utils.rGet
 import com.richardluo.globalIconPack.utils.rSet
 import de.robv.android.xposed.XC_MethodHook
@@ -25,35 +23,44 @@ import java.lang.reflect.Method
 class NoForceShape : Hook {
 
   override fun onHookPixelLauncher(lpp: LoadPackageParam) {
-    if (!initIfEnabled(lpp)) return
+    removeShadow(lpp)
 
-    removeShadow()
+    if (!getPrefInMod().getBoolean(PrefKey.NO_FORCE_SHAPE, false)) return
     XposedBridge.hookAllMethods(
-      BaseIconFactory.clazz,
+      BaseIconFactory.getClazz(lpp),
       "normalizeAndWrapToAdaptiveIcon",
       object : XC_MethodHook() {
         override fun beforeHookedMethod(param: MethodHookParam) {
           param.args[0].asType<Drawable?>()?.let {
-            if (it is IconHelper.ProcessedBitmapDrawable) param.args[0] = it.unMask()
+            if (it is IconHelper.ProcessedBitmapDrawable) param.args[0] = it.makeAdaptive()
           }
         }
       },
     )
     // Fix FloatingIconView and DragView
     ReflectHelper.hookAllMethods(
-      BaseIconFactory.clazz,
+      BaseIconFactory.getClazz(lpp),
       "wrapToAdaptiveIcon",
       arrayOf(Drawable::class.java),
       object : XC_MethodHook() {
         override fun beforeHookedMethod(param: MethodHookParam) {
           param.args[0].asType<Drawable?>()?.let {
-            if (it is IconHelper.ProcessedBitmapDrawable) param.result = it.unMask()
+            if (it is IconHelper.ProcessedBitmapDrawable) param.result = it.makeAdaptive()
           }
         }
       },
     )
     // Fix FloatingIconView
-    val getScale = getGetScale(lpp)
+    val getScaleM: Method? =
+      ReflectHelper.findMethodFirstMatch(
+        "com.android.launcher3.icons.IconNormalizer",
+        lpp,
+        "getScale",
+        Drawable::class.java,
+        RectF::class.java,
+      )
+    val obtainM: Method? =
+      ReflectHelper.findMethodFirstMatch("com.android.launcher3.icons.LauncherIcons", lpp, "obtain")
     ReflectHelper.findClass("com.android.launcher3.views.FloatingIconView", lpp)?.let {
       ReflectHelper.hookAllMethods(
         it,
@@ -64,7 +71,12 @@ class NoForceShape : Hook {
             if (drawable is UnmaskAdaptiveIconDrawable) {
               // https://cs.android.com/android/platform/superproject/+/android14-qpr3-release:packages/apps/Launcher3/src/com/android/launcher3/views/FloatingIconView.java;l=441
               val original = drawable.foreground
-              getScale(null, original, null, null, null)?.let { scale ->
+              val normalizer =
+                BaseIconFactory.getNormalizer(
+                  lpp,
+                  obtainM?.call<Any>(null, AndroidAppHelper.currentApplication()),
+                )
+              getScaleM?.call<Float>(normalizer, drawable, null, null, null)?.let { scale ->
                 val blurSizeOutline = 2
                 val bounds =
                   Rect(
@@ -85,13 +97,12 @@ class NoForceShape : Hook {
   }
 
   override fun onHookSystemUI(lpp: LoadPackageParam) {
-    if (!initIfEnabled(lpp)) return
+    removeShadow(lpp)
 
-    removeShadow()
+    if (!getPrefInMod().getBoolean(PrefKey.NO_FORCE_SHAPE, false)) return
     // Fix splash screen
-    // This is used when icon is not adaptive icon
     ReflectHelper.hookAllMethods(
-      BaseIconFactory.clazz,
+      BaseIconFactory.getClazz(lpp),
       "normalizeAndWrapToAdaptiveIcon",
       arrayOf(Drawable::class.java),
       object : XC_MethodHook() {
@@ -105,12 +116,12 @@ class NoForceShape : Hook {
   }
 
   override fun onHookSettings(lpp: LoadPackageParam) {
-    if (!initIfEnabled(lpp)) return
+    removeShadow(lpp)
 
-    removeShadow()
+    if (!getPrefInMod().getBoolean(PrefKey.NO_FORCE_SHAPE, false)) return
     // Fix recent app list
     ReflectHelper.hookAllMethods(
-      BaseIconFactory.clazz,
+      BaseIconFactory.getClazz(lpp),
       "normalizeAndWrapToAdaptiveIcon",
       arrayOf(Drawable::class.java),
       object : XC_MethodHook() {
@@ -124,14 +135,14 @@ class NoForceShape : Hook {
   }
 
   @Suppress("LocalVariableName")
-  private fun removeShadow() {
-    // Remove shadow because icons may have its own shadow
+  private fun removeShadow(lpp: LoadPackageParam) {
+    if (!getPrefInMod().getBoolean(PrefKey.NO_SHADOW, false)) return
     val MODE_DEFAULT = 0
     val MODE_WITH_SHADOW = 2
     val MODE_HARDWARE = 3
     val MODE_HARDWARE_WITH_SHADOW = 4
     ReflectHelper.hookAllMethods(
-      BaseIconFactory.clazz,
+      BaseIconFactory.getClazz(lpp),
       "drawIconBitmap",
       object : XC_MethodHook() {
         override fun beforeHookedMethod(param: MethodHookParam) {
@@ -147,32 +158,6 @@ class NoForceShape : Hook {
         }
       },
     )
-  }
-
-  private fun getGetScale(
-    lpp: LoadPackageParam
-  ): (Any?, Drawable, RectF?, Path?, BooleanArray?) -> Float? {
-    val getScaleM: Method? =
-      ReflectHelper.findMethodFirstMatch(
-        "com.android.launcher3.icons.IconNormalizer",
-        lpp,
-        "getScale",
-        Drawable::class.java,
-        RectF::class.java,
-      )
-    val obtainM: Method? =
-      ReflectHelper.findMethodFirstMatch("com.android.launcher3.icons.LauncherIcons", lpp, "obtain")
-    return {
-      thisObj: Any?,
-      drawable: Drawable,
-      outIconBounds: RectF?,
-      path: Path?,
-      outMaskShape: BooleanArray? ->
-      val factory = thisObj ?: obtainM?.call<Any>(null, AndroidAppHelper.currentApplication())
-      letAll(getNormalizer, getScaleM) { getNormalizer, getScale ->
-        getScale.call(getNormalizer.call(factory), drawable, outIconBounds, path, outMaskShape)
-      }
-    }
   }
 
   class UnmaskAdaptiveIconDrawable(background: Drawable?, foreground: Drawable?) :
@@ -191,14 +176,6 @@ class NoForceShape : Hook {
     }
   }
 
-  fun IconHelper.ProcessedBitmapDrawable.unMask() = createUnMask(this)
-
   fun createUnMask(drawable: Drawable) =
     UnmaskAdaptiveIconDrawable(null, IconHelper.createScaledDrawable(drawable))
-
-  private fun initIfEnabled(lpp: LoadPackageParam): Boolean {
-    return getPrefInMod().getBoolean(PrefKey.NO_FORCE_SHAPE, false).also {
-      if (it) BaseIconFactory.initWithLauncher3(lpp)
-    }
-  }
 }

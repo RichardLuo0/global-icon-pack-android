@@ -1,19 +1,24 @@
 package com.richardluo.globalIconPack.reflect
 
 import com.richardluo.globalIconPack.utils.ReflectHelper
+import com.richardluo.globalIconPack.utils.call
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 import java.lang.reflect.Method
 
 object BaseIconFactory {
-  lateinit var clazz: Class<*>
-    private set
+  private lateinit var clazz: Class<*>
 
-  var getNormalizer: Method? = null
-    private set
+  private var getNormalizer: Method? = null
 
-  fun initWithLauncher3(lpp: LoadPackageParam) {
-    clazz = ReflectHelper.findClassThrow("com.android.launcher3.icons.BaseIconFactory", lpp)
-    getNormalizer =
-      getNormalizer ?: clazz.let { ReflectHelper.findMethodFirstMatch(it, "getNormalizer") }
+  fun getClazz(lpp: LoadPackageParam): Class<*> {
+    if (!::clazz.isInitialized)
+      clazz = ReflectHelper.findClassThrow("com.android.launcher3.icons.BaseIconFactory", lpp)
+    return clazz
+  }
+
+  fun getNormalizer(lpp: LoadPackageParam, factory: Any?): Any? {
+    if (getNormalizer == null)
+      getNormalizer = getClazz(lpp).let { ReflectHelper.findMethodFirstMatch(it, "getNormalizer") }
+    return getNormalizer?.call(factory)
   }
 }

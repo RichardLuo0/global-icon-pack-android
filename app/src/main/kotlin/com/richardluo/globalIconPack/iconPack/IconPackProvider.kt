@@ -7,7 +7,7 @@ import android.database.Cursor
 import android.net.Uri
 import com.richardluo.globalIconPack.iconPack.database.IconPackDB
 import com.richardluo.globalIconPack.utils.getOrNull
-import com.richardluo.globalIconPack.utils.logInApp
+import com.richardluo.globalIconPack.utils.log
 
 class IconPackProvider : ContentProvider() {
   private val iconPackDB by lazy { IconPackDB(context!!) }
@@ -33,8 +33,7 @@ class IconPackProvider : ContentProvider() {
     return when (uri.path?.removePrefix("/")) {
       FALLBACKS ->
         if (selectionArgs != null && selectionArgs.isNotEmpty())
-          runCatching { iconPackDB.getFallbackSettings(selectionArgs[0]) }
-            .getOrNull { logInApp(it) }
+          runCatching { iconPackDB.getFallbackSettings(selectionArgs[0]) }.getOrNull { log(it) }
         else null
       ICONS ->
         if (selectionArgs != null && selectionArgs.size >= 4)
@@ -45,7 +44,7 @@ class IconPackProvider : ContentProvider() {
                 selectionArgs[3].toBoolean(),
               )
             }
-            .getOrNull { logInApp(it) }
+            .getOrNull { log(it) }
         else null
       else -> null
     }
