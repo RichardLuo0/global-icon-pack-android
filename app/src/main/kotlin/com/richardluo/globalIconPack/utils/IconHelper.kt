@@ -37,15 +37,7 @@ object IconHelper {
         if (forceClip) {
           // Use original mask if mask is not presented
           if (mask != null) super.draw(canvas)
-          else {
-            getMask()
-              ?.apply {
-                val matrix = Matrix()
-                matrix.setScale(iconScale, iconScale, bounds.width() / 2f, bounds.height() / 2f)
-                transform(matrix)
-              }
-              ?.let { super.draw(canvas, it) } ?: super.drawClip(canvas)
-          }
+          else getMask()?.let { super.draw(canvas, it) } ?: super.drawClip(canvas)
         } else super.draw(canvas)
       }
     }
@@ -56,8 +48,10 @@ object IconHelper {
     }
   }
 
-  // For marking only
-  class ProcessedBitmapDrawable(res: Resources, bitmap: Bitmap) : BitmapDrawable(res, bitmap)
+  class ProcessedBitmapDrawable(res: Resources, bitmap: Bitmap) : BitmapDrawable(res, bitmap) {
+
+    fun makeAdaptive() = AdaptiveIconDrawable(null, createScaledDrawable(this))
+  }
 
   fun processIconToBitmap(
     res: Resources,
