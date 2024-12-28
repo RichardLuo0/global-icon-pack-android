@@ -30,6 +30,7 @@
     <string name="restartOthers">Restart Others</string>
     <string name="openCrowdin">Help with localization</string>
     <string name="openGithub">Github</string>
-    <string name="RestartedSuccessfully">Restarted successfully</string>
     <string name="restartedSuccessfully">Restarted successfully</string>
+    <string name="plzEnableModuleFirst">Please ensure that the module is enabled first.</string>
+    <string name="warning">Warning</string>
 </resources>

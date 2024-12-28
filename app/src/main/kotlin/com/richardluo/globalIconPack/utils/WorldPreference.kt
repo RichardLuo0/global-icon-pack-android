@@ -28,7 +28,7 @@ object WorldPreference {
       pref =
         context.getSharedPreferences(
           PreferenceManager.getDefaultSharedPreferencesName(context),
-          Context.MODE_WORLD_READABLE,
+          if (BuildConfig.DEBUG) Context.MODE_PRIVATE else Context.MODE_WORLD_READABLE,
         )
     return pref
   }

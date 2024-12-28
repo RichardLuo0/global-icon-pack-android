@@ -39,6 +39,7 @@ import com.richardluo.globalIconPack.R
 import com.richardluo.globalIconPack.iconPack.IconPackApps
 import com.richardluo.globalIconPack.ui.components.ComposableSliderPreference
 import com.richardluo.globalIconPack.ui.components.IconPackItem
+import com.richardluo.globalIconPack.ui.components.InfoDialog
 import com.richardluo.globalIconPack.ui.components.LoadingDialog
 import com.richardluo.globalIconPack.ui.components.SampleTheme
 import com.richardluo.globalIconPack.ui.components.lazyListPreference
@@ -65,72 +66,24 @@ class MainActivity : ComponentActivity() {
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
-    val pref = WorldPreference.getPrefInApp(this)
     setContent {
-      SampleTheme {
-        ProvidePreferenceLocals(flow = pref.getPreferenceFlow()) {
-          SampleScreen(ModeChangeListener(this, pref))
+      val pref = runCatching { WorldPreference.getPrefInApp(this) }.getOrNull()
+      if (pref == null) {
+        InfoDialog(
+          title = { Text("⚠️ ${getString(R.string.warning)}") },
+          content = { Text(getString(R.string.plzEnableModuleFirst)) },
+        ) {
+          finish()
         }
-      }
+      } else
+        SampleTheme {
+          ProvidePreferenceLocals(flow = pref.getPreferenceFlow()) {
+            SampleScreen(ModeChangeListener(this, pref))
+          }
+        }
     }
   }
 
-@Composable
-@OptIn(ExperimentalMaterial3Api::class)
-fun SampleScreen() {
-  val context = LocalContext.current
-  val windowInsets = WindowInsets.safeDrawing
-  val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
-  val snackbarState = remember { SnackbarHostState() }
-  Scaffold(
-    modifier = Modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
-    topBar = {
-      val appLabel = context.applicationInfo.loadLabel(context.packageManager).toString()
-      TopAppBar(
-        title = { Text(appLabel) },
-        modifier = Modifier.fillMaxWidth(),
-        windowInsets = windowInsets.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top),
-        scrollBehavior = scrollBehavior,
-        actions = { MainDropdownMenu(snackbarState) },
-      )
-    },
-    snackbarHost = { SnackbarHost(hostState = snackbarState) },
-    containerColor = Color.Transparent,
-    contentColor = contentColorFor(MaterialTheme.colorScheme.background),
-    contentWindowInsets = windowInsets,
-  ) { contentPadding ->
-    LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = contentPadding) {
-      preferenceCategory(key = "general", title = { Text(stringResource(R.string.general)) })
-      listPreference(
-        key = PrefKey.MODE,
-        defaultValue = MODE_PROVIDER,
-        values = listOf(MODE_PROVIDER, MODE_LOCAL),
-        valueToText = { AnnotatedString(modeToDesc(context, it)) },
-        title = { Text(stringResource(R.string.mode)) },
-        summary = { Text(modeToDesc(context, it)) },
-      )
-      lazyListPreference(
-        key = PrefKey.ICON_PACK,
-        defaultValue = "",
-        load = { IconPackApps.load(context) },
-        item = { value, currentValue, valueMap, onClick ->
-          IconPackItem(value, currentValue, valueMap, onClick)
-        },
-        title = { Text(stringResource(R.string.iconPack)) },
-        summary = { Text(it.ifEmpty { stringResource(R.string.iconPackSummary) }) },
-      )
-      switchPreference(
-        key = PrefKey.NO_FORCE_SHAPE,
-        defaultValue = false,
-        title = { Text(stringResource(R.string.noForceShape)) },
-        summary = { Text(stringResource(R.string.noForceShapeSummary)) },
-      )
-      switchPreference(
-        key = PrefKey.ICON_PACK_AS_FALLBACK,
-        defaultValue = false,
-        title = { Text(stringResource(R.string.iconPackAsFallback)) },
-        summary = { Text(stringResource(R.string.iconPackAsFallbackSummary)) },
-      )
   @Composable
   @OptIn(ExperimentalMaterial3Api::class)
   private fun SampleScreen(modeChangeListener: ModeChangeListener) {
