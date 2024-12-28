@@ -31,11 +31,12 @@ object IconPackApps {
 
   fun load(context: Context): Map<String, IconPackApp> {
     return packAppMap.orAssign {
-      context.registerReceiver(
+      context.applicationContext.registerReceiver(
         packageChangeReceiver,
         IntentFilter().apply {
           addAction(Intent.ACTION_PACKAGE_ADDED)
           addAction(Intent.ACTION_PACKAGE_REMOVED)
+          addDataScheme("package")
         },
       )
       mutableMapOf<String, IconPackApp>().apply {
