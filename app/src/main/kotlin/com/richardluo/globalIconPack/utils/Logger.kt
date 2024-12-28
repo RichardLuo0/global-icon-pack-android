@@ -8,10 +8,12 @@ private const val TAG = "[Global Icon Pack]"
 
 val currentPackageName: String by lazy { AndroidAppHelper.currentPackageName() }
 
-fun log(text: String) = XposedBridge.log("$TAG $currentPackageName: $text")
+fun log(text: String) {
+  if (isInMod) XposedBridge.log("$TAG $currentPackageName: $text")
+  else Log.i("LSPosed-Bridge", "$TAG $text")
+}
 
-fun log(t: Throwable) = XposedBridge.log("$TAG $currentPackageName: ${t.stackTraceToString()}")
-
-fun logInApp(text: String) = Log.i("LSPosed-Bridge", "$TAG $text")
-
-fun logInApp(t: Throwable) = Log.e("LSPosed-Bridge", "$TAG ${t.stackTraceToString()}")
+fun log(t: Throwable) {
+  if (isInMod) XposedBridge.log("$TAG $currentPackageName: ${t.stackTraceToString()}")
+  else Log.e("LSPosed-Bridge", "$TAG ${t.stackTraceToString()}")
+}

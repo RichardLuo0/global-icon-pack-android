@@ -29,7 +29,7 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
     val pack =
       pref.getString(PrefKey.ICON_PACK, "")?.takeIf { it.isNotEmpty() }
         ?: run {
-          logInApp("No icon pack set")
+          log("No icon pack set")
           return
         }
     val packUpdateTime = context.packageManager.getPackageInfo(pack, 0).lastUpdateTime
@@ -75,7 +75,7 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
       setTransactionSuccessful()
       endTransaction()
     }
-    logInApp("database: $pack updated")
+    log("database: $pack updated")
   }
 
   fun getFallbackSettings(pack: String) =

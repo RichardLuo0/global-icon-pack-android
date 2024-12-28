@@ -13,9 +13,7 @@ import com.richardluo.globalIconPack.iconPack.database.ClockIconEntry
 import com.richardluo.globalIconPack.iconPack.database.ClockMetadata
 import com.richardluo.globalIconPack.iconPack.database.IconEntry
 import com.richardluo.globalIconPack.iconPack.database.NormalIconEntry
-import com.richardluo.globalIconPack.utils.isInMod
 import com.richardluo.globalIconPack.utils.log
-import com.richardluo.globalIconPack.utils.logInApp
 import java.io.IOException
 import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserException
@@ -126,7 +124,7 @@ internal fun loadIconPack(resources: Resources, pack: String, iconFallback: Bool
         .filter { it.value !is ClockIconEntry }
         .forEach { (cn, entry) -> clockMetaMap[entry.name]?.let { iconEntryMap[cn] = it } }
   } catch (e: Exception) {
-    if (isInMod) log(e) else logInApp(e)
+    log(e)
   }
   return info
 }

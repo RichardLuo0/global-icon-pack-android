@@ -20,7 +20,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import com.richardluo.globalIconPack.R
-import com.richardluo.globalIconPack.utils.logInApp
+import com.richardluo.globalIconPack.utils.log
 import com.topjohnwu.superuser.Shell
 import kotlinx.coroutines.launch
 
@@ -40,7 +40,7 @@ fun MainDropdownMenu(snackbarState: SnackbarHostState) {
         else {
           val error =
             "code: ${result.code} err: ${result.err.joinToString("\n")} out: ${result.out.joinToString("\n")}"
-          logInApp(error)
+          log(error)
           snackbarState.showSnackbar(
             "❌ $error",
             withDismissAction = true,
