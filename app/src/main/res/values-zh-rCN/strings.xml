@@ -11,9 +11,6 @@
     <string name="noForceShapeSummary">移除不规则图标背后的白色背景。</string>
     <string name="iconPackAsFallback">使用图标包作为回退选项</string>
     <string name="iconPackAsFallbackSummary">在活动名称不符合时仍然使用图标包。</string>
-    <string name="launcherSettings">启动器设置</string>
-    <string name="scale">缩放</string>
-    <string name="scaleSummary">所有图标的缩放。</string>
     <string name="forceLoadClockAndCalendar">强制加载时钟和日历图标</string>
     <string name="iconPackSettings">图标包设置</string>
     <string name="iconFallback">生成回退图标</string>

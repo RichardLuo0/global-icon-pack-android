@@ -11,9 +11,6 @@
     <string name="noForceShapeSummary">Entfernt den weißen Hintergrund hinter ungewöhnlich geformten Symbolen.</string>
     <string name="iconPackAsFallback">Rückfall-Symbolpaket</string>
     <string name="iconPackAsFallbackSummary">Symbolpaket verwenden, auch wenn der Name der Aktivität nicht damit übereinstimmt.</string>
-    <string name="launcherSettings">Startbildschirm-Einstellungen</string>
-    <string name="scale">Skalierung</string>
-    <string name="scaleSummary">Auf alle Symbole angewandte Skalierung.</string>
     <string name="forceLoadClockAndCalendar">Laden des Uhr- und Kalendersymbols erzwingen</string>
     <string name="iconPackSettings">Symbolpaket-Einstellungen</string>
     <string name="iconFallback">Rückfallsymbole generieren</string>

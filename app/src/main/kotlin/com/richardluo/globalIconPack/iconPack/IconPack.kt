@@ -35,7 +35,6 @@ abstract class IconPack(
       pref.getFloat(PrefKey.ICON_PACK_SCALE, 1f)
     } else 1f
 
-  protected val globalScale: Float = pref.getFloat(PrefKey.SCALE, 1f)
   protected val iconPackAsFallback =
     WorldPreference.getPrefInMod().getBoolean(PrefKey.ICON_PACK_AS_FALLBACK, false)
 
@@ -48,7 +47,7 @@ abstract class IconPack(
   fun getIcon(iconEntry: IconEntry, iconDpi: Int) =
     iconEntry
       .getIcon { getIcon(it, iconDpi) }
-      ?.let { if (useAdaptive) IconHelper.makeAdaptive(it, globalScale) else it }
+      ?.let { if (useAdaptive) IconHelper.makeAdaptive(it) else it }
 
   fun getIcon(id: Int, iconDpi: Int): Drawable? = getIconEntry(id)?.let { getIcon(it, iconDpi) }
 
@@ -88,7 +87,6 @@ abstract class IconPack(
         iconUpons.randomOrNull(),
         iconMasks.randomOrNull(),
         iconScale,
-        globalScale,
       )
     else if (iconFallback) {
       // Do not pass global scale because BitmapDrawable will scale anyway
@@ -113,7 +111,7 @@ fun getComponentName(packageName: String): ComponentName = ComponentName(package
  * CustomAdaptiveIconDrawable does not work correctly for some apps. It maybe clipped by adaptive
  * icon mask or shows black background, but we don't know how to efficiently convert Bitmap to Path.
  */
-internal val useAdaptive: Boolean by lazy {
+private val useAdaptive: Boolean by lazy {
   if (!isInMod) false
   else
     when (val packageName = AndroidAppHelper.currentPackageName()) {
@@ -121,7 +119,6 @@ internal val useAdaptive: Boolean by lazy {
       "com.android.systemui" -> false
       "com.android.intentresolver" -> true
       else -> {
-        // Query if it is a launcher app
         val intent =
           Intent().apply {
             setPackage(packageName)

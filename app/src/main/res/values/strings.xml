@@ -7,15 +7,8 @@
     <string name="modeLocal">Local mode: Hooked apps reload icon pack on each launch.</string>
     <string name="iconPack">Icon pack</string>
     <string name="iconPackSummary">The package name to be used as icon pack.</string>
-    <string name="noForceShape">No force shape</string>
-    <string name="noForceShapeSummary">Remove the white background behind irregular icon.</string>
     <string name="iconPackAsFallback">Icon pack as fallback</string>
     <string name="iconPackAsFallbackSummary">Still use icon pack when activity name does not match.</string>
-
-    <string name="launcherSettings">Launcher settings</string>
-    <string name="scale">Scale</string>
-    <string name="scaleSummary">Scale applied to all icons.</string>
-    <string name="forceLoadClockAndCalendar">Force load clock and calendar icon</string>
 
     <string name="iconPackSettings">Icon pack settings</string>
     <string name="iconFallback">Generate fallback icons</string>
@@ -31,6 +24,7 @@
     <string name="openCrowdin">Help with localization</string>
     <string name="openGithub">Github</string>
     <string name="restartedSuccessfully">Restarted successfully</string>
-    <string name="plzEnableModuleFirst">Please ensure that the module is enabled first.</string>
+
     <string name="warning">Warning</string>
+    <string name="plzEnableModuleFirst">Please ensure that the module is enabled first.</string>
 </resources>

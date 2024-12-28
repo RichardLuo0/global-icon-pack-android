@@ -183,17 +183,20 @@ class MainActivity : ComponentActivity() {
         }
 
         preferenceCategory(
-          key = "launcherSettings",
-          title = { Text(stringResource(R.string.launcherSettings)) },
+          key = "pixelSettings",
+          title = { Text(stringResource(R.string.pixelSettings)) },
         )
-        sliderPreference(
-          key = PrefKey.SCALE,
-          defaultValue = 1f,
-          valueRange = 0f..1.5f,
-          valueSteps = 29,
-          valueText = { Text("%.2f".format(it)) },
-          title = { Text(stringResource(R.string.scale)) },
-          summary = { Text(stringResource(R.string.scaleSummary)) },
+        switchPreference(
+          key = PrefKey.NO_FORCE_SHAPE,
+          defaultValue = false,
+          title = { Text(stringResource(R.string.noForceShape)) },
+          summary = { Text(stringResource(R.string.noForceShapeSummary)) },
+        )
+        switchPreference(
+          key = PrefKey.NO_SHADOW,
+          defaultValue = false,
+          title = { Text(stringResource(R.string.noShadow)) },
+          summary = { Text(stringResource(R.string.noShadowSummary)) },
         )
         switchPreference(
           key = PrefKey.FORCE_LOAD_CLOCK_AND_CALENDAR,

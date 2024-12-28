@@ -11,9 +11,6 @@
     <string name="noForceShapeSummary">crwdns18:0crwdne18:0</string>
     <string name="iconPackAsFallback">crwdns20:0crwdne20:0</string>
     <string name="iconPackAsFallbackSummary">crwdns22:0crwdne22:0</string>
-    <string name="launcherSettings">crwdns24:0crwdne24:0</string>
-    <string name="scale">crwdns26:0crwdne26:0</string>
-    <string name="scaleSummary">crwdns28:0crwdne28:0</string>
     <string name="forceLoadClockAndCalendar">crwdns30:0crwdne30:0</string>
     <string name="iconPackSettings">crwdns32:0crwdne32:0</string>
     <string name="iconFallback">crwdns34:0crwdne34:0</string>

@@ -3,7 +3,6 @@ package com.richardluo.globalIconPack.utils
 import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.Canvas
-import android.graphics.Matrix
 import android.graphics.Paint
 import android.graphics.PorterDuff
 import android.graphics.PorterDuffXfermode
@@ -25,7 +24,6 @@ object IconHelper {
     private val mask: Bitmap?,
     private val forceClip: Boolean = false,
     private val iconScale: Float,
-    private val scale: Float,
   ) :
     UnClipAdaptiveIconDrawable(
       background?.let { createScaledDrawable(it, iconScale) },
@@ -35,7 +33,7 @@ object IconHelper {
       Paint(Paint.ANTI_ALIAS_FLAG or Paint.DITHER_FLAG or Paint.FILTER_BITMAP_FLAG)
 
     override fun draw(canvas: Canvas) {
-      drawIcon(canvas, paint, bounds, back, upon, mask, scale) {
+      drawIcon(canvas, paint, bounds, back, upon, mask) {
         if (forceClip) {
           // Use original mask if mask is not presented
           if (mask != null) super.draw(canvas)
@@ -68,7 +66,6 @@ object IconHelper {
     upon: Bitmap?,
     mask: Bitmap?,
     iconScale: Float = 1f,
-    scale: Float = 1f,
   ): BitmapDrawable {
     val width = drawable.intrinsicWidth
     val height = drawable.intrinsicHeight
@@ -76,7 +73,7 @@ object IconHelper {
     val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
     val canvas = Canvas(bitmap)
     val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.DITHER_FLAG or Paint.FILTER_BITMAP_FLAG)
-    drawIcon(canvas, paint, bounds, back, upon, mask, scale) {
+    drawIcon(canvas, paint, bounds, back, upon, mask) {
       val scaledDrawable = createScaledDrawable(drawable, iconScale)
       canvas.drawBitmap(scaledDrawable.toBitmap(), null, bounds, paint)
     }
@@ -90,7 +87,6 @@ object IconHelper {
     upon: Bitmap?,
     mask: Bitmap?,
     iconScale: Float = 1f,
-    scale: Float = 1f,
   ): Drawable =
     if (drawable is AdaptiveIconDrawable)
       CustomAdaptiveIconDrawable(
@@ -101,7 +97,6 @@ object IconHelper {
         mask,
         true,
         iconScale,
-        scale,
       )
     else if (mask != null)
       CustomAdaptiveIconDrawable(
@@ -112,32 +107,13 @@ object IconHelper {
         mask,
         true,
         iconScale,
-        scale,
       )
-    else {
-      // Let app handle the rest
-      processIconToBitmap(res, drawable, back, upon, null, iconScale, scale)
-    }
+    else processIconToBitmap(res, drawable, back, upon, null, iconScale)
 
-  fun makeAdaptive(drawable: Drawable, scale: Float = 1f) =
-    if (drawable is AdaptiveIconDrawable)
-      if (scale == 1f) drawable
-      else
-        CustomAdaptiveIconDrawable(
-          drawable.background,
-          drawable.foreground,
-          null,
-          null,
-          null,
-          true,
-          1f,
-          scale,
-        )
-    else
-      UnClipAdaptiveIconDrawable(
-        null,
-        createScaledDrawable(drawable, ADAPTIVE_ICON_VIEWPORT_SCALE * scale),
-      )
+  fun makeAdaptive(drawable: Drawable) =
+    if (drawable !is AdaptiveIconDrawable)
+      UnClipAdaptiveIconDrawable(null, createScaledDrawable(drawable, ADAPTIVE_ICON_VIEWPORT_SCALE))
+    else drawable
 
   fun drawIcon(
     canvas: Canvas,
@@ -146,15 +122,12 @@ object IconHelper {
     back: Bitmap?,
     upon: Bitmap?,
     mask: Bitmap?,
-    scale: Float = 1f,
     drawBaseIcon: () -> Unit,
   ) {
     if (bounds.width() < 0) return
     if (bounds.height() < 0) return
 
     canvas.clipRect(bounds)
-    canvas.scale(scale, scale, bounds.exactCenterX(), bounds.exactCenterY())
-
     drawBaseIcon()
 
     mask?.let {
