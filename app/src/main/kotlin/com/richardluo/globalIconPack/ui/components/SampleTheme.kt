@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.richardluo.globalIconPack.ui
+package com.richardluo.globalIconPack.ui.components
 
 import android.app.Activity
 import android.graphics.drawable.ColorDrawable

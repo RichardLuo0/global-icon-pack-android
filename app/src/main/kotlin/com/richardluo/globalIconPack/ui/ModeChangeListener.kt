@@ -11,27 +11,19 @@ import com.richardluo.globalIconPack.iconPack.BootReceiver
 import com.richardluo.globalIconPack.iconPack.KeepAliveService
 import com.richardluo.globalIconPack.iconPack.database.IconPackDB
 import com.richardluo.globalIconPack.utils.registerAndCallOnSharedPreferenceChangeListener
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 
-class ModeChangeListener(private val activity: Activity) :
-  SharedPreferences.OnSharedPreferenceChangeListener {
+class ModeChangeListener(private val activity: Activity, private val pref: SharedPreferences) {
   private val iconPackChangeListener by lazy { IconPackDB(activity) }
 
-  override fun onSharedPreferenceChanged(pref: SharedPreferences, key: String?) {
-    if (key != PrefKey.MODE) return
-    when (pref.getString(PrefKey.MODE, MODE_PROVIDER)) {
+  fun onChange(value: String) {
+    when (value) {
       MODE_PROVIDER -> {
-        // Init db
         KeepAliveService.startForeground(activity)
-        runBlocking {
-          launch {
-            pref.registerAndCallOnSharedPreferenceChangeListener(
-              iconPackChangeListener,
-              PrefKey.ICON_PACK,
-            )
-          }
-        }
+        // Init db
+        pref.registerAndCallOnSharedPreferenceChangeListener(
+          iconPackChangeListener,
+          PrefKey.ICON_PACK,
+        )
         // Ask for notification permission used for foreground service
         if (
           activity.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) !=

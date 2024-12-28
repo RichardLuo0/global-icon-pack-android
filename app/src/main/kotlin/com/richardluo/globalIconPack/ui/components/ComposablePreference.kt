@@ -1,4 +1,4 @@
-package com.richardluo.globalIconPack.ui
+package com.richardluo.globalIconPack.ui.components
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable

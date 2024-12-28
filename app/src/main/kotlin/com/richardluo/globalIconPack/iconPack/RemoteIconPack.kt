@@ -16,8 +16,8 @@ private fun <T> Cursor.getFirstRow(block: (Cursor) -> T) =
 
 private fun Cursor.getBlob(name: String) = this.getBlob(getColumnIndexOrThrow(name))
 
-class RemoteIconPack(pref: SharedPreferences, getResources: (packageName: String) -> Resources?) :
-  IconPack(pref, getResources) {
+class RemoteIconPack(pref: SharedPreferences, pack: String, resources: Resources) :
+  IconPack(pref, pack, resources) {
   private val indexMap = mutableMapOf<ComponentName, Int?>()
   private val iconEntryList = mutableListOf<IconEntry>()
 

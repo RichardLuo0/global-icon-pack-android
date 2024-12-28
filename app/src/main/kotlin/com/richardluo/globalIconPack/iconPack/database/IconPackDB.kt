@@ -52,7 +52,7 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
       execSQL("CREATE INDEX IF NOT EXISTS \"${pack}_packageName\" ON \"$pack\" (packageName)")
       // Load icon pack
       val packResources = context.packageManager.getResourcesForApplication(pack)
-      loadIconPack(packResources, pack, iconFallback = true, isInMod = false)?.let { info ->
+      loadIconPack(packResources, pack, iconFallback = true).let { info ->
         // Insert icons
         insertIcon(pack, info.iconEntryMap.map { (cn, entry) -> Icon(cn, entry) })
         // Insert fallback

@@ -8,9 +8,12 @@ import android.content.res.Resources
 import android.content.res.XmlResourceParser
 import android.util.Xml
 import androidx.core.graphics.drawable.toBitmap
+import com.richardluo.globalIconPack.iconPack.database.CalendarIconEntry
+import com.richardluo.globalIconPack.iconPack.database.ClockIconEntry
 import com.richardluo.globalIconPack.iconPack.database.ClockMetadata
 import com.richardluo.globalIconPack.iconPack.database.IconEntry
-import com.richardluo.globalIconPack.iconPack.database.IconType
+import com.richardluo.globalIconPack.iconPack.database.NormalIconEntry
+import com.richardluo.globalIconPack.utils.isInMod
 import com.richardluo.globalIconPack.utils.log
 import com.richardluo.globalIconPack.utils.logInApp
 import java.io.IOException
@@ -18,16 +21,13 @@ import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserException
 import org.xmlpull.v1.XmlPullParserFactory
 
-class LocalIconPack(
-  pref: SharedPreferences,
-  isInMod: Boolean = false,
-  getResources: (packageName: String) -> Resources?,
-) : IconPack(pref, getResources) {
+class LocalIconPack(pref: SharedPreferences, pack: String, resources: Resources) :
+  IconPack(pref, pack, resources) {
   private val indexMap = mutableMapOf<ComponentName, Int>()
   private val iconEntryList = mutableListOf<IconEntry?>()
 
   init {
-    loadIconPack(resources, pack, iconFallback, isInMod)?.let { info ->
+    loadIconPack(resources, pack, iconFallback).let { info ->
       this.iconBacks = info.iconBacks.mapNotNull { getIcon(it)?.toBitmap() }
       this.iconUpons = info.iconUpons.mapNotNull { getIcon(it)?.toBitmap() }
       this.iconMasks = info.iconMasks.mapNotNull { getIcon(it)?.toBitmap() }
@@ -47,7 +47,7 @@ class LocalIconPack(
     indexMap[cn] ?: if (iconPackAsFallback) indexMap[getComponentName(cn.packageName)] else null
 }
 
-data class IconPackInfo(
+class IconPackInfo(
   val iconBacks: MutableList<String> = mutableListOf(),
   val iconUpons: MutableList<String> = mutableListOf(),
   val iconMasks: MutableList<String> = mutableListOf(),
@@ -56,16 +56,11 @@ data class IconPackInfo(
 )
 
 @SuppressLint("DiscouragedApi")
-internal fun loadIconPack(
-  resources: Resources,
-  pack: String,
-  iconFallback: Boolean,
-  isInMod: Boolean = false,
-): IconPackInfo? {
+internal fun loadIconPack(resources: Resources, pack: String, iconFallback: Boolean): IconPackInfo {
   val info = IconPackInfo()
   val iconEntryMap = info.iconEntryMap
 
-  val parseXml = getXml(resources, pack) ?: return null
+  val parseXml = getXml(resources, pack) ?: return info
   val compStart = "ComponentInfo{"
   val compStartLength = compStart.length
   val compEnd = "}"

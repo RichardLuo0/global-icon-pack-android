@@ -1,7 +1,9 @@
 package com.richardluo.globalIconPack.utils
 
+import android.app.Application
 import android.content.SharedPreferences
 import androidx.annotation.CheckResult
+import com.richardluo.globalIconPack.BuildConfig
 import de.robv.android.xposed.XC_MethodHook.MethodHookParam
 import de.robv.android.xposed.XposedBridge
 import java.lang.reflect.Field
@@ -93,4 +95,11 @@ class ReAssignable<T>(private var value: T? = null) {
   }
 
   fun orAssign(block: () -> T) = value ?: run { block().also { value = it } }
+}
+
+val isInMod by lazy {
+  when (Application.getProcessName()) {
+    BuildConfig.APPLICATION_ID -> false
+    else -> true
+  }
 }

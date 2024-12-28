@@ -16,16 +16,14 @@ import com.richardluo.globalIconPack.iconPack.database.IconEntry
 import com.richardluo.globalIconPack.reflect.Resources.getDrawableForDensity
 import com.richardluo.globalIconPack.utils.IconHelper
 import com.richardluo.globalIconPack.utils.WorldPreference
+import com.richardluo.globalIconPack.utils.isInMod
+import java.io.InputStream
 
 abstract class IconPack(
   pref: SharedPreferences,
-  getResources: (packageName: String) -> Resources?,
+  protected val pack: String,
+  protected val resources: Resources,
 ) {
-  protected val pack =
-    pref.getString(PrefKey.ICON_PACK, "")?.takeIf { it.isNotEmpty() }
-      ?: throw Exception("No icon pack set")
-  protected val resources = getResources(pack) ?: throw Exception("Icon pack is invalid")
-
   protected val iconFallback = pref.getBoolean(PrefKey.ICON_FALLBACK, true)
   protected val enableOverrideIconFallback = pref.getBoolean(PrefKey.OVERRIDE_ICON_FALLBACK, false)
   // Fallback settings from icon pack
@@ -97,25 +95,27 @@ fun getComponentName(packageName: String): ComponentName = ComponentName(package
 
 /**
  * CustomAdaptiveIconDrawable does not work correctly for some apps. It maybe clipped by adaptive
- * icon mask or show black background, but we don't know how to efficiently convert Bitmap to Path.
+ * icon mask or shows black background, but we don't know how to efficiently convert Bitmap to Path.
  */
 internal val useAdaptive: Boolean by lazy {
-  when (val packageName = AndroidAppHelper.currentPackageName()) {
-    "com.android.settings" -> false
-    "com.android.systemui" -> false
-    "com.android.intentresolver" -> true
-    else -> {
-      // Query if it is a launcher app
-      val intent =
-        Intent().apply {
-          setPackage(packageName)
-          setAction(Intent.ACTION_MAIN)
-          addCategory(Intent.CATEGORY_HOME)
-        }
-      AndroidAppHelper.currentApplication()
-        .packageManager
-        .resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY)
-        .let { it?.activityInfo != null }
+  if (!isInMod) false
+  else
+    when (val packageName = AndroidAppHelper.currentPackageName()) {
+      "com.android.settings" -> false
+      "com.android.systemui" -> false
+      "com.android.intentresolver" -> true
+      else -> {
+        // Query if it is a launcher app
+        val intent =
+          Intent().apply {
+            setPackage(packageName)
+            setAction(Intent.ACTION_MAIN)
+            addCategory(Intent.CATEGORY_HOME)
+          }
+        AndroidAppHelper.currentApplication()
+          .packageManager
+          .resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY)
+          .let { it?.activityInfo != null }
+      }
     }
-  }
 }

@@ -23,10 +23,14 @@ private fun initIP() {
   AndroidAppHelper.currentApplication()?.packageManager?.let { pm ->
     runCatching {
         val pref = WorldPreference.getPrefInMod()
+        val pack =
+          pref.getString(PrefKey.ICON_PACK, "")?.takeIf { it.isNotEmpty() }
+            ?: throw Exception("No icon pack set")
+        val res = pm.getResourcesForApplication(pack)
         ip =
           when (pref.getString(PrefKey.MODE, MODE_PROVIDER)) {
-            MODE_PROVIDER -> RemoteIconPack(pref) { pm.getResourcesForApplication(it) }
-            else -> LocalIconPack(pref, true) { pm.getResourcesForApplication(it) }
+            MODE_PROVIDER -> RemoteIconPack(pref, pack, res)
+            else -> LocalIconPack(pref, pack, res)
           }
       }
       .exceptionOrNull()
