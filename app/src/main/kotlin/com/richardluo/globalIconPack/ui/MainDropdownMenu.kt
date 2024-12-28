@@ -64,10 +64,12 @@ fun MainDropdownMenu(snackbarState: SnackbarHostState) {
   }
   DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
     DropdownMenuItem(
+      leadingIcon = {},
       text = { Text(stringResource(R.string.restartSystemUI)) },
       onClick = runCommand("killall com.android.systemui"),
     )
     DropdownMenuItem(
+      leadingIcon = {},
       text = { Text(stringResource(R.string.restartPixelLauncher)) },
       onClick =
         runCommand(
@@ -75,6 +77,7 @@ fun MainDropdownMenu(snackbarState: SnackbarHostState) {
         ),
     )
     DropdownMenuItem(
+      leadingIcon = {},
       text = { Text(stringResource(R.string.restartOthers)) },
       onClick =
         runCommand(
@@ -84,6 +87,7 @@ fun MainDropdownMenu(snackbarState: SnackbarHostState) {
         ),
     )
     DropdownMenuItem(
+      leadingIcon = { Text("🌐") },
       text = { Text(stringResource(R.string.openCrowdin)) },
       onClick = {
         context.startActivity(
@@ -96,6 +100,7 @@ fun MainDropdownMenu(snackbarState: SnackbarHostState) {
       },
     )
     DropdownMenuItem(
+      leadingIcon = { Text("🧑‍💻") },
       text = { Text(stringResource(R.string.openGithub)) },
       onClick = {
         context.startActivity(
@@ -104,6 +109,14 @@ fun MainDropdownMenu(snackbarState: SnackbarHostState) {
             Uri.parse("https://github.com/RichardLuo0/global-icon-pack-android"),
           )
         )
+        expanded = false
+      },
+    )
+    DropdownMenuItem(
+      leadingIcon = { Text("☕") },
+      text = { Text(stringResource(R.string.buyMeACoffee)) },
+      onClick = {
+        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://ko-fi.com/richardluo")))
         expanded = false
       },
     )

@@ -30,6 +30,7 @@
     <string name="restartOthers">Restart Others</string>
     <string name="openCrowdin">Help with localization</string>
     <string name="openGithub">Github</string>
+    <string name="buyMeACoffee">Buy me a coffee</string>
     <string name="restartedSuccessfully">Restarted successfully</string>
 
     <string name="warning">Warning</string>
