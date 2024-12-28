@@ -8,7 +8,8 @@ import android.content.Intent.ACTION_TIMEZONE_CHANGED
 import android.content.Intent.ACTION_TIME_CHANGED
 import android.os.Process
 import android.os.UserManager
-import com.richardluo.globalIconPack.iconPack.database.IconType
+import com.richardluo.globalIconPack.iconPack.database.CalendarIconEntry
+import com.richardluo.globalIconPack.iconPack.database.ClockIconEntry
 import com.richardluo.globalIconPack.iconPack.getComponentName
 import com.richardluo.globalIconPack.iconPack.getIP
 import com.richardluo.globalIconPack.utils.ReflectHelper
@@ -48,12 +49,12 @@ class CalendarAndClockHook : Hook {
           val packageName = param.args[0] as String
           val iconDpi = param.args[1] as Int
           val entry = ip.getIconEntry(getComponentName(packageName)) ?: return
-          when (entry.type) {
-            IconType.Calendar -> {
+          when (entry) {
+            is CalendarIconEntry -> {
               calendars.add(packageName)
               param.result = ip.getIcon(entry, iconDpi)
             }
-            IconType.Clock -> {
+            is ClockIconEntry -> {
               clocks.add(packageName)
               param.result = ip.getIcon(entry, iconDpi)
             }

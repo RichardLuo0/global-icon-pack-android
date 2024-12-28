@@ -1,9 +1,7 @@
 package com.richardluo.globalIconPack.iconPack.database
 
 import android.graphics.drawable.Drawable
-import com.richardluo.globalIconPack.iconPack.IconPack
 import com.richardluo.globalIconPack.reflect.ClockDrawableWrapper
-import com.richardluo.globalIconPack.utils.letAll
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.ObjectInputStream
@@ -11,23 +9,16 @@ import java.io.ObjectOutputStream
 import java.io.Serializable
 import java.util.Calendar
 
-data class IconEntry(
-  val name: String,
-  val type: IconType,
-  val clockMetadata: ClockMetadata? = null,
-) : Serializable {
+abstract class IconEntry(val name: String) : Serializable {
 
-  fun getIcon(ip: IconPack, iconDpi: Int): Drawable? {
-    return when (type) {
-      IconType.Normal -> ip.getIcon(name, iconDpi)
-      IconType.Calendar ->
-        ip.getIcon("$name${Calendar.getInstance().get(Calendar.DAY_OF_MONTH)}", iconDpi)
-      IconType.Clock ->
-        letAll(ip.getIcon(name, iconDpi), clockMetadata) { icon, metadata ->
-          ClockDrawableWrapper.from(icon, metadata) ?: icon
-        }
-    }
-  }
+  abstract fun getIcon(getIcon: (String) -> Drawable?): Drawable?
+
+  abstract fun copyTo(
+    component: String,
+    newName: String,
+    xml: StringBuilder,
+    copyRes: (String, String) -> Unit,
+  )
 
   fun toByteArray(): ByteArray =
     ByteArrayOutputStream().also { ObjectOutputStream(it).writeObject(this) }.toByteArray()
@@ -40,8 +31,57 @@ data class IconEntry(
   }
 }
 
-enum class IconType {
-  Normal,
-  Calendar,
-  Clock,
+class NormalIconEntry(name: String) : IconEntry(name) {
+
+  override fun getIcon(getIcon: (String) -> Drawable?) = getIcon(name)
+
+  override fun copyTo(
+    component: String,
+    newName: String,
+    xml: StringBuilder,
+    copyRes: (String, String) -> Unit,
+  ) {
+    xml.append("<item component=\"${component}\" drawable=\"${newName}\"/>")
+    copyRes(name, newName)
+  }
+}
+
+class CalendarIconEntry(name: String) : IconEntry(name) {
+
+  override fun getIcon(getIcon: (String) -> Drawable?) =
+    getIcon("$name${Calendar.getInstance().get(Calendar.DAY_OF_MONTH)}")
+
+  override fun copyTo(
+    component: String,
+    newName: String,
+    xml: StringBuilder,
+    copyRes: (String, String) -> Unit,
+  ) {
+    xml.append("<calendar component=\"${component}\" prefix=\"${newName}\"/>")
+    (1..31).mapNotNull { copyRes("$name${it}", "${newName}_${it}") }
+  }
+}
+
+class ClockIconEntry(name: String, private val metadata: ClockMetadata) : IconEntry(name) {
+
+  override fun getIcon(getIcon: (String) -> Drawable?) =
+    getIcon(name)?.let { ClockDrawableWrapper.from(it, metadata) ?: it }
+
+  override fun copyTo(
+    component: String,
+    newName: String,
+    xml: StringBuilder,
+    copyRes: (String, String) -> Unit,
+  ) {
+    xml.append(
+      "<dynamic-clock drawable=\"${newName}\" " +
+        "hourLayerIndex=\"${metadata.hourLayerIndex}\" " +
+        "minuteLayerIndex=\"${metadata.minuteLayerIndex}\" " +
+        "secondLayerIndex=\"${metadata.secondLayerIndex}\" " +
+        "defaultHour=\"${metadata.defaultHour}\" " +
+        "defaultMinute=\"${metadata.defaultMinute}\" " +
+        "defaultSecond=\"${metadata.defaultSecond}\" />"
+    )
+    copyRes(name, newName)
+  }
 }

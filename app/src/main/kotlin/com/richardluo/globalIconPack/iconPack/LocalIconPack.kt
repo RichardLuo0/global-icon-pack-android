@@ -74,18 +74,15 @@ internal fun loadIconPack(resources: Resources, pack: String, iconFallback: Bool
 
   // Any type other than normal will take priority
   fun addIconEntry(cn: ComponentName, entry: IconEntry) {
-    if (!iconEntryMap.containsKey(cn) || entry.type != IconType.Normal) iconEntryMap[cn] = entry
+    if (!iconEntryMap.containsKey(cn) || entry !is NormalIconEntry) iconEntryMap[cn] = entry
   }
 
-  fun addIcon(parseXml: XmlPullParser, iconType: IconType) {
+  fun addIcon(parseXml: XmlPullParser, iconEntry: IconEntry) {
     var componentName: String = parseXml["component"] ?: return
-    val drawableName =
-      parseXml[if (iconType == IconType.Calendar) "prefix" else "drawable"] ?: return
     if (componentName.startsWith(compStart) && componentName.endsWith(compEnd)) {
       componentName = componentName.substring(compStartLength, componentName.length - compEndLength)
     }
     ComponentName.unflattenFromString(componentName)?.let { cn ->
-      val iconEntry = IconEntry(drawableName, iconType)
       addIconEntry(cn, iconEntry)
       // Use the first icon as app icon. I don't see a better way.
       addIconEntry(getComponentName(cn.packageName), iconEntry)
@@ -104,15 +101,14 @@ internal fun loadIconPack(resources: Resources, pack: String, iconFallback: Bool
           if (!iconFallback) continue
           info.iconScale = parseXml.getAttributeValue(null, "factor")?.toFloatOrNull() ?: 1f
         }
-        "item" -> addIcon(parseXml, IconType.Normal)
-        "calendar" -> addIcon(parseXml, IconType.Calendar)
+        "item" -> addIcon(parseXml, NormalIconEntry(parseXml["drawable"] ?: continue))
+        "calendar" -> addIcon(parseXml, CalendarIconEntry(parseXml["prefix"] ?: continue))
         "dynamic-clock" -> {
           val drawableName = parseXml["drawable"] ?: continue
           if (parseXml !is XmlResourceParser) continue
           clockMetaMap[drawableName] =
-            IconEntry(
+            ClockIconEntry(
               drawableName,
-              IconType.Clock,
               ClockMetadata(
                 parseXml.getAttributeIntValue(null, "hourLayerIndex", -1),
                 parseXml.getAttributeIntValue(null, "minuteLayerIndex", -1),
@@ -125,10 +121,10 @@ internal fun loadIconPack(resources: Resources, pack: String, iconFallback: Bool
         }
       }
     }
-    iconEntryMap.forEach { (cn, entry) ->
-      val drawableName = entry.takeUnless { it.type == IconType.Clock }?.name ?: return@forEach
-      clockMetaMap[drawableName]?.let { iconEntryMap[cn] = it }
-    }
+    if (clockMetaMap.isNotEmpty())
+      iconEntryMap
+        .filter { it.value !is ClockIconEntry }
+        .forEach { (cn, entry) -> clockMetaMap[entry.name]?.let { iconEntryMap[cn] = it } }
   } catch (e: Exception) {
     if (isInMod) log(e) else logInApp(e)
   }

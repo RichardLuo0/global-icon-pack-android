@@ -45,17 +45,33 @@ abstract class IconPack(
 
   abstract fun getId(cn: ComponentName): Int?
 
-  fun getIcon(iconEntry: IconEntry, iconDpi: Int): Drawable? =
-    iconEntry.getIcon(this, iconDpi)?.let {
-      if (useAdaptive) IconHelper.makeAdaptive(it, globalScale) else it
-    }
+  fun getIcon(iconEntry: IconEntry, iconDpi: Int) =
+    iconEntry
+      .getIcon { getIcon(it, iconDpi) }
+      ?.let { if (useAdaptive) IconHelper.makeAdaptive(it, globalScale) else it }
 
   fun getIcon(id: Int, iconDpi: Int): Drawable? = getIconEntry(id)?.let { getIcon(it, iconDpi) }
 
-  fun getIcon(resName: String, iconDpi: Int = 0): Drawable? =
+  fun getIcon(resName: String, iconDpi: Int = 0) =
     getDrawableId(resName)
       .takeIf { it != 0 }
-      ?.let { getDrawableForDensity(resources, it, iconDpi, null) }
+      ?.let {
+        if (isInMod) getDrawableForDensity(resources, it, iconDpi, null)
+        else resources.getDrawableForDensity(it, iconDpi, null)
+      }
+
+  fun copyTo(
+    iconEntry: IconEntry,
+    component: String,
+    name: String,
+    xml: StringBuilder,
+    write: (InputStream, String) -> Unit,
+  ) =
+    iconEntry.copyTo(component, name, xml) { resName, newName ->
+      getDrawableId(resName)
+        .takeIf { it != 0 }
+        ?.let { write(resources.openRawResource(it), newName) }
+    }
 
   private val idCache = mutableMapOf<String, Int>()
 
@@ -74,7 +90,7 @@ abstract class IconPack(
         iconScale,
         globalScale,
       )
-    else {
+    else if (iconFallback) {
       // Do not pass global scale because BitmapDrawable will scale anyway
       IconHelper.processIconToBitmap(
         resources,
@@ -84,7 +100,7 @@ abstract class IconPack(
         iconMasks.randomOrNull(),
         iconScale,
       )
-    }
+    } else baseIcon
 }
 
 fun getComponentName(info: PackageItemInfo): ComponentName =
