@@ -22,7 +22,7 @@
 
 -keep class com.richardluo.globalIconPack.XposedMain
 -keep class com.richardluo.globalIconPack.iconPack.database.FallbackSettings
--keep class com.richardluo.globalIconPack.iconPack.database.IconEntry
+-keep class com.richardluo.globalIconPack.iconPack.database.*IconEntry
 -keepclassmembers class ** {
     private static long serialVersionUID;
 }
