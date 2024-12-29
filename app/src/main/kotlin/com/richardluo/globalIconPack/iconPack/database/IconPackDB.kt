@@ -62,11 +62,14 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
       delete("fallbacks", "pack not in (${appSet})", null)
       // Drop expired tables
       rawQuery(
-          "SELECT 'DROP TABLE ' || name || ';' FROM sqlite_master " +
-            "WHERE type = 'table' AND name NOT IN ($appSet)",
+          "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT IN ($appSet)",
           null,
         )
-        .close()
+        .use {
+          while (it.moveToNext()) {
+            db.execSQL("DROP TABLE '${it.getString(0)}'")
+          }
+        }
       setTransactionSuccessful()
       endTransaction()
     }
@@ -133,11 +136,16 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
   override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
     db.apply {
       rawQuery(
-          "SELECT 'DROP TABLE ' || name || ';' FROM sqlite_master " +
-            "WHERE type = 'table' AND name != 'fallbacks'",
+          "SELECT name FROM sqlite_master " +
+            "WHERE type = 'table' AND name NOT IN ('fallbacks','android_metadata')",
           null,
         )
-        .close()
+        .use {
+          while (it.moveToNext()) {
+            db.execSQL("DROP TABLE '${it.getString(0)}'")
+          }
+        }
+      delete("fallbacks", null, null)
       WorldPreference.getPrefInApp(context).getString(PrefKey.ICON_PACK, "")?.let { update(db, it) }
     }
   }
