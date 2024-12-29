@@ -44,6 +44,10 @@ class NormalIconEntry(name: String) : IconEntry(name) {
     xml.append("<item component=\"${component}\" drawable=\"${newName}\"/>")
     copyRes(name, newName)
   }
+
+  companion object {
+    private const val serialVersionUID = 1L
+  }
 }
 
 class CalendarIconEntry(name: String) : IconEntry(name) {
@@ -59,6 +63,10 @@ class CalendarIconEntry(name: String) : IconEntry(name) {
   ) {
     xml.append("<calendar component=\"${component}\" prefix=\"${newName}\"/>")
     (1..31).mapNotNull { copyRes("$name${it}", "${newName}_${it}") }
+  }
+
+  companion object {
+    private const val serialVersionUID = 1L
   }
 }
 
@@ -83,5 +91,9 @@ class ClockIconEntry(name: String, private val metadata: ClockMetadata) : IconEn
         "defaultSecond=\"${metadata.defaultSecond}\" />"
     )
     copyRes(name, newName)
+  }
+
+  companion object {
+    private const val serialVersionUID = 1L
   }
 }

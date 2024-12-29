@@ -15,7 +15,7 @@ import com.richardluo.globalIconPack.utils.log
 data class Icon(val componentName: ComponentName, val entry: IconEntry)
 
 class IconPackDB(private val context: Context, path: String = "iconPack.db") :
-  SQLiteOpenHelper(context.createDeviceProtectedStorageContext(), path, null, 2) {
+  SQLiteOpenHelper(context.createDeviceProtectedStorageContext(), path, null, 3) {
 
   override fun onCreate(db: SQLiteDatabase) {}
 
