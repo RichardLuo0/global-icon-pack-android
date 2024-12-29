@@ -24,7 +24,7 @@ import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -32,7 +32,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
-import androidx.lifecycle.lifecycleScope
 import com.richardluo.globalIconPack.MODE_LOCAL
 import com.richardluo.globalIconPack.MODE_PROVIDER
 import com.richardluo.globalIconPack.PrefKey
@@ -47,7 +46,8 @@ import com.richardluo.globalIconPack.ui.components.SnackbarErrorVisuals
 import com.richardluo.globalIconPack.ui.components.lazyListPreference
 import com.richardluo.globalIconPack.utils.WorldPreference
 import com.topjohnwu.superuser.Shell
-import kotlinx.coroutines.async
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import me.zhanghai.compose.preference.ProvidePreferenceLocals
 import me.zhanghai.compose.preference.SwitchPreference
 import me.zhanghai.compose.preference.getPreferenceFlow
@@ -127,8 +127,8 @@ class MainActivity : ComponentActivity() {
       contentColor = contentColorFor(MaterialTheme.colorScheme.background),
       contentWindowInsets = windowInsets,
     ) { contentPadding ->
-      var loading by remember { mutableStateOf(false) }
-      if (loading) LoadingDialog()
+      var waiting by remember { mutableIntStateOf(0) }
+      if (waiting > 0) LoadingDialog()
 
       LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = contentPadding) {
         preferenceCategory(key = "general", title = { Text(stringResource(R.string.general)) })
@@ -143,9 +143,9 @@ class MainActivity : ComponentActivity() {
             rememberPreferenceState(PrefKey.MODE, MODE_PROVIDER).also {
               val value by it
               LaunchedEffect(value) {
-                loading = true
-                lifecycleScope.async { listener.onModeChange(value) }.await()
-                loading = false
+                waiting++
+                withContext(Dispatchers.Default) { listener.onModeChange(value) }
+                waiting--
               }
             }
           },
@@ -163,9 +163,9 @@ class MainActivity : ComponentActivity() {
             rememberPreferenceState(PrefKey.ICON_PACK, "").also {
               val value by it
               LaunchedEffect(value) {
-                loading = true
-                lifecycleScope.async { listener.onIconPackChange(value) }.await()
-                loading = false
+                waiting++
+                withContext(Dispatchers.Default) { listener.onIconPackChange(value) }
+                waiting--
               }
             }
           },
