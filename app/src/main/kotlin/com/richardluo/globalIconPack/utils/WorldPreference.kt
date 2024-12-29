@@ -23,12 +23,14 @@ object WorldPreference {
   }
 
   @SuppressLint("WorldReadableFiles")
+  @Suppress("KotlinConstantConditions")
   fun getPrefInApp(context: Context): SharedPreferences {
     if (!WorldPreference::pref.isInitialized)
       pref =
         context.getSharedPreferences(
           PreferenceManager.getDefaultSharedPreferencesName(context),
-          if (BuildConfig.DEBUG) Context.MODE_PRIVATE else Context.MODE_WORLD_READABLE,
+          if (BuildConfig.BUILD_TYPE == "debugApp") Context.MODE_PRIVATE
+          else Context.MODE_WORLD_READABLE,
         )
     return pref
   }

@@ -71,6 +71,7 @@ class MainActivity : ComponentActivity() {
         InfoDialog(
           title = { Text("⚠️ ${getString(R.string.warning)}") },
           content = { Text(getString(R.string.plzEnableModuleFirst)) },
+          onCancel = { finish() },
         ) {
           finish()
         }
@@ -150,11 +151,11 @@ class MainActivity : ComponentActivity() {
             }
           },
         )
-        switchPreference(
-          key = PrefKey.NO_FORCE_SHAPE,
-          defaultValue = false,
-          title = { Text(stringResource(R.string.noForceShape)) },
-          summary = { Text(stringResource(R.string.noForceShapeSummary)) },
+        preference(
+          key = "openMerger",
+          onClick = { context.startActivity(Intent(context, IconPackMergerActivity::class.java)) },
+          title = { Text(stringResource(R.string.appName)) }, // TODO
+          summary = { Text(stringResource(R.string.appName)) },
         )
         switchPreference(
           key = PrefKey.ICON_PACK_AS_FALLBACK,

@@ -33,12 +33,18 @@ fun InfoDialog(
   openState: MutableState<Boolean> = remember { mutableStateOf(true) },
   title: @Composable () -> Unit,
   content: @Composable () -> Unit,
+  onCancel: () -> Unit = {},
   onOk: () -> Unit = {},
 ) {
   var open by openState
   if (!open) return
 
-  BasicAlertDialog(onDismissRequest = { open = false }) {
+  BasicAlertDialog(
+    onDismissRequest = {
+      onCancel()
+      open = false
+    }
+  ) {
     Surface(
       modifier = Modifier.fillMaxWidth(),
       shape = AlertDialogDefaults.shape,
