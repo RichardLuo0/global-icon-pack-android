@@ -8,7 +8,7 @@
     <string name="iconPack">Icon pack</string>
     <string name="iconPackSummary">The package name to be used as icon pack.</string>
     <string name="iconPackAsFallback">Icon pack as fallback</string>
-    <string name="iconPackAsFallbackSummary">Still use icon pack when activity name does not match.</string>
+    <string name="iconPackAsFallbackSummary">Use icon pack even if class name does not match.</string>
 
     <string name="iconPackSettings">Icon pack settings</string>
     <string name="iconFallback">Generate fallback icons</string>
@@ -34,5 +34,5 @@
     <string name="restartedSuccessfully">Restarted successfully</string>
 
     <string name="warning">Warning</string>
-    <string name="plzEnableModuleFirst">Please ensure that the module is enabled first.</string>
+    <string name="plzEnableModuleFirst">Please ensure the Xposed module has been enabled first.</string>
 </resources>
