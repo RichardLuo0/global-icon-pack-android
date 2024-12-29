@@ -170,12 +170,6 @@ class MainActivity : ComponentActivity() {
             }
           },
         )
-        preference(
-          key = "openMerger",
-          onClick = { context.startActivity(Intent(context, IconPackMergerActivity::class.java)) },
-          title = { Text(stringResource(R.string.appName)) }, // TODO
-          summary = { Text(stringResource(R.string.appName)) },
-        )
         switchPreference(
           key = PrefKey.ICON_PACK_AS_FALLBACK,
           defaultValue = false,
