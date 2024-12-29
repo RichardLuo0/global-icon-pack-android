@@ -20,6 +20,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import com.richardluo.globalIconPack.R
+import com.richardluo.globalIconPack.ui.components.SnackbarErrorVisuals
 import com.richardluo.globalIconPack.utils.log
 import com.topjohnwu.superuser.Shell
 import kotlinx.coroutines.launch
@@ -42,9 +43,11 @@ fun MainDropdownMenu(snackbarState: SnackbarHostState) {
             "code: ${result.code} err: ${result.err.joinToString("\n")} out: ${result.out.joinToString("\n")}"
           log(error)
           snackbarState.showSnackbar(
-            "❌ $error",
-            withDismissAction = true,
-            duration = SnackbarDuration.Long,
+            SnackbarErrorVisuals(
+              "❌ $error",
+              withDismissAction = true,
+              duration = SnackbarDuration.Long,
+            )
           )
         }
       }

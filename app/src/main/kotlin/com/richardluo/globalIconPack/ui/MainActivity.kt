@@ -14,6 +14,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -42,6 +43,7 @@ import com.richardluo.globalIconPack.ui.components.IconPackItem
 import com.richardluo.globalIconPack.ui.components.InfoDialog
 import com.richardluo.globalIconPack.ui.components.LoadingDialog
 import com.richardluo.globalIconPack.ui.components.SampleTheme
+import com.richardluo.globalIconPack.ui.components.SnackbarErrorVisuals
 import com.richardluo.globalIconPack.ui.components.lazyListPreference
 import com.richardluo.globalIconPack.utils.WorldPreference
 import com.topjohnwu.superuser.Shell
@@ -103,7 +105,24 @@ class MainActivity : ComponentActivity() {
           actions = { MainDropdownMenu(snackbarState) },
         )
       },
-      snackbarHost = { SnackbarHost(hostState = snackbarState) },
+      snackbarHost = {
+        SnackbarHost(
+          hostState = snackbarState,
+          snackbar = {
+            val isError = snackbarState.currentSnackbarData?.visuals is SnackbarErrorVisuals
+            Snackbar(
+              it,
+              shape = MaterialTheme.shapes.extraLarge,
+              containerColor =
+                if (isError) MaterialTheme.colorScheme.error
+                else MaterialTheme.colorScheme.secondary,
+              contentColor =
+                if (isError) MaterialTheme.colorScheme.onError
+                else MaterialTheme.colorScheme.onSecondary,
+            )
+          },
+        )
+      },
       containerColor = Color.Transparent,
       contentColor = contentColorFor(MaterialTheme.colorScheme.background),
       contentWindowInsets = windowInsets,
