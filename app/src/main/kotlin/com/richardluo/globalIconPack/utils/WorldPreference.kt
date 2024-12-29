@@ -13,7 +13,7 @@ object WorldPreference {
   private lateinit var pref: SharedPreferences
 
   fun getPrefInMod(): SharedPreferences {
-    if (!WorldPreference::pref.isInitialized)
+    if (!::pref.isInitialized)
       pref =
         XSharedPreferences(BuildConfig.APPLICATION_ID).also {
           if (!it.file.canRead())
@@ -25,7 +25,7 @@ object WorldPreference {
   @SuppressLint("WorldReadableFiles")
   @Suppress("KotlinConstantConditions")
   fun getPrefInApp(context: Context): SharedPreferences {
-    if (!WorldPreference::pref.isInitialized)
+    if (!::pref.isInitialized)
       pref =
         context.getSharedPreferences(
           PreferenceManager.getDefaultSharedPreferencesName(context),
