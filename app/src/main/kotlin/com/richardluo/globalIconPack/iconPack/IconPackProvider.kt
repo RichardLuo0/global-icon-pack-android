@@ -30,24 +30,24 @@ class IconPackProvider : ContentProvider() {
     sortOrder: String?,
   ): Cursor? {
     startForegroundAsNeeded()
-    return when (uri.path?.removePrefix("/")) {
-      FALLBACKS ->
-        if (selectionArgs != null && selectionArgs.isNotEmpty())
-          runCatching { iconPackDB.getFallbackSettings(selectionArgs[0]) }.getOrNull { log(it) }
-        else null
-      ICONS ->
-        if (selectionArgs != null && selectionArgs.size >= 4)
-          runCatching {
+    return runCatching {
+        when (uri.path?.removePrefix("/")) {
+          FALLBACKS ->
+            if (selectionArgs != null && selectionArgs.isNotEmpty())
+              iconPackDB.getFallbackSettings(selectionArgs[0])
+            else null
+          ICONS ->
+            if (selectionArgs != null && selectionArgs.size >= 4)
               iconPackDB.getIcon(
                 selectionArgs[0],
                 ComponentName(selectionArgs[1], selectionArgs[2]),
                 selectionArgs[3].toBoolean(),
               )
-            }
-            .getOrNull { log(it) }
-        else null
-      else -> null
-    }
+            else null
+          else -> null
+        }
+      }
+      .getOrNull { log(it) }
   }
 
   private var isServiceStarted = false

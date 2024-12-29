@@ -17,9 +17,7 @@ data class Icon(val componentName: ComponentName, val entry: IconEntry)
 class IconPackDB(private val context: Context, path: String = "iconPack.db") :
   SQLiteOpenHelper(context.createDeviceProtectedStorageContext(), path, null, 2) {
 
-  override fun onCreate(db: SQLiteDatabase) {
-    db.execSQL("CREATE TABLE IF NOT EXISTS \"fallbacks\" (pack TEXT PRIMARY KEY, fallback BLOB)")
-  }
+  override fun onCreate(db: SQLiteDatabase) {}
 
   fun onIconPackChange(pack: String) {
     update(writableDatabase, pack)
@@ -32,18 +30,24 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
           log("No icon pack set")
           return
         }
+    val packTable = pt(pack)
     val packUpdateTime = context.packageManager.getPackageInfo(pack, 0).lastUpdateTime
-    db.rawQuery("select DISTINCT tbl_name from sqlite_master where tbl_name=?", arrayOf(pack)).use {
-      if (it.count > 0 && packUpdateTime < context.getDatabasePath(db.path).lastModified()) return
-    }
+    db
+      .rawQuery("select DISTINCT tbl_name from sqlite_master where tbl_name=?", arrayOf(packTable))
+      .use {
+        if (it.count > 0 && packUpdateTime < context.getDatabasePath(db.path).lastModified()) return
+      }
     db.apply {
       beginTransaction()
       // Create tables
-      execSQL("CREATE TABLE IF NOT EXISTS \"$pack\" (packageName TEXT, className TEXT, entry BLOB)")
+      execSQL("CREATE TABLE IF NOT EXISTS 'fallbacks' (pack TEXT PRIMARY KEY, fallback BLOB)")
       execSQL(
-        "CREATE UNIQUE INDEX IF NOT EXISTS \"${pack}_componentName\" ON \"$pack\" (packageName, className)"
+        "CREATE TABLE IF NOT EXISTS '$packTable' (packageName TEXT, className TEXT, entry BLOB)"
       )
-      execSQL("CREATE INDEX IF NOT EXISTS \"${pack}_packageName\" ON \"$pack\" (packageName)")
+      execSQL(
+        "CREATE UNIQUE INDEX IF NOT EXISTS '${pack}_componentName' ON '$packTable' (packageName, className)"
+      )
+      execSQL("CREATE INDEX IF NOT EXISTS '${pack}_packageName' ON '$packTable' (packageName)")
       // Load icon pack
       val packResources = context.packageManager.getResourcesForApplication(pack)
       loadIconPack(packResources, pack, iconFallback = true).let { info ->
@@ -57,12 +61,14 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
         )
       }
       // Get installed icon packs
-      val appSet = IconPackApps.load(context).keys.joinToString(", ") { "'$it'" }
+      val packs = IconPackApps.load(context).keys
       // Delete expired fallbacks
-      delete("fallbacks", "pack not in (${appSet})", null)
+      val packSet = packs.joinToString(", ") { "'$it'" }
+      delete("fallbacks", "pack not in ($packSet)", null)
       // Drop expired tables
+      val packTableSet = packs.joinToString(", ") { "'${pt(it)}'" }
       rawQuery(
-          "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT IN ($appSet)",
+          "select DISTINCT tbl_name from sqlite_master WHERE tbl_name LIKE '${pt("%")}' AND tbl_name NOT IN ($packTableSet)",
           null,
         )
         .use {
@@ -93,16 +99,16 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
 
   private fun getIconExact(pack: String, cn: ComponentName) =
     readableDatabase.rawQuery(
-      "SELECT entry FROM \"$pack\" WHERE packageName=? and className=? LIMIT 1",
+      "SELECT entry FROM '${pt(pack)}' WHERE packageName=? and className=? LIMIT 1",
       arrayOf(cn.packageName, cn.className),
     )
 
   private fun getIconFallback(pack: String, cn: ComponentName) =
     readableDatabase.rawQuery(
-      "SELECT entry FROM \"$pack\" WHERE packageName=? ORDER BY " +
+      "SELECT entry FROM '${pt(pack)}' WHERE packageName=? ORDER BY " +
         "CASE " +
-        "  WHEN className = \"${cn.className}\" THEN 1 " +
-        "  WHEN className = \"\" THEN 2 " +
+        "  WHEN className = '${cn.className}' THEN 1 " +
+        "  WHEN className = '' THEN 2 " +
         "  ELSE 3 " +
         "END LIMIT 1",
       arrayOf(cn.packageName),
@@ -113,7 +119,7 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
 
   private fun insertIcon(db: SQLiteDatabase, pack: String, icons: List<Icon>) {
     val insertIcon: SQLiteStatement =
-      db.compileStatement("INSERT OR REPLACE INTO \"$pack\" VALUES(?, ?, ?)")
+      db.compileStatement("INSERT OR REPLACE INTO '${pt(pack)}' VALUES(?, ?, ?)")
     db.apply {
       beginTransaction()
       runCatching {
@@ -133,11 +139,12 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
     }
   }
 
+  private fun pt(pack: String) = "pack_$pack"
+
   override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
     db.apply {
       rawQuery(
-          "SELECT name FROM sqlite_master " +
-            "WHERE type = 'table' AND name NOT IN ('fallbacks','android_metadata')",
+          "select DISTINCT tbl_name from sqlite_master WHERE name NOT IN ('android_metadata')",
           null,
         )
         .use {
@@ -145,7 +152,6 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
             db.execSQL("DROP TABLE '${it.getString(0)}'")
           }
         }
-      delete("fallbacks", null, null)
       WorldPreference.getPrefInApp(context).getString(PrefKey.ICON_PACK, "")?.let { update(db, it) }
     }
   }
