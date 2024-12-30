@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="$0">
+
+    <uses-sdk
+        android:minSdkVersion="33"
+        android:targetSdkVersion="35" />
+
+    <application android:label="$1">
+
+        <activity
+            android:name="android.app.Activity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.novalauncher.THEME" />
+                <category android:name="com.novalauncher.category.CUSTOM_ICON_PICKER" />
+            </intent-filter>
+        </activity>
+    </application>
+</manifest>

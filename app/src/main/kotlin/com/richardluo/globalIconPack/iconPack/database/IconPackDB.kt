@@ -11,6 +11,7 @@ import com.richardluo.globalIconPack.iconPack.IconPackApps
 import com.richardluo.globalIconPack.iconPack.loadIconPack
 import com.richardluo.globalIconPack.utils.WorldPreference
 import com.richardluo.globalIconPack.utils.log
+import kotlinx.coroutines.runBlocking
 
 data class Icon(val componentName: ComponentName, val entry: IconEntry)
 
@@ -61,7 +62,7 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
         )
       }
       // Get installed icon packs
-      val packs = IconPackApps.load(context).keys
+      val packs = runBlocking { IconPackApps.load(context).keys }
       // Delete expired fallbacks
       val packSet = packs.joinToString(", ") { "'$it'" }
       delete("fallbacks", "pack not in ($packSet)", null)

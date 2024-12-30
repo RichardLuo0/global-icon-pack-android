@@ -61,8 +61,8 @@ class CalendarIconEntry(name: String) : IconEntry(name) {
     xml: StringBuilder,
     copyRes: (String, String) -> Unit,
   ) {
-    xml.append("<calendar component=\"${component}\" prefix=\"${newName}\"/>")
-    (1..31).mapNotNull { copyRes("$name${it}", "${newName}_${it}") }
+    xml.append("<calendar component=\"${component}\" prefix=\"${newName}_\"/>")
+    (1..31).mapNotNull { copyRes("$name${it}", "${newName}_$it") }
   }
 
   companion object {

@@ -8,6 +8,8 @@ import android.content.pm.PackageManager
 import android.content.pm.ResolveInfo
 import android.graphics.drawable.Drawable
 import com.richardluo.globalIconPack.utils.ReAssignable
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 data class IconPackApp(val label: String, val icon: Drawable)
 
@@ -29,24 +31,28 @@ object IconPackApps {
       }
     }
 
-  fun load(context: Context): Map<String, IconPackApp> {
+  suspend fun load(context: Context): Map<String, IconPackApp> {
     return packAppMap.orAssign {
-      context.applicationContext.registerReceiver(
-        packageChangeReceiver,
-        IntentFilter().apply {
-          addAction(Intent.ACTION_PACKAGE_ADDED)
-          addAction(Intent.ACTION_PACKAGE_REMOVED)
-          addDataScheme("package")
-        },
-      )
-      mutableMapOf<String, IconPackApp>().apply {
-        val pm = context.packageManager
-        listOf(
-            "app.lawnchair.icons.THEMED_ICON",
-            "org.adw.ActivityStarter.THEMES",
-            "com.novalauncher.THEME",
-          )
-          .forEach { action -> pm.queryIntentActivities(Intent(action), 0).forEach { put(pm, it) } }
+      withContext(Dispatchers.Default) {
+        context.applicationContext.registerReceiver(
+          packageChangeReceiver,
+          IntentFilter().apply {
+            addAction(Intent.ACTION_PACKAGE_ADDED)
+            addAction(Intent.ACTION_PACKAGE_REMOVED)
+            addDataScheme("package")
+          },
+        )
+        mutableMapOf<String, IconPackApp>().apply {
+          val pm = context.packageManager
+          listOf(
+              "app.lawnchair.icons.THEMED_ICON",
+              "org.adw.ActivityStarter.THEMES",
+              "com.novalauncher.THEME",
+            )
+            .forEach { action ->
+              pm.queryIntentActivities(Intent(action), 0).forEach { put(pm, it) }
+            }
+        }
       }
     }
   }

@@ -10,6 +10,10 @@
             <action android:name="com.novalauncher.THEME" />
         </intent>
     </queries>
+    <!-- Used for icon pack merger -->
+    <uses-permission
+        android:name="android.permission.QUERY_ALL_PACKAGES"
+        tools:ignore="QueryAllPackagesPermission" />
 
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
@@ -49,6 +53,10 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name=".ui.IconPackMergerActivity"
+            android:exported="true" />
 
         <provider
             android:name=".iconPack.IconPackProvider"

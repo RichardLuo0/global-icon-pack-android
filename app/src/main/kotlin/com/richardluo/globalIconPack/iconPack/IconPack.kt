@@ -15,15 +15,9 @@ import com.richardluo.globalIconPack.PrefKey
 import com.richardluo.globalIconPack.iconPack.database.IconEntry
 import com.richardluo.globalIconPack.reflect.Resources.getDrawableForDensity
 import com.richardluo.globalIconPack.utils.IconHelper
-import com.richardluo.globalIconPack.utils.WorldPreference
 import com.richardluo.globalIconPack.utils.isInMod
-import java.io.InputStream
 
-abstract class IconPack(
-  pref: SharedPreferences,
-  protected val pack: String,
-  protected val resources: Resources,
-) {
+abstract class IconPack(pref: SharedPreferences, val pack: String, val resources: Resources) {
   protected val iconFallback = pref.getBoolean(PrefKey.ICON_FALLBACK, true)
   protected val enableOverrideIconFallback = pref.getBoolean(PrefKey.OVERRIDE_ICON_FALLBACK, false)
   // Fallback settings from icon pack
@@ -35,14 +29,13 @@ abstract class IconPack(
       pref.getFloat(PrefKey.ICON_PACK_SCALE, 1f)
     } else 1f
 
-  protected val iconPackAsFallback =
-    WorldPreference.getPrefInMod().getBoolean(PrefKey.ICON_PACK_AS_FALLBACK, false)
-
-  abstract fun getIconEntry(cn: ComponentName): IconEntry?
+  protected val iconPackAsFallback = pref.getBoolean(PrefKey.ICON_PACK_AS_FALLBACK, false)
 
   abstract fun getIconEntry(id: Int): IconEntry?
 
   abstract fun getId(cn: ComponentName): Int?
+
+  fun getIconEntry(cn: ComponentName) = getId(cn)?.let { getIconEntry(it) }
 
   fun getIcon(iconEntry: IconEntry, iconDpi: Int) =
     iconEntry
@@ -59,23 +52,10 @@ abstract class IconPack(
         else resources.getDrawableForDensity(it, iconDpi, null)
       }
 
-  fun copyTo(
-    iconEntry: IconEntry,
-    component: String,
-    name: String,
-    xml: StringBuilder,
-    write: (InputStream, String) -> Unit,
-  ) =
-    iconEntry.copyTo(component, name, xml) { resName, newName ->
-      getDrawableId(resName)
-        .takeIf { it != 0 }
-        ?.let { write(resources.openRawResource(it), newName) }
-    }
-
   private val idCache = mutableMapOf<String, Int>()
 
   @SuppressLint("DiscouragedApi")
-  fun getDrawableId(name: String) =
+  protected fun getDrawableId(name: String) =
     idCache.getOrPut(name) { resources.getIdentifier(name, "drawable", pack) }
 
   fun genIconFrom(baseIcon: Drawable) =

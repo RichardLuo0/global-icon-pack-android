@@ -19,10 +19,10 @@ import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserException
 import org.xmlpull.v1.XmlPullParserFactory
 
-class LocalIconPack(pref: SharedPreferences, pack: String, resources: Resources) :
+open class LocalIconPack(pref: SharedPreferences, pack: String, resources: Resources) :
   IconPack(pref, pack, resources) {
-  private val indexMap = mutableMapOf<ComponentName, Int>()
-  private val iconEntryList = mutableListOf<IconEntry?>()
+  protected val indexMap = mutableMapOf<ComponentName, Int>()
+  protected val iconEntryList = mutableListOf<IconEntry>()
 
   init {
     loadIconPack(resources, pack, iconFallback).let { info ->
@@ -36,8 +36,6 @@ class LocalIconPack(pref: SharedPreferences, pack: String, resources: Resources)
       }
     }
   }
-
-  override fun getIconEntry(cn: ComponentName) = indexMap[cn]?.let { iconEntryList.getOrNull(it) }
 
   override fun getIconEntry(id: Int): IconEntry? = iconEntryList.getOrNull(id)
 

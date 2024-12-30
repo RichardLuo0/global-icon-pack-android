@@ -20,7 +20,6 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -28,7 +27,6 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
@@ -123,8 +121,6 @@ class MainActivity : ComponentActivity() {
           },
         )
       },
-      containerColor = Color.Transparent,
-      contentColor = contentColorFor(MaterialTheme.colorScheme.background),
       contentWindowInsets = windowInsets,
     ) { contentPadding ->
       var waiting by remember { mutableIntStateOf(0) }
@@ -175,6 +171,12 @@ class MainActivity : ComponentActivity() {
           defaultValue = false,
           title = { Text(stringResource(R.string.iconPackAsFallback)) },
           summary = { Text(stringResource(R.string.iconPackAsFallbackSummary)) },
+        )
+        preference(
+          key = "openMerger",
+          onClick = { context.startActivity(Intent(context, IconPackMergerActivity::class.java)) },
+          title = { Text(stringResource(R.string.mergeIconPack)) },
+          summary = { Text(stringResource(R.string.mergeIconPackSummary)) },
         )
 
         preferenceCategory(

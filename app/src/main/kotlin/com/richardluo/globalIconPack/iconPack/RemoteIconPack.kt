@@ -46,8 +46,6 @@ class RemoteIconPack(pref: SharedPreferences, pack: String, resources: Resources
       }
   }
 
-  override fun getIconEntry(cn: ComponentName) = getId(cn)?.let { iconEntryList.getOrNull(it) }
-
   override fun getIconEntry(id: Int): IconEntry? = iconEntryList.getOrNull(id)
 
   override fun getId(cn: ComponentName): Int? =

@@ -88,13 +88,13 @@ fun SharedPreferences.registerAndCallOnSharedPreferenceChangeListener(
   also { listener.onSharedPreferenceChanged(it, key) }
     .registerOnSharedPreferenceChangeListener(listener)
 
-class ReAssignable<T>(private var value: T? = null) {
+class ReAssignable<T>(var value: T? = null) {
 
   fun reset() {
     value = null
   }
 
-  fun orAssign(block: () -> T) = value ?: run { block().also { value = it } }
+  inline fun orAssign(block: () -> T) = value ?: block().also { value = it }
 }
 
 val isInMod by lazy {

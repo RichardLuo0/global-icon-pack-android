@@ -79,9 +79,12 @@ dependencies {
 //    androidTestImplementation libs.espresso.core
     implementation libs.core.ktx
     implementation libs.activity
+    implementation libs.viewmodel
     implementation libs.preference
     implementation libs.material3
+    implementation libs.ui.tooling.preview.android
     implementation libs.libsu
+    implementation libs.documentfile
 
     compileOnly(fileTree("libs") { include("api-82.jar") })
 }
