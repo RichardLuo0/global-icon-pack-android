@@ -42,7 +42,7 @@ jobs:
         id: save_version
         run: |
           VERSION_NAME=$(./gradlew printVersion -q)
-          echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_ENV
+          echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_OUTPUT
 
       - uses: ncipollo/release-action@v1
         with:
