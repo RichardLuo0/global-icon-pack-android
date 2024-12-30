@@ -59,6 +59,10 @@ android {
         buildConfig true
         compose true
     }
+    androidResources {
+        generateLocaleConfig = true
+    }
+
     dependenciesInfo {
         // Disables dependency metadata when building APKs.
         includeInApk = false
