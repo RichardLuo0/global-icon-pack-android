@@ -23,7 +23,7 @@
     <string name="forceLoadClockAndCalendar">强制加载时钟和日历图标</string>
     <string name="moreOptions">更多选项</string>
     <string name="restartSystemUI">重启系统UI</string>
-    <string name="restartPixelLauncher">清除数据库 &amp; 重新启动Pixel启动器</string>
+    <string name="restartPixelLauncher">清除DB &amp; 重启Pixel启动器</string>
     <string name="restartOthers">重启其他app</string>
     <string name="openCrowdin">协助本地化</string>
     <string name="openGithub">Github</string>
