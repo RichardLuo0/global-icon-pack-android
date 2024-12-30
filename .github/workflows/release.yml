@@ -1,6 +1,10 @@
 name: Release CI
 
 on:
+  push:
+    branches: [ "master" ]
+    paths:
+      - version.properties
   workflow_dispatch:
 
 jobs:
@@ -21,12 +25,6 @@ jobs:
         with:
           fastlaneDir: ./metadata
 
-      - name: Bump version
-        id: bump_version
-        uses: oflynned/Android-Semantic-Release@master
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Write sign info
         run: |
           if [ ! -z "${{ secrets.KEYSTORE }}" ]; then
@@ -40,8 +38,14 @@ jobs:
       - name: Build with Gradle
         run: chmod +x gradlew && ./gradlew assembleRelease
 
+      - name: Save version
+        id: save_version
+        run: |
+          VERSION_NAME=$(./gradlew printVersion -q)
+          echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_ENV
+
       - uses: ncipollo/release-action@v1
         with:
-          tag: ${{ steps.bump_version.outputs.new_tag }}
+          tag: ${{ steps.save_version.outputs.VERSION_NAME }}
           artifacts: "app/build/outputs/apk/release/app-release.apk"
           token: ${{ secrets.GITHUB_TOKEN }}

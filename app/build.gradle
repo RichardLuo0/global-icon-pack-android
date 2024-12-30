@@ -67,6 +67,12 @@ android {
     }
 }
 
+tasks.register('printVersion') {
+    doLast {
+        println android.defaultConfig.versionName
+    }
+}
+
 dependencies {
 //    testImplementation libs.junit
 //    androidTestImplementation libs.ext.junit
