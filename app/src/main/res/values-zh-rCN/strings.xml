@@ -38,6 +38,7 @@
     <string name="chooseIconToBeReplaced">选择你想要替换的图标</string>
     <string name="chooseNewIcon">选择一个新图标</string>
     <string name="noCandidateIconForThisApp">没有此应用的候选图标。</string>
+    <string name="originalIcon">原始图标</string>
     <string name="fillNewPackInfo">填写新包的信息</string>
     <string name="newPackName">新图标包名称</string>
     <string name="newPackPackage">新图标包包名</string>
@@ -45,5 +46,5 @@
     <string name="nextStep">下一步</string>
     <string name="done">完成</string>
     <string name="mergerWarning">此app会收集并且生成构建新图标包所需的文件。\n未经原创者许可，您不得分发所生成的内容。\n你已被警告！</string>
-    <string name="mergerInstruction">请按照以下步骤操作：\n1. 安装termux并授予存储权限。\n2. 运行命令`cd &lt;the output folder&gt; &amp; bash create_icon_pack.sh`。</string>
+    <string name="mergerInstruction">请按照以下步骤操作：\n1. 安装Termux并授予存储权限。\n2. 运行命令`cd &lt;the output folder&gt; &amp;&amp; bash create_icon_pack.sh`。</string>
 </resources>

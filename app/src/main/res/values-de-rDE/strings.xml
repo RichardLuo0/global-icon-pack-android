@@ -38,6 +38,7 @@
     <string name="chooseIconToBeReplaced">Choose the icon you want to replace</string>
     <string name="chooseNewIcon">Choose a new icon</string>
     <string name="noCandidateIconForThisApp">No candidate icons for this app.</string>
+    <string name="originalIcon">Original icon</string>
     <string name="fillNewPackInfo">Fill new pack info</string>
     <string name="newPackName">New pack name</string>
     <string name="newPackPackage">New pack package</string>
@@ -45,5 +46,5 @@
     <string name="nextStep">Next step</string>
     <string name="done">Done</string>
     <string name="mergerWarning">The app will collect and generate the necessary files for creating a new icon pack.\nYou are not permitted to distribute the generated content without the original creators\' permission.\nYou have been warned!</string>
-    <string name="mergerInstruction">Follow the steps below:\n1. Install termux and grant storage permission.\n2. Run command `cd &lt;the output folder&gt; &amp; bash create_icon_pack.sh`.</string>
+    <string name="mergerInstruction">Follow the steps below:\n1. Install Termux and grant storage permission.\n2. Run command `cd &lt;the output folder&gt; &amp;&amp; bash create_icon_pack.sh`.</string>
 </resources>
