@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 pkg install -y aapt2 apksigner unzip curl
 
