@@ -116,6 +116,11 @@ class IconPackMergerActivity : ComponentActivity() {
       modifier = Modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
       topBar = {
         TopAppBar(
+          navigationIcon = {
+            IconButton(onClick = { finish() }) {
+              Icon(Icons.AutoMirrored.Outlined.ArrowBack, "Back")
+            }
+          },
           title = {
             AnimatedContent(targetState = pagerState.currentPage, label = "Title text change") {
               Text(
