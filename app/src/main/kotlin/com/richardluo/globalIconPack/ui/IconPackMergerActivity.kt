@@ -38,12 +38,14 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.ArrowForward
 import androidx.compose.material.icons.outlined.Done
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -275,7 +277,7 @@ class IconPackMergerActivity : ComponentActivity() {
           modifier = Modifier.fillMaxWidth(),
         )
       }
-      item(key = "generateWholeIconPack", contentType = "Checkbox") {
+      item(key = "installedAppsOnly", contentType = "Checkbox") {
         Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
           Checkbox(
             checked = viewModel.installedAppsOnly,
@@ -348,14 +350,14 @@ class IconPackMergerActivity : ComponentActivity() {
       Spacer(modifier = Modifier.width(12.dp))
       Column(modifier = Modifier.fillMaxWidth()) {
         Text(
-          info.packLabel,
+          info.packLabel.ifEmpty { getString(R.string.originalIcon) },
           color = MaterialTheme.colorScheme.onSurface,
           style = MaterialTheme.typography.bodyLarge,
           maxLines = 1,
           overflow = TextOverflow.Ellipsis,
         )
         Text(
-          info.entry.pack,
+          info.app,
           color = MaterialTheme.colorScheme.onSurfaceVariant,
           style = MaterialTheme.typography.bodySmall,
           maxLines = 1,

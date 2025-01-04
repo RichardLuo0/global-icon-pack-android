@@ -23,7 +23,7 @@ import com.richardluo.globalIconPack.utils.asType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-data class NewAppIconInfo(val app: String, val packLabel: String, val entry: IconEntryWithPack)
+data class NewAppIconInfo(val app: String, val packLabel: String, val entry: IconEntryWithPack?)
 
 data class AppIconInfo(val app: String, val label: String, val entry: IconEntryWithPack?)
 
@@ -94,14 +94,14 @@ class MergerVM : ViewModel() {
 
   private fun getIcon(context: Context, entry: IconEntryWithPack?, app: String) =
     if (entry != null)
-      imageCache.getOrPut(entry.pack + "_" + app) {
+      imageCache.getOrPut("${entry.pack}/$app") {
         (getIconPack(context, entry.pack).getIcon(entry.entry, 0)
             ?: context.packageManager.getApplicationIcon(app))
           .toBitmap()
           .asImageBitmap()
       }
     else
-      imageCache.getOrPut(basePack + "_" + app) {
+      imageCache.getOrPut("$basePack/fallback/$app") {
         getIconPack(context, basePack)
           .genIconFrom(context.packageManager.getApplicationIcon(app))
           .toBitmap()
@@ -117,9 +117,10 @@ class MergerVM : ViewModel() {
         }
       }
       .filterNotNull()
+      .plus(NewAppIconInfo(app.packageName, "", null))
   }
 
-  fun saveNewIcon(entry: IconEntryWithPack) {
+  fun saveNewIcon(entry: IconEntryWithPack?) {
     val app = selectedApp ?: return
     icons[app] = icons[app]?.copy(entry = entry) ?: return
   }
@@ -134,7 +135,7 @@ class MergerVM : ViewModel() {
         newPackName,
         newPackPackage,
         basePack,
-        icons.filter { it.value.entry != null }.mapValues { it.value.entry!! },
+        icons.mapValues { it.value.entry },
         installedAppsOnly,
       ) {
         getIconPack(context, it)

@@ -23,7 +23,7 @@ object IconPackCreator {
     label: String,
     packageName: String,
     basePack: String,
-    newIcons: Map<ComponentName, IconEntryWithPack>,
+    newIcons: Map<ComponentName, IconEntryWithPack?>,
     installedAppsOnly: Boolean,
     getIconPack: (String) -> CopyableIconPack,
   ) {
@@ -42,6 +42,7 @@ object IconPackCreator {
     baseIconPack.copyFallbacks("icon_fallback", appFilterSb, ::writeInputToFile)
     if (installedAppsOnly)
       newIcons.entries.forEachIndexed { i, (cn, entry) ->
+        if (entry == null) return@forEachIndexed
         val iconName = "icon_${i}"
         getIconPack(entry.pack)
           .copyIconTo(entry.entry, cn.flattenToString(), iconName, appFilterSb, ::writeInputToFile)
@@ -49,7 +50,10 @@ object IconPackCreator {
     else
       baseIconPack.getAllIconEntries().forEachIndexed { i, (cn, entry) ->
         val iconName = "icon_$i"
-        val newEntry = newIcons[cn]
+        val newEntry =
+          if (newIcons.containsKey(cn))
+            if (newIcons[cn] == null) return@forEachIndexed else newIcons[cn]
+          else null
         val finalIconEntry = newEntry?.entry ?: entry
         val finalIconPack = newEntry?.let { getIconPack(it.pack) } ?: baseIconPack
         finalIconPack.copyIconTo(

@@ -44,6 +44,7 @@
     <string name="chooseIconToBeReplaced">Choose the icon you want to replace</string>
     <string name="chooseNewIcon">Choose a new icon</string>
     <string name="noCandidateIconForThisApp">No candidate icons for this app.</string>
+    <string name="originalIcon">Original icon</string>
     <string name="fillNewPackInfo">Fill new pack info</string>
     <string name="newPackName">New pack name</string>
     <string name="newPackPackage">New pack package</string>
