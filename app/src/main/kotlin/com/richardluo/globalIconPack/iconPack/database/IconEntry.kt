@@ -90,6 +90,7 @@ class ClockIconEntry(name: String, private val metadata: ClockMetadata) : IconEn
         "defaultMinute=\"${metadata.defaultMinute}\" " +
         "defaultSecond=\"${metadata.defaultSecond}\" />"
     )
+    xml.append("<item component=\"${component}\" drawable=\"${newName}\"/>")
     copyRes(name, newName)
   }
 
