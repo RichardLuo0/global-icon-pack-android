@@ -17,6 +17,7 @@ import java.io.OutputStreamWriter
 object IconPackCreator {
   class IconEntryWithPack(val entry: IconEntry, val pack: String)
 
+  @OptIn(ExperimentalStdlibApi::class)
   fun createIconPack(
     context: Context,
     uri: Uri,
@@ -33,19 +34,34 @@ object IconPackCreator {
 
     val res = workDir.createDirectorySafe("res")
     val drawable = res.createDirectorySafe("drawable")
+    val values = res.createDirectorySafe("values")
     val xml = res.createDirectorySafe("xml")
 
+    val colorsSb = StringBuilder("<?xml version=\"1.0\" encoding=\"UTF-8\"?><resources>")
+    var colorIndex = 0
+    fun addColor(color: Int) =
+      "color_${colorIndex++}"
+        .also { colorsSb.append("<color name=\"$it\">#${color.toHexString()}</color>") }
+
     val appFilterSb = StringBuilder("<?xml version=\"1.0\" encoding=\"UTF-8\"?><resources>")
-    val baseIconPack = getIconPack(basePack)
-    fun writeInputToFile(input: InputStream, outputFile: String) =
+    fun writeToDrawable(input: InputStream, outputFile: String) =
       input.writeTo(drawable.createFileAndOpenStream(contentResolver, "", outputFile))
-    baseIconPack.copyFallbacks("icon_fallback", appFilterSb, ::writeInputToFile)
+
+    val baseIconPack = getIconPack(basePack)
+    baseIconPack.copyFallbacks("icon_fallback", appFilterSb, ::writeToDrawable)
     if (installedAppsOnly)
       newIcons.entries.forEachIndexed { i, (cn, entry) ->
         if (entry == null) return@forEachIndexed
         val iconName = "icon_${i}"
         getIconPack(entry.pack)
-          .copyIconTo(entry.entry, cn.flattenToString(), iconName, appFilterSb, ::writeInputToFile)
+          .copyIconTo(
+            entry.entry,
+            cn.flattenToString(),
+            iconName,
+            appFilterSb,
+            ::addColor,
+            ::writeToDrawable,
+          )
       }
     else
       baseIconPack.getAllIconEntries().forEachIndexed { i, (cn, entry) ->
@@ -61,13 +77,20 @@ object IconPackCreator {
           cn.flattenToString(),
           iconName,
           appFilterSb,
-          ::writeInputToFile,
+          ::addColor,
+          ::writeToDrawable,
         )
       }
+
     appFilterSb.append("</resources>")
     xml
       .createFileAndOpenStream(contentResolver, "text/xml", "appfilter.xml")
       .writeText(appFilterSb.toString())
+
+    colorsSb.append("</resources>")
+    values
+      .createFileAndOpenStream(contentResolver, "text/xml", "colors.xml")
+      .writeText(colorsSb.toString())
 
     context.resources
       .openRawResource(R.raw.icon_pack_manifest)

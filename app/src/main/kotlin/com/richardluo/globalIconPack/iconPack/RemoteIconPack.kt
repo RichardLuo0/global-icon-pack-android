@@ -4,17 +4,13 @@ import android.app.AndroidAppHelper
 import android.content.ComponentName
 import android.content.SharedPreferences
 import android.content.res.Resources
-import android.database.Cursor
 import android.net.Uri
 import androidx.core.graphics.drawable.toBitmap
 import com.richardluo.globalIconPack.iconPack.database.FallbackSettings
 import com.richardluo.globalIconPack.iconPack.database.IconEntry
+import com.richardluo.globalIconPack.utils.getBlob
+import com.richardluo.globalIconPack.utils.getFirstRow
 import com.richardluo.globalIconPack.utils.getOrPutNullable
-
-private fun <T> Cursor.getFirstRow(block: (Cursor) -> T) =
-  this.takeIf { it.moveToFirst() }?.use(block)
-
-private fun Cursor.getBlob(name: String) = this.getBlob(getColumnIndexOrThrow(name))
 
 class RemoteIconPack(pref: SharedPreferences, pack: String, resources: Resources) :
   IconPack(pref, pack, resources) {

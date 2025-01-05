@@ -54,7 +54,7 @@ internal fun loadIconPack(resources: Resources, pack: String, iconFallback: Bool
   val info = IconPackInfo()
   val iconEntryMap = info.iconEntryMap
 
-  val parseXml = getXml(resources, pack) ?: return info
+  val parser = getXml(resources, pack) ?: return info
   val compStart = "ComponentInfo{"
   val compStartLength = compStart.length
   val compEnd = "}"
@@ -85,31 +85,31 @@ internal fun loadIconPack(resources: Resources, pack: String, iconFallback: Bool
 
   try {
     val clockMetaMap = mutableMapOf<String, IconEntry>()
-    while (parseXml.next() != XmlPullParser.END_DOCUMENT) {
-      if (parseXml.eventType != XmlPullParser.START_TAG) continue
-      when (parseXml.name) {
-        "iconback" -> addFallback(parseXml, info.iconBacks)
-        "iconupon" -> addFallback(parseXml, info.iconUpons)
-        "iconmask" -> addFallback(parseXml, info.iconMasks)
+    while (parser.next() != XmlPullParser.END_DOCUMENT) {
+      if (parser.eventType != XmlPullParser.START_TAG) continue
+      when (parser.name) {
+        "iconback" -> addFallback(parser, info.iconBacks)
+        "iconupon" -> addFallback(parser, info.iconUpons)
+        "iconmask" -> addFallback(parser, info.iconMasks)
         "scale" -> {
           if (!iconFallback) continue
-          info.iconScale = parseXml.getAttributeValue(null, "factor")?.toFloatOrNull() ?: 1f
+          info.iconScale = parser.getAttributeValue(null, "factor")?.toFloatOrNull() ?: 1f
         }
-        "item" -> addIcon(parseXml, NormalIconEntry(parseXml["drawable"] ?: continue))
-        "calendar" -> addIcon(parseXml, CalendarIconEntry(parseXml["prefix"] ?: continue))
+        "item" -> addIcon(parser, NormalIconEntry(parser["drawable"] ?: continue))
+        "calendar" -> addIcon(parser, CalendarIconEntry(parser["prefix"] ?: continue))
         "dynamic-clock" -> {
-          val drawableName = parseXml["drawable"] ?: continue
-          if (parseXml !is XmlResourceParser) continue
+          val drawableName = parser["drawable"] ?: continue
+          if (parser !is XmlResourceParser) continue
           clockMetaMap[drawableName] =
             ClockIconEntry(
               drawableName,
               ClockMetadata(
-                parseXml.getAttributeIntValue(null, "hourLayerIndex", -1),
-                parseXml.getAttributeIntValue(null, "minuteLayerIndex", -1),
-                parseXml.getAttributeIntValue(null, "secondLayerIndex", -1),
-                parseXml.getAttributeIntValue(null, "defaultHour", 0),
-                parseXml.getAttributeIntValue(null, "defaultMinute", 0),
-                parseXml.getAttributeIntValue(null, "defaultSecond", 0),
+                parser.getAttributeIntValue(null, "hourLayerIndex", -1),
+                parser.getAttributeIntValue(null, "minuteLayerIndex", -1),
+                parser.getAttributeIntValue(null, "secondLayerIndex", -1),
+                parser.getAttributeIntValue(null, "defaultHour", 0),
+                parser.getAttributeIntValue(null, "defaultMinute", 0),
+                parser.getAttributeIntValue(null, "defaultSecond", 0),
               ),
             )
         }

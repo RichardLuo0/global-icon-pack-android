@@ -2,6 +2,7 @@ package com.richardluo.globalIconPack.utils
 
 import android.app.Application
 import android.content.SharedPreferences
+import android.database.Cursor
 import androidx.annotation.CheckResult
 import com.richardluo.globalIconPack.BuildConfig
 import de.robv.android.xposed.XC_MethodHook.MethodHookParam
@@ -17,7 +18,7 @@ fun <R> callOriginalMethod(param: MethodHookParam): R =
 
 @CheckResult
 fun withHighByteSet(id: Int, flag: Int): Int {
-  return id and 0x00FFFFFF or flag
+  return id and 0x00ffffff or flag
 }
 
 fun isHighTwoByte(id: Int, flag: Int): Boolean {
@@ -103,3 +104,9 @@ val isInMod by lazy {
     else -> true
   }
 }
+
+fun <T> Cursor.getFirstRow(block: (Cursor) -> T) = this.takeIf { it.moveToFirst() }?.use(block)
+
+fun Cursor.getBlob(name: String) = this.getBlob(getColumnIndexOrThrow(name))
+
+fun Cursor.getLong(name: String) = this.getLong(getColumnIndexOrThrow(name))
