@@ -10,6 +10,8 @@ import com.richardluo.globalIconPack.PrefKey
 import com.richardluo.globalIconPack.iconPack.IconPackApps
 import com.richardluo.globalIconPack.iconPack.loadIconPack
 import com.richardluo.globalIconPack.utils.WorldPreference
+import com.richardluo.globalIconPack.utils.getFirstRow
+import com.richardluo.globalIconPack.utils.getLong
 import com.richardluo.globalIconPack.utils.log
 import kotlinx.coroutines.runBlocking
 
@@ -35,9 +37,12 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
       "CREATE TABLE IF NOT EXISTS 'fallbacks' (pack TEXT PRIMARY KEY, fallback BLOB, updateAt NUMERIC)"
     )
     val packTable = pt(pack)
-    val packUpdateTime = context.packageManager.getPackageInfo(pack, 0).lastUpdateTime
-    db.rawQuery("select DISTINCT updateAt from fallbacks where pack=?", arrayOf(pack)).use {
-      if (it.count > 0 && packUpdateTime < it.getLong(it.getColumnIndexOrThrow("updateAt"))) return
+    db.rawQuery("select DISTINCT updateAt from fallbacks where pack=?", arrayOf(pack)).use { c ->
+      if (
+        context.packageManager.getPackageInfo(pack, 0).lastUpdateTime <
+          (c.getFirstRow { it.getLong("updateAt") } ?: 0)
+      )
+        return
     }
     db.apply {
       beginTransaction()
@@ -131,7 +136,7 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
     db.apply {
       beginTransaction()
       runCatching {
-        for (icon in icons) {
+        icons.forEach { icon ->
           insertIcon.apply {
             clearBindings()
             val cn = icon.componentName
