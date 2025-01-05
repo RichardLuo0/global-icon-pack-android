@@ -4,7 +4,11 @@ set -e
 pkg install -y aapt2 apksigner unzip curl
 
 dir="$HOME/global_icon_pack"
-androidJar="$dir"/android.jar
+androidJar="$dir"/android-14.jar
+
+if [ ! -d "$dir" ]; then
+  mkdir -p "$dir"
+fi
 
 # Download android sdk 34. 35 doesn't work because https://github.com/termux/termux-packages/issues/22667
 if [ ! -d "$dir" ]; then
@@ -14,9 +18,10 @@ if [ ! -e "$androidJar" ]; then
   echo -e "\033[34mDownloading android sdk...\033[0m"
   currentDir=$(pwd)
   cd "$dir" || exit 1
-  curl -o android.zip https://dl.google.com/android/repository/android-14_r04.zip
-  unzip -j android.zip android-*/android.jar
+  curl -o android.zip https://dl.google.com/android/repository/platform-34-ext7_r03.zip
+  unzip -o -j android.zip android-*/android.jar
   rm android.zip
+  mv android.jar "$androidJar"
   cd "$currentDir" || exit 1
 fi
 

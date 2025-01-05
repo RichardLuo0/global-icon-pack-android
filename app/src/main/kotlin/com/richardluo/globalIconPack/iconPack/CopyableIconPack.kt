@@ -53,25 +53,24 @@ class CopyableIconPack(pref: SharedPreferences, pack: String, resources: Resourc
           )
           for (i in 0 until parser.attributeCount) {
             val name = parser.getAttributeName(i)
-            val value = parser.getAttributeValue(i)
-            val fullName = "${parser.getAttributeNamespace(i).ifNotEmpty { "android:" } }$name"
-            if (value.startsWith("@")) {
-              val id = value.removePrefix("@").toIntOrNull()
-              if (id != null && isHighTwoByte(id, 0x7F000000)) {
-                when (resources.getResourceTypeName(id)) {
-                  "drawable",
-                  "mipmap" -> {
-                    val newRes = "${newName}_${index++}"
-                    writeAllFiles(id, newRes, addColor, write)
-                    xml.append("$fullName=\"@drawable/$newRes\" ")
-                  }
-                  "color" ->
-                    xml.append("$fullName=\"@color/${addColor(resources.getColor(id,null))}\" ")
+            val fullName = "${parser.getAttributeNamespace(i).ifNotEmpty { "android:" }}$name"
+            val id = parser.getAttributeResourceValue(i, 0)
+            if (id != 0 && isHighTwoByte(id, 0x7F000000)) {
+              when (resources.getResourceTypeName(id)) {
+                "drawable",
+                "mipmap" -> {
+                  val newRes = "${newName}_${index++}"
+                  writeAllFiles(id, newRes, addColor, write)
+                  xml.append("$fullName=\"@drawable/$newRes\"")
                 }
-                continue
+                "color" ->
+                  xml.append("$fullName=\"@color/${addColor(resources.getColor(id,null))}\"")
               }
+            } else {
+              val value = parser.getAttributeValue(i)
+              xml.append("$fullName=\"$value\"")
             }
-            xml.append("$fullName=\"$value\" ")
+            xml.append(' ')
           }
           xml.append(">")
         }
