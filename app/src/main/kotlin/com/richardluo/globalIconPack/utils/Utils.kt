@@ -110,3 +110,5 @@ fun <T> Cursor.getFirstRow(block: (Cursor) -> T) = this.takeIf { it.moveToFirst(
 fun Cursor.getBlob(name: String) = this.getBlob(getColumnIndexOrThrow(name))
 
 fun Cursor.getLong(name: String) = this.getLong(getColumnIndexOrThrow(name))
+
+fun String.ifNotEmpty(block: (String) -> String) = if (isNotEmpty()) block(this) else this

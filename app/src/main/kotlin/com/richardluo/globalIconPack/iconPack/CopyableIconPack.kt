@@ -7,6 +7,7 @@ import android.graphics.Bitmap
 import android.graphics.Bitmap.CompressFormat
 import com.richardluo.globalIconPack.iconPack.database.IconEntry
 import com.richardluo.globalIconPack.utils.getOrNull
+import com.richardluo.globalIconPack.utils.ifNotEmpty
 import com.richardluo.globalIconPack.utils.isHighTwoByte
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
@@ -40,16 +41,20 @@ class CopyableIconPack(pref: SharedPreferences, pack: String, resources: Resourc
         .getOrNull { write(resources.openRawResource(resId), newName) } ?: return
     val xml = StringBuilder()
     var index = 0
+    var isAndroidNSSet = false
     while (parser.next() != XmlPullParser.END_DOCUMENT) {
       when (parser.eventType) {
         XmlPullParser.END_DOCUMENT -> break
         XmlPullParser.START_TAG -> {
           xml.append(
-            "<${parser.name} xmlns:android=\"http://schemas.android.com/apk/res/android\" "
+            "<${parser.namespace.ifNotEmpty { "android:" } }${parser.name} ${if (!isAndroidNSSet) {
+              isAndroidNSSet = true
+              "xmlns:android=\"http://schemas.android.com/apk/res/android\" "} else ""}"
           )
           for (i in 0 until parser.attributeCount) {
             val name = parser.getAttributeName(i)
             val value = parser.getAttributeValue(i)
+            val fullName = "${parser.getAttributeNamespace(i).ifNotEmpty { "android:" } }$name"
             if (value.startsWith("@")) {
               val id = value.removePrefix("@").toIntOrNull()
               if (id != null && isHighTwoByte(id, 0x7F000000)) {
@@ -58,15 +63,15 @@ class CopyableIconPack(pref: SharedPreferences, pack: String, resources: Resourc
                   "mipmap" -> {
                     val newRes = "${newName}_${index++}"
                     writeAllFiles(id, newRes, addColor, write)
-                    xml.append("android:$name=\"@drawable/$newRes\" ")
+                    xml.append("$fullName=\"@drawable/$newRes\" ")
                   }
                   "color" ->
-                    xml.append("android:$name=\"@color/${addColor(resources.getColor(id,null))}\" ")
+                    xml.append("$fullName=\"@color/${addColor(resources.getColor(id,null))}\" ")
                 }
                 continue
               }
             }
-            xml.append("$name=\"$value\" ")
+            xml.append("$fullName=\"$value\" ")
           }
           xml.append(">")
         }
@@ -75,6 +80,7 @@ class CopyableIconPack(pref: SharedPreferences, pack: String, resources: Resourc
       }
     }
     write(xml.toString().byteInputStream(), "$newName.xml")
+    parser.close()
   }
 
   fun copyFallbacks(name: String, xml: StringBuilder, write: (InputStream, String) -> Unit) {
