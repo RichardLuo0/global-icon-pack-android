@@ -122,6 +122,8 @@ internal fun loadIconPack(resources: Resources, pack: String, iconFallback: Bool
   } catch (e: Exception) {
     log(e)
   }
+
+  if (parser is XmlResourceParser) parser.close()
   return info
 }
 
