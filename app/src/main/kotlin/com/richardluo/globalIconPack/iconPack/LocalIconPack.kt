@@ -3,7 +3,6 @@ package com.richardluo.globalIconPack.iconPack
 import android.annotation.SuppressLint
 import android.content.ComponentName
 import android.content.SharedPreferences
-import android.content.pm.PackageManager
 import android.content.res.Resources
 import android.content.res.XmlResourceParser
 import android.util.Xml
@@ -13,10 +12,9 @@ import com.richardluo.globalIconPack.iconPack.database.ClockIconEntry
 import com.richardluo.globalIconPack.iconPack.database.ClockMetadata
 import com.richardluo.globalIconPack.iconPack.database.IconEntry
 import com.richardluo.globalIconPack.iconPack.database.NormalIconEntry
+import com.richardluo.globalIconPack.utils.getOrNull
 import com.richardluo.globalIconPack.utils.log
-import java.io.IOException
 import org.xmlpull.v1.XmlPullParser
-import org.xmlpull.v1.XmlPullParserException
 import org.xmlpull.v1.XmlPullParserFactory
 
 open class LocalIconPack(pref: SharedPreferences, pack: String, resources: Resources) :
@@ -128,20 +126,18 @@ internal fun loadIconPack(resources: Resources, pack: String, iconFallback: Bool
 }
 
 @SuppressLint("DiscouragedApi")
-private fun getXml(resources: Resources, pack: String): XmlPullParser? {
-  try {
-    return resources
-      .getIdentifier("appfilter", "xml", pack)
-      .takeIf { 0 != it }
-      ?.let { resources.getXml(it) }
-      ?: run {
-        XmlPullParserFactory.newInstance().newPullParser().apply {
-          setInput(resources.assets.open("$name.xml"), Xml.Encoding.UTF_8.toString())
+private fun getXml(resources: Resources, pack: String) =
+  runCatching {
+      resources
+        .getIdentifier("appfilter", "xml", pack)
+        .takeIf { 0 != it }
+        ?.let { resources.getXml(it) }
+        ?: run {
+          XmlPullParserFactory.newInstance().newPullParser().apply {
+            setInput(resources.assets.open("appfilter.xml"), Xml.Encoding.UTF_8.toString())
+          }
         }
-      }
-  } catch (_: PackageManager.NameNotFoundException) {} catch (_: IOException) {} catch (
-    _: XmlPullParserException) {}
-  return null
-}
+    }
+    .getOrNull { log(it) }
 
 private operator fun XmlPullParser.get(key: String): String? = this.getAttributeValue(null, key)
