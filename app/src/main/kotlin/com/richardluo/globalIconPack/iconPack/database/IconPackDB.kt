@@ -16,7 +16,7 @@ import kotlinx.coroutines.runBlocking
 data class Icon(val componentName: ComponentName, val entry: IconEntry)
 
 class IconPackDB(private val context: Context, path: String = "iconPack.db") :
-  SQLiteOpenHelper(context.createDeviceProtectedStorageContext(), path, null, 3) {
+  SQLiteOpenHelper(context.createDeviceProtectedStorageContext(), path, null, 4) {
 
   override fun onCreate(db: SQLiteDatabase) {}
 
@@ -31,17 +31,17 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
           log("No icon pack set")
           return
         }
+    db.execSQL(
+      "CREATE TABLE IF NOT EXISTS 'fallbacks' (pack TEXT PRIMARY KEY, fallback BLOB, updateAt NUMERIC)"
+    )
     val packTable = pt(pack)
     val packUpdateTime = context.packageManager.getPackageInfo(pack, 0).lastUpdateTime
-    db
-      .rawQuery("select DISTINCT tbl_name from sqlite_master where tbl_name=?", arrayOf(packTable))
-      .use {
-        if (it.count > 0 && packUpdateTime < context.getDatabasePath(db.path).lastModified()) return
-      }
+    db.rawQuery("select DISTINCT updateAt from fallbacks where pack=?", arrayOf(pack)).use {
+      if (it.count > 0 && packUpdateTime < it.getLong(it.getColumnIndexOrThrow("updateAt"))) return
+    }
     db.apply {
       beginTransaction()
       // Create tables
-      execSQL("CREATE TABLE IF NOT EXISTS 'fallbacks' (pack TEXT PRIMARY KEY, fallback BLOB)")
       execSQL(
         "CREATE TABLE IF NOT EXISTS '$packTable' (packageName TEXT, className TEXT, entry BLOB)"
       )
@@ -59,6 +59,12 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
           db,
           pack,
           FallbackSettings(info.iconBacks, info.iconUpons, info.iconMasks, info.iconScale),
+        )
+        update(
+          "fallbacks",
+          ContentValues().apply { put("updateAt", System.currentTimeMillis()) },
+          "pack=?",
+          arrayOf(pack),
         )
       }
       // Get installed icon packs
@@ -93,6 +99,7 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
       ContentValues().apply {
         put("pack", pack)
         put("fallback", fs.toByteArray())
+        put("updateAt", System.currentTimeMillis())
       },
       SQLiteDatabase.CONFLICT_REPLACE,
     )
