@@ -1,85 +1,54 @@
 package com.richardluo.globalIconPack.iconPack
 
-import android.annotation.SuppressLint
 import android.content.SharedPreferences
 import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.Bitmap.CompressFormat
 import com.richardluo.globalIconPack.iconPack.database.IconEntry
-import com.richardluo.globalIconPack.utils.getOrNull
-import com.richardluo.globalIconPack.utils.ifNotEmpty
+import com.richardluo.globalIconPack.utils.AXMLEditor
 import com.richardluo.globalIconPack.utils.isHighTwoByte
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
-import org.xmlpull.v1.XmlPullParser
 
 class CopyableIconPack(pref: SharedPreferences, pack: String, resources: Resources) :
   LocalIconPack(pref, pack, resources) {
 
-  fun copyIconTo(
+  fun copyIcon(
     iconEntry: IconEntry,
     component: String,
     name: String,
     xml: StringBuilder,
-    addColor: (Int) -> String,
-    write: (InputStream, String) -> Unit,
+    addColor: (color: Int) -> Int,
+    addDrawable: (InputStream, String) -> Int,
   ) =
     iconEntry.copyTo(component, name, xml) { resName, newName ->
-      getDrawableId(resName).takeIf { it != 0 }?.let { writeAllFiles(it, newName, addColor, write) }
+      getDrawableId(resName)
+        .takeIf { it != 0 }
+        ?.let { addAllFiles(it, newName, addColor, addDrawable) }
     }
 
-  @SuppressLint("DiscouragedApi")
-  private fun writeAllFiles(
+  private fun addAllFiles(
     resId: Int,
-    newName: String,
-    addColor: (Int) -> String,
-    write: (InputStream, String) -> Unit,
-  ) {
-    val parser =
-      runCatching { resources.getXml(resId) }
-        .getOrNull { write(resources.openRawResource(resId), newName) } ?: return
-    val xml = StringBuilder()
-    var index = 0
-    var isAndroidNSSet = false
-    while (parser.next() != XmlPullParser.END_DOCUMENT) {
-      when (parser.eventType) {
-        XmlPullParser.END_DOCUMENT -> break
-        XmlPullParser.START_TAG -> {
-          xml.append(
-            "<${parser.namespace.ifNotEmpty { "android:" } }${parser.name} ${if (!isAndroidNSSet) {
-              isAndroidNSSet = true
-              "xmlns:android=\"http://schemas.android.com/apk/res/android\" "} else ""}"
-          )
-          for (i in 0 until parser.attributeCount) {
-            val name = parser.getAttributeName(i)
-            val fullName = "${parser.getAttributeNamespace(i).ifNotEmpty { "android:" }}$name"
-            val id = parser.getAttributeResourceValue(i, 0)
-            if (id != 0 && isHighTwoByte(id, 0x7F000000)) {
-              when (resources.getResourceTypeName(id)) {
-                "drawable",
-                "mipmap" -> {
-                  val newRes = "${newName}_${index++}"
-                  writeAllFiles(id, newRes, addColor, write)
-                  xml.append("$fullName=\"@drawable/$newRes\"")
-                }
-                "color" ->
-                  xml.append("$fullName=\"@color/${addColor(resources.getColor(id,null))}\"")
-              }
-            } else {
-              val value = parser.getAttributeValue(i)
-              xml.append("$fullName=\"$value\"")
-            }
-            xml.append(' ')
-          }
-          xml.append(">")
+    name: String,
+    addColor: (color: Int) -> Int,
+    addDrawable: (InputStream, String) -> Int,
+  ): Int {
+    val stream = resources.openRawResource(resId)
+    if (AXMLEditor.isAXML(stream)) {
+      val editor = AXMLEditor(stream)
+      var i = 0
+      editor.replaceResourceId { id ->
+        if (!isHighTwoByte(id, 0x7f000000)) return@replaceResourceId null
+        when (resources.getResourceTypeName(id)) {
+          "drawable",
+          "mipmap" -> addAllFiles(id, "${name}_${i++}", addColor, addDrawable)
+          "color" -> addColor(resources.getColor(id, null))
+          else -> null
         }
-        XmlPullParser.TEXT -> xml.append(parser.text)
-        XmlPullParser.END_TAG -> xml.append("</${parser.name}>")
       }
-    }
-    write(xml.toString().byteInputStream(), "$newName.xml")
-    parser.close()
+      return addDrawable(editor.toStream(), "$name.compiledXML")
+    } else return addDrawable(stream, name)
   }
 
   fun copyFallbacks(name: String, xml: StringBuilder, write: (InputStream, String) -> Unit) {

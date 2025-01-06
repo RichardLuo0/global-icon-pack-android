@@ -37,30 +37,43 @@ object IconPackCreator {
     val values = res.createDirectorySafe("values")
     val xml = res.createDirectorySafe("xml")
 
+    val resIds = StringBuilder()
+
     val colorsSb = StringBuilder("<?xml version=\"1.0\" encoding=\"UTF-8\"?><resources>")
+    val initColorId = 0x7f010000
     var colorIndex = 0
-    fun addColor(color: Int) =
-      "color_${colorIndex++}"
-        .also { colorsSb.append("<color name=\"$it\">#${color.toHexString()}</color>") }
+    fun addColor(color: Int): Int {
+      val name = "color_$colorIndex"
+      val id = initColorId + colorIndex
+      colorsSb.append("<color name=\"$name\">#${color.toHexString()}</color>")
+      resIds.append("$packageName:color/$name = 0x${id.toHexString()}\n")
+      colorIndex++
+      return id
+    }
+
+    var drawableId = 0x7f020000
+    fun addDrawable(input: InputStream, name: String): Int {
+      val id = drawableId++
+      input.writeTo(drawable.createFileAndOpenStream(contentResolver, "", name))
+      resIds.append("$packageName:drawable/$name = 0x${id.toHexString()}\n")
+      return id
+    }
 
     val appFilterSb = StringBuilder("<?xml version=\"1.0\" encoding=\"UTF-8\"?><resources>")
-    fun writeToDrawable(input: InputStream, outputFile: String) =
-      input.writeTo(drawable.createFileAndOpenStream(contentResolver, "", outputFile))
-
     val baseIconPack = getIconPack(basePack)
-    baseIconPack.copyFallbacks("icon_fallback", appFilterSb, ::writeToDrawable)
+    baseIconPack.copyFallbacks("icon_fallback", appFilterSb, ::addDrawable)
     if (installedAppsOnly)
       newIcons.entries.forEachIndexed { i, (cn, entry) ->
         if (entry == null) return@forEachIndexed
         val iconName = "icon_${i}"
         getIconPack(entry.pack)
-          .copyIconTo(
+          .copyIcon(
             entry.entry,
             cn.flattenToString(),
             iconName,
             appFilterSb,
             ::addColor,
-            ::writeToDrawable,
+            ::addDrawable,
           )
       }
     else
@@ -72,16 +85,15 @@ object IconPackCreator {
           else null
         val finalIconEntry = newEntry?.entry ?: entry
         val finalIconPack = newEntry?.let { getIconPack(it.pack) } ?: baseIconPack
-        finalIconPack.copyIconTo(
+        finalIconPack.copyIcon(
           finalIconEntry,
           cn.flattenToString(),
           iconName,
           appFilterSb,
           ::addColor,
-          ::writeToDrawable,
+          ::addDrawable,
         )
       }
-
     appFilterSb.append("</resources>")
     xml
       .createFileAndOpenStream(contentResolver, "text/xml", "appfilter.xml")
@@ -91,6 +103,10 @@ object IconPackCreator {
     values
       .createFileAndOpenStream(contentResolver, "text/xml", "colors.xml")
       .writeText(colorsSb.toString())
+
+    workDir
+      .createFileAndOpenStream(contentResolver, "text/plain", "resIds.txt")
+      .writeText(resIds.toString())
 
     context.resources
       .openRawResource(R.raw.icon_pack_manifest)
