@@ -67,7 +67,6 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -200,9 +199,7 @@ class IconPackMergerActivity : ComponentActivity() {
   private val requestIconPackStorage =
     registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
       if (result.resultCode == RESULT_OK) {
-        result.data?.data?.let { uri ->
-          lifecycleScope.launch { viewModel.createIconPack(this@IconPackMergerActivity, uri) }
-        }
+        result.data?.data?.let { uri -> lifecycleScope.launch { viewModel.createIconPack(uri) } }
       }
     }
 
@@ -225,7 +222,7 @@ class IconPackMergerActivity : ComponentActivity() {
 
   @Composable
   private fun IconList() {
-    LaunchedEffect(viewModel.basePack) { viewModel.loadIcons(this@IconPackMergerActivity) }
+    LaunchedEffect(viewModel.basePack) { viewModel.loadIcons() }
     LazyVerticalGrid(
       modifier = Modifier.fillMaxSize().padding(horizontal = 2.dp),
       columns = GridCells.Adaptive(minSize = 74.dp),
@@ -238,7 +235,7 @@ class IconPackMergerActivity : ComponentActivity() {
     LazyListDialog(
       viewModel.packDialogState,
       title = { Text(getString(R.string.chooseNewIcon)) },
-      load = { viewModel.loadIconForSelectedApp(this) },
+      load = { viewModel.loadIconForSelectedApp() },
       nothing = {
         Text(
           getString(R.string.noCandidateIconForThisApp),
@@ -291,7 +288,6 @@ class IconPackMergerActivity : ComponentActivity() {
 
   @Composable
   fun IconForApp(cn: ComponentName, info: AppIconInfo) {
-    val context = LocalContext.current
     Column(
       modifier =
         Modifier.clip(MaterialTheme.shapes.medium)
@@ -300,9 +296,7 @@ class IconPackMergerActivity : ComponentActivity() {
           .padding(vertical = 18.dp, horizontal = 4.dp)
     ) {
       var image by remember { mutableStateOf<ImageBitmap?>(null) }
-      LaunchedEffect(info) {
-        image = withContext(Dispatchers.Default) { viewModel.getIcon(context, info) }
-      }
+      LaunchedEffect(info) { image = withContext(Dispatchers.Default) { viewModel.getIcon(info) } }
       AnimatedContent(targetState = image, label = "Image loaded") { targetImage ->
         if (targetImage != null)
           Image(
@@ -328,7 +322,6 @@ class IconPackMergerActivity : ComponentActivity() {
 
   @Composable
   fun NewAppIconItem(info: NewAppIconInfo, onClick: () -> Unit) {
-    val context = LocalContext.current
     Row(
       modifier =
         Modifier.fillMaxWidth()
@@ -341,7 +334,7 @@ class IconPackMergerActivity : ComponentActivity() {
     ) {
       Box(modifier = Modifier.fillMaxHeight().aspectRatio(1f)) {
         Image(
-          bitmap = viewModel.getIcon(context, info),
+          bitmap = viewModel.getIcon(info),
           contentDescription = "",
           modifier = Modifier.matchParentSize(),
           contentScale = ContentScale.Crop,

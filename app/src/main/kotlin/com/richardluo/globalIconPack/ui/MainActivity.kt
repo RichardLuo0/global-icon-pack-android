@@ -1,9 +1,12 @@
 package com.richardluo.globalIconPack.ui
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.viewModels
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
@@ -23,9 +26,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
@@ -44,8 +45,6 @@ import com.richardluo.globalIconPack.ui.components.SnackbarErrorVisuals
 import com.richardluo.globalIconPack.ui.components.lazyListPreference
 import com.richardluo.globalIconPack.utils.WorldPreference
 import com.topjohnwu.superuser.Shell
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import me.zhanghai.compose.preference.ProvidePreferenceLocals
 import me.zhanghai.compose.preference.SwitchPreference
 import me.zhanghai.compose.preference.getPreferenceFlow
@@ -56,6 +55,7 @@ import me.zhanghai.compose.preference.rememberPreferenceState
 import me.zhanghai.compose.preference.switchPreference
 
 class MainActivity : ComponentActivity() {
+  private val viewModel: MainVM by viewModels()
 
   companion object {
     init {
@@ -76,17 +76,13 @@ class MainActivity : ComponentActivity() {
           finish()
         }
       } else
-        SampleTheme {
-          ProvidePreferenceLocals(flow = pref.getPreferenceFlow()) {
-            SampleScreen(PrefChangeListener(this, pref))
-          }
-        }
+        SampleTheme { ProvidePreferenceLocals(flow = pref.getPreferenceFlow()) { SampleScreen() } }
     }
   }
 
   @Composable
   @OptIn(ExperimentalMaterial3Api::class)
-  private fun SampleScreen(listener: PrefChangeListener) {
+  private fun SampleScreen() {
     val context = this
     val windowInsets = WindowInsets.safeDrawing
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
@@ -123,8 +119,7 @@ class MainActivity : ComponentActivity() {
       },
       contentWindowInsets = windowInsets,
     ) { contentPadding ->
-      var waiting by remember { mutableIntStateOf(0) }
-      if (waiting > 0) LoadingDialog()
+      if (viewModel.waiting > 0) LoadingDialog()
 
       LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = contentPadding) {
         preferenceCategory(key = "general", title = { Text(stringResource(R.string.general)) })
@@ -139,9 +134,13 @@ class MainActivity : ComponentActivity() {
             rememberPreferenceState(PrefKey.MODE, MODE_PROVIDER).also {
               val value by it
               LaunchedEffect(value) {
-                waiting++
-                withContext(Dispatchers.Default) { listener.onModeChange(value) }
-                waiting--
+                // Ask for notification permission used for foreground service
+                if (
+                  context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) !=
+                    PackageManager.PERMISSION_GRANTED
+                )
+                  context.requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 200)
+                viewModel.onModeChange(value)
               }
             }
           },
@@ -158,11 +157,7 @@ class MainActivity : ComponentActivity() {
           rememberState = {
             rememberPreferenceState(PrefKey.ICON_PACK, "").also {
               val value by it
-              LaunchedEffect(value) {
-                waiting++
-                withContext(Dispatchers.Default) { listener.onIconPackChange(value) }
-                waiting--
-              }
+              LaunchedEffect(value) { viewModel.onIconPackChange(value) }
             }
           },
         )
