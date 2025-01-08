@@ -153,7 +153,7 @@ class MainActivity : ComponentActivity() {
             IconPackItem(key, value, currentKey, onClick)
           },
           title = { Text(stringResource(R.string.iconPack)) },
-          summary = { Text(it.ifEmpty { stringResource(R.string.iconPackSummary) }) },
+          summary = { _, value -> Text(value?.label ?: stringResource(R.string.iconPackSummary)) },
           rememberState = {
             rememberPreferenceState(PrefKey.ICON_PACK, "").also {
               val value by it
