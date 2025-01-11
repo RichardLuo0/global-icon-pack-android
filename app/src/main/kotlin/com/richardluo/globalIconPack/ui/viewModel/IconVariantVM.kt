@@ -137,7 +137,7 @@ class IconVariantVM(app: Application) : AndroidViewModel(app) {
       val entry = NormalIconEntry(iconName)
       if (iconName.isEmpty()) iconPackDB.deleteIcon(basePack, cn.packageName)
       else iconPackDB.insertOrUpdateIcon(basePack, cn, entry)
-      getUpdatedEntryWithPack(cn)?.let { icons[cn]?.copy(entry = it) }?.let { icons[cn] = it }
+      icons[cn]?.copy(entry = getUpdatedEntryWithPack(cn))?.let { icons[cn] = it }
     }
     isLoading = false
     variantSheet = false
