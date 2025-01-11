@@ -10,6 +10,8 @@
     <string name="iconPackSummary">图标包的包名。</string>
     <string name="iconPackAsFallback">使用图标包作为回退选项</string>
     <string name="iconPackAsFallbackSummary">即使类名称不匹配，仍然使用图标包。</string>
+    <string name="iconVariant">图标变体</string>
+    <string name="iconVariantSummary">从图标包中选择不同的变体。</string>
     <string name="mergeIconPack">合并图标包</string>
     <string name="mergeIconPackSummary">从各种图标包生成一个新的图标包。</string>
     <string name="iconPackSettings">图标包设置</string>
@@ -34,6 +36,8 @@
     <string name="restartedSuccessfully">重启成功</string>
     <string name="warning">警告</string>
     <string name="notice">提示</string>
+    <string name="restoreDefault">恢复默认</string>
+    <string name="searchVariants">搜索变体</string>
     <string name="chooseBasePack">选择基本图标包</string>
     <string name="chooseIconToBeReplaced">选择你想要替换的图标</string>
     <string name="chooseNewIcon">选择一个新图标</string>
