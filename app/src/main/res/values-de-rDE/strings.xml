@@ -10,6 +10,8 @@
     <string name="iconPackSummary">Der Paketname des Symbolpakets.</string>
     <string name="iconPackAsFallback">Rückfall-Symbolpaket</string>
     <string name="iconPackAsFallbackSummary">Use icon pack even if class name does not match.</string>
+    <string name="iconVariant">Icon variant</string>
+    <string name="iconVariantSummary">Choose different variants from icon pack.</string>
     <string name="mergeIconPack">Merge icon pack</string>
     <string name="mergeIconPackSummary">Generate a new icon pack from various icon packs.</string>
     <string name="iconPackSettings">Symbolpaket-Einstellungen</string>
@@ -34,6 +36,8 @@
     <string name="restartedSuccessfully">Neustart erfolgreich</string>
     <string name="warning">Warning</string>
     <string name="notice">Notice</string>
+    <string name="restoreDefault">Restore default</string>
+    <string name="searchVariants">Search variants</string>
     <string name="chooseBasePack">Choose a base icon pack</string>
     <string name="chooseIconToBeReplaced">Choose the icon you want to replace</string>
     <string name="chooseNewIcon">Choose a new icon</string>
