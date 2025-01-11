@@ -57,5 +57,5 @@
     <string name="nextStep">Next step</string>
     <string name="done">Done</string>
     <string name="mergerWarning">The app will collect and generate the necessary files for creating a new icon pack.\nYou are not permitted to distribute the generated content without the original creators\' permission.\nYou have been warned!</string>
-    <string name="mergerInstruction">Follow the steps below:\n1. Install termux and grant storage permission.\n2. Run command `cd &lt;the output folder&gt; &amp;&amp; bash create_icon_pack.sh`.</string>
+    <string name="mergerInstruction">Follow the steps below:\n1. Install Termux and grant storage permission.\n2. Run command `cd &lt;the output folder&gt; &amp;&amp; bash create_icon_pack.sh`.</string>
 </resources>
