@@ -58,6 +58,7 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
             iconFallback = true,
           )
           .let { info ->
+            delete("'${pt(pack)}'", null, null)
             // Insert icons
             insertIcon(db, pack, info.iconEntryMap.toList())
             // Insert fallback
@@ -147,13 +148,21 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
     }
   }
 
-  fun replaceIcon(pack: String, cn: ComponentName, entry: IconEntry) {
-    writableDatabase.update(
+  fun insertOrUpdateIcon(pack: String, cn: ComponentName, entry: IconEntry) {
+    writableDatabase.insertWithOnConflict(
       "'${pt(pack)}'",
-      ContentValues().apply { put("entry", entry.toByteArray()) },
-      "packageName=? and className=?",
-      arrayOf(cn.packageName, cn.className),
+      null,
+      ContentValues().apply {
+        put("packageName", cn.packageName)
+        put("className", cn.className)
+        put("entry", entry.toByteArray())
+      },
+      SQLiteDatabase.CONFLICT_REPLACE,
     )
+  }
+
+  fun deleteIcon(pack: String, packageName: String) {
+    writableDatabase.delete("'${pt(pack)}'", "packageName=?", arrayOf(packageName))
   }
 
   fun resetPack(pack: String) {

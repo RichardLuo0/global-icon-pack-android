@@ -145,7 +145,10 @@ class IconVariantActivity : ComponentActivity() {
             columns = GridCells.Adaptive(minSize = 74.dp),
           ) {
             items(icons, key = { it }) { name ->
-              IconForApp(name, loadImage = { viewModel.loadIcon(name) }) {
+              IconForApp(
+                name.ifEmpty { stringResource(R.string.originalIcon) },
+                loadImage = { viewModel.loadIcon(name) },
+              ) {
                 lifecycleScope.launch { viewModel.replaceIcon(name) }
               }
             }

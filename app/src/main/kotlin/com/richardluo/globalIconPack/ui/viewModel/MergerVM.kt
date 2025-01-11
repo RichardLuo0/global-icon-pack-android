@@ -57,9 +57,9 @@ class MergerVM(app: Application) : AndroidViewModel(app) {
         if (pack.isEmpty()) return@onEach
         isLoading = true
         icons.clear()
-        val newIcons =
-          withContext(Dispatchers.Default) {
-            val iconPack = iconCache.getIconPack(pack)
+        withContext(Dispatchers.Default) {
+          val iconPack = iconCache.getIconPack(pack)
+          icons.putAll(
             context
               .getSystemService(Context.LAUNCHER_APPS_SERVICE)
               .asType<LauncherApps>()
@@ -75,8 +75,8 @@ class MergerVM(app: Application) : AndroidViewModel(app) {
                   ),
                 )
               }
-          }
-        icons.putAll(newIcons)
+          )
+        }
         isLoading = false
       }
       .launchIn(viewModelScope)

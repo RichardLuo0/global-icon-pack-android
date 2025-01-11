@@ -9,6 +9,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.richardluo.globalIconPack.PrefKey
@@ -43,6 +44,7 @@ class IconVariantVM(app: Application) : AndroidViewModel(app) {
     private set
 
   private val basePack = WorldPreference.getPrefInApp(context).getString(PrefKey.ICON_PACK, "")!!
+  private val baseIconPack by lazy { iconCache.getIconPack(basePack) }
   private val iconPackAsFallback =
     WorldPreference.getPrefInApp(context).getBoolean(PrefKey.ICON_PACK_AS_FALLBACK, false)
   var icons = mutableStateMapOf<ComponentName, AppIconInfo>()
@@ -50,7 +52,7 @@ class IconVariantVM(app: Application) : AndroidViewModel(app) {
 
   private val variantIcons = flow {
     emit(null)
-    emit(withContext(Dispatchers.Default) { iconCache.getIconPack(basePack).getDrawables() })
+    emit(withContext(Dispatchers.Default) { baseIconPack.getDrawables() })
   }
 
   var variantSheet by mutableStateOf(false)
@@ -67,9 +69,9 @@ class IconVariantVM(app: Application) : AndroidViewModel(app) {
           withContext(Dispatchers.Default) {
             icons ?: return@withContext listOf()
             cn ?: return@withContext listOf()
-            val entry =
-              iconCache.getIconPack(basePack).getIconEntry(cn) ?: return@withContext listOf()
-            if (text.isEmpty()) icons.filter { it.startsWith(entry.name) }
+            val entry = baseIconPack.getIconEntry(cn)
+            if (text.isEmpty())
+              if (entry != null) icons.filter { it.startsWith(entry.name) } else listOf("")
             else icons.filter { it.contains(text) }
           }
         )
@@ -91,28 +93,27 @@ class IconVariantVM(app: Application) : AndroidViewModel(app) {
         .getActivityList(null, Process.myUserHandle())
         .forEach { info ->
           val cn = info.componentName
-          getUpdatedEntryWithPack(cn)?.let {
-            newIcons[cn] = AppIconInfo(cn.packageName, info.label.toString(), it)
-          }
+          newIcons[cn] =
+            AppIconInfo(cn.packageName, info.label.toString(), getUpdatedEntryWithPack(cn))
         }
       icons.putAll(newIcons)
     }
     isLoading = false
   }
 
-  private fun getUpdatedEntryWithPack(cn: ComponentName): IconEntryWithPack? {
-    val entry =
-      iconPackDB.getIcon(basePack, cn, iconPackAsFallback).getFirstRow {
-        IconEntry.from(it.getBlob("entry"))
-      }
-    return if (entry == null || icons[cn]?.entry?.entry?.name != entry.name)
-      entry?.let { IconEntryWithPack(it, basePack) }
-    else null
-  }
+  private fun getUpdatedEntryWithPack(cn: ComponentName) =
+    iconPackDB
+      .getIcon(basePack, cn, iconPackAsFallback)
+      .getFirstRow { IconEntry.from(it.getBlob("entry")) }
+      ?.let { IconEntryWithPack(it, basePack) }
 
   suspend fun loadIcon(info: AppIconInfo) = iconCache.loadIcon(info.entry, info.app, basePack)
 
-  suspend fun loadIcon(iconName: String) = iconCache.loadIcon(iconName, basePack)
+  suspend fun loadIcon(iconName: String) =
+    if (iconName.isEmpty())
+      selectedApp.value?.packageName?.let { iconCache.loadIcon(null, it, basePack) }
+        ?: ImageBitmap(1, 1)
+    else iconCache.loadIcon(iconName, basePack)
 
   fun openVariantSheet(cn: ComponentName) {
     selectedApp.value = cn
@@ -134,7 +135,8 @@ class IconVariantVM(app: Application) : AndroidViewModel(app) {
     isLoading = true
     withContext(Dispatchers.Default) {
       val entry = NormalIconEntry(iconName)
-      iconPackDB.replaceIcon(basePack, cn, entry)
+      if (iconName.isEmpty()) iconPackDB.deleteIcon(basePack, cn.packageName)
+      else iconPackDB.insertOrUpdateIcon(basePack, cn, entry)
       getUpdatedEntryWithPack(cn)?.let { icons[cn]?.copy(entry = it) }?.let { icons[cn] = it }
     }
     isLoading = false
