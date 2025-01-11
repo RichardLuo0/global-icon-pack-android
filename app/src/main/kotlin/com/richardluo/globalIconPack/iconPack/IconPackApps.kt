@@ -7,7 +7,7 @@ import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.content.pm.ResolveInfo
 import android.graphics.drawable.Drawable
-import com.richardluo.globalIconPack.utils.ReAssignable
+import java.lang.ref.WeakReference
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -19,41 +19,44 @@ private fun MutableMap<String, IconPackApp>.put(pm: PackageManager, resolveInfo:
   }
 
 object IconPackApps {
-  private val packAppMap = ReAssignable<Map<String, IconPackApp>>()
+  private var packAppMap: WeakReference<Map<String, IconPackApp>>? = null
 
   private val packageChangeReceiver =
     object : BroadcastReceiver() {
 
       override fun onReceive(context: Context, intent: Intent?) {
-        // Invalidate cache
-        packAppMap.reset()
+        packAppMap = null
         context.unregisterReceiver(this)
       }
     }
 
   suspend fun load(context: Context): Map<String, IconPackApp> {
-    return packAppMap.orAssign {
-      withContext(Dispatchers.Default) {
-        context.applicationContext.registerReceiver(
-          packageChangeReceiver,
-          IntentFilter().apply {
-            addAction(Intent.ACTION_PACKAGE_ADDED)
-            addAction(Intent.ACTION_PACKAGE_REMOVED)
-            addDataScheme("package")
-          },
-        )
-        mutableMapOf<String, IconPackApp>().apply {
-          val pm = context.packageManager
-          listOf(
-              "app.lawnchair.icons.THEMED_ICON",
-              "org.adw.ActivityStarter.THEMES",
-              "com.novalauncher.THEME",
+    return packAppMap?.get()
+      ?: let {
+        val newMap =
+          withContext(Dispatchers.Default) {
+            context.applicationContext.registerReceiver(
+              packageChangeReceiver,
+              IntentFilter().apply {
+                addAction(Intent.ACTION_PACKAGE_ADDED)
+                addAction(Intent.ACTION_PACKAGE_REMOVED)
+                addDataScheme("package")
+              },
             )
-            .forEach { action ->
-              pm.queryIntentActivities(Intent(action), 0).forEach { put(pm, it) }
+            mutableMapOf<String, IconPackApp>().apply {
+              val pm = context.packageManager
+              listOf(
+                  "app.lawnchair.icons.THEMED_ICON",
+                  "org.adw.ActivityStarter.THEMES",
+                  "com.novalauncher.THEME",
+                )
+                .forEach { action ->
+                  pm.queryIntentActivities(Intent(action), 0).forEach { put(pm, it) }
+                }
             }
-        }
+          }
+        packAppMap = WeakReference(newMap)
+        newMap
       }
-    }
   }
 }

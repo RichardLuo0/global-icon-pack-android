@@ -82,22 +82,6 @@ inline fun <T> Result<T>.getOrNull(block: (Throwable) -> Unit) = getOrElse {
 inline fun <K, V> MutableMap<K, V?>.getOrPutNullable(key: K, defaultValue: () -> V?) =
   if (containsKey(key)) get(key) else defaultValue().also { put(key, it) }
 
-fun SharedPreferences.registerAndCallOnSharedPreferenceChangeListener(
-  listener: SharedPreferences.OnSharedPreferenceChangeListener,
-  key: String,
-) =
-  also { listener.onSharedPreferenceChanged(it, key) }
-    .registerOnSharedPreferenceChangeListener(listener)
-
-class ReAssignable<T>(var value: T? = null) {
-
-  fun reset() {
-    value = null
-  }
-
-  inline fun orAssign(block: () -> T) = value ?: block().also { value = it }
-}
-
 val isInMod by lazy {
   when (Application.getProcessName()) {
     BuildConfig.APPLICATION_ID -> false
