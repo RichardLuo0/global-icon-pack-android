@@ -1,15 +1,20 @@
 package com.richardluo.globalIconPack.utils
 
 import android.app.Application
-import android.content.SharedPreferences
 import android.database.Cursor
 import androidx.annotation.CheckResult
+import androidx.collection.LruCache
+import androidx.compose.runtime.Composable
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.richardluo.globalIconPack.BuildConfig
 import de.robv.android.xposed.XC_MethodHook.MethodHookParam
 import de.robv.android.xposed.XposedBridge
 import java.lang.reflect.Field
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.StateFlow
+import org.xmlpull.v1.XmlPullParser
 
 @Suppress("UNCHECKED_CAST")
 fun <R> callOriginalMethod(param: MethodHookParam): R =
@@ -96,3 +101,22 @@ fun Cursor.getBlob(name: String) = this.getBlob(getColumnIndexOrThrow(name))
 fun Cursor.getLong(name: String) = this.getLong(getColumnIndexOrThrow(name))
 
 fun String.ifNotEmpty(block: (String) -> String) = if (isNotEmpty()) block(this) else this
+
+operator fun XmlPullParser.get(key: String): String? = this.getAttributeValue(null, key)
+
+inline fun <K : Any, V : Any> LruCache<K, V>.getOrPut(key: K, defaultValue: () -> V): V {
+  val value = get(key)
+  return if (value == null) {
+    val answer = defaultValue()
+    put(key, answer)
+    answer
+  } else value
+}
+
+@Composable fun <T> StateFlow<T>.getState() = collectAsStateWithLifecycle()
+
+@Composable fun <T> StateFlow<T>.getValue() = collectAsStateWithLifecycle().value
+
+@Composable fun <T> Flow<T>.getState(init: T) = collectAsStateWithLifecycle(init)
+
+@Composable fun <T> Flow<T>.getValue(init: T) = collectAsStateWithLifecycle(init).value

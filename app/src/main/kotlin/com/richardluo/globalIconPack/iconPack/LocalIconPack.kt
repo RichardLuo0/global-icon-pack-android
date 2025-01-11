@@ -12,6 +12,7 @@ import com.richardluo.globalIconPack.iconPack.database.ClockIconEntry
 import com.richardluo.globalIconPack.iconPack.database.ClockMetadata
 import com.richardluo.globalIconPack.iconPack.database.IconEntry
 import com.richardluo.globalIconPack.iconPack.database.NormalIconEntry
+import com.richardluo.globalIconPack.utils.get
 import com.richardluo.globalIconPack.utils.getOrNull
 import com.richardluo.globalIconPack.utils.log
 import org.xmlpull.v1.XmlPullParser
@@ -39,22 +40,46 @@ open class LocalIconPack(pref: SharedPreferences, pack: String, resources: Resou
 
   override fun getId(cn: ComponentName) =
     indexMap[cn] ?: if (iconPackAsFallback) indexMap[getComponentName(cn.packageName)] else null
+
+  @SuppressLint("DiscouragedApi")
+  fun getDrawables(): Set<String> {
+    val parser =
+      resources
+        .getIdentifier("drawable", "xml", pack)
+        .takeIf { 0 != it }
+        ?.let { resources.getXml(it) } ?: return setOf()
+    val drawableList = mutableSetOf<String>()
+    while (parser.next() != XmlPullParser.END_DOCUMENT) {
+      if (parser.eventType != XmlPullParser.START_TAG) continue
+      when (parser.name) {
+        "item" -> drawableList.add(parser["drawable"] ?: continue)
+      }
+    }
+    return drawableList
+  }
 }
 
-class IconPackInfo(
-  val iconBacks: MutableList<String> = mutableListOf(),
-  val iconUpons: MutableList<String> = mutableListOf(),
-  val iconMasks: MutableList<String> = mutableListOf(),
+open class IconPackInfo(
+  open val iconBacks: List<String>,
+  open val iconUpons: List<String>,
+  open val iconMasks: List<String>,
   var iconScale: Float = 1f,
-  val iconEntryMap: MutableMap<ComponentName, IconEntry> = mutableMapOf(),
+  open val iconEntryMap: Map<ComponentName, IconEntry>,
 )
+
+private class MutableIconPackInfo(
+  override val iconBacks: MutableList<String> = mutableListOf(),
+  override val iconUpons: MutableList<String> = mutableListOf(),
+  override val iconMasks: MutableList<String> = mutableListOf(),
+  override val iconEntryMap: MutableMap<ComponentName, IconEntry> = mutableMapOf(),
+) : IconPackInfo(iconBacks, iconUpons, iconMasks, 1f, iconEntryMap)
 
 @SuppressLint("DiscouragedApi")
 internal fun loadIconPack(resources: Resources, pack: String, iconFallback: Boolean): IconPackInfo {
-  val info = IconPackInfo()
+  val info = MutableIconPackInfo()
   val iconEntryMap = info.iconEntryMap
 
-  val parser = getXml(resources, pack) ?: return info
+  val parser = getAppFilter(resources, pack) ?: return info
   val compStart = "ComponentInfo{"
   val compStartLength = compStart.length
   val compEnd = "}"
@@ -128,18 +153,13 @@ internal fun loadIconPack(resources: Resources, pack: String, iconFallback: Bool
 }
 
 @SuppressLint("DiscouragedApi")
-private fun getXml(resources: Resources, pack: String) =
+private fun getAppFilter(res: Resources, pack: String) =
   runCatching {
-      resources
-        .getIdentifier("appfilter", "xml", pack)
-        .takeIf { 0 != it }
-        ?.let { resources.getXml(it) }
+      res.getIdentifier("appfilter", "xml", pack).takeIf { 0 != it }?.let { res.getXml(it) }
         ?: run {
           XmlPullParserFactory.newInstance().newPullParser().apply {
-            setInput(resources.assets.open("appfilter.xml"), Xml.Encoding.UTF_8.toString())
+            setInput(res.assets.open("appfilter.xml"), Xml.Encoding.UTF_8.toString())
           }
         }
     }
     .getOrNull { log(it) }
-
-private operator fun XmlPullParser.get(key: String): String? = this.getAttributeValue(null, key)

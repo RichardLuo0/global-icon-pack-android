@@ -15,7 +15,7 @@ import java.io.OutputStream
 import java.io.OutputStreamWriter
 
 object IconPackCreator {
-  class IconEntryWithPack(val entry: IconEntry, val pack: String)
+  data class IconEntryWithPack(val entry: IconEntry, val pack: String)
 
   @OptIn(ExperimentalStdlibApi::class)
   fun createIconPack(

@@ -1,10 +1,11 @@
 [versions]
-agp = "8.7.3"
+agp = "8.8.0"
 kotlin = "2.0.21"
 core-ktx = "1.15.0"
 activity = "1.9.3"
 viewmodel = "2.8.7"
 material3 = "1.3.1"
+material-icons-extended = "1.7.6"
 ui-tooling-preview-android = "1.7.6"
 libsu = "6.0.0"
 documentfile = "1.0.1"
@@ -18,6 +19,7 @@ activity = { group = "androidx.activity", name = "activity-compose", version.ref
 viewmodel = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "viewmodel" }
 preference = { group = "me.zhanghai.compose.preference", name = "library", version = "1.1.1" }
 material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "material3" }
+material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended", version.ref = "material-icons-extended" }
 ui-tooling-preview-android = { group = "androidx.compose.ui", name = "ui-tooling-preview-android", version.ref = "ui-tooling-preview-android" }
 libsu = { group = "com.github.topjohnwu.libsu", name = "core", version.ref = "libsu" }
 documentfile = { group = "androidx.documentfile", name = "documentfile", version.ref = "documentfile" }

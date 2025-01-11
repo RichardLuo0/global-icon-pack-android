@@ -15,8 +15,6 @@ import com.richardluo.globalIconPack.utils.getLong
 import com.richardluo.globalIconPack.utils.log
 import kotlinx.coroutines.runBlocking
 
-data class Icon(val componentName: ComponentName, val entry: IconEntry)
-
 class IconPackDB(private val context: Context, path: String = "iconPack.db") :
   SQLiteOpenHelper(context.createDeviceProtectedStorageContext(), path, null, 4) {
 
@@ -26,26 +24,23 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
     update(writableDatabase, pack)
   }
 
-  private fun update(db: SQLiteDatabase, inputPack: String) {
-    val pack =
-      inputPack.takeIf { it.isNotEmpty() }
-        ?: run {
-          log("No icon pack set")
-          return
-        }
-    db.execSQL(
-      "CREATE TABLE IF NOT EXISTS 'fallbacks' (pack TEXT PRIMARY KEY, fallback BLOB, updateAt NUMERIC)"
-    )
-    val packTable = pt(pack)
-    db.rawQuery("select DISTINCT updateAt from fallbacks where pack=?", arrayOf(pack)).use { c ->
-      if (
-        context.packageManager.getPackageInfo(pack, 0).lastUpdateTime <
-          (c.getFirstRow { it.getLong("updateAt") } ?: 0)
-      )
-        return
+  private fun update(db: SQLiteDatabase, pack: String) {
+    pack.ifEmpty {
+      log("No icon pack set")
+      return
     }
     db.apply {
-      beginTransaction()
+      execSQL(
+        "CREATE TABLE IF NOT EXISTS 'fallbacks' (pack TEXT PRIMARY KEY, fallback BLOB, updateAt NUMERIC)"
+      )
+      val packTable = pt(pack)
+      rawQuery("select DISTINCT updateAt from fallbacks where pack=?", arrayOf(pack)).use { c ->
+        if (
+          context.packageManager.getPackageInfo(pack, 0).lastUpdateTime <
+            (c.getFirstRow { it.getLong("updateAt") } ?: 0)
+        )
+          return
+      }
       // Create tables
       execSQL(
         "CREATE TABLE IF NOT EXISTS '$packTable' (packageName TEXT, className TEXT, entry BLOB)"
@@ -54,44 +49,47 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
         "CREATE UNIQUE INDEX IF NOT EXISTS '${pack}_componentName' ON '$packTable' (packageName, className)"
       )
       execSQL("CREATE INDEX IF NOT EXISTS '${pack}_packageName' ON '$packTable' (packageName)")
-      // Load icon pack
-      val packResources = context.packageManager.getResourcesForApplication(pack)
-      loadIconPack(packResources, pack, iconFallback = true).let { info ->
-        // Insert icons
-        insertIcon(db, pack, info.iconEntryMap.map { (cn, entry) -> Icon(cn, entry) })
-        // Insert fallback
-        insertFallbackSettings(
-          db,
-          pack,
-          FallbackSettings(info.iconBacks, info.iconUpons, info.iconMasks, info.iconScale),
-        )
-        update(
-          "fallbacks",
-          ContentValues().apply { put("updateAt", System.currentTimeMillis()) },
-          "pack=?",
-          arrayOf(pack),
-        )
-      }
-      // Get installed icon packs
-      val packs = runBlocking { IconPackApps.load(context).keys }
-      // Delete expired fallbacks
-      val packSet = packs.joinToString(", ") { "'$it'" }
-      delete("fallbacks", "pack not in ($packSet)", null)
-      // Drop expired tables
-      val packTableSet = packs.joinToString(", ") { "'${pt(it)}'" }
-      rawQuery(
-          "select DISTINCT tbl_name from sqlite_master WHERE tbl_name LIKE '${pt("%")}' AND tbl_name NOT IN ($packTableSet)",
-          null,
-        )
-        .use {
-          while (it.moveToNext()) {
-            db.execSQL("DROP TABLE '${it.getString(0)}'")
+      beginTransaction()
+      try {
+        // Load icon pack
+        loadIconPack(
+            context.packageManager.getResourcesForApplication(pack),
+            pack,
+            iconFallback = true,
+          )
+          .let { info ->
+            // Insert icons
+            insertIcon(db, pack, info.iconEntryMap.toList())
+            // Insert fallback
+            insertFallbackSettings(
+              db,
+              pack,
+              FallbackSettings(info.iconBacks, info.iconUpons, info.iconMasks, info.iconScale),
+            )
           }
-        }
-      setTransactionSuccessful()
+        // Get installed icon packs
+        val packs = runBlocking { IconPackApps.get(context).keys }
+        // Delete expired fallbacks
+        val packSet = packs.joinToString(", ") { "'$it'" }
+        delete("fallbacks", "pack not in ($packSet)", null)
+        // Drop expired tables
+        val packTableSet = packs.joinToString(", ") { "'${pt(it)}'" }
+        rawQuery(
+            "select DISTINCT tbl_name from sqlite_master WHERE tbl_name LIKE '${pt("%")}' AND tbl_name NOT IN ($packTableSet)",
+            null,
+          )
+          .use {
+            while (it.moveToNext()) {
+              db.execSQL("DROP TABLE '${it.getString(0)}'")
+            }
+          }
+        setTransactionSuccessful()
+      } catch (e: Exception) {
+        log(e)
+      }
       endTransaction()
+      log("database: $pack updated")
     }
-    log("database: $pack updated")
   }
 
   fun getFallbackSettings(pack: String) =
@@ -130,26 +128,42 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
   fun getIcon(pack: String, cn: ComponentName, fallback: Boolean = false) =
     if (fallback) getIconFallback(pack, cn) else getIconExact(pack, cn)
 
-  private fun insertIcon(db: SQLiteDatabase, pack: String, icons: List<Icon>) {
+  private fun insertIcon(
+    db: SQLiteDatabase,
+    pack: String,
+    icons: List<Pair<ComponentName, IconEntry>>,
+  ) {
     val insertIcon: SQLiteStatement =
       db.compileStatement("INSERT OR REPLACE INTO '${pt(pack)}' VALUES(?, ?, ?)")
-    db.apply {
-      beginTransaction()
-      runCatching {
-        icons.forEach { icon ->
-          insertIcon.apply {
-            clearBindings()
-            val cn = icon.componentName
-            bindString(1, cn.packageName)
-            bindString(2, cn.className)
-            bindBlob(3, icon.entry.toByteArray())
-            execute()
-          }
-        }
-        setTransactionSuccessful()
+    icons.forEach { icon ->
+      insertIcon.apply {
+        clearBindings()
+        val cn = icon.first
+        bindString(1, cn.packageName)
+        bindString(2, cn.className)
+        bindBlob(3, icon.second.toByteArray())
+        execute()
       }
-      endTransaction()
     }
+  }
+
+  fun replaceIcon(pack: String, cn: ComponentName, entry: IconEntry) {
+    writableDatabase.update(
+      "'${pt(pack)}'",
+      ContentValues().apply { put("entry", entry.toByteArray()) },
+      "packageName=? and className=?",
+      arrayOf(cn.packageName, cn.className),
+    )
+  }
+
+  fun resetPack(pack: String) {
+    writableDatabase.update(
+      "fallbacks",
+      ContentValues().apply { put("updateAt", 0) },
+      "pack=?",
+      arrayOf(pack),
+    )
+    update(writableDatabase, pack)
   }
 
   private fun pt(pack: String) = "pack_$pack"

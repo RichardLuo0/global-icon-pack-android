@@ -1,4 +1,4 @@
-package com.richardluo.globalIconPack.ui
+package com.richardluo.globalIconPack.ui.viewModel
 
 import android.app.Application
 import android.content.ComponentName
@@ -8,26 +8,55 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
 import com.richardluo.globalIconPack.MODE_PROVIDER
 import com.richardluo.globalIconPack.PrefKey
 import com.richardluo.globalIconPack.iconPack.BootReceiver
 import com.richardluo.globalIconPack.iconPack.KeepAliveService
 import com.richardluo.globalIconPack.iconPack.database.IconPackDB
 import com.richardluo.globalIconPack.utils.WorldPreference
+import com.richardluo.globalIconPack.utils.getInstance
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.withContext
+import me.zhanghai.compose.preference.Preferences
 
 class MainVM(app: Application) : AndroidViewModel(app) {
   private val context: Context
     get() = getApplication()
 
-  private val iconPackChangeListener by lazy { IconPackDB(app) }
+  private val iconPackDB by getInstance { IconPackDB(app) }
   private val pref by lazy { WorldPreference.getPrefInApp(app) }
+
+  // This is used to get a strong reference to icon cache so it never gets recycled before
+  // MainVM is destroyed
+  private val iconCache = getInstance { IconCache(app) }.value
+
+  init {
+    iconCache
+  }
 
   var waiting by mutableIntStateOf(0)
     private set
 
-  suspend fun onModeChange(value: String) {
+  fun bindPreferencesFlow(flow: Flow<Preferences>) {
+    flow
+      .map { it[PrefKey.MODE] ?: MODE_PROVIDER }
+      .distinctUntilChanged()
+      .onEach(::onModeChange)
+      .launchIn(viewModelScope)
+    flow
+      .map { it[PrefKey.ICON_PACK] ?: "" }
+      .distinctUntilChanged()
+      .onEach(::onIconPackChange)
+      .launchIn(viewModelScope)
+  }
+
+  private suspend fun onModeChange(value: String) {
     waiting++
     withContext(Dispatchers.Default) { changeComponent(value) }
     waiting--
@@ -55,10 +84,10 @@ class MainVM(app: Application) : AndroidViewModel(app) {
     }
   }
 
-  suspend fun onIconPackChange(pack: String) {
+  private suspend fun onIconPackChange(pack: String) {
     if (pref.getString(PrefKey.MODE, MODE_PROVIDER) == MODE_PROVIDER) {
       waiting++
-      withContext(Dispatchers.Default) { iconPackChangeListener.onIconPackChange(pack) }
+      withContext(Dispatchers.Default) { iconPackDB.onIconPackChange(pack) }
       waiting--
     }
   }

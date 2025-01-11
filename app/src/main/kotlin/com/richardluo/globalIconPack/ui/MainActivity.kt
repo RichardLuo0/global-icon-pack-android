@@ -31,6 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
+import androidx.lifecycle.lifecycleScope
 import com.richardluo.globalIconPack.MODE_LOCAL
 import com.richardluo.globalIconPack.MODE_PROVIDER
 import com.richardluo.globalIconPack.PrefKey
@@ -43,8 +44,16 @@ import com.richardluo.globalIconPack.ui.components.LoadingDialog
 import com.richardluo.globalIconPack.ui.components.SampleTheme
 import com.richardluo.globalIconPack.ui.components.SnackbarErrorVisuals
 import com.richardluo.globalIconPack.ui.components.lazyListPreference
+import com.richardluo.globalIconPack.ui.viewModel.MainVM
 import com.richardluo.globalIconPack.utils.WorldPreference
+import com.richardluo.globalIconPack.utils.getState
 import com.topjohnwu.superuser.Shell
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
+import me.zhanghai.compose.preference.LocalPreferenceFlow
+import me.zhanghai.compose.preference.Preference
 import me.zhanghai.compose.preference.ProvidePreferenceLocals
 import me.zhanghai.compose.preference.SwitchPreference
 import me.zhanghai.compose.preference.getPreferenceFlow
@@ -121,6 +130,24 @@ class MainActivity : ComponentActivity() {
     ) { contentPadding ->
       if (viewModel.waiting > 0) LoadingDialog()
 
+      val flow = LocalPreferenceFlow.current
+      LaunchedEffect(flow) {
+        viewModel.bindPreferencesFlow(flow)
+        flow
+          .map { it[PrefKey.MODE] ?: MODE_PROVIDER }
+          .distinctUntilChanged()
+          .onEach { mode ->
+            // Ask for notification permission used for foreground service
+            if (
+              mode == MODE_PROVIDER &&
+                context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) !=
+                  PackageManager.PERMISSION_GRANTED
+            )
+              context.requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 200)
+          }
+          .launchIn(lifecycleScope)
+      }
+
       LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = contentPadding) {
         preferenceCategory(key = "general", title = { Text(stringResource(R.string.general)) })
         listPreference(
@@ -130,35 +157,21 @@ class MainActivity : ComponentActivity() {
           valueToText = { AnnotatedString(modeToDesc(it)) },
           title = { Text(stringResource(R.string.mode)) },
           summary = { Text(modeToDesc(it)) },
-          rememberState = {
-            rememberPreferenceState(PrefKey.MODE, MODE_PROVIDER).also {
-              val value by it
-              LaunchedEffect(value) {
-                // Ask for notification permission used for foreground service
-                if (
-                  context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) !=
-                    PackageManager.PERMISSION_GRANTED
-                )
-                  context.requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 200)
-                viewModel.onModeChange(value)
-              }
-            }
-          },
         )
         lazyListPreference(
           key = PrefKey.ICON_PACK,
           defaultValue = "",
-          load = { IconPackApps.load(context) },
+          load = { IconPackApps.get(context) },
           item = { key, value, currentKey, onClick ->
             IconPackItem(key, value, currentKey, onClick)
           },
           title = { Text(stringResource(R.string.iconPack)) },
-          summary = { _, value -> Text(value?.label ?: stringResource(R.string.iconPackSummary)) },
-          rememberState = {
-            rememberPreferenceState(PrefKey.ICON_PACK, "").also {
-              val value by it
-              LaunchedEffect(value) { viewModel.onIconPackChange(value) }
-            }
+          summary = { key, value ->
+            Text(
+              value?.label
+                ?: key.takeIf { it.isNotEmpty() }
+                ?: stringResource(R.string.iconPackSummary)
+            )
           },
         )
         switchPreference(
@@ -167,6 +180,17 @@ class MainActivity : ComponentActivity() {
           title = { Text(stringResource(R.string.iconPackAsFallback)) },
           summary = { Text(stringResource(R.string.iconPackAsFallbackSummary)) },
         )
+        item(key = "iconVariant") {
+          val isProvider by flow.map { MODE_PROVIDER == it[PrefKey.MODE] }.getState(false)
+          val isPackSet by
+            flow.map { it.get<String>(PrefKey.ICON_PACK)?.isNotEmpty() ?: false }.getState(false)
+          Preference(
+            enabled = isProvider && isPackSet,
+            onClick = { context.startActivity(Intent(context, IconVariantActivity::class.java)) },
+            title = { Text(stringResource(R.string.iconVariant)) },
+            summary = { Text(stringResource(R.string.iconVariantSummary)) },
+          )
+        }
         preference(
           key = "openMerger",
           onClick = { context.startActivity(Intent(context, IconPackMergerActivity::class.java)) },

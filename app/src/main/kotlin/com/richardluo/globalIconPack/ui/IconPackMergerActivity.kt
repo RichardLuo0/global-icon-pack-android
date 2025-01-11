@@ -1,6 +1,5 @@
 package com.richardluo.globalIconPack.ui
 
-import android.content.ComponentName
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -10,7 +9,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -63,7 +61,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
@@ -75,15 +72,18 @@ import androidx.lifecycle.lifecycleScope
 import com.richardluo.globalIconPack.R
 import com.richardluo.globalIconPack.iconPack.IconPackApp
 import com.richardluo.globalIconPack.iconPack.IconPackApps
+import com.richardluo.globalIconPack.ui.components.IconForApp
 import com.richardluo.globalIconPack.ui.components.IconPackItem
 import com.richardluo.globalIconPack.ui.components.InfoDialog
+import com.richardluo.globalIconPack.ui.components.LazyImage
 import com.richardluo.globalIconPack.ui.components.LazyListDialog
 import com.richardluo.globalIconPack.ui.components.LoadingDialog
 import com.richardluo.globalIconPack.ui.components.SampleTheme
-import kotlinx.coroutines.Dispatchers
+import com.richardluo.globalIconPack.ui.viewModel.MergerVM
+import com.richardluo.globalIconPack.ui.viewModel.NewAppIconInfo
+import com.richardluo.globalIconPack.utils.getValue
 import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 class IconPackMergerActivity : ComponentActivity() {
   private val viewModel: MergerVM by viewModels()
@@ -147,9 +147,7 @@ class IconPackMergerActivity : ComponentActivity() {
             coroutineScope.launch { pagerState.animateScrollToPage(pagerState.currentPage + 1) }
           }
         val done =
-          FabState(Icons.Outlined.Done, getString(R.string.done)) {
-            if (viewModel.basePack.isNotEmpty()) viewModel.warningDialogState.value = true
-          }
+          FabState(Icons.Outlined.Done, getString(R.string.done), viewModel::openWarningDialog)
         val fabState by remember {
           derivedStateOf {
             if (pagerState.currentPage != pagerState.pageCount - 1) nextStep else done
@@ -207,13 +205,13 @@ class IconPackMergerActivity : ComponentActivity() {
   private fun SelectBasePack(pagerState: PagerState) {
     val coroutineScope = rememberCoroutineScope()
     var valueMap by remember { mutableStateOf<Map<String, IconPackApp>>(mapOf()) }
-    LaunchedEffect(Unit) { valueMap = IconPackApps.load(this@IconPackMergerActivity) }
+    LaunchedEffect(Unit) { valueMap = IconPackApps.get(this@IconPackMergerActivity) }
     LazyColumn(modifier = Modifier.fillMaxSize()) {
       items(valueMap.toList()) { (key, value) ->
-        IconPackItem(key, value, viewModel.basePack) {
+        IconPackItem(key, value, viewModel.basePackFlow.getValue()) {
           lifecycleScope.launch {
             coroutineScope.async { pagerState.animateScrollToPage(Page.IconList.ordinal) }.await()
-            viewModel.basePack = key
+            viewModel.basePackFlow.value = key
           }
         }
       }
@@ -222,20 +220,21 @@ class IconPackMergerActivity : ComponentActivity() {
 
   @Composable
   private fun IconList() {
-    LaunchedEffect(viewModel.basePack) { viewModel.loadIcons() }
     LazyVerticalGrid(
       modifier = Modifier.fillMaxSize().padding(horizontal = 2.dp),
       columns = GridCells.Adaptive(minSize = 74.dp),
     ) {
       items(viewModel.icons.toList(), key = { entry -> entry.first }) { (cn, info) ->
-        IconForApp(cn, info)
+        IconForApp(info.label, key = info, loadImage = { viewModel.loadIcon(info) }) {
+          viewModel.openPackDialog(cn)
+        }
       }
     }
 
     LazyListDialog(
       viewModel.packDialogState,
       title = { Text(getString(R.string.chooseNewIcon)) },
-      load = { viewModel.loadIconForSelectedApp() },
+      load = { viewModel.getIconForSelectedApp() },
       nothing = {
         Text(
           getString(R.string.noCandidateIconForThisApp),
@@ -287,40 +286,6 @@ class IconPackMergerActivity : ComponentActivity() {
   }
 
   @Composable
-  fun IconForApp(cn: ComponentName, info: AppIconInfo) {
-    Column(
-      modifier =
-        Modifier.clip(MaterialTheme.shapes.medium)
-          .clickable { viewModel.openPackDialog(cn) }
-          .fillMaxWidth()
-          .padding(vertical = 18.dp, horizontal = 4.dp)
-    ) {
-      var image by remember { mutableStateOf<ImageBitmap?>(null) }
-      LaunchedEffect(info) { image = withContext(Dispatchers.Default) { viewModel.getIcon(info) } }
-      AnimatedContent(targetState = image, label = "Image loaded") { targetImage ->
-        if (targetImage != null)
-          Image(
-            bitmap = targetImage,
-            contentDescription = info.label,
-            modifier = Modifier.padding(horizontal = 12.dp).aspectRatio(1f),
-            contentScale = ContentScale.Crop,
-          )
-        else Box(modifier = Modifier.padding(horizontal = 12.dp).aspectRatio(1f))
-      }
-      Spacer(modifier = Modifier.height(12.dp))
-      Text(
-        info.label,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        style = MaterialTheme.typography.bodyMedium,
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis,
-        textAlign = TextAlign.Center,
-        modifier = Modifier.fillMaxWidth(),
-      )
-    }
-  }
-
-  @Composable
   fun NewAppIconItem(info: NewAppIconInfo, onClick: () -> Unit) {
     Row(
       modifier =
@@ -333,11 +298,12 @@ class IconPackMergerActivity : ComponentActivity() {
       verticalAlignment = Alignment.CenterVertically,
     ) {
       Box(modifier = Modifier.fillMaxHeight().aspectRatio(1f)) {
-        Image(
-          bitmap = viewModel.getIcon(info),
-          contentDescription = "",
+        LazyImage(
+          info,
+          contentDescription = info.app,
           modifier = Modifier.matchParentSize(),
           contentScale = ContentScale.Crop,
+          loadImage = { viewModel.loadIcon(info) },
         )
       }
       Spacer(modifier = Modifier.width(12.dp))

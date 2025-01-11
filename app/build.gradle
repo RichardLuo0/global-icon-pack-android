@@ -86,6 +86,7 @@ dependencies {
     implementation libs.viewmodel
     implementation libs.preference
     implementation libs.material3
+    implementation libs.material.icons.extended
     implementation libs.ui.tooling.preview.android
     implementation libs.libsu
     implementation libs.documentfile

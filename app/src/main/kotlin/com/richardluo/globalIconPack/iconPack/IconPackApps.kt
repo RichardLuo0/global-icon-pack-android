@@ -30,7 +30,7 @@ object IconPackApps {
       }
     }
 
-  suspend fun load(context: Context): Map<String, IconPackApp> {
+  suspend fun get(context: Context): Map<String, IconPackApp> {
     return packAppMap?.get()
       ?: let {
         val newMap =
