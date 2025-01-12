@@ -25,7 +25,7 @@ object IconHelper {
     private val iconScale: Float,
   ) :
     UnClipAdaptiveIconDrawable(
-      background?.let { createScaledDrawable(it, iconScale) },
+      background,
       foreground?.let { createScaledDrawable(it, iconScale) },
     ) {
     private val paint =
