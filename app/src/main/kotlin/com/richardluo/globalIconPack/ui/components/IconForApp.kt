@@ -44,7 +44,7 @@ fun IconForApp(
       label,
       color = MaterialTheme.colorScheme.onSurfaceVariant,
       style = MaterialTheme.typography.bodyMedium,
-      maxLines = 1,
+      maxLines = 2,
       overflow = TextOverflow.Ellipsis,
       textAlign = TextAlign.Center,
       modifier = Modifier.fillMaxWidth(),
