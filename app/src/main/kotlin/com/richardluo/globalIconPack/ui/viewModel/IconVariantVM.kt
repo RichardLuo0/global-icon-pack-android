@@ -66,13 +66,17 @@ class IconVariantVM(app: Application) : AndroidViewModel(app) {
       ) { icons, cn, text ->
         emit(null)
         emit(
-          withContext(Dispatchers.Default) {
-            icons ?: return@withContext listOf()
-            cn ?: return@withContext listOf()
-            val entry = baseIconPack.getIconEntry(cn)
-            if (text.isEmpty())
-              if (entry != null) icons.filter { it.startsWith(entry.name) } else listOf("")
-            else icons.filter { it.contains(text) }
+          mutableListOf("").apply {
+            addAll(
+              withContext(Dispatchers.Default) {
+                icons ?: return@withContext listOf()
+                cn ?: return@withContext listOf()
+                val entry = baseIconPack.getIconEntry(cn)
+                if (text.isEmpty())
+                  if (entry != null) icons.filter { it.startsWith(entry.name) } else listOf()
+                else icons.filter { it.contains(text) }
+              }
+            )
           }
         )
       }
