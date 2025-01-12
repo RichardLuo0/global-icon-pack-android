@@ -28,15 +28,22 @@ open class UnClipAdaptiveIconDrawable(background: Drawable?, foreground: Drawabl
   AdaptiveIconDrawable(background, foreground) {
 
   override fun draw(canvas: Canvas) {
-    draw(
-      canvas,
-      Path().apply {
-        addRect(
-          RectF(0f, 0f, bounds.width().toFloat(), bounds.height().toFloat()),
-          Path.Direction.CW,
-        )
-      },
-    )
+    if (isInMod)
+      draw(
+        canvas,
+        Path().apply {
+          addRect(
+            RectF(0f, 0f, bounds.width().toFloat(), bounds.height().toFloat()),
+            Path.Direction.CW,
+          )
+        },
+      )
+    else {
+      canvas.translate(bounds.left.toFloat(), bounds.top.toFloat())
+      background?.draw(canvas)
+      foreground?.draw(canvas)
+      canvas.translate(-bounds.left.toFloat(), -bounds.top.toFloat())
+    }
   }
 
   protected fun draw(canvas: Canvas, path: Path) {

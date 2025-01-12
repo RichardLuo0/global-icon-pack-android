@@ -68,8 +68,7 @@ abstract class IconPack(pref: SharedPreferences, val pack: String, val resources
         iconMasks.randomOrNull(),
         iconScale,
       )
-    else if (iconFallback) {
-      // Do not pass global scale because BitmapDrawable will scale anyway
+    else if (iconFallback)
       IconHelper.processIconToBitmap(
         resources,
         baseIcon,
@@ -78,7 +77,7 @@ abstract class IconPack(pref: SharedPreferences, val pack: String, val resources
         iconMasks.randomOrNull(),
         iconScale,
       )
-    } else baseIcon
+    else baseIcon
 }
 
 fun getComponentName(info: PackageItemInfo): ComponentName =

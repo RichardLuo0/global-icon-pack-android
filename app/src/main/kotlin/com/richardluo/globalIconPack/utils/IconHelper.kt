@@ -22,7 +22,6 @@ object IconHelper {
     private val back: Bitmap?,
     private val upon: Bitmap?,
     private val mask: Bitmap?,
-    private val forceClip: Boolean = false,
     private val iconScale: Float,
   ) :
     UnClipAdaptiveIconDrawable(
@@ -34,11 +33,9 @@ object IconHelper {
 
     override fun draw(canvas: Canvas) {
       drawIcon(canvas, paint, bounds, back, upon, mask) {
-        if (forceClip) {
-          // Use original mask if mask is not presented
-          if (mask != null) super.draw(canvas)
-          else getMask()?.let { super.draw(canvas, it) } ?: super.drawClip(canvas)
-        } else super.draw(canvas)
+        // Use original mask if mask is not presented
+        if (mask != null) super.draw(canvas)
+        else getMask()?.let { super.draw(canvas, it) } ?: super.drawClip(canvas)
       }
     }
 
@@ -68,7 +65,13 @@ object IconHelper {
     val canvas = Canvas(bitmap)
     val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.DITHER_FLAG or Paint.FILTER_BITMAP_FLAG)
     drawIcon(canvas, paint, bounds, back, upon, mask) {
-      val scaledDrawable = createScaledDrawable(drawable, iconScale)
+      val scaledDrawable =
+        if (mask != null && drawable is AdaptiveIconDrawable)
+          UnClipAdaptiveIconDrawable(
+            drawable.background,
+            createScaledDrawable(drawable.foreground, iconScale),
+          )
+        else createScaledDrawable(drawable, iconScale)
       canvas.drawBitmap(scaledDrawable.toBitmap(), null, bounds, paint)
     }
     return ProcessedBitmapDrawable(res, bitmap)
@@ -89,19 +92,10 @@ object IconHelper {
         back,
         upon,
         mask,
-        true,
         iconScale,
       )
     else if (mask != null)
-      CustomAdaptiveIconDrawable(
-        null,
-        createScaledDrawable(drawable),
-        back,
-        upon,
-        mask,
-        true,
-        iconScale,
-      )
+      CustomAdaptiveIconDrawable(null, createScaledDrawable(drawable), back, upon, mask, iconScale)
     else processIconToBitmap(res, drawable, back, upon, null, iconScale)
 
   fun makeAdaptive(drawable: Drawable) =
