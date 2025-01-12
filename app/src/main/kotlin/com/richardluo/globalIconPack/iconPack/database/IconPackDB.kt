@@ -35,11 +35,12 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
       )
       val packTable = pt(pack)
       rawQuery("select DISTINCT updateAt from fallbacks where pack=?", arrayOf(pack)).use { c ->
-        if (
-          context.packageManager.getPackageInfo(pack, 0).lastUpdateTime <
-            (c.getFirstRow { it.getLong("updateAt") } ?: 0)
-        )
-          return
+        val info =
+          runCatching { context.packageManager.getPackageInfo(pack, 0) }
+            .getOrElse {
+              return
+            }
+        if (info.lastUpdateTime < (c.getFirstRow { it.getLong("updateAt") } ?: 0)) return
       }
       // Create tables
       execSQL(
