@@ -148,17 +148,31 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
     }
   }
 
-  fun insertOrUpdateIcon(pack: String, cn: ComponentName, entry: IconEntry) {
-    writableDatabase.insertWithOnConflict(
-      "'${pt(pack)}'",
-      null,
-      ContentValues().apply {
-        put("packageName", cn.packageName)
-        put("className", cn.className)
-        put("entry", entry.toByteArray())
-      },
-      SQLiteDatabase.CONFLICT_REPLACE,
-    )
+  fun insertOrUpdateIcon(pack: String, packageName: String, entry: IconEntry) {
+    writableDatabase.apply {
+      beginTransaction()
+      try {
+        insertWithOnConflict(
+          "'${pt(pack)}'",
+          null,
+          ContentValues().apply {
+            put("packageName", packageName)
+            put("entry", entry.toByteArray())
+          },
+          SQLiteDatabase.CONFLICT_REPLACE,
+        )
+        update(
+          "'${pt(pack)}'",
+          ContentValues().apply { put("entry", entry.toByteArray()) },
+          "packageName=?",
+          arrayOf(packageName),
+        )
+        setTransactionSuccessful()
+      } catch (e: Exception) {
+        log(e)
+      }
+      endTransaction()
+    }
   }
 
   fun deleteIcon(pack: String, packageName: String) {
