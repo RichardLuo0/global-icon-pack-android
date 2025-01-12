@@ -39,7 +39,7 @@
     <string name="restoreDefault">恢复默认</string>
     <string name="searchVariants">搜索变体</string>
     <string name="chooseBasePack">选择基本图标包</string>
-    <string name="chooseIconToBeReplaced">选择你想要替换的图标</string>
+    <string name="chooseIconToReplace">选择你想要替换的图标</string>
     <string name="chooseNewIcon">选择一个新图标</string>
     <string name="noCandidateIconForThisApp">没有此应用的候选图标。</string>
     <string name="originalIcon">原始图标</string>

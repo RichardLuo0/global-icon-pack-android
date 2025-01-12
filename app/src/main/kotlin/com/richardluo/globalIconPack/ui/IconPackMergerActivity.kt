@@ -39,11 +39,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.ArrowForward
 import androidx.compose.material.icons.outlined.Done
+import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -61,6 +63,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -68,6 +71,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import com.richardluo.globalIconPack.R
 import com.richardluo.globalIconPack.iconPack.IconPackApps
+import com.richardluo.globalIconPack.ui.components.AppbarSearchBar
 import com.richardluo.globalIconPack.ui.components.IconForApp
 import com.richardluo.globalIconPack.ui.components.IconPackItem
 import com.richardluo.globalIconPack.ui.components.InfoDialog
@@ -112,28 +116,36 @@ class IconPackMergerActivity : ComponentActivity() {
     Scaffold(
       modifier = Modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
       topBar = {
-        TopAppBar(
-          navigationIcon = {
-            IconButton(onClick = { finish() }) {
-              Icon(Icons.AutoMirrored.Outlined.ArrowBack, "Back")
-            }
-          },
-          title = {
-            AnimatedContent(targetState = pagerState.currentPage, label = "Title text change") {
-              Text(
+        Box {
+          TopAppBar(
+            navigationIcon = {
+              IconButton(onClick = { finish() }) {
+                Icon(Icons.AutoMirrored.Outlined.ArrowBack, "Back")
+              }
+            },
+            title = {
+              AnimatedContent(targetState = pagerState.currentPage, label = "Title text change") {
                 when (it) {
-                  Page.SelectBasePack.ordinal -> getString(R.string.chooseBasePack)
-                  Page.IconList.ordinal -> getString(R.string.chooseIconToBeReplaced)
-                  Page.PackInfoForm.ordinal -> getString(R.string.fillNewPackInfo)
-                  else -> ""
+                  Page.SelectBasePack.ordinal -> Text(getString(R.string.chooseBasePack))
+                  Page.IconList.ordinal -> Text(getString(R.string.chooseIconToReplace))
+                  Page.PackInfoForm.ordinal -> Text(getString(R.string.fillNewPackInfo))
                 }
-              )
-            }
-          },
-          modifier = Modifier.fillMaxWidth(),
-          windowInsets = windowInsets.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top),
-          scrollBehavior = scrollBehavior,
-        )
+              }
+            },
+            actions = {
+              if (pagerState.currentPage == Page.IconList.ordinal)
+                IconButton(onClick = { viewModel.expandSearchBar.value = true }) {
+                  Icon(Icons.Outlined.Search, stringResource(R.string.search))
+                }
+            },
+            modifier = Modifier.fillMaxWidth(),
+            windowInsets = windowInsets.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top),
+            scrollBehavior = scrollBehavior,
+          )
+
+          if (pagerState.currentPage == Page.IconList.ordinal)
+            AppbarSearchBar(viewModel.expandSearchBar, viewModel.searchText)
+        }
       },
       contentWindowInsets = windowInsets,
       floatingActionButton = {
@@ -215,16 +227,22 @@ class IconPackMergerActivity : ComponentActivity() {
 
   @Composable
   private fun IconList() {
-    LazyVerticalGrid(
-      modifier = Modifier.fillMaxSize().padding(horizontal = 2.dp),
-      columns = GridCells.Adaptive(minSize = 74.dp),
-    ) {
-      items(viewModel.icons.toList(), key = { entry -> entry.first }) { (cn, info) ->
-        IconForApp(info.label, key = info, loadImage = { viewModel.loadIcon(info) }) {
-          viewModel.openPackDialog(cn)
+    val icons = viewModel.filteredIcons.getValue(null)
+    if (icons != null)
+      LazyVerticalGrid(
+        modifier = Modifier.fillMaxSize().padding(horizontal = 2.dp),
+        columns = GridCells.Adaptive(minSize = 74.dp),
+      ) {
+        items(icons.toList(), key = { entry -> entry.first }) { (cn, info) ->
+          IconForApp(info.label, key = info, loadImage = { viewModel.loadIcon(info) }) {
+            viewModel.openPackDialog(cn)
+          }
         }
       }
-    }
+    else
+      Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        LinearProgressIndicator(modifier = Modifier.fillMaxWidth().padding(24.dp))
+      }
 
     LazyListDialog(
       viewModel.packDialogState,

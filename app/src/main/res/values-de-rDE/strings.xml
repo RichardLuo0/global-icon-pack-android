@@ -39,7 +39,7 @@
     <string name="restoreDefault">Restore default</string>
     <string name="searchVariants">Search variants</string>
     <string name="chooseBasePack">Choose a base icon pack</string>
-    <string name="chooseIconToBeReplaced">Choose the icon you want to replace</string>
+    <string name="chooseIconToReplace">Choose the icon you want to replace</string>
     <string name="chooseNewIcon">Choose a new icon</string>
     <string name="noCandidateIconForThisApp">No candidate icons for this app.</string>
     <string name="originalIcon">Original icon</string>

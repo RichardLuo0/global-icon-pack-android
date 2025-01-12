@@ -9,6 +9,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
@@ -19,21 +20,19 @@ import com.richardluo.globalIconPack.iconPack.database.NormalIconEntry
 import com.richardluo.globalIconPack.utils.IconPackCreator.IconEntryWithPack
 import com.richardluo.globalIconPack.utils.WorldPreference
 import com.richardluo.globalIconPack.utils.asType
+import com.richardluo.globalIconPack.utils.debounceTextField
 import com.richardluo.globalIconPack.utils.getBlob
 import com.richardluo.globalIconPack.utils.getFirstRow
 import com.richardluo.globalIconPack.utils.getInstance
 import kotlin.collections.set
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combineTransform
 import kotlinx.coroutines.flow.conflate
-import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-@OptIn(FlowPreview::class)
 class IconVariantVM(app: Application) : AndroidViewModel(app) {
   private val context: Context
     get() = getApplication()
@@ -50,6 +49,21 @@ class IconVariantVM(app: Application) : AndroidViewModel(app) {
   var icons = mutableStateMapOf<ComponentName, AppIconInfo>()
     private set
 
+  val expandSearchBar = mutableStateOf(false)
+  val searchText = mutableStateOf("")
+  val filteredIcons =
+    combineTransform(
+        snapshotFlow { icons.toMap() },
+        snapshotFlow { searchText.value }.debounceTextField(),
+      ) { icons, text ->
+        if (text.isEmpty()) emit(icons)
+        else {
+          emit(null)
+          emit(icons.filter { (_, value) -> value.label.contains(text, ignoreCase = true) })
+        }
+      }
+      .conflate()
+
   private val variantIcons = flow {
     emit(null)
     emit(withContext(Dispatchers.Default) { baseIconPack.getDrawables() })
@@ -57,12 +71,12 @@ class IconVariantVM(app: Application) : AndroidViewModel(app) {
 
   var variantSheet by mutableStateOf(false)
   private val selectedApp = MutableStateFlow<ComponentName?>(null)
-  val searchText = MutableStateFlow("")
+  val variantSearchText = mutableStateOf("")
   val suggestVariantIcons =
     combineTransform(
         variantIcons,
         selectedApp,
-        searchText.debounce { if (it.isEmpty()) 0L else 300L },
+        snapshotFlow { variantSearchText.value }.debounceTextField(),
       ) { icons, cn, text ->
         emit(null)
         emit(

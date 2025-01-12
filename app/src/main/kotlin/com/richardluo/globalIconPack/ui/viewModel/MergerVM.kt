@@ -10,15 +10,19 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.richardluo.globalIconPack.iconPack.IconPackApps
 import com.richardluo.globalIconPack.utils.IconPackCreator
 import com.richardluo.globalIconPack.utils.IconPackCreator.IconEntryWithPack
 import com.richardluo.globalIconPack.utils.asType
+import com.richardluo.globalIconPack.utils.debounceTextField
 import com.richardluo.globalIconPack.utils.getInstance
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combineTransform
+import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.withContext
@@ -41,6 +45,21 @@ class MergerVM(app: Application) : AndroidViewModel(app) {
     }
 
   val icons = mutableStateMapOf<ComponentName, AppIconInfo>()
+
+  val expandSearchBar = mutableStateOf(false)
+  val searchText = mutableStateOf("")
+  val filteredIcons =
+    combineTransform(
+        snapshotFlow { icons.toMap() },
+        snapshotFlow { searchText.value }.debounceTextField(),
+      ) { icons, text ->
+        if (text.isEmpty()) emit(icons)
+        else {
+          emit(null)
+          emit(icons.filter { (_, value) -> value.label.contains(text, ignoreCase = true) })
+        }
+      }
+      .conflate()
 
   private var selectedApp by mutableStateOf<ComponentName?>(null)
   val packDialogState = mutableStateOf(false)
