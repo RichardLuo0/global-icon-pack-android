@@ -89,7 +89,7 @@ class IconVariantVM(app: Application) : AndroidViewModel(app) {
   private suspend fun loadIcons() {
     if (basePack.isEmpty()) return
     isLoading = true
-    withContext(Dispatchers.Default) {
+    withContext(Dispatchers.IO) {
       val newIcons = mutableMapOf<ComponentName, AppIconInfo>()
       context
         .getSystemService(Context.LAUNCHER_APPS_SERVICE)
@@ -127,7 +127,7 @@ class IconVariantVM(app: Application) : AndroidViewModel(app) {
   suspend fun restoreDefault() {
     if (basePack.isEmpty()) return
     isLoading = true
-    withContext(Dispatchers.Default) {
+    withContext(Dispatchers.IO) {
       iconPackDB.resetPack(basePack)
       loadIcons()
     }
@@ -137,7 +137,7 @@ class IconVariantVM(app: Application) : AndroidViewModel(app) {
   suspend fun replaceIcon(iconName: String) {
     val cn = selectedApp.value ?: return
     isLoading = true
-    withContext(Dispatchers.Default) {
+    withContext(Dispatchers.IO) {
       val entry = NormalIconEntry(iconName)
       if (iconName.isEmpty()) iconPackDB.deleteIcon(basePack, cn.packageName)
       else iconPackDB.insertOrUpdateIcon(basePack, cn, entry)

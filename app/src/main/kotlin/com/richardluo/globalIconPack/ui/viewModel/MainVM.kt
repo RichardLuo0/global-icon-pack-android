@@ -87,7 +87,7 @@ class MainVM(app: Application) : AndroidViewModel(app) {
   private suspend fun onIconPackChange(pack: String) {
     if (pref.getString(PrefKey.MODE, MODE_PROVIDER) == MODE_PROVIDER) {
       waiting++
-      withContext(Dispatchers.Default) { iconPackDB.onIconPackChange(pack) }
+      withContext(Dispatchers.IO) { iconPackDB.onIconPackChange(pack) }
       waiting--
     }
   }
