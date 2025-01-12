@@ -52,4 +52,9 @@ class IconCache(private val context: Application) {
         getIconPack(pack).getIcon(drawableName, 0)?.toBitmap()?.asImageBitmap() ?: ImageBitmap(1, 1)
       }
     }
+
+  fun invalidate() {
+    iconPackCache.clear()
+    imageCache.evictAll()
+  }
 }

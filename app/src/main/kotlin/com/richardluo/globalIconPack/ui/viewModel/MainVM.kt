@@ -32,13 +32,8 @@ class MainVM(app: Application) : AndroidViewModel(app) {
   private val iconPackDB by getInstance { IconPackDB(app) }
   private val pref by lazy { WorldPreference.getPrefInApp(app) }
 
-  // This is used to get a strong reference to icon cache so it never gets recycled before
-  // MainVM is destroyed
+  // Hold a strong reference to icon cache so it never gets recycled before MainVM is destroyed
   private val iconCache = getInstance { IconCache(app) }.value
-
-  init {
-    iconCache
-  }
 
   var waiting by mutableIntStateOf(0)
     private set
@@ -53,6 +48,23 @@ class MainVM(app: Application) : AndroidViewModel(app) {
       .map { it[PrefKey.ICON_PACK] ?: "" }
       .distinctUntilChanged()
       .onEach(::onIconPackChange)
+      .launchIn(viewModelScope)
+
+    data class CachePref(
+      val iconFallback: Boolean,
+      val overrideIconFallback: Boolean,
+      val iconPackScale: Float,
+    )
+    flow
+      .map {
+        CachePref(
+          it[PrefKey.ICON_FALLBACK] ?: true,
+          it[PrefKey.OVERRIDE_ICON_FALLBACK] ?: false,
+          it[PrefKey.ICON_PACK_SCALE] ?: 1f,
+        )
+      }
+      .distinctUntilChanged()
+      .onEach { iconCache.invalidate() }
       .launchIn(viewModelScope)
   }
 
