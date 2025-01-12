@@ -43,7 +43,7 @@ import com.richardluo.globalIconPack.ui.components.InfoDialog
 import com.richardluo.globalIconPack.ui.components.LoadingDialog
 import com.richardluo.globalIconPack.ui.components.SampleTheme
 import com.richardluo.globalIconPack.ui.components.SnackbarErrorVisuals
-import com.richardluo.globalIconPack.ui.components.lazyListPreference
+import com.richardluo.globalIconPack.ui.components.mapListPreference
 import com.richardluo.globalIconPack.ui.viewModel.MainVM
 import com.richardluo.globalIconPack.utils.WorldPreference
 import com.richardluo.globalIconPack.utils.getState
@@ -158,10 +158,10 @@ class MainActivity : ComponentActivity() {
           title = { Text(stringResource(R.string.mode)) },
           summary = { Text(modeToDesc(it)) },
         )
-        lazyListPreference(
+        mapListPreference(
           key = PrefKey.ICON_PACK,
           defaultValue = "",
-          load = { IconPackApps.get(context) },
+          getValueMap = { IconPackApps.get() },
           item = { key, value, currentKey, onClick ->
             IconPackItem(key, value, currentKey, onClick)
           },

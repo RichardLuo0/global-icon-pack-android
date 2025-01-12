@@ -51,10 +51,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -70,7 +68,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import com.richardluo.globalIconPack.R
-import com.richardluo.globalIconPack.iconPack.IconPackApp
 import com.richardluo.globalIconPack.iconPack.IconPackApps
 import com.richardluo.globalIconPack.ui.components.IconForApp
 import com.richardluo.globalIconPack.ui.components.IconPackItem
@@ -204,8 +201,7 @@ class IconPackMergerActivity : ComponentActivity() {
   @Composable
   private fun SelectBasePack(pagerState: PagerState) {
     val coroutineScope = rememberCoroutineScope()
-    var valueMap by remember { mutableStateOf<Map<String, IconPackApp>>(mapOf()) }
-    LaunchedEffect(Unit) { valueMap = IconPackApps.get(this@IconPackMergerActivity) }
+    val valueMap = IconPackApps.get()
     LazyColumn(modifier = Modifier.fillMaxSize()) {
       items(valueMap.toList()) { (key, value) ->
         IconPackItem(key, value, viewModel.basePackFlow.getValue()) {
