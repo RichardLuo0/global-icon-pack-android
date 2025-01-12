@@ -20,7 +20,7 @@ class CopyableIconPack(pref: SharedPreferences, pack: String, resources: Resourc
     name: String,
     xml: StringBuilder,
     addColor: (color: Int) -> Int,
-    addDrawable: (InputStream, String) -> Int,
+    addDrawable: (InputStream, String, String) -> Int,
   ) =
     iconEntry.copyTo(component, name, xml) { resName, newName ->
       getDrawableId(resName)
@@ -32,10 +32,10 @@ class CopyableIconPack(pref: SharedPreferences, pack: String, resources: Resourc
     resId: Int,
     name: String,
     addColor: (color: Int) -> Int,
-    addDrawable: (InputStream, String) -> Int,
+    addDrawable: (InputStream, String, String) -> Int,
   ): Int {
     val stream = resources.openRawResource(resId)
-    if (AXMLEditor.isAXML(stream)) {
+    return if (AXMLEditor.isAXML(stream)) {
       val editor = AXMLEditor(stream)
       var i = 0
       editor.replaceResourceId { id ->
@@ -47,11 +47,15 @@ class CopyableIconPack(pref: SharedPreferences, pack: String, resources: Resourc
           else -> null
         }
       }
-      return addDrawable(editor.toStream(), "$name.compiledXML")
-    } else return addDrawable(stream, name)
+      addDrawable(editor.toStream(), name, ".compiledXML")
+    } else addDrawable(stream, name, "")
   }
 
-  fun copyFallbacks(name: String, xml: StringBuilder, write: (InputStream, String) -> Unit) {
+  fun copyFallbacks(
+    name: String,
+    xml: StringBuilder,
+    write: (InputStream, String, String) -> Unit,
+  ) {
     copyFallback(iconBacks, "iconback", "${name}_0", xml, write)
     copyFallback(iconUpons, "iconupon", "${name}_1", xml, write)
     copyFallback(iconMasks, "iconmask", "${name}_2", xml, write)
@@ -63,7 +67,7 @@ class CopyableIconPack(pref: SharedPreferences, pack: String, resources: Resourc
     tag: String,
     name: String,
     xml: StringBuilder,
-    write: (InputStream, String) -> Unit,
+    write: (InputStream, String, String) -> Unit,
   ) {
     if (bitmapList.isEmpty()) return
     xml.append("<$tag")
@@ -71,7 +75,7 @@ class CopyableIconPack(pref: SharedPreferences, pack: String, resources: Resourc
       xml.append(" img$i=\"${name}_$i\" ")
       ByteArrayOutputStream().use {
         bitmap.compress(CompressFormat.PNG, 100, it)
-        write(ByteArrayInputStream(it.toByteArray()), "${name}_$i")
+        write(ByteArrayInputStream(it.toByteArray()), "${name}_$i", "")
       }
     }
     xml.append("/>")

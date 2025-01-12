@@ -39,22 +39,25 @@ object IconPackCreator {
 
     val resIds = StringBuilder()
 
-    val colorsSb = StringBuilder("<?xml version=\"1.0\" encoding=\"UTF-8\"?><resources>")
+    class ColorRef(val name: String, val id: Int)
+    val colorMap = mutableMapOf<Int, ColorRef>()
     val initColorId = 0x7f010000
     var colorIndex = 0
-    fun addColor(color: Int): Int {
-      val name = "color_$colorIndex"
-      val id = initColorId + colorIndex
-      colorsSb.append("<color name=\"$name\">#${color.toHexString()}</color>")
-      resIds.append("$packageName:color/$name = 0x${id.toHexString()}\n")
-      colorIndex++
-      return id
-    }
+    fun addColor(color: Int) =
+      colorMap
+        .getOrPut(color) {
+          val name = "color_$colorIndex"
+          val id = initColorId + colorIndex
+          resIds.append("$packageName:color/$name = 0x${id.toHexString()}\n")
+          colorIndex++
+          ColorRef(name, id)
+        }
+        .id
 
     var drawableId = 0x7f020000
-    fun addDrawable(input: InputStream, name: String): Int {
+    fun addDrawable(input: InputStream, name: String, suffix: String): Int {
       val id = drawableId++
-      input.writeTo(drawable.createFileAndOpenStream(contentResolver, "", name))
+      input.writeTo(drawable.createFileAndOpenStream(contentResolver, "", name + suffix))
       resIds.append("$packageName:drawable/$name = 0x${id.toHexString()}\n")
       return id
     }
@@ -99,10 +102,18 @@ object IconPackCreator {
       .createFileAndOpenStream(contentResolver, "text/xml", "appfilter.xml")
       .writeText(appFilterSb.toString())
 
-    colorsSb.append("</resources>")
     values
       .createFileAndOpenStream(contentResolver, "text/xml", "colors.xml")
-      .writeText(colorsSb.toString())
+      .writeText(
+        StringBuilder("<?xml version=\"1.0\" encoding=\"UTF-8\"?><resources>")
+          .apply {
+            colorMap.map {
+              append("<color name=\"${it.value.name}\">#${it.key.toHexString()}</color>")
+            }
+            append("</resources>")
+          }
+          .toString()
+      )
 
     workDir
       .createFileAndOpenStream(contentResolver, "text/plain", "resIds.txt")
