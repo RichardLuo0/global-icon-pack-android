@@ -11,6 +11,14 @@ import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.InputStream
 
+interface ApkBuilder {
+  fun addColor(color: Int): Int
+
+  fun addDrawable(input: InputStream, name: String, suffix: String = ""): Int
+
+  fun addDimen(dimen: Float): Int
+}
+
 class CopyableIconPack(pref: SharedPreferences, pack: String, resources: Resources) :
   LocalIconPack(pref, pack, resources) {
 
@@ -18,22 +26,14 @@ class CopyableIconPack(pref: SharedPreferences, pack: String, resources: Resourc
     iconEntry: IconEntry,
     component: String,
     name: String,
-    xml: StringBuilder,
-    addColor: (color: Int) -> Int,
-    addDrawable: (InputStream, String, String) -> Int,
+    appfilterXML: StringBuilder,
+    apkBuilder: ApkBuilder,
   ) =
-    iconEntry.copyTo(component, name, xml) { resName, newName ->
-      getDrawableId(resName)
-        .takeIf { it != 0 }
-        ?.let { addAllFiles(it, newName, addColor, addDrawable) }
+    iconEntry.copyTo(component, name, appfilterXML) { resName, newName ->
+      getDrawableId(resName).takeIf { it != 0 }?.let { addAllFiles(it, newName, apkBuilder) }
     }
 
-  private fun addAllFiles(
-    resId: Int,
-    name: String,
-    addColor: (color: Int) -> Int,
-    addDrawable: (InputStream, String, String) -> Int,
-  ): Int {
+  private fun addAllFiles(resId: Int, name: String, apkBuilder: ApkBuilder): Int {
     val stream = resources.openRawResource(resId)
     return if (AXMLEditor.isAXML(stream)) {
       val editor = AXMLEditor(stream)
@@ -42,23 +42,20 @@ class CopyableIconPack(pref: SharedPreferences, pack: String, resources: Resourc
         if (!isHighTwoByte(id, 0x7f000000)) return@replaceResourceId null
         when (resources.getResourceTypeName(id)) {
           "drawable",
-          "mipmap" -> addAllFiles(id, "${name}_${i++}", addColor, addDrawable)
-          "color" -> addColor(resources.getColor(id, null))
+          "mipmap" -> addAllFiles(id, "${name}_${i++}", apkBuilder)
+          "color" -> apkBuilder.addColor(resources.getColor(id, null))
+          "dimen" -> apkBuilder.addDimen(resources.getDimension(id))
           else -> null
         }
       }
-      addDrawable(editor.toStream(), name, ".compiledXML")
-    } else addDrawable(stream, name, "")
+      apkBuilder.addDrawable(editor.toStream(), name, ".compiledXML")
+    } else apkBuilder.addDrawable(stream, name)
   }
 
-  fun copyFallbacks(
-    name: String,
-    xml: StringBuilder,
-    write: (InputStream, String, String) -> Unit,
-  ) {
-    copyFallback(iconBacks, "iconback", "${name}_0", xml, write)
-    copyFallback(iconUpons, "iconupon", "${name}_1", xml, write)
-    copyFallback(iconMasks, "iconmask", "${name}_2", xml, write)
+  fun copyFallbacks(name: String, xml: StringBuilder, apkBuilder: ApkBuilder) {
+    copyFallback(iconBacks, "iconback", "${name}_0", xml, apkBuilder)
+    copyFallback(iconUpons, "iconupon", "${name}_1", xml, apkBuilder)
+    copyFallback(iconMasks, "iconmask", "${name}_2", xml, apkBuilder)
     xml.append("<scale factor=\"$iconScale\" />")
   }
 
@@ -67,7 +64,7 @@ class CopyableIconPack(pref: SharedPreferences, pack: String, resources: Resourc
     tag: String,
     name: String,
     xml: StringBuilder,
-    write: (InputStream, String, String) -> Unit,
+    apkBuilder: ApkBuilder,
   ) {
     if (bitmapList.isEmpty()) return
     xml.append("<$tag")
@@ -75,7 +72,7 @@ class CopyableIconPack(pref: SharedPreferences, pack: String, resources: Resourc
       xml.append(" img$i=\"${name}_$i\" ")
       ByteArrayOutputStream().use {
         bitmap.compress(CompressFormat.PNG, 100, it)
-        write(ByteArrayInputStream(it.toByteArray()), "${name}_$i", "")
+        apkBuilder.addDrawable(ByteArrayInputStream(it.toByteArray()), "${name}_$i")
       }
     }
     xml.append("/>")

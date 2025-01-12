@@ -6,6 +6,7 @@ import android.content.Context
 import android.net.Uri
 import androidx.documentfile.provider.DocumentFile
 import com.richardluo.globalIconPack.R
+import com.richardluo.globalIconPack.iconPack.ApkBuilder
 import com.richardluo.globalIconPack.iconPack.CopyableIconPack
 import com.richardluo.globalIconPack.iconPack.database.IconEntry
 import java.io.BufferedInputStream
@@ -18,6 +19,94 @@ object IconPackCreator {
   data class IconEntryWithPack(val entry: IconEntry, val pack: String)
 
   @OptIn(ExperimentalStdlibApi::class)
+  class IconPackApkBuilder(
+    private val packageName: String,
+    private val context: Context,
+    private val workDir: DocumentFile,
+  ) : ApkBuilder {
+    private val contentResolver = context.contentResolver
+    private val res = workDir.createDirectorySafe("res")
+    private val drawable = res.createDirectorySafe("drawable")
+    private val values = res.createDirectorySafe("values")
+    private val xml = res.createDirectorySafe("xml")
+
+    private val resIds = StringBuilder()
+    private val valuesXML = StringBuilder("<?xml version=\"1.0\" encoding=\"UTF-8\"?><resources>")
+
+    private class Ref(val id: Int, val name: String)
+
+    private inner class RefMap<T>(
+      private val type: String,
+      private val initId: Int,
+      private val toString: (T) -> String,
+    ) : LinkedHashMap<T, Ref>() {
+      private var index = 0
+
+      fun getOrPut(key: T) =
+        getOrPut(key) {
+          val name = "${type}_$index"
+          val id = initId + index
+          resIds.append("$packageName:$type/$name = 0x${id.toHexString()}\n")
+          index++
+          Ref(id, name)
+        }
+
+      fun build() {
+        map { valuesXML.append("<$type name=\"${it.value.name}\">${toString(it.key)}</$type>") }
+      }
+    }
+
+    private var drawableId = 0x7f010000
+
+    override fun addDrawable(input: InputStream, name: String, suffix: String): Int {
+      val id = drawableId++
+      input.writeTo(drawable.createFileAndOpenStream(contentResolver, "", name + suffix))
+      resIds.append("$packageName:drawable/$name = 0x${id.toHexString()}\n")
+      return id
+    }
+
+    private val colorMap = RefMap<Int>("color", 0x7f020000) { "#${ it.toHexString()}" }
+
+    override fun addColor(color: Int) = colorMap.getOrPut(color).id
+
+    private val dimenMap = RefMap<Float>("dimen", 0x7f030000) { "${it}dp" }
+
+    override fun addDimen(dimen: Float) = dimenMap.getOrPut(dimen).id
+
+    fun addXML(content: String) {
+      xml.createFileAndOpenStream(contentResolver, "text/xml", "appfilter.xml").writeText(content)
+    }
+
+    fun build(label: String) {
+      colorMap.build()
+      dimenMap.build()
+      values
+        .createFileAndOpenStream(contentResolver, "text/xml", "values.xml")
+        .writeText(valuesXML.append("</resources>").toString())
+
+      workDir
+        .createFileAndOpenStream(contentResolver, "text/plain", "resIds.txt")
+        .writeText(resIds.toString())
+
+      context.resources
+        .openRawResource(R.raw.icon_pack_manifest)
+        .replaceAndWriteTo(
+          workDir.createFileAndOpenStream(contentResolver, "text/xml", "AndroidManifest.xml"),
+          packageName,
+          label,
+        )
+      context.resources
+        .openRawResource(R.raw.create_icon_pack)
+        .writeTo(workDir.createFileAndOpenStream(contentResolver, "", "create_icon_pack.sh"))
+      context.resources
+        .openRawResource(R.raw.dummy)
+        .writeTo(workDir.createFileAndOpenStream(contentResolver, "", "dummy.jks"))
+      context.resources
+        .openRawResource(R.raw.classes)
+        .writeTo(workDir.createFileAndOpenStream(contentResolver, "", "classes.dex"))
+    }
+  }
+
   fun createIconPack(
     context: Context,
     uri: Uri,
@@ -28,56 +117,20 @@ object IconPackCreator {
     installedAppsOnly: Boolean,
     getIconPack: (String) -> CopyableIconPack,
   ) {
-    val contentResolver = context.contentResolver
     val workDir = fromTreeUri(context, uri)
     workDir.listFiles().forEach { file -> file.delete() }
 
-    val res = workDir.createDirectorySafe("res")
-    val drawable = res.createDirectorySafe("drawable")
-    val values = res.createDirectorySafe("values")
-    val xml = res.createDirectorySafe("xml")
+    val apkBuilder = IconPackApkBuilder(packageName, context, workDir)
 
-    val resIds = StringBuilder()
-
-    class ColorRef(val name: String, val id: Int)
-    val colorMap = mutableMapOf<Int, ColorRef>()
-    val initColorId = 0x7f010000
-    var colorIndex = 0
-    fun addColor(color: Int) =
-      colorMap
-        .getOrPut(color) {
-          val name = "color_$colorIndex"
-          val id = initColorId + colorIndex
-          resIds.append("$packageName:color/$name = 0x${id.toHexString()}\n")
-          colorIndex++
-          ColorRef(name, id)
-        }
-        .id
-
-    var drawableId = 0x7f020000
-    fun addDrawable(input: InputStream, name: String, suffix: String): Int {
-      val id = drawableId++
-      input.writeTo(drawable.createFileAndOpenStream(contentResolver, "", name + suffix))
-      resIds.append("$packageName:drawable/$name = 0x${id.toHexString()}\n")
-      return id
-    }
-
-    val appFilterSb = StringBuilder("<?xml version=\"1.0\" encoding=\"UTF-8\"?><resources>")
+    val appfilterXML = StringBuilder("<?xml version=\"1.0\" encoding=\"UTF-8\"?><resources>")
     val baseIconPack = getIconPack(basePack)
-    baseIconPack.copyFallbacks("icon_fallback", appFilterSb, ::addDrawable)
+    baseIconPack.copyFallbacks("icon_fallback", appfilterXML, apkBuilder)
     if (installedAppsOnly)
       newIcons.entries.forEachIndexed { i, (cn, entry) ->
         if (entry == null) return@forEachIndexed
         val iconName = "icon_${i}"
         getIconPack(entry.pack)
-          .copyIcon(
-            entry.entry,
-            cn.flattenToString(),
-            iconName,
-            appFilterSb,
-            ::addColor,
-            ::addDrawable,
-          )
+          .copyIcon(entry.entry, cn.flattenToString(), iconName, appfilterXML, apkBuilder)
       }
     else
       baseIconPack.getAllIconEntries().forEachIndexed { i, (cn, entry) ->
@@ -92,49 +145,13 @@ object IconPackCreator {
           finalIconEntry,
           cn.flattenToString(),
           iconName,
-          appFilterSb,
-          ::addColor,
-          ::addDrawable,
+          appfilterXML,
+          apkBuilder,
         )
       }
-    appFilterSb.append("</resources>")
-    xml
-      .createFileAndOpenStream(contentResolver, "text/xml", "appfilter.xml")
-      .writeText(appFilterSb.toString())
+    apkBuilder.addXML(appfilterXML.append("</resources>").toString())
 
-    values
-      .createFileAndOpenStream(contentResolver, "text/xml", "colors.xml")
-      .writeText(
-        StringBuilder("<?xml version=\"1.0\" encoding=\"UTF-8\"?><resources>")
-          .apply {
-            colorMap.map {
-              append("<color name=\"${it.value.name}\">#${it.key.toHexString()}</color>")
-            }
-            append("</resources>")
-          }
-          .toString()
-      )
-
-    workDir
-      .createFileAndOpenStream(contentResolver, "text/plain", "resIds.txt")
-      .writeText(resIds.toString())
-
-    context.resources
-      .openRawResource(R.raw.icon_pack_manifest)
-      .replaceAndWriteTo(
-        workDir.createFileAndOpenStream(contentResolver, "text/xml", "AndroidManifest.xml"),
-        packageName,
-        label,
-      )
-    context.resources
-      .openRawResource(R.raw.create_icon_pack)
-      .writeTo(workDir.createFileAndOpenStream(contentResolver, "", "create_icon_pack.sh"))
-    context.resources
-      .openRawResource(R.raw.dummy)
-      .writeTo(workDir.createFileAndOpenStream(contentResolver, "", "dummy.jks"))
-    context.resources
-      .openRawResource(R.raw.classes)
-      .writeTo(workDir.createFileAndOpenStream(contentResolver, "", "classes.dex"))
+    apkBuilder.build(label)
   }
 
   private fun InputStream.writeTo(output: OutputStream) {

@@ -29,6 +29,7 @@ for compiledXML in res/drawable/*.compiledXML
 do
   aapt2 compile "$compiledXML" --source-path "${compiledXML%.compiledXML}.xml" -o compiled/
   rm "$compiledXML"
+  echo -e "Compiled $compiledXML"
 done
 aapt2 compile --dir res/ -o compiled/
 zip -r compiled.zip compiled/
