@@ -32,21 +32,19 @@ fun BoxScope.AppbarSearchBar(
   searchText: MutableState<String>,
   placeHolder: String = stringResource(R.string.search),
 ) {
-  AnimatedVisibility(
-    expandSearchBar.value,
-    enter = slideInHorizontally(initialOffsetX = { it }) + fadeIn(initialAlpha = 0f),
-    exit = slideOutHorizontally(targetOffsetX = { it }) + fadeOut(targetAlpha = 0f),
-    label = "Expand search bar",
+  Box(
     modifier =
-      Modifier.align(Alignment.BottomCenter).height(TopAppBarDefaults.TopAppBarExpandedHeight),
+      Modifier.align(Alignment.BottomCenter).height(TopAppBarDefaults.TopAppBarExpandedHeight)
   ) {
-    val focusRequester = remember { FocusRequester() }
-    Box {
-      RoundSearchBar(
-        searchText,
-        placeHolder,
-        modifier = Modifier.align(Alignment.Center).focusRequester(focusRequester),
-      ) {
+    AnimatedVisibility(
+      expandSearchBar.value,
+      enter = fadeIn() + slideInHorizontally(initialOffsetX = { it }),
+      exit = slideOutHorizontally(targetOffsetX = { it }) + fadeOut(),
+      label = "Expand search bar",
+      modifier = Modifier.align(Alignment.Center),
+    ) {
+      val focusRequester = remember { FocusRequester() }
+      RoundSearchBar(searchText, placeHolder, modifier = Modifier.focusRequester(focusRequester)) {
         IconButton(
           onClick = {
             expandSearchBar.value = false
@@ -56,9 +54,9 @@ fun BoxScope.AppbarSearchBar(
           Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "Back")
         }
       }
-    }
-    LaunchedEffect(expandSearchBar.value) {
-      if (expandSearchBar.value) focusRequester.requestFocus()
+      LaunchedEffect(expandSearchBar.value) {
+        if (expandSearchBar.value) focusRequester.requestFocus()
+      }
     }
   }
 }
