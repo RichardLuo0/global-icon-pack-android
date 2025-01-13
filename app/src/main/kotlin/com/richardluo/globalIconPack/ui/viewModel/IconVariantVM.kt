@@ -13,6 +13,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.richardluo.globalIconPack.PrefDef
 import com.richardluo.globalIconPack.PrefKey
 import com.richardluo.globalIconPack.iconPack.database.IconEntry
 import com.richardluo.globalIconPack.iconPack.database.IconPackDB
@@ -42,10 +43,12 @@ class IconVariantVM(app: Application) : AndroidViewModel(app) {
   var isLoading by mutableStateOf(false)
     private set
 
-  private val basePack = WorldPreference.getPrefInApp(context).getString(PrefKey.ICON_PACK, "")!!
+  private val basePack =
+    WorldPreference.getPrefInApp(context).getString(PrefKey.ICON_PACK, PrefDef.ICON_PACK)!!
   private val baseIconPack by lazy { iconCache.getIconPack(basePack) }
   private val iconPackAsFallback =
-    WorldPreference.getPrefInApp(context).getBoolean(PrefKey.ICON_PACK_AS_FALLBACK, false)
+    WorldPreference.getPrefInApp(context)
+      .getBoolean(PrefKey.ICON_PACK_AS_FALLBACK, PrefDef.ICON_PACK_AS_FALLBACK)
   var icons = mutableStateMapOf<ComponentName, AppIconInfo>()
     private set
 

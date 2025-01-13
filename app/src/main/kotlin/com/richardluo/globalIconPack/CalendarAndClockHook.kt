@@ -20,7 +20,11 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 
 class CalendarAndClockHook : Hook {
   override fun onHookPixelLauncher(lpp: LoadPackageParam) {
-    if (!WorldPreference.getPrefInMod().getBoolean(PrefKey.NO_FORCE_SHAPE, true)) return
+    if (
+      !WorldPreference.getPrefInMod()
+        .getBoolean(PrefKey.FORCE_LOAD_CLOCK_AND_CALENDAR, PrefDef.FORCE_LOAD_CLOCK_AND_CALENDAR)
+    )
+      return
 
     val calendars = mutableSetOf<String>()
     val clocks = mutableSetOf<String>()

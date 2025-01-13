@@ -6,6 +6,7 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import android.database.sqlite.SQLiteStatement
+import com.richardluo.globalIconPack.PrefDef
 import com.richardluo.globalIconPack.PrefKey
 import com.richardluo.globalIconPack.iconPack.IconPackApps
 import com.richardluo.globalIconPack.iconPack.loadIconPack
@@ -204,7 +205,9 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
             db.execSQL("DROP TABLE '${it.getString(0)}'")
           }
         }
-      WorldPreference.getPrefInApp(context).getString(PrefKey.ICON_PACK, "")?.let { update(db, it) }
+      WorldPreference.getPrefInApp(context).getString(PrefKey.ICON_PACK, PrefDef.ICON_PACK)?.let {
+        update(db, it)
+      }
     }
   }
 }

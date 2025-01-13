@@ -35,6 +35,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.lifecycle.lifecycleScope
 import com.richardluo.globalIconPack.MODE_LOCAL
 import com.richardluo.globalIconPack.MODE_PROVIDER
+import com.richardluo.globalIconPack.PrefDef
 import com.richardluo.globalIconPack.PrefKey
 import com.richardluo.globalIconPack.R
 import com.richardluo.globalIconPack.iconPack.IconPackApps
@@ -135,7 +136,7 @@ class MainActivity : ComponentActivity() {
       LaunchedEffect(flow) {
         viewModel.bindPreferencesFlow(flow)
         flow
-          .map { it[PrefKey.MODE] ?: MODE_PROVIDER }
+          .map { it[PrefKey.MODE] ?: PrefDef.MODE }
           .distinctUntilChanged()
           .onEach { mode ->
             // Ask for notification permission used for foreground service
@@ -153,7 +154,7 @@ class MainActivity : ComponentActivity() {
         preferenceCategory(key = "general", title = { Text(stringResource(R.string.general)) })
         listPreference(
           key = PrefKey.MODE,
-          defaultValue = MODE_PROVIDER,
+          defaultValue = PrefDef.MODE,
           values = listOf(MODE_PROVIDER, MODE_LOCAL),
           valueToText = { AnnotatedString(modeToDesc(it)) },
           title = { Text(stringResource(R.string.mode)) },
@@ -161,7 +162,7 @@ class MainActivity : ComponentActivity() {
         )
         mapListPreference(
           key = PrefKey.ICON_PACK,
-          defaultValue = "",
+          defaultValue = PrefDef.ICON_PACK,
           getValueMap = { IconPackApps.getFlow(context).collectAsState(mapOf()).value },
           item = { key, value, currentKey, onClick ->
             IconPackItem(key, value, currentKey, onClick)
@@ -177,7 +178,7 @@ class MainActivity : ComponentActivity() {
         )
         switchPreference(
           key = PrefKey.ICON_PACK_AS_FALLBACK,
-          defaultValue = false,
+          defaultValue = PrefDef.ICON_PACK_AS_FALLBACK,
           title = { Text(stringResource(R.string.iconPackAsFallback)) },
           summary = { Text(stringResource(R.string.iconPackAsFallbackSummary)) },
         )
@@ -205,12 +206,13 @@ class MainActivity : ComponentActivity() {
         )
         switchPreference(
           key = PrefKey.ICON_FALLBACK,
-          defaultValue = true,
+          defaultValue = PrefDef.ICON_FALLBACK,
           title = { Text(stringResource(R.string.iconFallback)) },
           summary = { Text(stringResource(R.string.iconFallbackSummary)) },
         )
         item {
-          val enableState = rememberPreferenceState(PrefKey.OVERRIDE_ICON_FALLBACK, false)
+          val enableState =
+            rememberPreferenceState(PrefKey.OVERRIDE_ICON_FALLBACK, PrefDef.OVERRIDE_ICON_FALLBACK)
           val enabled by enableState
           SwitchPreference(
             state = enableState,
@@ -220,7 +222,7 @@ class MainActivity : ComponentActivity() {
           ComposableSliderPreference(
             enabled = { enabled },
             key = PrefKey.ICON_PACK_SCALE,
-            defaultValue = 1f,
+            defaultValue = PrefDef.ICON_PACK_SCALE,
             valueRange = 0f..1.5f,
             valueSteps = 29,
             valueText = { Text("%.2f".format(it)) },
@@ -234,19 +236,19 @@ class MainActivity : ComponentActivity() {
         )
         switchPreference(
           key = PrefKey.NO_FORCE_SHAPE,
-          defaultValue = false,
+          defaultValue = PrefDef.NO_FORCE_SHAPE,
           title = { Text(stringResource(R.string.noForceShape)) },
           summary = { Text(stringResource(R.string.noForceShapeSummary)) },
         )
         switchPreference(
           key = PrefKey.NO_SHADOW,
-          defaultValue = false,
+          defaultValue = PrefDef.NO_SHADOW,
           title = { Text(stringResource(R.string.noShadow)) },
           summary = { Text(stringResource(R.string.noShadowSummary)) },
         )
         switchPreference(
           key = PrefKey.FORCE_LOAD_CLOCK_AND_CALENDAR,
-          defaultValue = true,
+          defaultValue = PrefDef.FORCE_LOAD_CLOCK_AND_CALENDAR,
           title = { Text(stringResource(R.string.forceLoadClockAndCalendar)) },
         )
       }

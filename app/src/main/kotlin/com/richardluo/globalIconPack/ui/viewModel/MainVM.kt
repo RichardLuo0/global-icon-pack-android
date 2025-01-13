@@ -10,6 +10,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.richardluo.globalIconPack.MODE_PROVIDER
+import com.richardluo.globalIconPack.PrefDef
 import com.richardluo.globalIconPack.PrefKey
 import com.richardluo.globalIconPack.iconPack.BootReceiver
 import com.richardluo.globalIconPack.iconPack.KeepAliveService
@@ -40,12 +41,12 @@ class MainVM(app: Application) : AndroidViewModel(app) {
 
   fun bindPreferencesFlow(flow: Flow<Preferences>) {
     flow
-      .map { it[PrefKey.MODE] ?: MODE_PROVIDER }
+      .map { it[PrefKey.MODE] ?: PrefDef.MODE }
       .distinctUntilChanged()
       .onEach(::onModeChange)
       .launchIn(viewModelScope)
     flow
-      .map { it[PrefKey.ICON_PACK] ?: "" }
+      .map { it[PrefKey.ICON_PACK] ?: PrefDef.ICON_PACK }
       .distinctUntilChanged()
       .onEach(::onIconPackChange)
       .launchIn(viewModelScope)
@@ -58,9 +59,9 @@ class MainVM(app: Application) : AndroidViewModel(app) {
     flow
       .map {
         CachePref(
-          it[PrefKey.ICON_FALLBACK] ?: true,
-          it[PrefKey.OVERRIDE_ICON_FALLBACK] ?: false,
-          it[PrefKey.ICON_PACK_SCALE] ?: 1f,
+          it[PrefKey.ICON_FALLBACK] ?: PrefDef.ICON_FALLBACK,
+          it[PrefKey.OVERRIDE_ICON_FALLBACK] ?: PrefDef.OVERRIDE_ICON_FALLBACK,
+          it[PrefKey.ICON_PACK_SCALE] ?: PrefDef.ICON_PACK_SCALE,
         )
       }
       .distinctUntilChanged()
@@ -97,7 +98,7 @@ class MainVM(app: Application) : AndroidViewModel(app) {
   }
 
   private suspend fun onIconPackChange(pack: String) {
-    if (pref.getString(PrefKey.MODE, MODE_PROVIDER) == MODE_PROVIDER) {
+    if (pref.getString(PrefKey.MODE, PrefDef.MODE) == MODE_PROVIDER) {
       waiting++
       withContext(Dispatchers.IO) { iconPackDB.onIconPackChange(pack) }
       waiting--

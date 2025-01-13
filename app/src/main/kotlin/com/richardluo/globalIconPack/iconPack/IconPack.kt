@@ -11,6 +11,7 @@ import android.content.pm.PackageManager
 import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
+import com.richardluo.globalIconPack.PrefDef
 import com.richardluo.globalIconPack.PrefKey
 import com.richardluo.globalIconPack.iconPack.database.IconEntry
 import com.richardluo.globalIconPack.reflect.Resources.getDrawableForDensity
@@ -18,18 +19,20 @@ import com.richardluo.globalIconPack.utils.IconHelper
 import com.richardluo.globalIconPack.utils.isInMod
 
 abstract class IconPack(pref: SharedPreferences, val pack: String, val resources: Resources) {
-  protected val iconFallback = pref.getBoolean(PrefKey.ICON_FALLBACK, true)
-  protected val enableOverrideIconFallback = pref.getBoolean(PrefKey.OVERRIDE_ICON_FALLBACK, false)
+  protected val iconFallback = pref.getBoolean(PrefKey.ICON_FALLBACK, PrefDef.ICON_FALLBACK)
+  protected val enableOverrideIconFallback =
+    pref.getBoolean(PrefKey.OVERRIDE_ICON_FALLBACK, PrefDef.OVERRIDE_ICON_FALLBACK)
   // Fallback settings from icon pack
   protected lateinit var iconBacks: List<Bitmap>
   protected lateinit var iconUpons: List<Bitmap>
   protected lateinit var iconMasks: List<Bitmap>
   protected var iconScale: Float =
     if (iconFallback && enableOverrideIconFallback) {
-      pref.getFloat(PrefKey.ICON_PACK_SCALE, 1f)
+      pref.getFloat(PrefKey.ICON_PACK_SCALE, PrefDef.ICON_PACK_SCALE)
     } else 1f
 
-  protected val iconPackAsFallback = pref.getBoolean(PrefKey.ICON_PACK_AS_FALLBACK, false)
+  protected val iconPackAsFallback =
+    pref.getBoolean(PrefKey.ICON_PACK_AS_FALLBACK, PrefDef.ICON_PACK_AS_FALLBACK)
 
   abstract fun getIconEntry(id: Int): IconEntry?
 
