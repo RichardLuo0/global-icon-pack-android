@@ -130,7 +130,11 @@ class IconVariantActivity : ComponentActivity() {
   fun SelectVariantIcon() {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
     LaunchedEffect(viewModel.variantSheet) {
-      if (viewModel.variantSheet) sheetState.show() else sheetState.hide()
+      if (viewModel.variantSheet) sheetState.show()
+      else {
+        sheetState.hide()
+        viewModel.variantSearchText.value = ""
+      }
     }
     if (viewModel.variantSheet)
       ModalBottomSheet(
