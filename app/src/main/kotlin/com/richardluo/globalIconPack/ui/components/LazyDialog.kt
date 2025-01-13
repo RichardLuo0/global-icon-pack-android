@@ -16,7 +16,6 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -30,22 +29,11 @@ import androidx.compose.ui.unit.dp
 fun <T> LazyDialog(
   openState: MutableState<Boolean> = remember { mutableStateOf(true) },
   title: @Composable () -> Unit,
-  initValue: T,
-  load: suspend () -> T,
+  value: T?,
   content: @Composable (T) -> Unit,
 ) {
-  var open by openState
-  if (!open) return
-
-  var value by remember { mutableStateOf(initValue) }
-  var isLoaded by remember { mutableStateOf(false) }
-  LaunchedEffect(openState) {
-    if (open) {
-      value = load()
-      isLoaded = true
-    }
-  }
-  BasicAlertDialog(onDismissRequest = { open = false }) {
+  if (!openState.value) return
+  BasicAlertDialog(onDismissRequest = { openState.value = false }) {
     Surface(
       modifier = Modifier.fillMaxWidth(),
       shape = AlertDialogDefaults.shape,
@@ -70,7 +58,7 @@ fun <T> LazyDialog(
           textStyle = MaterialTheme.typography.labelLarge,
         ) {
           Box(modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp)) {
-            if (isLoaded) content(value)
+            if (value != null) content(value)
             else
               LinearProgressIndicator(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp)
@@ -86,17 +74,15 @@ fun <T> LazyDialog(
 fun <T> LazyListDialog(
   openState: MutableState<Boolean> = remember { mutableStateOf(true) },
   title: @Composable () -> Unit,
-  initValue: List<T> = listOf(),
-  load: suspend () -> List<T>,
+  value: List<T>?,
   nothing: @Composable () -> Unit = {},
   item: @Composable (key: T, onClick: () -> Unit) -> Unit,
 ) =
-  LazyDialog(openState, title, initValue, load) { list ->
+  LazyDialog(openState, title, value) { list ->
     if (list.isEmpty()) nothing()
     else
       LazyColumn(modifier = Modifier.fillMaxWidth()) {
-        var open by openState
-        items(list) { key -> item(key) { open = false } }
+        items(list) { key -> item(key) { openState.value = false } }
       }
   }
 
@@ -104,12 +90,11 @@ fun <T> LazyListDialog(
 fun <T> LazyGridDialog(
   openState: MutableState<Boolean> = remember { mutableStateOf(true) },
   title: @Composable () -> Unit,
-  initValue: List<T> = listOf(),
-  load: () -> List<T>,
+  value: List<T>,
   nothing: @Composable () -> Unit = {},
   item: @Composable (key: T, onClick: () -> Unit) -> Unit,
 ) =
-  LazyDialog(openState, title, initValue, load) { list ->
+  LazyDialog(openState, title, value) { list ->
     if (list.isEmpty()) nothing()
     else
       LazyVerticalGrid(
@@ -117,6 +102,6 @@ fun <T> LazyGridDialog(
         columns = GridCells.Adaptive(minSize = 80.dp),
       ) {
         var open by openState
-        items(list) { key -> item(key) { open = false } }
+        items(list) { key -> item(key) { openState.value = false } }
       }
   }

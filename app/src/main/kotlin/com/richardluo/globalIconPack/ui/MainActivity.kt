@@ -25,6 +25,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -47,6 +48,7 @@ import com.richardluo.globalIconPack.ui.components.mapListPreference
 import com.richardluo.globalIconPack.ui.viewModel.MainVM
 import com.richardluo.globalIconPack.utils.WorldPreference
 import com.richardluo.globalIconPack.utils.getState
+import com.richardluo.globalIconPack.utils.getValue
 import com.topjohnwu.superuser.Shell
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.launchIn
@@ -161,7 +163,7 @@ class MainActivity : ComponentActivity() {
         mapListPreference(
           key = PrefKey.ICON_PACK,
           defaultValue = "",
-          getValueMap = { IconPackApps.get() },
+          getValueMap = { IconPackApps.getFlow(context).collectAsState(mapOf()).value },
           item = { key, value, currentKey, onClick ->
             IconPackItem(key, value, currentKey, onClick)
           },

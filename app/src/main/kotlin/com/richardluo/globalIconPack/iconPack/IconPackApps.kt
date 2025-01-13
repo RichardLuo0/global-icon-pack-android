@@ -4,75 +4,67 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
-import android.content.pm.PackageManager
-import android.content.pm.ResolveInfo
 import android.graphics.drawable.Drawable
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import java.lang.ref.WeakReference
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.awaitClose
-import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.shareIn
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 data class IconPackApp(val label: String, val icon: Drawable)
 
-private fun MutableMap<String, IconPackApp>.put(pm: PackageManager, resolveInfo: ResolveInfo) =
-  resolveInfo.activityInfo.applicationInfo.let {
-    put(it.packageName, IconPackApp(it.loadLabel(pm).toString(), it.loadIcon(pm)))
-  }
-
 object IconPackApps {
-  private var packAppMapFlow: Flow<Map<String, IconPackApp>>? = null
-  private var packAppMap = WeakReference<Map<String, IconPackApp>>(null)
+  private var sharedFlow: SharedFlow<Map<String, IconPackApp>>? = null
 
-  private fun getIconAppMap(context: Context) =
-    mutableMapOf<String, IconPackApp>()
-      .apply {
-        val pm = context.packageManager
-        listOf(
-            "app.lawnchair.icons.THEMED_ICON",
-            "org.adw.ActivityStarter.THEMES",
-            "com.novalauncher.THEME",
-          )
-          .forEach { action -> pm.queryIntentActivities(Intent(action), 0).forEach { put(pm, it) } }
-      }
-      .also { packAppMap = WeakReference(it) }
+  private suspend fun getIconAppMap(context: Context) =
+    withContext(Dispatchers.IO) {
+      val pm = context.packageManager
+      listOf(
+          "app.lawnchair.icons.THEMED_ICON",
+          "org.adw.ActivityStarter.THEMES",
+          "com.novalauncher.THEME",
+        )
+        .map { action -> pm.queryIntentActivities(Intent(action), 0) }
+        .flatten()
+        .associate { info ->
+          info.activityInfo.applicationInfo.let {
+            Pair(it.packageName, IconPackApp(it.loadLabel(pm).toString(), it.loadIcon(pm)))
+          }
+        }
+    }
 
   suspend fun get(context: Context) =
-    packAppMap.get() ?: withContext(Dispatchers.IO) { getIconAppMap(context) }
+    getFlow(context).replayCache.getOrElse(0) { getIconAppMap(context) }
 
-  @Composable
-  fun get(): Map<String, IconPackApp> {
-    val app = LocalContext.current.applicationContext
-    val flow =
-      packAppMapFlow
-        ?: run {
-          val flow =
-            callbackFlow<Map<String, IconPackApp>> {
-              val packageChangeReceiver =
-                object : BroadcastReceiver() {
+  @OptIn(DelicateCoroutinesApi::class)
+  fun getFlow(context: Context): SharedFlow<Map<String, IconPackApp>> {
+    val app = context.applicationContext
+    return sharedFlow
+      ?: callbackFlow<Map<String, IconPackApp>> {
+          val packageChangeReceiver =
+            object : BroadcastReceiver() {
 
-                  override fun onReceive(context: Context, intent: Intent?) {
-                    trySend(getIconAppMap(context))
-                  }
-                }
-              app.registerReceiver(
-                packageChangeReceiver,
-                IntentFilter().apply {
-                  addAction(Intent.ACTION_PACKAGE_ADDED)
-                  addAction(Intent.ACTION_PACKAGE_REMOVED)
-                  addDataScheme("package")
-                },
-              )
-              packageChangeReceiver.onReceive(app, null)
-              awaitClose { app.unregisterReceiver(packageChangeReceiver) }
+              override fun onReceive(context: Context, intent: Intent?) {
+                GlobalScope.launch { trySend(getIconAppMap(context)) }
+              }
             }
-          packAppMapFlow = flow
-          flow
+          app.registerReceiver(
+            packageChangeReceiver,
+            IntentFilter().apply {
+              addAction(Intent.ACTION_PACKAGE_ADDED)
+              addAction(Intent.ACTION_PACKAGE_REMOVED)
+              addDataScheme("package")
+            },
+          )
+          packageChangeReceiver.onReceive(app, null)
+          awaitClose { app.unregisterReceiver(packageChangeReceiver) }
         }
-    return flow.collectAsStateWithLifecycle(packAppMap.get() ?: mapOf()).value
+        .shareIn(GlobalScope, started = SharingStarted.WhileSubscribed(), replay = 1)
+        .also { sharedFlow = it }
   }
 }

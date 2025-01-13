@@ -68,6 +68,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.lifecycleScope
 import com.richardluo.globalIconPack.R
 import com.richardluo.globalIconPack.iconPack.IconPackApps
@@ -212,7 +213,7 @@ class IconPackMergerActivity : ComponentActivity() {
   @Composable
   private fun SelectBasePack(pagerState: PagerState) {
     val coroutineScope = rememberCoroutineScope()
-    val valueMap = IconPackApps.get()
+    val valueMap = IconPackApps.getFlow(this).getValue(mapOf())
     LazyColumn(modifier = Modifier.fillMaxSize()) {
       items(valueMap.toList()) { (key, value) ->
         IconPackItem(key, value, viewModel.basePackFlow.getValue()) {
@@ -247,7 +248,7 @@ class IconPackMergerActivity : ComponentActivity() {
     LazyListDialog(
       viewModel.packDialogState,
       title = { Text(getString(R.string.chooseNewIcon)) },
-      load = { viewModel.getIconForSelectedApp() },
+      value = viewModel.iconsForSelectedApp.collectAsStateWithLifecycle(null).value,
       nothing = {
         Text(
           getString(R.string.noCandidateIconForThisApp),
