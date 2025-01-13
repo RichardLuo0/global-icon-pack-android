@@ -17,9 +17,9 @@ object PrefKey {
 object PrefDef {
   const val MODE = MODE_PROVIDER
   const val ICON_PACK = ""
-  const val ICON_PACK_AS_FALLBACK = true
+  const val ICON_PACK_AS_FALLBACK = false
 
-  const val ICON_FALLBACK = false
+  const val ICON_FALLBACK = true
   const val OVERRIDE_ICON_FALLBACK = false
   const val ICON_PACK_SCALE = 1f
 
