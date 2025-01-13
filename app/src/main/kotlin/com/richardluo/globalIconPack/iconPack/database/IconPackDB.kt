@@ -31,7 +31,7 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
     }
     db.apply {
       execSQL(
-        "CREATE TABLE IF NOT EXISTS 'fallbacks' (pack TEXT PRIMARY KEY, fallback BLOB, updateAt NUMERIC)"
+        "CREATE TABLE IF NOT EXISTS 'fallbacks' (pack TEXT PRIMARY KEY NOT NULL, fallback BLOB NOT NULL, updateAt NUMERIC NOT NULL)"
       )
       val packTable = pt(pack)
       rawQuery("select DISTINCT updateAt from fallbacks where pack=?", arrayOf(pack)).use { c ->
@@ -44,7 +44,7 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
       }
       // Create tables
       execSQL(
-        "CREATE TABLE IF NOT EXISTS '$packTable' (packageName TEXT, className TEXT, entry BLOB)"
+        "CREATE TABLE IF NOT EXISTS '$packTable' (packageName TEXT NOT NULL, className TEXT NOT NULL, entry BLOB NOT NULL)"
       )
       execSQL(
         "CREATE UNIQUE INDEX IF NOT EXISTS '${pack}_componentName' ON '$packTable' (packageName, className)"
@@ -153,20 +153,21 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
     writableDatabase.apply {
       beginTransaction()
       try {
-        insertWithOnConflict(
-          "'${pt(pack)}'",
-          null,
-          ContentValues().apply {
-            put("packageName", packageName)
-            put("entry", entry.toByteArray())
-          },
-          SQLiteDatabase.CONFLICT_REPLACE,
-        )
         update(
           "'${pt(pack)}'",
           ContentValues().apply { put("entry", entry.toByteArray()) },
           "packageName=?",
           arrayOf(packageName),
+        )
+        insertWithOnConflict(
+          "'${pt(pack)}'",
+          null,
+          ContentValues().apply {
+            put("packageName", packageName)
+            put("className", "")
+            put("entry", entry.toByteArray())
+          },
+          SQLiteDatabase.CONFLICT_REPLACE,
         )
         setTransactionSuccessful()
       } catch (e: Exception) {
