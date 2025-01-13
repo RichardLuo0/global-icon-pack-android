@@ -59,7 +59,11 @@ class IconVariantVM(app: Application) : AndroidViewModel(app) {
         if (text.isEmpty()) emit(icons)
         else {
           emit(null)
-          emit(icons.filter { (_, value) -> value.label.contains(text, ignoreCase = true) })
+          emit(
+            withContext(Dispatchers.Default) {
+              icons.filter { (_, value) -> value.label.contains(text, ignoreCase = true) }
+            }
+          )
         }
       }
       .conflate()
