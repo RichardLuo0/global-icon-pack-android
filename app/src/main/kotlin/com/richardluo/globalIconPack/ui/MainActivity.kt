@@ -47,7 +47,6 @@ import com.richardluo.globalIconPack.ui.components.SnackbarErrorVisuals
 import com.richardluo.globalIconPack.ui.components.mapListPreference
 import com.richardluo.globalIconPack.ui.viewModel.MainVM
 import com.richardluo.globalIconPack.utils.WorldPreference
-import com.richardluo.globalIconPack.utils.getState
 import com.richardluo.globalIconPack.utils.getValue
 import com.topjohnwu.superuser.Shell
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -183,9 +182,9 @@ class MainActivity : ComponentActivity() {
           summary = { Text(stringResource(R.string.iconPackAsFallbackSummary)) },
         )
         item(key = "iconVariant") {
-          val isProvider by flow.map { MODE_PROVIDER == it[PrefKey.MODE] }.getState(false)
-          val isPackSet by
-            flow.map { it.get<String>(PrefKey.ICON_PACK)?.isNotEmpty() ?: false }.getState(false)
+          val isProvider = flow.map { MODE_PROVIDER == it[PrefKey.MODE] }.getValue(false)
+          val isPackSet =
+            flow.map { it.get<String>(PrefKey.ICON_PACK)?.isNotEmpty() ?: false }.getValue(false)
           Preference(
             enabled = isProvider && isPackSet,
             onClick = { context.startActivity(Intent(context, IconVariantActivity::class.java)) },

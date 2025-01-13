@@ -29,7 +29,7 @@ class IconCache(private val context: Application) {
   suspend fun loadIcon(entry: IconEntryWithPack?, app: String, basePack: String) =
     if (entry != null)
       imageCache.getOrPut("${entry.pack}/${entry.entry.name}") {
-        withContext(Dispatchers.Default) {
+        withContext(Dispatchers.IO) {
           (getIconPack(entry.pack).getIcon(entry.entry, 0)
               ?: context.packageManager.getApplicationIcon(app))
             .toBitmap()
@@ -48,7 +48,7 @@ class IconCache(private val context: Application) {
 
   suspend fun loadIcon(drawableName: String, pack: String) =
     imageCache.getOrPut("$pack/$drawableName") {
-      withContext(Dispatchers.Default) {
+      withContext(Dispatchers.IO) {
         getIconPack(pack).getIcon(drawableName, 0)?.toBitmap()?.asImageBitmap() ?: ImageBitmap(1, 1)
       }
     }
