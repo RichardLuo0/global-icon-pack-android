@@ -36,6 +36,9 @@ This module is designed to extend the customization of icon packs throughout the
 ## Known Issues
 * If the launcher is slow to boot or crashes, switch to 'local' mode.
 
+## Help with localization
+<a href="https://crowdin.com/project/global-icon-pack-android" rel="nofollow"><img style="width:140;height:40px" src="https://badges.crowdin.net/badge/light/crowdin-on-dark.png" srcset="https://badges.crowdin.net/badge/light/crowdin-on-dark.png 1x,https://badges.crowdin.net/badge/light/crowdin-on-dark@2x.png 2x" alt="Crowdin | Agile localization for tech companies" /></a>
+
 ## Disclaimer
 > [!WARNING]
 > * Please note that this module may not be fully compatible with all custom ROMs. 
