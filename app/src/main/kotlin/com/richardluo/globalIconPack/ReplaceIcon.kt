@@ -22,6 +22,7 @@ private const val ANDROID_DEFAULT = 0x7f000000
 private const val IP_DEFAULT = 0x00000000
 
 class ReplaceIcon : Hook {
+
   override fun onHookPixelLauncher(lpp: LoadPackageParam) {
     // Find needed class
     ClockDrawableWrapper.initWithPixelLauncher(lpp)

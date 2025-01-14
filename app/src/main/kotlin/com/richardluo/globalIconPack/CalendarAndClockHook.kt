@@ -19,6 +19,7 @@ import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 
 class CalendarAndClockHook : Hook {
+
   override fun onHookPixelLauncher(lpp: LoadPackageParam) {
     if (
       !WorldPreference.getPrefInMod()
@@ -29,7 +30,8 @@ class CalendarAndClockHook : Hook {
     val calendars = mutableSetOf<String>()
     val clocks = mutableSetOf<String>()
 
-    val iconProvider = ReflectHelper.findClassThrow("com.android.launcher3.icons.IconProvider", lpp)
+    val iconProvider =
+      ReflectHelper.findClass("com.android.launcher3.icons.IconProvider", lpp) ?: return
     val mCalendar = ReflectHelper.findField(iconProvider, "mCalendar")
     val mClock = ReflectHelper.findField(iconProvider, "mClock")
     ReflectHelper.hookAllConstructors(
@@ -69,10 +71,8 @@ class CalendarAndClockHook : Hook {
     )
 
     val iconChangeReceiver =
-      ReflectHelper.findClassThrow(
-        "com.android.launcher3.icons.IconProvider\$IconChangeReceiver",
-        lpp,
-      )
+      ReflectHelper.findClass("com.android.launcher3.icons.IconProvider\$IconChangeReceiver", lpp)
+        ?: return
     val mCallbackField = iconChangeReceiver.let { ReflectHelper.findField(it, "mCallback") }
     ReflectHelper.hookAllMethods(
       iconChangeReceiver,
