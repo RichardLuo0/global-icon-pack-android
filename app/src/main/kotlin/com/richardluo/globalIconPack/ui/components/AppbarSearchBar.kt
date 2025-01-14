@@ -1,5 +1,6 @@
 package com.richardluo.globalIconPack.ui.components
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -43,6 +44,7 @@ fun BoxScope.AppbarSearchBar(
       label = "Expand search bar",
       modifier = Modifier.align(Alignment.Center),
     ) {
+      BackHandler { expandSearchBar.value = false }
       val focusRequester = remember { FocusRequester() }
       RoundSearchBar(searchText, placeHolder, modifier = Modifier.focusRequester(focusRequester)) {
         IconButton(
