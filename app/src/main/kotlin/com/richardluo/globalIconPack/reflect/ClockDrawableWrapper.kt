@@ -1,5 +1,8 @@
 package com.richardluo.globalIconPack.reflect
 
+import android.graphics.Color
+import android.graphics.drawable.AdaptiveIconDrawable
+import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
 import android.os.Bundle
 import com.richardluo.globalIconPack.iconPack.database.ClockMetadata
@@ -38,7 +41,9 @@ object ClockDrawableWrapper {
         null,
         bundle,
         object : IntFunction<Drawable> {
-          override fun apply(dummy: Int): Drawable = drawable
+          override fun apply(dummy: Int): Drawable =
+            if (drawable is AdaptiveIconDrawable) drawable
+            else AdaptiveIconDrawable(ColorDrawable(Color.WHITE), drawable)
         },
       )
     }
