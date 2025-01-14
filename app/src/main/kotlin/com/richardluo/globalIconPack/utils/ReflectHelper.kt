@@ -82,5 +82,5 @@ object ReflectHelper {
     callMethod<Unit>(thisObj, methodName, *args)
 
   fun findField(clazz: Class<*>, name: String): Field? =
-    clazz.getDeclaredField(name).apply { isAccessible = true }
+    runCatching { clazz.getDeclaredField(name).apply { isAccessible = true } }.getOrNull { log(it) }
 }
