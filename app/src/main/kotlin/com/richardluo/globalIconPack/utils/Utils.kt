@@ -124,6 +124,4 @@ inline fun <K : Any, V : Any> LruCache<K, V>.getOrPut(key: K, defaultValue: () -
 @Composable fun <T> Flow<T>.getValue(init: T) = collectAsStateWithLifecycle(init).value
 
 @OptIn(FlowPreview::class)
-fun Flow<String>.debounceTextField(delay: Long = 300L) = debounce {
-  if (it.isEmpty()) 0L else delay
-}
+fun Flow<String>.debounceInput(delay: Long = 300L) = debounce { if (it.isEmpty()) 0L else delay }

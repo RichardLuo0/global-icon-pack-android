@@ -21,7 +21,7 @@ import com.richardluo.globalIconPack.iconPack.database.NormalIconEntry
 import com.richardluo.globalIconPack.utils.IconPackCreator.IconEntryWithPack
 import com.richardluo.globalIconPack.utils.WorldPreference
 import com.richardluo.globalIconPack.utils.asType
-import com.richardluo.globalIconPack.utils.debounceTextField
+import com.richardluo.globalIconPack.utils.debounceInput
 import com.richardluo.globalIconPack.utils.getBlob
 import com.richardluo.globalIconPack.utils.getFirstRow
 import com.richardluo.globalIconPack.utils.getInstance
@@ -57,7 +57,7 @@ class IconVariantVM(app: Application) : AndroidViewModel(app) {
   val filteredIcons =
     combineTransform(
         snapshotFlow { icons.toMap() },
-        snapshotFlow { searchText.value }.debounceTextField(),
+        snapshotFlow { searchText.value }.debounceInput(),
       ) { icons, text ->
         if (text.isEmpty()) emit(icons)
         else {
@@ -83,7 +83,7 @@ class IconVariantVM(app: Application) : AndroidViewModel(app) {
     combineTransform(
         variantIcons,
         selectedApp,
-        snapshotFlow { variantSearchText.value }.debounceTextField(),
+        snapshotFlow { variantSearchText.value }.debounceInput(),
       ) { icons, cn, text ->
         emit(null)
         emit(

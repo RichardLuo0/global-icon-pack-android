@@ -17,7 +17,7 @@ import com.richardluo.globalIconPack.iconPack.IconPackApps
 import com.richardluo.globalIconPack.utils.IconPackCreator
 import com.richardluo.globalIconPack.utils.IconPackCreator.IconEntryWithPack
 import com.richardluo.globalIconPack.utils.asType
-import com.richardluo.globalIconPack.utils.debounceTextField
+import com.richardluo.globalIconPack.utils.debounceInput
 import com.richardluo.globalIconPack.utils.getInstance
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -51,7 +51,7 @@ class MergerVM(app: Application) : AndroidViewModel(app) {
   val filteredIcons =
     combineTransform(
         snapshotFlow { icons.toMap() },
-        snapshotFlow { searchText.value }.debounceTextField(),
+        snapshotFlow { searchText.value }.debounceInput(),
       ) { icons, text ->
         if (text.isEmpty()) emit(icons)
         else {
