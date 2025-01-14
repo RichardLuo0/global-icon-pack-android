@@ -39,11 +39,11 @@ class ReplaceIcon : Hook {
           isInReplaceIconResId.set(true)
 
           val info = param.thisObject as PackageItemInfo
-          if (info.icon != 0) {
-            info.icon =
-              getIP()?.getId(getComponentName(info))?.let { withHighByteSet(it, IN_IP) }
-                ?: withHighByteSet(info.icon, NOT_IN_IP)
-          }
+          info.icon =
+            getIP()?.getId(getComponentName(info))?.let { withHighByteSet(it, IN_IP) }
+              ?: if (isHighTwoByte(info.icon, ANDROID_DEFAULT))
+                withHighByteSet(info.icon, NOT_IN_IP)
+              else info.icon
 
           isInReplaceIconResId.set(false)
         }
