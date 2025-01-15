@@ -38,7 +38,6 @@
     <string name="notice">提示</string>
     <string name="search">搜索</string>
     <string name="restoreDefault">恢复默认</string>
-    <string name="searchVariants">搜索变体</string>
     <string name="chooseBasePack">选择基本图标包</string>
     <string name="chooseIconToReplace">选择要替换的图标</string>
     <string name="chooseNewIcon">选择一个新图标</string>

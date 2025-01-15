@@ -13,6 +13,8 @@ import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyGridScope
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
@@ -24,6 +26,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -32,7 +35,6 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -47,7 +49,6 @@ import com.richardluo.globalIconPack.ui.components.LoadingDialog
 import com.richardluo.globalIconPack.ui.components.RoundSearchBar
 import com.richardluo.globalIconPack.ui.components.SampleTheme
 import com.richardluo.globalIconPack.ui.viewModel.IconVariantVM
-import com.richardluo.globalIconPack.utils.getState
 import com.richardluo.globalIconPack.utils.getValue
 import kotlinx.coroutines.launch
 
@@ -141,29 +142,54 @@ class IconVariantActivity : ComponentActivity() {
         sheetState = sheetState,
         onDismissRequest = { viewModel.variantSheet = false },
       ) {
-        RoundSearchBar(viewModel.variantSearchText, stringResource(R.string.searchVariants)) {
+        RoundSearchBar(viewModel.variantSearchText, stringResource(R.string.search)) {
           Icon(Icons.Default.Search, contentDescription = "Search")
         }
-        val iconsFromVM by viewModel.suggestVariantIcons.getState(null)
-        val icons = iconsFromVM
-        if (icons != null)
-          LazyVerticalGrid(
-            modifier = Modifier.fillMaxSize().padding(horizontal = 2.dp),
-            columns = GridCells.Adaptive(minSize = 74.dp),
-          ) {
-            items(icons, key = { it }) { name ->
-              IconForApp(
-                name.ifEmpty { stringResource(R.string.originalIcon) },
-                loadImage = { viewModel.loadIcon(name) },
-              ) {
-                lifecycleScope.launch { viewModel.replaceIcon(name) }
-              }
+        val suggestIcons = viewModel.suggestVariantIcons.getValue(null)
+        if (suggestIcons != null)
+          if (viewModel.variantSearchText.value.isEmpty()) {
+            val variantIcons = viewModel.variantIcons.getValue(null) ?: setOf()
+            LazyVerticalGrid(
+              modifier = Modifier.fillMaxSize().padding(horizontal = 2.dp),
+              columns = GridCells.Adaptive(minSize = 74.dp),
+            ) {
+              variantIconTitle(getString(R.string.suggestedIcons))
+              variantIconItems(suggestIcons)
+              variantIconTitle(getString(R.string.allIcons))
+              variantIconItems(variantIcons.toList())
             }
-          }
+          } else
+            LazyVerticalGrid(
+              modifier = Modifier.fillMaxSize().padding(horizontal = 2.dp),
+              columns = GridCells.Adaptive(minSize = 74.dp),
+            ) {
+              variantIconItems(suggestIcons)
+            }
         else
           Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
             LinearProgressIndicator(modifier = Modifier.fillMaxWidth().padding(24.dp))
           }
       }
+  }
+
+  private fun LazyGridScope.variantIconTitle(text: String) {
+    item(span = { GridItemSpan(maxLineSpan) }, contentType = "Title") {
+      Text(
+        text,
+        style = MaterialTheme.typography.titleMedium,
+        modifier = Modifier.padding(top = 12.dp, start = 12.dp, end = 12.dp),
+      )
+    }
+  }
+
+  private fun LazyGridScope.variantIconItems(icons: List<String>) {
+    items(icons, key = { it }) { name ->
+      IconForApp(
+        name.ifEmpty { stringResource(R.string.originalIcon) },
+        loadImage = { viewModel.loadIcon(name) },
+      ) {
+        lifecycleScope.launch { viewModel.replaceIcon(name) }
+      }
+    }
   }
 }

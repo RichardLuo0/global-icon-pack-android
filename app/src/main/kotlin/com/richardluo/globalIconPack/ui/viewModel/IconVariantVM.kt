@@ -71,9 +71,9 @@ class IconVariantVM(app: Application) : AndroidViewModel(app) {
       }
       .conflate()
 
-  private val variantIcons = flow {
+  val variantIcons = flow {
     emit(null)
-    emit(withContext(Dispatchers.Default) { baseIconPack.getDrawables() })
+    emit(withContext(Dispatchers.IO) { baseIconPack.getDrawables() })
   }
 
   var variantSheet by mutableStateOf(false)
