@@ -38,6 +38,8 @@
     <string name="notice">Notice</string>
     <string name="search">Search</string>
     <string name="restoreDefault">Restore default</string>
+    <string name="suggestedIcons">Suggested icons</string>
+    <string name="allIcons">All icons</string>
     <string name="chooseBasePack">Choose a base icon pack</string>
     <string name="chooseIconToReplace">Choose the icon to replace</string>
     <string name="chooseNewIcon">Choose a new icon</string>
