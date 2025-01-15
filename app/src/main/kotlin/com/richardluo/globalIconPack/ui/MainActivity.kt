@@ -183,7 +183,8 @@ class MainActivity : ComponentActivity() {
           summary = { Text(stringResource(R.string.iconPackAsFallbackSummary)) },
         )
         item(key = "iconVariant") {
-          val isProvider = flow.map { MODE_PROVIDER == it[PrefKey.MODE] }.getValue(false)
+          val isProvider =
+            flow.map { (it[PrefKey.MODE] ?: PrefDef.MODE) == MODE_PROVIDER }.getValue(false)
           val isPackSet =
             flow.map { it.get<String>(PrefKey.ICON_PACK)?.isNotEmpty() ?: false }.getValue(false)
           Preference(
