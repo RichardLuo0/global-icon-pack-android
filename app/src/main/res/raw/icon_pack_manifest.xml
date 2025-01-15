@@ -3,7 +3,7 @@
     package="$0">
 
     <uses-sdk
-        android:minSdkVersion="33"
+        android:minSdkVersion="31"
         android:targetSdkVersion="35" />
 
     <application android:label="$1">
