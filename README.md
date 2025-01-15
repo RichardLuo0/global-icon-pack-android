@@ -35,6 +35,8 @@ This module is designed to extend the customization of icon packs throughout the
 
 ## Known Issues
 * If the launcher is slow to boot or crashes, switch to 'local' mode.
+* If it says "Please ensure the Xposed module has been enabled first" and you have the module enabled already. Try force stop then restart the app.
+* Regardless of the minimum SDK version, you must test compatibility with android versions below 14 by yourself.
 
 ## Help with localization
 <a href="https://crowdin.com/project/global-icon-pack-android" rel="nofollow"><img style="width:140;height:40px" src="https://badges.crowdin.net/badge/light/crowdin-on-dark.png" srcset="https://badges.crowdin.net/badge/light/crowdin-on-dark.png 1x,https://badges.crowdin.net/badge/light/crowdin-on-dark@2x.png 2x" alt="Crowdin | Agile localization for tech companies" /></a>
