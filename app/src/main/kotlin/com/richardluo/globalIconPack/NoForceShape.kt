@@ -6,6 +6,7 @@ import android.graphics.Rect
 import android.graphics.RectF
 import android.graphics.drawable.AdaptiveIconDrawable
 import android.graphics.drawable.Drawable
+import android.graphics.drawable.LayerDrawable
 import com.richardluo.globalIconPack.reflect.BaseIconFactory
 import com.richardluo.globalIconPack.utils.IconHelper
 import com.richardluo.globalIconPack.utils.ReflectHelper
@@ -131,6 +132,34 @@ class NoForceShape : Hook {
           }
         }
       },
+    )
+    // Fix accessibility
+    val adaptiveIcon =
+      ReflectHelper.findClass("com.android.settingslib.widget.AdaptiveIcon", lpp) ?: return
+    val extractOriIcon =
+      object : XC_MethodHook() {
+        override fun afterHookedMethod(param: MethodHookParam) {
+          param.result.asType<Drawable?>()?.let { icon ->
+            if (adaptiveIcon.isAssignableFrom(icon::class.java))
+              icon.asType<LayerDrawable>().getDrawable(1)?.let { param.result = it }
+          }
+        }
+      }
+    ReflectHelper.hookAllMethods(
+      ReflectHelper.findClass(
+        "com.android.settings.accessibility.AccessibilityActivityPreference",
+        lpp,
+      ) ?: return,
+      "getA11yActivityIcon",
+      extractOriIcon,
+    )
+    ReflectHelper.hookAllMethods(
+      ReflectHelper.findClass(
+        "com.android.settings.accessibility.AccessibilityServicePreference",
+        lpp,
+      ) ?: return,
+      "getA11yServiceIcon",
+      extractOriIcon,
     )
   }
 
