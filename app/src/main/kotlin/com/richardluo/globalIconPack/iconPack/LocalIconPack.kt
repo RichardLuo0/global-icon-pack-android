@@ -6,10 +6,12 @@ import android.content.SharedPreferences
 import android.content.res.Resources
 import android.content.res.XmlResourceParser
 import android.util.Xml
-import androidx.core.graphics.drawable.toBitmap
+import com.richardluo.globalIconPack.PrefDef
+import com.richardluo.globalIconPack.PrefKey
 import com.richardluo.globalIconPack.iconPack.database.CalendarIconEntry
 import com.richardluo.globalIconPack.iconPack.database.ClockIconEntry
 import com.richardluo.globalIconPack.iconPack.database.ClockMetadata
+import com.richardluo.globalIconPack.iconPack.database.FallbackSettings
 import com.richardluo.globalIconPack.iconPack.database.IconEntry
 import com.richardluo.globalIconPack.iconPack.database.NormalIconEntry
 import com.richardluo.globalIconPack.utils.get
@@ -24,11 +26,12 @@ open class LocalIconPack(pref: SharedPreferences, pack: String, resources: Resou
   protected val iconEntryList = mutableListOf<IconEntry>()
 
   init {
-    loadIconPack(resources, pack, iconFallback).let { info ->
-      this.iconBacks = info.iconBacks.mapNotNull { getIcon(it)?.toBitmap() }
-      this.iconUpons = info.iconUpons.mapNotNull { getIcon(it)?.toBitmap() }
-      this.iconMasks = info.iconMasks.mapNotNull { getIcon(it)?.toBitmap() }
-      if (iconFallback && !enableOverrideIconFallback) this.iconScale = info.iconScale
+    loadIconPack(resources, pack).let { info ->
+      if (pref.getBoolean(PrefKey.ICON_FALLBACK, PrefDef.ICON_FALLBACK))
+        initFallbackSettings(
+          FallbackSettings(info.iconBacks, info.iconUpons, info.iconMasks, info.iconScale),
+          pref,
+        )
       info.iconEntryMap.forEach { (cn, entry) ->
         iconEntryList.add(entry)
         indexMap[cn] = iconEntryList.size - 1
@@ -59,23 +62,24 @@ open class LocalIconPack(pref: SharedPreferences, pack: String, resources: Resou
   }
 }
 
-open class IconPackInfo(
-  open val iconBacks: List<String>,
-  open val iconUpons: List<String>,
-  open val iconMasks: List<String>,
-  var iconScale: Float = 1f,
-  open val iconEntryMap: Map<ComponentName, IconEntry>,
-)
+open class IconPackInfo {
+  open val iconBacks = listOf<String>()
+  open val iconUpons = listOf<String>()
+  open val iconMasks = listOf<String>()
+  open val iconScale: Float = 1f
+  open val iconEntryMap = mapOf<ComponentName, IconEntry>()
+}
 
-private class MutableIconPackInfo(
-  override val iconBacks: MutableList<String> = mutableListOf(),
-  override val iconUpons: MutableList<String> = mutableListOf(),
-  override val iconMasks: MutableList<String> = mutableListOf(),
-  override val iconEntryMap: MutableMap<ComponentName, IconEntry> = mutableMapOf(),
-) : IconPackInfo(iconBacks, iconUpons, iconMasks, 1f, iconEntryMap)
+private class MutableIconPackInfo : IconPackInfo() {
+  override val iconBacks: MutableList<String> = mutableListOf()
+  override val iconUpons: MutableList<String> = mutableListOf()
+  override val iconMasks: MutableList<String> = mutableListOf()
+  override var iconScale: Float = 1f
+  override val iconEntryMap: MutableMap<ComponentName, IconEntry> = mutableMapOf()
+}
 
 @SuppressLint("DiscouragedApi")
-internal fun loadIconPack(resources: Resources, pack: String, iconFallback: Boolean): IconPackInfo {
+internal fun loadIconPack(resources: Resources, pack: String): IconPackInfo {
   val info = MutableIconPackInfo()
   val iconEntryMap = info.iconEntryMap
 
@@ -86,7 +90,6 @@ internal fun loadIconPack(resources: Resources, pack: String, iconFallback: Bool
   val compEndLength = compEnd.length
 
   fun addFallback(parseXml: XmlPullParser, list: MutableList<String>) {
-    if (!iconFallback) return
     for (i in 0 until parseXml.attributeCount) if (parseXml.getAttributeName(i).startsWith("img"))
       list.add(parseXml.getAttributeValue(i))
   }
@@ -116,10 +119,7 @@ internal fun loadIconPack(resources: Resources, pack: String, iconFallback: Bool
         "iconback" -> addFallback(parser, info.iconBacks)
         "iconupon" -> addFallback(parser, info.iconUpons)
         "iconmask" -> addFallback(parser, info.iconMasks)
-        "scale" -> {
-          if (!iconFallback) continue
-          info.iconScale = parser.getAttributeValue(null, "factor")?.toFloatOrNull() ?: 1f
-        }
+        "scale" -> info.iconScale = parser.getAttributeValue(null, "factor")?.toFloatOrNull() ?: 1f
         "item" -> addIcon(parser, NormalIconEntry(parser["drawable"] ?: continue))
         "calendar" -> addIcon(parser, CalendarIconEntry(parser["prefix"] ?: continue))
         "dynamic-clock" -> {

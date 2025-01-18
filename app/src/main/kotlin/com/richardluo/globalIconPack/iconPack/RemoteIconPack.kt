@@ -5,7 +5,8 @@ import android.content.ComponentName
 import android.content.SharedPreferences
 import android.content.res.Resources
 import android.net.Uri
-import androidx.core.graphics.drawable.toBitmap
+import com.richardluo.globalIconPack.PrefDef
+import com.richardluo.globalIconPack.PrefKey
 import com.richardluo.globalIconPack.iconPack.database.FallbackSettings
 import com.richardluo.globalIconPack.iconPack.database.IconEntry
 import com.richardluo.globalIconPack.utils.getBlob
@@ -20,26 +21,17 @@ class RemoteIconPack(pref: SharedPreferences, pack: String, resources: Resources
   private val contentResolver = AndroidAppHelper.currentApplication().contentResolver
 
   init {
-    contentResolver
-      .query(
-        Uri.parse("content://${IconPackProvider.AUTHORITIES}/${IconPackProvider.FALLBACKS}"),
-        null,
-        null,
-        arrayOf(pack),
-        null,
-      )
-      ?.getFirstRow { FallbackSettings.from(it.getBlob("fallback")) }
-      ?.let { fs ->
-        this.iconBacks = fs.iconBacks.mapNotNull { getIcon(it)?.toBitmap() }
-        this.iconUpons = fs.iconUpons.mapNotNull { getIcon(it)?.toBitmap() }
-        this.iconMasks = fs.iconMasks.mapNotNull { getIcon(it)?.toBitmap() }
-        if (iconFallback && !enableOverrideIconFallback) this.iconScale = fs.iconScale
-      }
-      ?: run {
-        this.iconBacks = listOf()
-        this.iconUpons = listOf()
-        this.iconMasks = listOf()
-      }
+    if (pref.getBoolean(PrefKey.ICON_FALLBACK, PrefDef.ICON_FALLBACK))
+      contentResolver
+        .query(
+          Uri.parse("content://${IconPackProvider.AUTHORITIES}/${IconPackProvider.FALLBACKS}"),
+          null,
+          null,
+          arrayOf(pack),
+          null,
+        )
+        ?.getFirstRow { FallbackSettings.from(it.getBlob("fallback")) }
+        ?.let { initFallbackSettings(it, pref) }
   }
 
   override fun getIconEntry(id: Int): IconEntry? = iconEntryList.getOrNull(id)

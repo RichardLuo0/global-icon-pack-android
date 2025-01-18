@@ -54,22 +54,17 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
       beginTransaction()
       try {
         // Load icon pack
-        loadIconPack(
-            context.packageManager.getResourcesForApplication(pack),
+        loadIconPack(context.packageManager.getResourcesForApplication(pack), pack).let { info ->
+          delete("'${pt(pack)}'", null, null)
+          // Insert icons
+          insertIcon(db, pack, info.iconEntryMap.toList())
+          // Insert fallback
+          insertFallbackSettings(
+            db,
             pack,
-            iconFallback = true,
+            FallbackSettings(info.iconBacks, info.iconUpons, info.iconMasks, info.iconScale),
           )
-          .let { info ->
-            delete("'${pt(pack)}'", null, null)
-            // Insert icons
-            insertIcon(db, pack, info.iconEntryMap.toList())
-            // Insert fallback
-            insertFallbackSettings(
-              db,
-              pack,
-              FallbackSettings(info.iconBacks, info.iconUpons, info.iconMasks, info.iconScale),
-            )
-          }
+        }
         // Get installed icon packs
         val packs = runBlocking { IconPackApps.get(context).keys }
         // Delete expired fallbacks

@@ -62,9 +62,6 @@ fun <T> Method.call(thisObj: Any?, vararg param: Any?) = invoke(thisObj, *param)
 inline fun <T, R> Method.call(thisObj: Any?, vararg param: Any?, block: (T) -> R) =
   block(invoke(thisObj, *param) as T)
 
-inline fun Method.call(thisObj: Any?, vararg param: Any?, block: () -> Unit) =
-  call<Unit, Unit>(thisObj, param) { block() }
-
 infix fun String.rEqual(other: String): Boolean {
   if (length != other.length) return false
   for (i in other.indices) if (this[length - 1 - i] != other[length - 1 - i]) return false

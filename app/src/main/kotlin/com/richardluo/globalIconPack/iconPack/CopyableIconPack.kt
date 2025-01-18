@@ -53,10 +53,12 @@ class CopyableIconPack(pref: SharedPreferences, pack: String, resources: Resourc
   }
 
   fun copyFallbacks(name: String, xml: StringBuilder, apkBuilder: ApkBuilder) {
-    copyFallback(iconBacks, "iconback", "${name}_0", xml, apkBuilder)
-    copyFallback(iconUpons, "iconupon", "${name}_1", xml, apkBuilder)
-    copyFallback(iconMasks, "iconmask", "${name}_2", xml, apkBuilder)
-    xml.append("<scale factor=\"$iconScale\" />")
+    iconFallback?.apply {
+      copyFallback(iconBacks, "iconback", "${name}_0", xml, apkBuilder)
+      copyFallback(iconUpons, "iconupon", "${name}_1", xml, apkBuilder)
+      copyFallback(iconMasks, "iconmask", "${name}_2", xml, apkBuilder)
+      xml.append("<scale factor=\"$iconScale\" />")
+    }
   }
 
   private fun copyFallback(

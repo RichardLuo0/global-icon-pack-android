@@ -11,28 +11,38 @@ import android.content.pm.PackageManager
 import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
+import androidx.core.graphics.drawable.toBitmap
 import com.richardluo.globalIconPack.PrefDef
 import com.richardluo.globalIconPack.PrefKey
+import com.richardluo.globalIconPack.iconPack.database.FallbackSettings
 import com.richardluo.globalIconPack.iconPack.database.IconEntry
 import com.richardluo.globalIconPack.reflect.Resources.getDrawableForDensity
 import com.richardluo.globalIconPack.utils.IconHelper
 import com.richardluo.globalIconPack.utils.isInMod
 
 abstract class IconPack(pref: SharedPreferences, val pack: String, val resources: Resources) {
-  protected val iconFallback = pref.getBoolean(PrefKey.ICON_FALLBACK, PrefDef.ICON_FALLBACK)
-  protected val enableOverrideIconFallback =
-    pref.getBoolean(PrefKey.OVERRIDE_ICON_FALLBACK, PrefDef.OVERRIDE_ICON_FALLBACK)
-  // Fallback settings from icon pack
-  protected lateinit var iconBacks: List<Bitmap>
-  protected lateinit var iconUpons: List<Bitmap>
-  protected lateinit var iconMasks: List<Bitmap>
-  protected var iconScale: Float =
-    if (iconFallback && enableOverrideIconFallback) {
-      pref.getFloat(PrefKey.ICON_PACK_SCALE, PrefDef.ICON_PACK_SCALE)
-    } else 1f
+  protected class IconFallback(
+    val iconBacks: List<Bitmap>,
+    val iconUpons: List<Bitmap>,
+    val iconMasks: List<Bitmap>,
+    val iconScale: Float = 1f,
+  )
 
   protected val iconPackAsFallback =
     pref.getBoolean(PrefKey.ICON_PACK_AS_FALLBACK, PrefDef.ICON_PACK_AS_FALLBACK)
+  protected var iconFallback: IconFallback? = null
+
+  protected fun initFallbackSettings(fs: FallbackSettings, pref: SharedPreferences) {
+    iconFallback =
+      IconFallback(
+        fs.iconBacks.mapNotNull { getIcon(it)?.toBitmap() },
+        fs.iconUpons.mapNotNull { getIcon(it)?.toBitmap() },
+        fs.iconMasks.mapNotNull { getIcon(it)?.toBitmap() },
+        if (pref.getBoolean(PrefKey.OVERRIDE_ICON_FALLBACK, PrefDef.OVERRIDE_ICON_FALLBACK))
+          pref.getFloat(PrefKey.ICON_PACK_SCALE, PrefDef.ICON_PACK_SCALE)
+        else fs.iconScale,
+      )
+  }
 
   abstract fun getIconEntry(id: Int): IconEntry?
 
@@ -43,7 +53,7 @@ abstract class IconPack(pref: SharedPreferences, val pack: String, val resources
   fun getIcon(iconEntry: IconEntry, iconDpi: Int) =
     iconEntry
       .getIcon { getIcon(it, iconDpi) }
-      ?.let { if (useAdaptive) IconHelper.makeAdaptive(it) else it }
+      ?.let { if (useUnClipAdaptive) IconHelper.makeAdaptive(it) else it }
 
   fun getIcon(id: Int, iconDpi: Int): Drawable? = getIconEntry(id)?.let { getIcon(it, iconDpi) }
 
@@ -62,25 +72,26 @@ abstract class IconPack(pref: SharedPreferences, val pack: String, val resources
     idCache.getOrPut(name) { resources.getIdentifier(name, "drawable", pack) }
 
   fun genIconFrom(baseIcon: Drawable) =
-    if (useAdaptive)
-      IconHelper.processIcon(
-        resources,
-        baseIcon,
-        iconBacks.randomOrNull(),
-        iconUpons.randomOrNull(),
-        iconMasks.randomOrNull(),
-        iconScale,
-      )
-    else if (iconFallback)
-      IconHelper.processIconToBitmap(
-        resources,
-        baseIcon,
-        iconBacks.randomOrNull(),
-        iconUpons.randomOrNull(),
-        iconMasks.randomOrNull(),
-        iconScale,
-      )
-    else baseIcon
+    iconFallback?.run {
+      if (useUnClipAdaptive)
+        IconHelper.processIcon(
+          resources,
+          baseIcon,
+          iconBacks.randomOrNull(),
+          iconUpons.randomOrNull(),
+          iconMasks.randomOrNull(),
+          iconScale,
+        )
+      else
+        IconHelper.processIconToBitmap(
+          resources,
+          baseIcon,
+          iconBacks.randomOrNull(),
+          iconUpons.randomOrNull(),
+          iconMasks.randomOrNull(),
+          iconScale,
+        )
+    } ?: baseIcon
 }
 
 fun getComponentName(info: PackageItemInfo): ComponentName =
@@ -90,10 +101,10 @@ fun getComponentName(info: PackageItemInfo): ComponentName =
 fun getComponentName(packageName: String): ComponentName = ComponentName(packageName, "")
 
 /**
- * CustomAdaptiveIconDrawable does not work correctly for some apps. It maybe clipped by adaptive
+ * UnClipAdaptiveIconDrawable does not work correctly for some apps. It maybe clipped by adaptive
  * icon mask or shows black background, but we don't know how to efficiently convert Bitmap to Path.
  */
-private val useAdaptive: Boolean by lazy {
+private val useUnClipAdaptive: Boolean by lazy {
   if (!isInMod) false
   else
     when (val packageName = AndroidAppHelper.currentPackageName()) {
