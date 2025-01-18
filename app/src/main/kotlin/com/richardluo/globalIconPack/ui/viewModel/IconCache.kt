@@ -1,6 +1,7 @@
 package com.richardluo.globalIconPack.ui.viewModel
 
 import android.app.Application
+import android.graphics.drawable.Drawable
 import androidx.collection.LruCache
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
@@ -32,7 +33,7 @@ class IconCache(private val context: Application) {
         withContext(Dispatchers.IO) {
           (getIconPack(entry.pack).getIcon(entry.entry, 0)
               ?: context.packageManager.getApplicationIcon(app))
-            .toBitmap()
+            .toSafeBitmap(300, 300)
             .asImageBitmap()
         }
       }
@@ -41,7 +42,7 @@ class IconCache(private val context: Application) {
         withContext(Dispatchers.Default) {
           getIconPack(basePack)
             .genIconFrom(context.packageManager.getApplicationIcon(app))
-            .toBitmap()
+            .toSafeBitmap(300, 300)
             .asImageBitmap()
         }
       }
@@ -49,7 +50,8 @@ class IconCache(private val context: Application) {
   suspend fun loadIcon(drawableName: String, pack: String) =
     imageCache.getOrPut("$pack/$drawableName") {
       withContext(Dispatchers.IO) {
-        getIconPack(pack).getIcon(drawableName, 0)?.toBitmap()?.asImageBitmap() ?: ImageBitmap(1, 1)
+        getIconPack(pack).getIcon(drawableName, 0)?.toSafeBitmap(300, 300)?.asImageBitmap()
+          ?: ImageBitmap(1, 1)
       }
     }
 
@@ -58,3 +60,8 @@ class IconCache(private val context: Application) {
     imageCache.evictAll()
   }
 }
+
+private fun Drawable.toSafeBitmap(maxWidth: Int, maxHeight: Int) =
+  if (intrinsicWidth >= maxWidth && intrinsicHeight >= maxHeight) {
+    toBitmap(maxWidth, maxHeight)
+  } else toBitmap()
