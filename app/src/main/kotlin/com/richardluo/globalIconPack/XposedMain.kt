@@ -1,5 +1,6 @@
 package com.richardluo.globalIconPack
 
+import com.richardluo.globalIconPack.utils.WorldPreference
 import de.robv.android.xposed.IXposedHookLoadPackage
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 
@@ -13,7 +14,9 @@ class XposedMain : IXposedHookLoadPackage {
     hookList.forEach { it.onHookApp(lpp) }
 
     when (lpp.packageName) {
-      "com.google.android.apps.nexuslauncher" -> hookList.forEach { it.onHookPixelLauncher(lpp) }
+      WorldPreference.getPrefInMod()
+        .getString(PrefKey.PIXEL_LAUNCHER_PACKAGE, PrefDef.PIXEL_LAUNCHER_PACKAGE) ->
+        hookList.forEach { it.onHookPixelLauncher(lpp) }
       "com.android.systemui" -> hookList.forEach { it.onHookSystemUI(lpp) }
       "com.android.settings" -> hookList.forEach { it.onHookSettings(lpp) }
     }

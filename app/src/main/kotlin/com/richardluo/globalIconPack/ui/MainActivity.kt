@@ -3,6 +3,7 @@ package com.richardluo.globalIconPack.ui
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -64,6 +65,7 @@ import me.zhanghai.compose.preference.preference
 import me.zhanghai.compose.preference.preferenceCategory
 import me.zhanghai.compose.preference.rememberPreferenceState
 import me.zhanghai.compose.preference.switchPreference
+import me.zhanghai.compose.preference.textFieldPreference
 
 class MainActivity : ComponentActivity() {
   private val viewModel: MainVM by viewModels()
@@ -235,6 +237,13 @@ class MainActivity : ComponentActivity() {
         preferenceCategory(
           key = "pixelSettings",
           title = { Text(stringResource(R.string.pixelSettings)) },
+        )
+        textFieldPreference(
+          key = PrefKey.PIXEL_LAUNCHER_PACKAGE,
+          defaultValue = PrefDef.PIXEL_LAUNCHER_PACKAGE,
+          textToValue = { it },
+          title = { Text(stringResource(R.string.pixelLauncherPackage)) },
+          summary = { Text(stringResource(R.string.pixelLauncherPackageSummary)) },
         )
         switchPreference(
           key = PrefKey.NO_FORCE_SHAPE,
