@@ -50,20 +50,33 @@ object ReflectHelper {
     runCatching {
         clazz.declaredMethods
           .filter { it.match(methodName, parameterTypes) }
-          .also { if (it.isEmpty()) log("No method $methodName is found on class ${clazz.name}") }
-          .forEach { XposedBridge.hookMethod(it, hook) }
+          .map { XposedBridge.hookMethod(it, hook) }
       }
-      .getOrElse { log(it) }
+      .getOrNull { log(it) }
 
   fun hookAllMethods(clazz: Class<*>, methodName: String, hook: XC_MethodHook) =
     hookAllMethods(clazz, methodName, arrayOf(), hook)
+
+  fun hookAllMethodsOrLog(
+    clazz: Class<*>,
+    methodName: String,
+    parameterTypes: Array<Class<*>?>,
+    hook: XC_MethodHook,
+  ) =
+    hookAllMethods(clazz, methodName, parameterTypes, hook).also {
+      if (it.isNullOrEmpty()) log("No method $methodName is found on class ${clazz.name}")
+    }
+
+  fun hookAllMethodsOrLog(clazz: Class<*>, methodName: String, hook: XC_MethodHook) =
+    hookAllMethodsOrLog(clazz, methodName, arrayOf(), hook)
 
   fun hookAllConstructors(clazz: Class<*>, hook: XC_MethodHook) =
     XposedBridge.hookAllConstructors(clazz, hook).also {
       if (it.isEmpty()) log("No constructors are found on class ${clazz.name}")
     }
 
-  fun hookMethod(method: Method, hook: XC_MethodHook) = XposedBridge.hookMethod(method, hook)
+  fun hookMethod(method: Method, hook: XC_MethodHook) =
+    runCatching { XposedBridge.hookMethod(method, hook) }.getOrNull { log(it) }
 
   // This should be cached, thus call xposed helper version
   fun <T> callMethod(thisObj: Any, methodName: String, vararg args: Any): T? {

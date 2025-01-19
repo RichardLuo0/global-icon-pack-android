@@ -26,6 +26,7 @@ class NoForceShape : Hook {
     removeShadow(lpp)
 
     if (!getPrefInMod().getBoolean(PrefKey.NO_FORCE_SHAPE, PrefDef.NO_FORCE_SHAPE)) return
+    // May not be presented on android >= 15
     ReflectHelper.hookAllMethods(
       BaseIconFactory.getClazz(lpp) ?: return,
       "normalizeAndWrapToAdaptiveIcon",
@@ -38,7 +39,7 @@ class NoForceShape : Hook {
       },
     )
     // Fix FloatingIconView and DragView
-    ReflectHelper.hookAllMethods(
+    ReflectHelper.hookAllMethodsOrLog(
       BaseIconFactory.getClazz(lpp) ?: return,
       "wrapToAdaptiveIcon",
       arrayOf(Drawable::class.java),
@@ -62,7 +63,7 @@ class NoForceShape : Hook {
     val obtainM: Method? =
       ReflectHelper.findMethodFirstMatch("com.android.launcher3.icons.LauncherIcons", lpp, "obtain")
     ReflectHelper.findClass("com.android.launcher3.views.FloatingIconView", lpp)?.let {
-      ReflectHelper.hookAllMethods(
+      ReflectHelper.hookAllMethodsOrLog(
         it,
         "setIcon",
         object : XC_MethodHook() {
@@ -101,7 +102,7 @@ class NoForceShape : Hook {
 
     if (!getPrefInMod().getBoolean(PrefKey.NO_FORCE_SHAPE, PrefDef.NO_FORCE_SHAPE)) return
     // Fix splash screen
-    ReflectHelper.hookAllMethods(
+    ReflectHelper.hookAllMethodsOrLog(
       BaseIconFactory.getClazz(lpp) ?: return,
       "normalizeAndWrapToAdaptiveIcon",
       arrayOf(Drawable::class.java),
@@ -120,7 +121,7 @@ class NoForceShape : Hook {
 
     if (!getPrefInMod().getBoolean(PrefKey.NO_FORCE_SHAPE, PrefDef.NO_FORCE_SHAPE)) return
     // Fix recent app list
-    ReflectHelper.hookAllMethods(
+    ReflectHelper.hookAllMethodsOrLog(
       BaseIconFactory.getClazz(lpp) ?: return,
       "normalizeAndWrapToAdaptiveIcon",
       arrayOf(Drawable::class.java),
@@ -144,7 +145,7 @@ class NoForceShape : Hook {
           }
         }
       }
-    ReflectHelper.hookAllMethods(
+    ReflectHelper.hookAllMethodsOrLog(
       ReflectHelper.findClass(
         "com.android.settings.accessibility.AccessibilityActivityPreference",
         lpp,
@@ -152,7 +153,7 @@ class NoForceShape : Hook {
       "getA11yActivityIcon",
       extractOriIcon,
     )
-    ReflectHelper.hookAllMethods(
+    ReflectHelper.hookAllMethodsOrLog(
       ReflectHelper.findClass(
         "com.android.settings.accessibility.AccessibilityServicePreference",
         lpp,
@@ -169,7 +170,7 @@ class NoForceShape : Hook {
     val MODE_WITH_SHADOW = 2
     val MODE_HARDWARE = 3
     val MODE_HARDWARE_WITH_SHADOW = 4
-    ReflectHelper.hookAllMethods(
+    ReflectHelper.hookAllMethodsOrLog(
       BaseIconFactory.getClazz(lpp) ?: return,
       "drawIconBitmap",
       object : XC_MethodHook() {

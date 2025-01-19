@@ -45,7 +45,7 @@ class CalendarAndClockHook : Hook {
         }
       },
     )
-    ReflectHelper.hookAllMethods(
+    ReflectHelper.hookAllMethodsOrLog(
       iconProvider,
       "getIconWithOverrides",
       arrayOf(String::class.java, Int::class.java),
@@ -74,7 +74,7 @@ class CalendarAndClockHook : Hook {
       ReflectHelper.findClass("com.android.launcher3.icons.IconProvider\$IconChangeReceiver", lpp)
         ?: return
     val mCallbackField = iconChangeReceiver.let { ReflectHelper.findField(it, "mCallback") }
-    ReflectHelper.hookAllMethods(
+    ReflectHelper.hookAllMethodsOrLog(
       iconChangeReceiver,
       "onReceive",
       object : XC_MethodHook() {
