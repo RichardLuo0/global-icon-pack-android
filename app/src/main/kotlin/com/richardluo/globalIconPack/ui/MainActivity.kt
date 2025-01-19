@@ -142,6 +142,7 @@ class MainActivity : ComponentActivity() {
             // Ask for notification permission used for foreground service
             if (
               mode == MODE_PROVIDER &&
+                Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
                 context.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) !=
                   PackageManager.PERMISSION_GRANTED
             )
