@@ -20,7 +20,7 @@
     <string name="overrideIconFallback">覆盖回退选项</string>
     <string name="overrideIconFallbackSummary">为回退选项使用新值。</string>
     <string name="iconPackScale">缩放</string>
-    <string name="pixelSettings">Pixel设置</string>
+    <string name="pixelSettings">Pixel 设置</string>
     <string name="pixelLauncherPackage">启动器包名</string>
     <string name="pixelLauncherPackageSummary">用于识别基于launcher 3的启动器，但以下功能不保证正常工作。</string>
     <string name="noForceShape">阻止强制形状</string>
