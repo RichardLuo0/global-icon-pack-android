@@ -17,7 +17,6 @@ import com.richardluo.globalIconPack.utils.call
 import com.richardluo.globalIconPack.utils.rGet
 import com.richardluo.globalIconPack.utils.rSet
 import de.robv.android.xposed.XC_MethodHook
-import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 import java.lang.reflect.Method
 
@@ -27,8 +26,8 @@ class NoForceShape : Hook {
     removeShadow(lpp)
 
     if (!getPrefInMod().getBoolean(PrefKey.NO_FORCE_SHAPE, PrefDef.NO_FORCE_SHAPE)) return
-    XposedBridge.hookAllMethods(
-      BaseIconFactory.getClazz(lpp),
+    ReflectHelper.hookAllMethods(
+      BaseIconFactory.getClazz(lpp) ?: return,
       "normalizeAndWrapToAdaptiveIcon",
       object : XC_MethodHook() {
         override fun beforeHookedMethod(param: MethodHookParam) {
@@ -40,7 +39,7 @@ class NoForceShape : Hook {
     )
     // Fix FloatingIconView and DragView
     ReflectHelper.hookAllMethods(
-      BaseIconFactory.getClazz(lpp),
+      BaseIconFactory.getClazz(lpp) ?: return,
       "wrapToAdaptiveIcon",
       arrayOf(Drawable::class.java),
       object : XC_MethodHook() {
@@ -103,7 +102,7 @@ class NoForceShape : Hook {
     if (!getPrefInMod().getBoolean(PrefKey.NO_FORCE_SHAPE, PrefDef.NO_FORCE_SHAPE)) return
     // Fix splash screen
     ReflectHelper.hookAllMethods(
-      BaseIconFactory.getClazz(lpp),
+      BaseIconFactory.getClazz(lpp) ?: return,
       "normalizeAndWrapToAdaptiveIcon",
       arrayOf(Drawable::class.java),
       object : XC_MethodHook() {
@@ -122,7 +121,7 @@ class NoForceShape : Hook {
     if (!getPrefInMod().getBoolean(PrefKey.NO_FORCE_SHAPE, PrefDef.NO_FORCE_SHAPE)) return
     // Fix recent app list
     ReflectHelper.hookAllMethods(
-      BaseIconFactory.getClazz(lpp),
+      BaseIconFactory.getClazz(lpp) ?: return,
       "normalizeAndWrapToAdaptiveIcon",
       arrayOf(Drawable::class.java),
       object : XC_MethodHook() {
@@ -171,7 +170,7 @@ class NoForceShape : Hook {
     val MODE_HARDWARE = 3
     val MODE_HARDWARE_WITH_SHADOW = 4
     ReflectHelper.hookAllMethods(
-      BaseIconFactory.getClazz(lpp),
+      BaseIconFactory.getClazz(lpp) ?: return,
       "drawIconBitmap",
       object : XC_MethodHook() {
         override fun beforeHookedMethod(param: MethodHookParam) {

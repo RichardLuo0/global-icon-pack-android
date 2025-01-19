@@ -12,10 +12,6 @@ object ReflectHelper {
   fun findClass(className: String, lpp: LoadPackageParam? = null) =
     runCatching { XposedHelpers.findClass(className, lpp?.classLoader) }.getOrNull { log(it) }
 
-  fun findClassThrow(className: String, lpp: LoadPackageParam? = null): Class<*> {
-    return XposedHelpers.findClass(className, lpp?.classLoader)
-  }
-
   private fun Method.match(methodName: String, parameterTypes: Array<out Class<*>?>) =
     this.name == methodName &&
       this.parameterTypes.size >= parameterTypes.size &&
