@@ -35,7 +35,7 @@ This module is designed to extend the customization of icon packs throughout the
 
 ## Known Issues
 * If the launcher is slow to boot or crashes, switch to 'local' mode.
-* If it says "Please ensure the Xposed module has been enabled first" and you have the module enabled already. Try force stop then restart the app.
+* If it says "Please ensure the Xposed module has been enabled first" and you have the module enabled already, try force stopping then restart the app.
 * Regardless of the minimum SDK version, you must test compatibility with android versions below 14 by yourself.
 
 ## Help with localization
