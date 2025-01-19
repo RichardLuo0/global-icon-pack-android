@@ -24,7 +24,7 @@
     <string name="iconPackScale">Scale</string>
 
     <string name="pixelSettings">Pixel settings</string>
-    <string name="pixelLauncherPackage">Launcher package</string>
+    <string name="pixelLauncherPackage">Launcher package name</string>
     <string name="pixelLauncherPackageSummary">Used to identify a launcher 3 based launcher, but the features below are not guaranteed.</string>
     <string name="noForceShape">No force shape</string>
     <string name="noForceShapeSummary">Remove the white background behind irregular icon.</string>
