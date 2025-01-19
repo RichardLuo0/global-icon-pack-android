@@ -21,7 +21,7 @@
     <string name="overrideIconFallbackSummary">Andere Werte für Rückfall-Einstellungen verwenden.</string>
     <string name="iconPackScale">Skalierung</string>
     <string name="pixelSettings">Pixel settings</string>
-    <string name="pixelLauncherPackage">Launcher package</string>
+    <string name="pixelLauncherPackage">Launcher package name</string>
     <string name="pixelLauncherPackageSummary">Used to identify a launcher 3 based launcher, but the features below are not guaranteed.</string>
     <string name="noForceShape">Keine Form erzwingen</string>
     <string name="noForceShapeSummary">Entfernt den weißen Hintergrund hinter ungewöhnlich geformten Symbolen.</string>
