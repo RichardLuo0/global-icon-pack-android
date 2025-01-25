@@ -107,6 +107,8 @@ object IconPackCreator {
     }
   }
 
+  class FolderNotEmptyException : Exception()
+
   fun createIconPack(
     context: Context,
     uri: Uri,
@@ -118,7 +120,7 @@ object IconPackCreator {
     getIconPack: (String) -> CopyableIconPack,
   ) {
     val workDir = fromTreeUri(context, uri)
-    workDir.listFiles().forEach { file -> file.delete() }
+    if (workDir.listFiles().isNotEmpty()) throw FolderNotEmptyException()
 
     val apkBuilder = IconPackApkBuilder(packageName, context, workDir)
 

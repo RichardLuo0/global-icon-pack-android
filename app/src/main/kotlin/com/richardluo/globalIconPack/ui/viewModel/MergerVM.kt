@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.pm.LauncherApps
 import android.net.Uri
 import android.os.Process
+import android.widget.Toast
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
@@ -13,6 +14,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.richardluo.globalIconPack.R
 import com.richardluo.globalIconPack.iconPack.IconPackApps
 import com.richardluo.globalIconPack.utils.IconPackCreator
 import com.richardluo.globalIconPack.utils.IconPackCreator.IconEntryWithPack
@@ -146,19 +148,25 @@ class MergerVM(app: Application) : AndroidViewModel(app) {
   suspend fun createIconPack(uri: Uri) {
     if (basePack.isEmpty()) return
     isLoading = true
-    withContext(Dispatchers.Default) {
-      IconPackCreator.createIconPack(
-        context,
-        uri,
-        newPackName,
-        newPackPackage,
-        basePack,
-        icons.mapValues { it.value.entry },
-        installedAppsOnly,
-        iconCache::getIconPack,
-      )
+    try {
+      withContext(Dispatchers.Default) {
+        IconPackCreator.createIconPack(
+          context,
+          uri,
+          newPackName,
+          newPackPackage,
+          basePack,
+          icons.mapValues { it.value.entry },
+          installedAppsOnly,
+          iconCache::getIconPack,
+        )
+      }
+      instructionDialogState.value = true
+    } catch (e: IconPackCreator.FolderNotEmptyException) {
+      Toast.makeText(context, context.getString(R.string.requiresEmptyFolder), Toast.LENGTH_LONG)
+        .show()
+    } finally {
+      isLoading = false
     }
-    instructionDialogState.value = true
-    isLoading = false
   }
 }
