@@ -37,4 +37,5 @@ aapt2 link compiled.zip -I "$androidJar" -o app.apk.unaligned --manifest Android
 aapt add app.apk.unaligned classes.dex
 zipalign -f -v -p 4 app.apk.unaligned app.apk
 apksigner sign --ks dummy.jks --ks-pass pass:123456 app.apk
-echo -e "\033[32mIcon pack has been generated and saved to $(pwd)/app.apk. Please install it manually.\033[0m"
+echo -e "\033[32mandroid.jar is saved in $androidJar. You can delete it if you want.\033[32m"
+echo -e "\033[32mNew icon pack has been generated and saved to $(pwd)/app.apk. Please install it manually.\033[0m"
