@@ -4,6 +4,7 @@ object PrefKey {
   const val MODE = "mode"
   const val ICON_PACK = "iconPack"
   const val ICON_PACK_AS_FALLBACK = "iconPackAsFallback"
+  const val SHORTCUT = "shortcut"
 
   const val ICON_FALLBACK = "iconFallback"
   const val OVERRIDE_ICON_FALLBACK = "overrideIconFallback"
@@ -19,6 +20,7 @@ object PrefDef {
   const val MODE = MODE_PROVIDER
   const val ICON_PACK = ""
   const val ICON_PACK_AS_FALLBACK = false
+  const val SHORTCUT = true
 
   const val ICON_FALLBACK = true
   const val OVERRIDE_ICON_FALLBACK = false

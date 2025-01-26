@@ -132,7 +132,7 @@ class IconVariantActivity : ComponentActivity() {
     WarnDialog(
       resetWarnDialogState,
       title = { Text(getString(R.string.restoreDefault)) },
-      content = { Text(getString(R.string.restoreDefaultWarn)) },
+      content = { Text(getString(R.string.restoreDefaultWarning)) },
     ) {
       lifecycleScope.launch { viewModel.restoreDefault() }
     }

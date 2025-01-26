@@ -187,6 +187,11 @@ class MainActivity : ComponentActivity() {
           title = { Text(stringResource(R.string.iconPackAsFallback)) },
           summary = { Text(stringResource(R.string.iconPackAsFallbackSummary)) },
         )
+        switchPreference(
+          key = PrefKey.SHORTCUT,
+          defaultValue = PrefDef.SHORTCUT,
+          title = { Text(stringResource(R.string.shortcut)) },
+        )
         item(key = "iconVariant") {
           val isProvider =
             flow.map { (it[PrefKey.MODE] ?: PrefDef.MODE) == MODE_PROVIDER }.getValue(false)

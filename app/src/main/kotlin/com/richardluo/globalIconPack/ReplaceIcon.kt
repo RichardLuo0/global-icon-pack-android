@@ -2,6 +2,7 @@ package com.richardluo.globalIconPack
 
 import android.content.pm.ActivityInfo
 import android.content.pm.ApplicationInfo
+import android.content.pm.LauncherApps
 import android.content.pm.PackageItemInfo
 import android.content.pm.ResolveInfo
 import android.graphics.drawable.Drawable
@@ -10,6 +11,8 @@ import com.richardluo.globalIconPack.iconPack.getIP
 import com.richardluo.globalIconPack.reflect.ClockDrawableWrapper
 import com.richardluo.globalIconPack.reflect.Resources.getDrawableForDensityM
 import com.richardluo.globalIconPack.utils.ReflectHelper
+import com.richardluo.globalIconPack.utils.WorldPreference
+import com.richardluo.globalIconPack.utils.asType
 import com.richardluo.globalIconPack.utils.callOriginalMethod
 import com.richardluo.globalIconPack.utils.isHighTwoByte
 import com.richardluo.globalIconPack.utils.withHighByteSet
@@ -24,7 +27,7 @@ private const val IP_DEFAULT = 0x00000000
 class ReplaceIcon : Hook {
 
   override fun onHookPixelLauncher(lpp: LoadPackageParam) {
-    // Find needed class
+    // Find needed class for clock
     ClockDrawableWrapper.initWithPixelLauncher(lpp)
   }
 
@@ -94,5 +97,17 @@ class ReplaceIcon : Hook {
         }
       }
     getDrawableForDensityM?.let { ReflectHelper.hookMethod(it, replaceIcon) }
+
+    // Generate shortcut icon
+    if (WorldPreference.getPrefInMod().getBoolean(PrefKey.SHORTCUT, PrefDef.SHORTCUT))
+      ReflectHelper.hookAllMethodsOrLog(
+        LauncherApps::class.java,
+        "getShortcutIconDrawable",
+        object : XC_MethodHook() {
+          override fun afterHookedMethod(param: MethodHookParam) {
+            param.result.asType<Drawable?>()?.let { param.result = getIP()?.genIconFrom(it) ?: it }
+          }
+        },
+      )
   }
 }
