@@ -29,7 +29,8 @@
         android:label="@string/appName"
         android:roundIcon="@mipmap/ic_launcher"
         android:supportsRtl="true"
-        android:theme="@style/Theme.Sample">
+        android:theme="@style/Theme.Sample"
+        tools:targetApi="tiramisu">
 
         <meta-data
             android:name="xposedmodule"
@@ -52,6 +53,9 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            <meta-data
+                android:name="android.app.shortcuts"
+                android:resource="@xml/shortcuts" />
         </activity>
 
         <activity
