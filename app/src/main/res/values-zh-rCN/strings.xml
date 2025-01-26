@@ -10,6 +10,7 @@
     <string name="iconPackSummary">图标包的包名。</string>
     <string name="iconPackAsFallback">使用图标包作为回退选项</string>
     <string name="iconPackAsFallbackSummary">即使类名称不匹配，仍然使用图标包。</string>
+    <string name="shortcut">生成快捷方式图标</string>
     <string name="iconVariant">图标变体</string>
     <string name="iconVariantSummary">从图标包中选择不同的变体。</string>
     <string name="mergeIconPack">合并图标包</string>
@@ -40,6 +41,7 @@
     <string name="notice">提示</string>
     <string name="search">搜索</string>
     <string name="restoreDefault">恢复默认</string>
+    <string name="restoreDefaultWarning">您确定要还原为默认图标吗？</string>
     <string name="suggestedIcons">推荐图标</string>
     <string name="allIcons">所有图标</string>
     <string name="chooseBasePack">选择基本图标包</string>
