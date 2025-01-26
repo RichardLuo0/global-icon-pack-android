@@ -52,49 +52,46 @@ class NoForceShape : Hook {
       },
     )
     // Fix FloatingIconView
-    val getScaleM: Method? =
+    val getScaleM =
       ReflectHelper.findMethodFirstMatch(
         "com.android.launcher3.icons.IconNormalizer",
         lpp,
         "getScale",
         Drawable::class.java,
         RectF::class.java,
-      )
+      ) ?: return
     val obtainM: Method? =
       ReflectHelper.findMethodFirstMatch("com.android.launcher3.icons.LauncherIcons", lpp, "obtain")
-    ReflectHelper.findClass("com.android.launcher3.views.FloatingIconView", lpp)?.let {
-      ReflectHelper.hookAllMethodsOrLog(
-        it,
-        "setIcon",
-        object : XC_MethodHook() {
-          override fun beforeHookedMethod(param: MethodHookParam) {
-            val drawable = param.args[0] as Drawable
-            if (drawable is UnmaskAdaptiveIconDrawable) {
-              // https://cs.android.com/android/platform/superproject/+/android14-qpr3-release:packages/apps/Launcher3/src/com/android/launcher3/views/FloatingIconView.java;l=441
-              val original = drawable.foreground
-              val normalizer =
-                BaseIconFactory.getNormalizer(
-                  lpp,
-                  obtainM?.call<Any>(null, AndroidAppHelper.currentApplication()),
-                )
-              getScaleM?.call<Float>(normalizer, drawable, null, null, null)?.let { scale ->
-                val blurSizeOutline = 2
-                val bounds =
-                  Rect(
-                    0,
-                    0,
-                    original.intrinsicWidth + blurSizeOutline,
-                    original.intrinsicHeight + blurSizeOutline,
-                  )
-                bounds.inset(blurSizeOutline / 2, blurSizeOutline / 2)
-                val cx: Float = bounds.exactCenterX()
-                param.args[3] = Math.round(cx + (bounds.left - cx) * scale)
-              }
-            }
+    ReflectHelper.hookAllMethodsOrLog(
+      ReflectHelper.findClass("com.android.launcher3.views.FloatingIconView", lpp) ?: return,
+      "setIcon",
+      object : XC_MethodHook() {
+        override fun beforeHookedMethod(param: MethodHookParam) {
+          val drawable = param.args[0] as Drawable
+          if (drawable is UnmaskAdaptiveIconDrawable) {
+            // https://cs.android.com/android/platform/superproject/+/android14-qpr3-release:packages/apps/Launcher3/src/com/android/launcher3/views/FloatingIconView.java;l=441
+            val original = drawable.foreground
+            val normalizer =
+              BaseIconFactory.getNormalizer(
+                lpp,
+                obtainM?.call<Any>(null, AndroidAppHelper.currentApplication()),
+              )
+            val scale = getScaleM.call<Float>(normalizer, drawable, null, null, null)
+            val blurSizeOutline = 2
+            val bounds =
+              Rect(
+                0,
+                0,
+                original.intrinsicWidth + blurSizeOutline,
+                original.intrinsicHeight + blurSizeOutline,
+              )
+            bounds.inset(blurSizeOutline / 2, blurSizeOutline / 2)
+            val cx: Float = bounds.exactCenterX()
+            param.args[3] = Math.round(cx + (bounds.left - cx) * scale)
           }
-        },
-      )
-    }
+        }
+      },
+    )
   }
 
   override fun onHookSystemUI(lpp: LoadPackageParam) {

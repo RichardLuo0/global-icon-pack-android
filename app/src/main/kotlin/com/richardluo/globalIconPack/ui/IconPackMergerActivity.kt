@@ -39,6 +39,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.ArrowForward
 import androidx.compose.material.icons.outlined.Done
+import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -80,6 +81,7 @@ import com.richardluo.globalIconPack.ui.components.LazyImage
 import com.richardluo.globalIconPack.ui.components.LazyListDialog
 import com.richardluo.globalIconPack.ui.components.LoadingDialog
 import com.richardluo.globalIconPack.ui.components.SampleTheme
+import com.richardluo.globalIconPack.ui.components.WarnDialog
 import com.richardluo.globalIconPack.ui.viewModel.MergerVM
 import com.richardluo.globalIconPack.ui.viewModel.NewAppIconInfo
 import com.richardluo.globalIconPack.utils.getValue
@@ -185,9 +187,9 @@ class IconPackMergerActivity : ComponentActivity() {
         }
       }
 
-      InfoDialog(
+      WarnDialog(
         viewModel.warningDialogState,
-        title = { Text("⚠️ ${getString(R.string.warning)}") },
+        title = { Text(getString(R.string.warning)) },
         content = { Text(getString(R.string.mergerWarning)) },
       ) {
         requestIconPackStorage.launch(Intent(Intent.ACTION_OPEN_DOCUMENT_TREE))
@@ -195,7 +197,8 @@ class IconPackMergerActivity : ComponentActivity() {
 
       InfoDialog(
         viewModel.instructionDialogState,
-        title = { Text("\uD83D\uDD14 ${getString(R.string.notice)}") },
+        icon = Icons.Outlined.Notifications,
+        title = { Text(getString(R.string.notice)) },
         content = { Text(getString(R.string.mergerInstruction)) },
       )
 

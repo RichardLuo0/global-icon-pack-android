@@ -35,6 +35,8 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -48,6 +50,7 @@ import com.richardluo.globalIconPack.ui.components.IconForApp
 import com.richardluo.globalIconPack.ui.components.LoadingDialog
 import com.richardluo.globalIconPack.ui.components.RoundSearchBar
 import com.richardluo.globalIconPack.ui.components.SampleTheme
+import com.richardluo.globalIconPack.ui.components.WarnDialog
 import com.richardluo.globalIconPack.ui.viewModel.IconVariantVM
 import com.richardluo.globalIconPack.utils.getValue
 import kotlinx.coroutines.launch
@@ -66,6 +69,7 @@ class IconVariantActivity : ComponentActivity() {
   private fun Screen() {
     val windowInsets = WindowInsets.safeDrawing
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
+    val resetWarnDialogState = remember { mutableStateOf(false) }
 
     Scaffold(
       modifier = Modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -84,7 +88,7 @@ class IconVariantActivity : ComponentActivity() {
               ) {
                 Icon(Icons.Outlined.Search, stringResource(R.string.search))
               }
-              IconButton(onClick = { lifecycleScope.launch { viewModel.restoreDefault() } }) {
+              IconButton(onClick = { resetWarnDialogState.value = true }) {
                 Icon(Icons.Outlined.Restore, stringResource(R.string.restoreDefault))
               }
             },
@@ -124,6 +128,14 @@ class IconVariantActivity : ComponentActivity() {
     SelectVariantIcon()
 
     if (viewModel.isLoading) LoadingDialog()
+
+    WarnDialog(
+      resetWarnDialogState,
+      title = { Text(getString(R.string.restoreDefault)) },
+      content = { Text(getString(R.string.restoreDefaultWarn)) },
+    ) {
+      lifecycleScope.launch { viewModel.restoreDefault() }
+    }
   }
 
   @OptIn(ExperimentalMaterial3Api::class)

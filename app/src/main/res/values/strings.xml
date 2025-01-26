@@ -46,6 +46,7 @@
     <string name="search">Search</string>
 
     <string name="restoreDefault">Restore default</string>
+    <string name="restoreDefaultWarn">Are you sure you want to restore to the default icons?</string>
     <string name="suggestedIcons">Suggested icons</string>
     <string name="allIcons">All icons</string>
 

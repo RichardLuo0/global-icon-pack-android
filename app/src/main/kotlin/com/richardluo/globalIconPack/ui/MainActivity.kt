@@ -28,6 +28,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -42,10 +43,10 @@ import com.richardluo.globalIconPack.R
 import com.richardluo.globalIconPack.iconPack.IconPackApps
 import com.richardluo.globalIconPack.ui.components.ComposableSliderPreference
 import com.richardluo.globalIconPack.ui.components.IconPackItem
-import com.richardluo.globalIconPack.ui.components.InfoDialog
 import com.richardluo.globalIconPack.ui.components.LoadingDialog
 import com.richardluo.globalIconPack.ui.components.SampleTheme
 import com.richardluo.globalIconPack.ui.components.SnackbarErrorVisuals
+import com.richardluo.globalIconPack.ui.components.WarnDialog
 import com.richardluo.globalIconPack.ui.components.mapListPreference
 import com.richardluo.globalIconPack.ui.viewModel.MainVM
 import com.richardluo.globalIconPack.utils.WorldPreference
@@ -81,8 +82,9 @@ class MainActivity : ComponentActivity() {
     setContent {
       val pref = runCatching { WorldPreference.getPrefInApp(this) }.getOrNull()
       if (pref == null) {
-        InfoDialog(
-          title = { Text("⚠️ ${getString(R.string.warning)}") },
+        WarnDialog(
+          openState = remember { mutableStateOf(true) },
+          title = { Text(getString(R.string.warning)) },
           content = { Text(getString(R.string.plzEnableModuleFirst)) },
           onCancel = { finish() },
         ) {
