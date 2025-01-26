@@ -10,6 +10,7 @@
     <string name="iconPackSummary">The package name to be used as icon pack.</string>
     <string name="iconPackAsFallback">Icon pack as fallback</string>
     <string name="iconPackAsFallbackSummary">Use icon pack even if class name does not match.</string>
+    <string name="shortcut">Generate icons for shortcuts</string>
     <string name="iconVariant">Icon variant</string>
     <string name="iconVariantSummary">Choose different variants from icon pack.</string>
     <string name="mergeIconPack">Merge icon pack</string>
@@ -40,6 +41,7 @@
     <string name="notice">Notice</string>
     <string name="search">Search</string>
     <string name="restoreDefault">Restore default</string>
+    <string name="restoreDefaultWarning">Are you sure you want to restore to the default icons?</string>
     <string name="suggestedIcons">Suggested icons</string>
     <string name="allIcons">All icons</string>
     <string name="chooseBasePack">Choose a base icon pack</string>
