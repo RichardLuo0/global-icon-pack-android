@@ -47,11 +47,16 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
@@ -95,13 +100,26 @@ class IconPackMergerActivity : ComponentActivity() {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     val pagerState = rememberPagerState(pageCount = { Page.Count.ordinal })
     val coroutineScope = rememberCoroutineScope()
+    val expandFabScrollConnection = remember {
+      object : NestedScrollConnection {
+        var isExpand by mutableStateOf(true)
+
+        override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+          if (available.y != 0f) isExpand = available.y > 1
+          return Offset.Zero
+        }
+      }
+    }
 
     BackHandler(enabled = pagerState.currentPage > 0) {
       coroutineScope.launch { pagerState.animateScrollToPage(pagerState.currentPage - 1) }
     }
 
     Scaffold(
-      modifier = Modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
+      modifier =
+        Modifier.fillMaxSize()
+          .nestedScroll(scrollBehavior.nestedScrollConnection)
+          .nestedScroll(expandFabScrollConnection),
       topBar = {
         Box {
           TopAppBar(
@@ -154,7 +172,7 @@ class IconPackMergerActivity : ComponentActivity() {
             verticalAlignment = Alignment.CenterVertically,
           ) {
             Icon(fabState.icon, fabState.text)
-            AnimatedVisibility(scrollBehavior.state.contentOffset > -12) {
+            AnimatedVisibility(expandFabScrollConnection.isExpand) {
               AnimatedContent(targetState = fabState, label = "Fab text change") {
                 Text(text = it.text, modifier = Modifier.padding(start = 8.dp))
               }
