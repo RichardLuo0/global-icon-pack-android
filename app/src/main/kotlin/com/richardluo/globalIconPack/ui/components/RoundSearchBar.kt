@@ -17,6 +17,7 @@ fun RoundSearchBar(
   state: MutableState<String>,
   placeHolder: String,
   modifier: Modifier = Modifier,
+  trailingIcon: (@Composable () -> Unit)? = null,
   leadingIcon: @Composable () -> Unit,
 ) {
   TextField(
@@ -24,6 +25,7 @@ fun RoundSearchBar(
     onValueChange = { state.value = it },
     placeholder = { Text(placeHolder) },
     leadingIcon = leadingIcon,
+    trailingIcon = trailingIcon,
     maxLines = 1,
     shape = MaterialTheme.shapes.extraLarge,
     modifier = modifier.fillMaxWidth().padding(horizontal = 12.dp),

@@ -25,14 +25,21 @@ import com.richardluo.globalIconPack.utils.debounceInput
 import com.richardluo.globalIconPack.utils.getBlob
 import com.richardluo.globalIconPack.utils.getFirstRow
 import com.richardluo.globalIconPack.utils.getInstance
+import com.richardluo.globalIconPack.utils.getString
 import kotlin.collections.set
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combineTransform
 import kotlinx.coroutines.flow.conflate
-import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.transform
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+
+interface VariantIcon
+
+class VariantPackIcon(val pack: String, val name: String) : VariantIcon
+
+class OriginalIcon : VariantIcon
 
 class IconVariantVM(app: Application) : AndroidViewModel(app) {
   private val context: Context
@@ -71,10 +78,17 @@ class IconVariantVM(app: Application) : AndroidViewModel(app) {
       }
       .conflate()
 
-  val variantIcons = flow {
-    emit(null)
-    emit(withContext(Dispatchers.IO) { baseIconPack.getDrawables() })
-  }
+  val variantPack = mutableStateOf(basePack)
+  val variantIcons =
+    snapshotFlow { variantPack.value }
+      .transform { pack ->
+        emit(null)
+        emit(
+          withContext(Dispatchers.IO) {
+            iconCache.getIconPack(pack).drawables.map { VariantPackIcon(pack, it) }
+          }
+        )
+      }
 
   var variantSheet by mutableStateOf(false)
   private val selectedApp = MutableStateFlow<ComponentName?>(null)
@@ -86,16 +100,16 @@ class IconVariantVM(app: Application) : AndroidViewModel(app) {
         snapshotFlow { variantSearchText.value }.debounceInput(),
       ) { icons, cn, text ->
         emit(null)
+        icons ?: return@combineTransform
+        cn ?: return@combineTransform
         emit(
-          mutableListOf("").apply {
+          mutableListOf<VariantIcon>(OriginalIcon()).apply {
             addAll(
               withContext(Dispatchers.Default) {
-                icons ?: return@withContext listOf()
-                cn ?: return@withContext listOf()
-                val entry = baseIconPack.getIconEntry(cn)
+                val entry = iconCache.getIconPack(variantPack.value).getIconEntry(cn)
                 if (text.isEmpty())
-                  if (entry != null) icons.filter { it.startsWith(entry.name) } else listOf()
-                else icons.filter { it.contains(text) }
+                  if (entry != null) icons.filter { it.name.startsWith(entry.name) } else listOf()
+                else icons.filter { it.name.contains(text) }
               }
             )
           }
@@ -127,18 +141,22 @@ class IconVariantVM(app: Application) : AndroidViewModel(app) {
   }
 
   private fun getUpdatedEntryWithPack(cn: ComponentName) =
-    iconPackDB
-      .getIcon(basePack, cn, iconPackAsFallback)
-      .getFirstRow { IconEntry.from(it.getBlob("entry")) }
-      ?.let { IconEntryWithPack(it, basePack) }
+    iconPackDB.getIcon(basePack, cn, iconPackAsFallback).getFirstRow {
+      val entry = IconEntry.from(it.getBlob("entry"))
+      val pack = it.getString("pack").ifEmpty { basePack }
+      IconEntryWithPack(entry, pack)
+    }
 
   suspend fun loadIcon(info: AppIconInfo) = iconCache.loadIcon(info.entry, info.app, basePack)
 
-  suspend fun loadIcon(iconName: String) =
-    if (iconName.isEmpty())
-      selectedApp.value?.packageName?.let { iconCache.loadIcon(null, it, basePack) }
-        ?: ImageBitmap(1, 1)
-    else iconCache.loadIcon(iconName, basePack)
+  suspend fun loadIconForSelectedApp(icon: VariantIcon) =
+    when (icon) {
+      is OriginalIcon ->
+        selectedApp.value?.packageName?.let { iconCache.loadIcon(null, it, basePack) }
+          ?: ImageBitmap(1, 1)
+      is VariantPackIcon -> iconCache.loadIcon(icon.name, icon.pack)
+      else -> ImageBitmap(1, 1)
+    }
 
   fun openVariantSheet(cn: ComponentName) {
     selectedApp.value = cn
@@ -155,13 +173,15 @@ class IconVariantVM(app: Application) : AndroidViewModel(app) {
     isLoading = false
   }
 
-  suspend fun replaceIcon(iconName: String) {
+  suspend fun replaceIcon(icon: VariantIcon) {
     val cn = selectedApp.value ?: return
     isLoading = true
     withContext(Dispatchers.IO) {
-      val entry = NormalIconEntry(iconName)
-      if (iconName.isEmpty()) iconPackDB.deleteIcon(basePack, cn.packageName)
-      else iconPackDB.insertOrUpdatePackageIcon(basePack, cn, entry)
+      when (icon) {
+        is OriginalIcon -> iconPackDB.deleteIcon(basePack, cn.packageName)
+        is VariantPackIcon ->
+          iconPackDB.insertOrUpdatePackageIcon(basePack, cn, NormalIconEntry(icon.name), icon.pack)
+      }
       icons[cn]?.copy(entry = getUpdatedEntryWithPack(cn))?.let { icons[cn] = it }
     }
     isLoading = false

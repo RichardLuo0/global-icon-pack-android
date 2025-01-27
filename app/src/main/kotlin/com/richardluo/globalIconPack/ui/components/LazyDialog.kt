@@ -17,17 +17,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun <T> LazyDialog(
-  openState: MutableState<Boolean> = remember { mutableStateOf(true) },
+  openState: MutableState<Boolean>,
   title: @Composable () -> Unit,
   value: T?,
   content: @Composable (T) -> Unit,
@@ -72,27 +68,28 @@ fun <T> LazyDialog(
 
 @Composable
 fun <T> LazyListDialog(
-  openState: MutableState<Boolean> = remember { mutableStateOf(true) },
+  openState: MutableState<Boolean>,
   title: @Composable () -> Unit,
   value: List<T>?,
+  key: ((item: T) -> Any)? = null,
   nothing: @Composable () -> Unit = {},
-  item: @Composable (key: T, onClick: () -> Unit) -> Unit,
+  itemContent: @Composable (item: T, dismiss: () -> Unit) -> Unit,
 ) =
   LazyDialog(openState, title, value) { list ->
     if (list.isEmpty()) nothing()
     else
       LazyColumn(modifier = Modifier.fillMaxWidth()) {
-        items(list) { key -> item(key) { openState.value = false } }
+        items(list, key) { item -> itemContent(item) { openState.value = false } }
       }
   }
 
 @Composable
 fun <T> LazyGridDialog(
-  openState: MutableState<Boolean> = remember { mutableStateOf(true) },
+  openState: MutableState<Boolean>,
   title: @Composable () -> Unit,
   value: List<T>,
   nothing: @Composable () -> Unit = {},
-  item: @Composable (key: T, onClick: () -> Unit) -> Unit,
+  itemContent: @Composable (item: T, dismiss: () -> Unit) -> Unit,
 ) =
   LazyDialog(openState, title, value) { list ->
     if (list.isEmpty()) nothing()
@@ -101,7 +98,6 @@ fun <T> LazyGridDialog(
         modifier = Modifier.padding(horizontal = 2.dp),
         columns = GridCells.Adaptive(minSize = 80.dp),
       ) {
-        var open by openState
-        items(list) { key -> item(key) { openState.value = false } }
+        items(list) { item -> itemContent(item) { openState.value = false } }
       }
   }

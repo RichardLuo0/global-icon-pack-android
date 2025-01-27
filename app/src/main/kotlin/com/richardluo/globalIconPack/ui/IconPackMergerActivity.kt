@@ -260,10 +260,10 @@ class IconPackMergerActivity : ComponentActivity() {
           modifier = Modifier.fillMaxWidth(),
         )
       },
-    ) { key, onClick ->
-      NewAppIconItem(key) {
-        viewModel.saveNewIcon(key.entry)
-        onClick()
+    ) { item, dismiss ->
+      NewAppIconItem(item) {
+        viewModel.saveNewIcon(item.entry)
+        dismiss()
       }
     }
   }

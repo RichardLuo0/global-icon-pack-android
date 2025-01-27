@@ -20,6 +20,7 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.outlined.FilterList
 import androidx.compose.material.icons.outlined.Restore
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -35,6 +36,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -45,13 +47,19 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import com.richardluo.globalIconPack.R
+import com.richardluo.globalIconPack.iconPack.IconPackApps
 import com.richardluo.globalIconPack.ui.components.AppbarSearchBar
 import com.richardluo.globalIconPack.ui.components.IconForApp
+import com.richardluo.globalIconPack.ui.components.IconPackItem
+import com.richardluo.globalIconPack.ui.components.LazyListDialog
 import com.richardluo.globalIconPack.ui.components.LoadingDialog
 import com.richardluo.globalIconPack.ui.components.RoundSearchBar
 import com.richardluo.globalIconPack.ui.components.SampleTheme
 import com.richardluo.globalIconPack.ui.components.WarnDialog
 import com.richardluo.globalIconPack.ui.viewModel.IconVariantVM
+import com.richardluo.globalIconPack.ui.viewModel.OriginalIcon
+import com.richardluo.globalIconPack.ui.viewModel.VariantIcon
+import com.richardluo.globalIconPack.ui.viewModel.VariantPackIcon
 import com.richardluo.globalIconPack.utils.getValue
 import kotlinx.coroutines.launch
 
@@ -160,9 +168,32 @@ class IconVariantActivity : ComponentActivity() {
         sheetState = sheetState,
         onDismissRequest = { viewModel.variantSheet = false },
       ) {
-        RoundSearchBar(viewModel.variantSearchText, stringResource(R.string.search)) {
-          Icon(Icons.Default.Search, contentDescription = "Search")
+        val packDialogState = remember { mutableStateOf(false) }
+        LazyListDialog(
+          packDialogState,
+          title = { Text(getString(R.string.iconPack)) },
+          value =
+            IconPackApps.getFlow(this@IconVariantActivity).collectAsState(mapOf()).value.toList(),
+          key = { it.first },
+        ) { item, dismiss ->
+          IconPackItem(item.first, item.second, viewModel.variantPack.value) {
+            viewModel.variantPack.value = item.first
+            dismiss()
+          }
         }
+
+        RoundSearchBar(
+          viewModel.variantSearchText,
+          stringResource(R.string.search),
+          trailingIcon = {
+            IconButton(onClick = { packDialogState.value = true }) {
+              Icon(Icons.Outlined.FilterList, contentDescription = "By pack")
+            }
+          },
+        ) {
+          Icon(Icons.Outlined.Search, contentDescription = "Search")
+        }
+
         val suggestIcons = viewModel.suggestVariantIcons.getValue(null)
         if (suggestIcons != null)
           if (viewModel.variantSearchText.value.isEmpty()) {
@@ -200,13 +231,17 @@ class IconVariantActivity : ComponentActivity() {
     }
   }
 
-  private fun LazyGridScope.variantIconItems(icons: List<String>) {
-    items(icons, key = { it }) { name ->
+  private fun LazyGridScope.variantIconItems(icons: List<VariantIcon>) {
+    items(icons) { icon ->
       IconForApp(
-        name.ifEmpty { stringResource(R.string.originalIcon) },
-        loadImage = { viewModel.loadIcon(name) },
+        when (icon) {
+          is OriginalIcon -> stringResource(R.string.originalIcon)
+          is VariantPackIcon -> icon.name
+          else -> ""
+        },
+        loadImage = { viewModel.loadIconForSelectedApp(icon) },
       ) {
-        lifecycleScope.launch { viewModel.replaceIcon(name) }
+        lifecycleScope.launch { viewModel.replaceIcon(icon) }
       }
     }
   }

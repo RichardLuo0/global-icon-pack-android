@@ -44,13 +44,13 @@ open class LocalIconPack(pref: SharedPreferences, pack: String, resources: Resou
   override fun getId(cn: ComponentName) =
     indexMap[cn] ?: if (iconPackAsFallback) indexMap[getComponentName(cn.packageName)] else null
 
-  @SuppressLint("DiscouragedApi")
-  fun getDrawables(): Set<String> {
+  val drawables: Set<String> by lazy {
+    @SuppressLint("DiscouragedApi")
     val parser =
       resources
         .getIdentifier("drawable", "xml", pack)
         .takeIf { 0 != it }
-        ?.let { resources.getXml(it) } ?: return setOf()
+        ?.let { resources.getXml(it) } ?: return@lazy setOf()
     val drawableList = mutableSetOf<String>()
     while (parser.next() != XmlPullParser.END_DOCUMENT) {
       if (parser.eventType != XmlPullParser.START_TAG) continue
@@ -58,7 +58,7 @@ open class LocalIconPack(pref: SharedPreferences, pack: String, resources: Resou
         "item" -> drawableList.add(parser["drawable"] ?: continue)
       }
     }
-    return drawableList
+    drawableList
   }
 }
 

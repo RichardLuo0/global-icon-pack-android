@@ -50,8 +50,8 @@ abstract class IconPack(pref: SharedPreferences, val pack: String, val resources
 
   fun getIconEntry(cn: ComponentName) = getId(cn)?.let { getIconEntry(it) }
 
-  fun getIcon(iconEntry: IconEntry, iconDpi: Int) =
-    iconEntry
+  open fun getIcon(entry: IconEntry, iconDpi: Int) =
+    entry
       .getIcon { getIcon(it, iconDpi) }
       ?.let { if (useUnClipAdaptive) IconHelper.makeAdaptive(it) else it }
 
@@ -104,7 +104,7 @@ fun getComponentName(packageName: String): ComponentName = ComponentName(package
  * UnClipAdaptiveIconDrawable does not work correctly for some apps. It maybe clipped by adaptive
  * icon mask or shows black background, but we don't know how to efficiently convert Bitmap to Path.
  */
-private val useUnClipAdaptive: Boolean by lazy {
+val useUnClipAdaptive: Boolean by lazy {
   if (!isInMod) false
   else
     when (val packageName = AndroidAppHelper.currentPackageName()) {

@@ -73,10 +73,9 @@ inline fun WarnDialog(
   InfoDialog(
     openState,
     icon = Icons.Outlined.WarningAmber,
-    iconColor = Color.Yellow,
-    title,
-    content,
-    onCancel,
-    onOk,
+    title = title,
+    content = content,
+    onCancel = onCancel,
+    onOk = onOk,
   )
 }

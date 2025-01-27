@@ -5,7 +5,6 @@ import android.content.ContentValues
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
-import android.database.sqlite.SQLiteStatement
 import com.richardluo.globalIconPack.PrefDef
 import com.richardluo.globalIconPack.PrefKey
 import com.richardluo.globalIconPack.iconPack.IconPackApps
@@ -17,7 +16,7 @@ import com.richardluo.globalIconPack.utils.log
 import kotlinx.coroutines.runBlocking
 
 class IconPackDB(private val context: Context, path: String = "iconPack.db") :
-  SQLiteOpenHelper(context.createDeviceProtectedStorageContext(), path, null, 4) {
+  SQLiteOpenHelper(context.createDeviceProtectedStorageContext(), path, null, 5) {
 
   override fun onCreate(db: SQLiteDatabase) {}
 
@@ -45,7 +44,7 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
       }
       // Create tables
       execSQL(
-        "CREATE TABLE IF NOT EXISTS '$packTable' (packageName TEXT NOT NULL, className TEXT NOT NULL, entry BLOB NOT NULL)"
+        "CREATE TABLE IF NOT EXISTS '$packTable' (packageName TEXT NOT NULL, className TEXT NOT NULL, entry BLOB NOT NULL, pack TEXT NOT NULL DEFAULT '')"
       )
       execSQL(
         "CREATE UNIQUE INDEX IF NOT EXISTS '${pack}_componentName' ON '$packTable' (packageName, className)"
@@ -71,16 +70,8 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
         val packSet = packs.joinToString(", ") { "'$it'" }
         delete("fallbacks", "pack not in ($packSet)", null)
         // Drop expired tables
-        val packTableSet = packs.joinToString(", ") { "'${pt(it)}'" }
-        rawQuery(
-            "select DISTINCT tbl_name from sqlite_master WHERE tbl_name LIKE '${pt("%")}' AND tbl_name NOT IN ($packTableSet)",
-            null,
-          )
-          .use {
-            while (it.moveToNext()) {
-              db.execSQL("DROP TABLE '${it.getString(0)}'")
-            }
-          }
+        val packTables = packs.map { pt(it) }
+        foreachPackTable { if (!packTables.contains(it)) db.execSQL("DROP TABLE '$it'") }
         setTransactionSuccessful()
       } catch (e: Exception) {
         log(e)
@@ -108,13 +99,13 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
 
   private fun getIconExact(pack: String, cn: ComponentName) =
     readableDatabase.rawQuery(
-      "SELECT entry FROM '${pt(pack)}' WHERE packageName=? and className=? LIMIT 1",
+      "SELECT entry, pack FROM '${pt(pack)}' WHERE packageName=? and className=? LIMIT 1",
       arrayOf(cn.packageName, cn.className),
     )
 
   private fun getIconFallback(pack: String, cn: ComponentName) =
     readableDatabase.rawQuery(
-      "SELECT entry FROM '${pt(pack)}' WHERE packageName=? ORDER BY " +
+      "SELECT entry, pack FROM '${pt(pack)}' WHERE packageName=? ORDER BY " +
         "CASE " +
         "  WHEN className = '${cn.className}' THEN 1 " +
         "  WHEN className = '' THEN 2 " +
@@ -131,8 +122,10 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
     pack: String,
     icons: List<Pair<ComponentName, IconEntry>>,
   ) {
-    val insertIcon: SQLiteStatement =
-      db.compileStatement("INSERT OR REPLACE INTO '${pt(pack)}' VALUES(?, ?, ?)")
+    val insertIcon =
+      db.compileStatement(
+        "INSERT OR REPLACE INTO '${pt(pack)}' (className, packageName, entry) VALUES(?, ?, ?) "
+      )
     icons.forEach { icon ->
       insertIcon.apply {
         clearBindings()
@@ -145,14 +138,23 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
     }
   }
 
-  fun insertOrUpdatePackageIcon(pack: String, cn: ComponentName, entry: IconEntry) {
+  fun insertOrUpdatePackageIcon(
+    pack: String,
+    cn: ComponentName,
+    entry: IconEntry,
+    entryPack: String,
+  ) {
     writableDatabase.apply {
       beginTransaction()
       try {
         val packTable = "'${pt(pack)}'"
+        val entryPackInTable = if (entryPack == pack) "" else entryPack
         update(
           packTable,
-          ContentValues().apply { put("entry", entry.toByteArray()) },
+          ContentValues().apply {
+            put("entry", entry.toByteArray())
+            put("pack", entryPackInTable)
+          },
           "packageName=?",
           arrayOf(cn.packageName),
         )
@@ -163,6 +165,7 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
             put("packageName", cn.packageName)
             put("className", "")
             put("entry", entry.toByteArray())
+            put("pack", entryPackInTable)
           },
           SQLiteDatabase.CONFLICT_REPLACE,
         )
@@ -173,6 +176,7 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
             put("packageName", cn.packageName)
             put("className", cn.className)
             put("entry", entry.toByteArray())
+            put("pack", entryPackInTable)
           },
           SQLiteDatabase.CONFLICT_REPLACE,
         )
@@ -200,16 +204,18 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
 
   private fun pt(pack: String) = "pack_$pack"
 
+  private fun SQLiteDatabase.foreachPackTable(block: (String) -> Unit) =
+    rawQuery("select DISTINCT tbl_name from sqlite_master WHERE tbl_name LIKE '${pt("%")}'", null)
+      .use { while (it.moveToNext()) block(it.getString(0)) }
+
   override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
     db.apply {
-      rawQuery(
-          "select DISTINCT tbl_name from sqlite_master WHERE name NOT IN ('android_metadata')",
-          null,
-        )
-        .use {
-          while (it.moveToNext()) {
-            db.execSQL("DROP TABLE '${it.getString(0)}'")
-          }
+      if (oldVersion == 4 && newVersion == 5) {
+        foreachPackTable { execSQL("ALTER TABLE '$it' ADD COLUMN pack TEXT NOT NULL DEFAULT ''") }
+      } else
+        foreachPackTable {
+          db.execSQL("DROP TABLE '$it'")
+          db.execSQL("DROP TABLE 'fallbacks'")
         }
       WorldPreference.getPrefInApp(context).getString(PrefKey.ICON_PACK, PrefDef.ICON_PACK)?.let {
         update(db, it)
