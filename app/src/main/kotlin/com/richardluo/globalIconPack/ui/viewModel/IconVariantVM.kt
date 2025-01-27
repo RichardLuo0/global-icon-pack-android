@@ -43,7 +43,7 @@ class IconVariantVM(app: Application) : AndroidViewModel(app) {
   var isLoading by mutableStateOf(false)
     private set
 
-  private val basePack =
+  val basePack =
     WorldPreference.getPrefInApp(context).getString(PrefKey.ICON_PACK, PrefDef.ICON_PACK)!!
   private val baseIconPack by lazy { iconCache.getIconPack(basePack) }
   private val iconPackAsFallback =

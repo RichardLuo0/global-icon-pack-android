@@ -60,6 +60,12 @@ class IconVariantActivity : ComponentActivity() {
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
+
+    if (viewModel.basePack.isEmpty()) {
+      finish()
+      return
+    }
+
     setContent { SampleTheme { Screen() } }
   }
 
