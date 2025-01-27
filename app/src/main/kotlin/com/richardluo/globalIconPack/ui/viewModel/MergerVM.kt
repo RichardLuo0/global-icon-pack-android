@@ -15,7 +15,6 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.richardluo.globalIconPack.R
-import com.richardluo.globalIconPack.iconPack.IconPackApps
 import com.richardluo.globalIconPack.utils.IconPackCreator
 import com.richardluo.globalIconPack.utils.IconPackCreator.IconEntryWithPack
 import com.richardluo.globalIconPack.utils.asType
@@ -28,8 +27,6 @@ import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.withContext
-
-data class NewAppIconInfo(val app: String, val packLabel: String, val entry: IconEntryWithPack?)
 
 class MergerVM(app: Application) : AndroidViewModel(app) {
   private val context: Context
@@ -67,40 +64,21 @@ class MergerVM(app: Application) : AndroidViewModel(app) {
       }
       .conflate()
 
-  private var selectedApp by mutableStateOf<ComponentName?>(null)
-  val packDialogState = mutableStateOf(false)
-  val warningDialogState = mutableStateOf(false)
-  val instructionDialogState = mutableStateOf(false)
-
-  val iconsForSelectedApp =
-    combineTransform(snapshotFlow { selectedApp }, IconPackApps.getFlow(context)) {
-      app,
-      iconPackApps ->
-      emit(null)
-      emit(
-        withContext(Dispatchers.Default) {
-          app ?: return@withContext listOf<NewAppIconInfo>()
-          iconPackApps
-            .map { (pack, packApp) ->
-              iconCache.getIconPack(pack).getIconEntry(app)?.let {
-                NewAppIconInfo(app.packageName, packApp.label, IconEntryWithPack(it, pack))
-              }
-            }
-            .filterNotNull()
-            .plus(NewAppIconInfo(app.packageName, "", null))
-        }
-      )
-    }
+  val chooseIconVM = ChooseIconVM(this::basePack, iconCache)
 
   var newPackName by mutableStateOf("Merged Icon Pack")
   var newPackPackage by mutableStateOf("com.dummy.iconPack")
   var installedAppsOnly by mutableStateOf(true)
+
+  val warningDialogState = mutableStateOf(false)
+  val instructionDialogState = mutableStateOf(false)
 
   init {
     basePackFlow
       .onEach { pack ->
         if (pack.isEmpty()) return@onEach
         isLoading = true
+        chooseIconVM.variantPack.value = pack
         icons.clear()
         withContext(Dispatchers.Default) {
           val iconPack = iconCache.getIconPack(pack)
@@ -127,8 +105,6 @@ class MergerVM(app: Application) : AndroidViewModel(app) {
       .launchIn(viewModelScope)
   }
 
-  suspend fun loadIcon(info: NewAppIconInfo) = iconCache.loadIcon(info.entry, info.app, basePack)
-
   suspend fun loadIcon(info: AppIconInfo) = iconCache.loadIcon(info.entry, info.app, basePack)
 
   fun openWarningDialog() {
@@ -136,12 +112,17 @@ class MergerVM(app: Application) : AndroidViewModel(app) {
   }
 
   fun openPackDialog(cn: ComponentName) {
-    selectedApp = cn
-    packDialogState.value = true
+    chooseIconVM.selectedApp.value = cn
+    chooseIconVM.variantSheet = true
   }
 
-  fun saveNewIcon(entry: IconEntryWithPack?) {
-    val app = selectedApp ?: return
+  fun saveNewIcon(icon: VariantIcon) {
+    val app = chooseIconVM.selectedApp.value ?: return
+    val entry =
+      when (icon) {
+        is VariantPackIcon -> IconEntryWithPack(icon.entry, icon.pack)
+        else -> null
+      }
     icons[app] = icons[app]?.copy(entry = entry) ?: return
   }
 

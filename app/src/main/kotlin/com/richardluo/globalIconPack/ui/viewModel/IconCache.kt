@@ -7,6 +7,7 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.core.graphics.drawable.toBitmap
 import com.richardluo.globalIconPack.iconPack.CopyableIconPack
+import com.richardluo.globalIconPack.iconPack.database.IconEntry
 import com.richardluo.globalIconPack.utils.IconPackCreator.IconEntryWithPack
 import com.richardluo.globalIconPack.utils.WorldPreference
 import com.richardluo.globalIconPack.utils.getOrPut
@@ -28,15 +29,7 @@ class IconCache(private val context: Application) {
   private val imageCache = LruCache<String, ImageBitmap>(4 * 1024 * 1024)
 
   suspend fun loadIcon(entry: IconEntryWithPack?, app: String, basePack: String) =
-    if (entry != null)
-      imageCache.getOrPut("${entry.pack}/${entry.entry.name}") {
-        withContext(Dispatchers.IO) {
-          (getIconPack(entry.pack).getIcon(entry.entry, 0)
-              ?: context.packageManager.getApplicationIcon(app))
-            .toSafeBitmap(300, 300)
-            .asImageBitmap()
-        }
-      }
+    if (entry != null) loadIcon(entry.entry, entry.pack)
     else
       imageCache.getOrPut("$basePack/fallback/$app") {
         withContext(Dispatchers.Default) {
@@ -47,10 +40,10 @@ class IconCache(private val context: Application) {
         }
       }
 
-  suspend fun loadIcon(drawableName: String, pack: String) =
-    imageCache.getOrPut("$pack/$drawableName") {
+  suspend fun loadIcon(entry: IconEntry, pack: String) =
+    imageCache.getOrPut("$pack/${entry.name}") {
       withContext(Dispatchers.IO) {
-        getIconPack(pack).getIcon(drawableName, 0)?.toSafeBitmap(300, 300)?.asImageBitmap()
+        getIconPack(pack).getIcon(entry, 0)?.toSafeBitmap(300, 300)?.asImageBitmap()
           ?: ImageBitmap(1, 1)
       }
     }
