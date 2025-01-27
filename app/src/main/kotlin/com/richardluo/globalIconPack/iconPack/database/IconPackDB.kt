@@ -124,7 +124,7 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
   ) {
     val insertIcon =
       db.compileStatement(
-        "INSERT OR REPLACE INTO '${pt(pack)}' (className, packageName, entry) VALUES(?, ?, ?) "
+        "INSERT OR REPLACE INTO '${pt(pack)}' (packageName, className, entry) VALUES(?, ?, ?) "
       )
     icons.forEach { icon ->
       insertIcon.apply {
