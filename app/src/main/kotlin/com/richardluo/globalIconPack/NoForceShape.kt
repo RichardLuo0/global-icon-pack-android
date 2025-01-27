@@ -17,6 +17,7 @@ import com.richardluo.globalIconPack.utils.call
 import com.richardluo.globalIconPack.utils.rGet
 import com.richardluo.globalIconPack.utils.rSet
 import de.robv.android.xposed.XC_MethodHook
+import de.robv.android.xposed.XC_MethodReplacement
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 import java.lang.reflect.Method
 
@@ -96,6 +97,17 @@ class NoForceShape : Hook {
 
   override fun onHookSystemUI(lpp: LoadPackageParam) {
     removeShadow(lpp)
+    // Remove bubble shadow
+    val removeBubbleShadow =
+      fun() {
+        if (!getPrefInMod().getBoolean(PrefKey.NO_SHADOW, PrefDef.NO_SHADOW)) return
+        ReflectHelper.hookAllMethods(
+          ReflectHelper.findClass("com.android.wm.shell.bubbles.BubbleStackView", lpp) ?: return,
+          "updateBubbleShadows",
+          XC_MethodReplacement.DO_NOTHING,
+        )
+      }
+    removeBubbleShadow()
 
     if (!getPrefInMod().getBoolean(PrefKey.NO_FORCE_SHAPE, PrefDef.NO_FORCE_SHAPE)) return
     // Fix splash screen
