@@ -104,7 +104,7 @@ internal fun loadIconPack(resources: Resources, pack: String): IconPackInfo {
     if (componentName.startsWith(compStart) && componentName.endsWith(compEnd)) {
       componentName = componentName.substring(compStartLength, componentName.length - compEndLength)
     }
-    ComponentName.unflattenFromString(componentName)?.let { cn ->
+    unflattenFromString(componentName)?.let { cn ->
       addIconEntry(cn, iconEntry)
       // Use the first icon as app icon. I don't see a better way.
       addIconEntry(getComponentName(cn.packageName), iconEntry)
@@ -163,3 +163,17 @@ private fun getAppFilter(res: Resources, pack: String) =
         }
     }
     .getOrNull { log(it) }
+
+// Fix when classname is empty
+fun unflattenFromString(str: String): ComponentName? {
+  val sep = str.indexOf('/')
+  if (sep < 0) {
+    return null
+  }
+  val pkg = str.substring(0, sep)
+  var cls = str.substring(sep + 1)
+  if (cls.isNotEmpty() && cls[0] == '.') {
+    cls = pkg + cls
+  }
+  return ComponentName(pkg, cls)
+}

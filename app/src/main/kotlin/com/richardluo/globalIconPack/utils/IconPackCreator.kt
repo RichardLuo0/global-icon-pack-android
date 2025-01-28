@@ -16,7 +16,7 @@ import java.io.OutputStream
 import java.io.OutputStreamWriter
 
 object IconPackCreator {
-  data class IconEntryWithPack(val entry: IconEntry, val pack: String)
+  data class IconEntryWithPack(val entry: IconEntry, val pack: CopyableIconPack)
 
   @OptIn(ExperimentalStdlibApi::class)
   class IconPackApkBuilder(
@@ -114,10 +114,9 @@ object IconPackCreator {
     uri: Uri,
     label: String,
     packageName: String,
-    basePack: String,
+    baseIconPack: CopyableIconPack,
     newIcons: Map<ComponentName, IconEntryWithPack?>,
     installedAppsOnly: Boolean,
-    getIconPack: (String) -> CopyableIconPack,
   ) {
     val workDir = fromTreeUri(context, uri)
     if (workDir.listFiles().isNotEmpty()) throw FolderNotEmptyException()
@@ -125,24 +124,22 @@ object IconPackCreator {
     val apkBuilder = IconPackApkBuilder(packageName, context, workDir)
 
     val appfilterXML = StringBuilder("<?xml version=\"1.0\" encoding=\"UTF-8\"?><resources>")
-    val baseIconPack = getIconPack(basePack)
     baseIconPack.copyFallbacks("icon_fallback", appfilterXML, apkBuilder)
+    var i = 0
     if (installedAppsOnly)
-      newIcons.entries.forEachIndexed { i, (cn, entry) ->
-        if (entry == null) return@forEachIndexed
-        val iconName = "icon_${i}"
-        getIconPack(entry.pack)
-          .copyIcon(entry.entry, cn.flattenToString(), iconName, appfilterXML, apkBuilder)
+      newIcons.entries.forEach { (cn, entry) ->
+        if (entry == null) return@forEach
+        val iconName = "icon_${i++}"
+        entry.pack.copyIcon(entry.entry, cn.flattenToString(), iconName, appfilterXML, apkBuilder)
       }
     else
-      baseIconPack.getAllIconEntries().forEachIndexed { i, (cn, entry) ->
-        val iconName = "icon_$i"
+      baseIconPack.getAllIconEntries().forEach { (cn, entry) ->
+        val iconName = "icon_${i++}"
         val newEntry =
-          if (newIcons.containsKey(cn))
-            if (newIcons[cn] == null) return@forEachIndexed else newIcons[cn]
+          if (newIcons.containsKey(cn)) if (newIcons[cn] == null) return@forEach else newIcons[cn]
           else null
         val finalIconEntry = newEntry?.entry ?: entry
-        val finalIconPack = newEntry?.let { getIconPack(it.pack) } ?: baseIconPack
+        val finalIconPack = newEntry?.pack ?: baseIconPack
         finalIconPack.copyIcon(
           finalIconEntry,
           cn.flattenToString(),

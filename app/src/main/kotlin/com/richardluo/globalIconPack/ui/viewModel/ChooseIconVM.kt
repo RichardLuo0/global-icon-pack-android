@@ -6,6 +6,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.graphics.ImageBitmap
+import com.richardluo.globalIconPack.iconPack.CopyableIconPack
 import com.richardluo.globalIconPack.iconPack.database.IconEntry
 import com.richardluo.globalIconPack.iconPack.database.NormalIconEntry
 import com.richardluo.globalIconPack.utils.debounceInput
@@ -18,7 +19,7 @@ import kotlinx.coroutines.withContext
 
 interface VariantIcon
 
-class VariantPackIcon(val pack: String, val entry: IconEntry) : VariantIcon
+class VariantPackIcon(val pack: CopyableIconPack, val entry: IconEntry) : VariantIcon
 
 class OriginalIcon : VariantIcon
 
@@ -31,7 +32,8 @@ class ChooseIconVM(private val getBasePack: () -> String, private val iconCache:
         emit(null)
         emit(
           withContext(Dispatchers.IO) {
-            iconCache.getIconPack(pack).drawables.map { VariantPackIcon(pack, NormalIconEntry(it)) }
+            val iconPack = iconCache.getIconPack(pack)
+            iconPack.drawables.map { VariantPackIcon(iconPack, NormalIconEntry(it)) }
           }
         )
       }

@@ -7,6 +7,7 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.core.graphics.drawable.toBitmap
 import com.richardluo.globalIconPack.iconPack.CopyableIconPack
+import com.richardluo.globalIconPack.iconPack.IconPack
 import com.richardluo.globalIconPack.iconPack.database.IconEntry
 import com.richardluo.globalIconPack.utils.IconPackCreator.IconEntryWithPack
 import com.richardluo.globalIconPack.utils.WorldPreference
@@ -40,11 +41,10 @@ class IconCache(private val context: Application) {
         }
       }
 
-  suspend fun loadIcon(entry: IconEntry, pack: String) =
+  suspend fun loadIcon(entry: IconEntry, pack: IconPack) =
     imageCache.getOrPut("$pack/${entry.name}") {
       withContext(Dispatchers.IO) {
-        getIconPack(pack).getIcon(entry, 0)?.toSafeBitmap(300, 300)?.asImageBitmap()
-          ?: ImageBitmap(1, 1)
+        pack.getIcon(entry, 0)?.toSafeBitmap(300, 300)?.asImageBitmap() ?: ImageBitmap(1, 1)
       }
     }
 

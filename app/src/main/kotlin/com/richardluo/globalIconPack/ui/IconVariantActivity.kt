@@ -17,19 +17,24 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.outlined.FilterList
+import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.Restore
 import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -40,6 +45,7 @@ import androidx.lifecycle.lifecycleScope
 import com.richardluo.globalIconPack.R
 import com.richardluo.globalIconPack.ui.components.AppbarSearchBar
 import com.richardluo.globalIconPack.ui.components.ChooseIconSheet
+import com.richardluo.globalIconPack.ui.components.IconButtonWithTooltip
 import com.richardluo.globalIconPack.ui.components.IconForApp
 import com.richardluo.globalIconPack.ui.components.LoadingDialog
 import com.richardluo.globalIconPack.ui.components.SampleTheme
@@ -76,19 +82,46 @@ class IconVariantActivity : ComponentActivity() {
         Box {
           TopAppBar(
             navigationIcon = {
-              IconButton(onClick = { finish() }) {
-                Icon(Icons.AutoMirrored.Outlined.ArrowBack, "Back")
-              }
+              IconButtonWithTooltip(Icons.AutoMirrored.Outlined.ArrowBack, "Back") { finish() }
             },
             title = { Text(stringResource(R.string.iconVariant)) },
             actions = {
-              IconButton(
-                onClick = { lifecycleScope.launch { viewModel.expandSearchBar.value = true } }
-              ) {
-                Icon(Icons.Outlined.Search, stringResource(R.string.search))
+              IconButtonWithTooltip(Icons.Outlined.Search, stringResource(R.string.search)) {
+                lifecycleScope.launch { viewModel.expandSearchBar.value = true }
               }
-              IconButton(onClick = { resetWarnDialogState.value = true }) {
-                Icon(Icons.Outlined.Restore, stringResource(R.string.restoreDefault))
+              var expanded by remember { mutableStateOf(false) }
+              IconButtonWithTooltip(Icons.Outlined.MoreVert, stringResource(R.string.moreOptions)) {
+                expanded = true
+              }
+              DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                viewModel.filterAppsVM.systemOnly.let {
+                  DropdownMenuItem(
+                    leadingIcon = {
+                      Icon(Icons.Outlined.FilterList, stringResource(R.string.restoreDefault))
+                    },
+                    text = {
+                      Text(
+                        stringResource(
+                          if (it.value) R.string.showUserApp else R.string.showSystemApp
+                        )
+                      )
+                    },
+                    onClick = {
+                      it.value = !it.value
+                      expanded = false
+                    },
+                  )
+                }
+                DropdownMenuItem(
+                  leadingIcon = {
+                    Icon(Icons.Outlined.Restore, stringResource(R.string.restoreDefault))
+                  },
+                  text = { Text(stringResource(R.string.restoreDefault)) },
+                  onClick = {
+                    resetWarnDialogState.value = true
+                    expanded = false
+                  },
+                )
               }
             },
             modifier = Modifier.fillMaxWidth(),
@@ -96,12 +129,12 @@ class IconVariantActivity : ComponentActivity() {
             scrollBehavior = scrollBehavior,
           )
 
-          AppbarSearchBar(viewModel.expandSearchBar, viewModel.searchText)
+          AppbarSearchBar(viewModel.expandSearchBar, viewModel.filterAppsVM.searchText)
         }
       },
       contentWindowInsets = windowInsets,
     ) { contentPadding ->
-      val icons = viewModel.filteredIcons.getValue(null)
+      val icons = viewModel.filterAppsVM.filteredApps.getValue(null)
       if (icons != null)
         LazyVerticalGrid(
           contentPadding = contentPadding,

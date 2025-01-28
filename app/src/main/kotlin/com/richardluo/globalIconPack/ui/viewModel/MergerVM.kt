@@ -3,9 +3,7 @@ package com.richardluo.globalIconPack.ui.viewModel
 import android.app.Application
 import android.content.ComponentName
 import android.content.Context
-import android.content.pm.LauncherApps
 import android.net.Uri
-import android.os.Process
 import android.widget.Toast
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
@@ -17,13 +15,9 @@ import androidx.lifecycle.viewModelScope
 import com.richardluo.globalIconPack.R
 import com.richardluo.globalIconPack.utils.IconPackCreator
 import com.richardluo.globalIconPack.utils.IconPackCreator.IconEntryWithPack
-import com.richardluo.globalIconPack.utils.asType
-import com.richardluo.globalIconPack.utils.debounceInput
 import com.richardluo.globalIconPack.utils.getInstance
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.combineTransform
-import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.withContext
@@ -46,24 +40,8 @@ class MergerVM(app: Application) : AndroidViewModel(app) {
   val icons = mutableStateMapOf<ComponentName, AppIconInfo>()
 
   val expandSearchBar = mutableStateOf(false)
-  val searchText = mutableStateOf("")
-  val filteredIcons =
-    combineTransform(
-        snapshotFlow { icons.toMap() },
-        snapshotFlow { searchText.value }.debounceInput(),
-      ) { icons, text ->
-        if (text.isEmpty()) emit(icons)
-        else {
-          emit(null)
-          emit(
-            withContext(Dispatchers.Default) {
-              icons.filter { (_, value) -> value.label.contains(text, ignoreCase = true) }
-            }
-          )
-        }
-      }
-      .conflate()
 
+  val filterAppsVM = FilterAppsVM(snapshotFlow { icons.toMap() })
   val chooseIconVM = ChooseIconVM(this::basePack, iconCache)
 
   var newPackName by mutableStateOf("Merged Icon Pack")
@@ -83,21 +61,9 @@ class MergerVM(app: Application) : AndroidViewModel(app) {
         withContext(Dispatchers.Default) {
           val iconPack = iconCache.getIconPack(pack)
           icons.putAll(
-            context
-              .getSystemService(Context.LAUNCHER_APPS_SERVICE)
-              .asType<LauncherApps>()
-              .getActivityList(null, Process.myUserHandle())
-              .associate { info ->
-                val cn = info.componentName
-                Pair(
-                  cn,
-                  AppIconInfo(
-                    cn.packageName,
-                    info.label.toString(),
-                    iconPack.getIconEntry(cn)?.let { IconEntryWithPack(it, pack) },
-                  ),
-                )
-              }
+            filterAppsVM.loadApps(context) { cn ->
+              iconPack.getIconEntry(cn)?.let { IconEntryWithPack(it, iconPack) }
+            }
           )
         }
         isLoading = false
@@ -136,10 +102,9 @@ class MergerVM(app: Application) : AndroidViewModel(app) {
           uri,
           newPackName,
           newPackPackage,
-          basePack,
+          iconCache.getIconPack(basePack),
           icons.mapValues { it.value.entry },
           installedAppsOnly,
-          iconCache::getIconPack,
         )
       }
       instructionDialogState.value = true

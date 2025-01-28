@@ -12,8 +12,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -50,13 +48,9 @@ fun BoxScope.AppbarSearchBar(
       }
       val focusRequester = remember { FocusRequester() }
       RoundSearchBar(searchText, placeHolder, modifier = Modifier.focusRequester(focusRequester)) {
-        IconButton(
-          onClick = {
-            expandSearchBar.value = false
-            searchText.value = ""
-          }
-        ) {
-          Icon(Icons.AutoMirrored.Outlined.ArrowBack, contentDescription = "Back")
+        IconButtonWithTooltip(Icons.AutoMirrored.Outlined.ArrowBack, "Back") {
+          expandSearchBar.value = false
+          searchText.value = ""
         }
       }
       LaunchedEffect(expandSearchBar.value) {

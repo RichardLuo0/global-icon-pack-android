@@ -19,15 +19,12 @@ import com.richardluo.globalIconPack.iconPack.database.IconPackDB
 import com.richardluo.globalIconPack.utils.IconPackCreator.IconEntryWithPack
 import com.richardluo.globalIconPack.utils.WorldPreference
 import com.richardluo.globalIconPack.utils.asType
-import com.richardluo.globalIconPack.utils.debounceInput
 import com.richardluo.globalIconPack.utils.getBlob
 import com.richardluo.globalIconPack.utils.getFirstRow
 import com.richardluo.globalIconPack.utils.getInstance
 import com.richardluo.globalIconPack.utils.getString
 import kotlin.collections.set
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.combineTransform
-import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -49,24 +46,8 @@ class IconVariantVM(app: Application) : AndroidViewModel(app) {
     private set
 
   val expandSearchBar = mutableStateOf(false)
-  val searchText = mutableStateOf("")
-  val filteredIcons =
-    combineTransform(
-        snapshotFlow { icons.toMap() },
-        snapshotFlow { searchText.value }.debounceInput(),
-      ) { icons, text ->
-        if (text.isEmpty()) emit(icons)
-        else {
-          emit(null)
-          emit(
-            withContext(Dispatchers.Default) {
-              icons.filter { (_, value) -> value.label.contains(text, ignoreCase = true) }
-            }
-          )
-        }
-      }
-      .conflate()
 
+  val filterAppsVM = FilterAppsVM(snapshotFlow { icons.toMap() })
   val chooseIconVM = ChooseIconVM(this::basePack, iconCache)
 
   init {
@@ -85,9 +66,9 @@ class IconVariantVM(app: Application) : AndroidViewModel(app) {
         .forEach { info ->
           val cn = info.componentName
           newIcons[cn] =
-            AppIconInfo(cn.packageName, info.label.toString(), getUpdatedEntryWithPack(cn))
+            AppIconInfo(cn.packageName, info.label.toString(), false, getUpdatedEntryWithPack(cn))
         }
-      icons.putAll(newIcons)
+      icons.putAll(filterAppsVM.loadApps(context, ::getUpdatedEntryWithPack))
     }
     isLoading = false
   }
@@ -96,7 +77,7 @@ class IconVariantVM(app: Application) : AndroidViewModel(app) {
     iconPackDB.getIcon(basePack, cn, iconPackAsFallback).getFirstRow {
       val entry = IconEntry.from(it.getBlob("entry"))
       val pack = it.getString("pack").ifEmpty { basePack }
-      IconEntryWithPack(entry, pack)
+      IconEntryWithPack(entry, iconCache.getIconPack(pack))
     }
 
   suspend fun loadIcon(info: AppIconInfo) = iconCache.loadIcon(info.entry, info.app, basePack)
@@ -123,7 +104,7 @@ class IconVariantVM(app: Application) : AndroidViewModel(app) {
       when (icon) {
         is OriginalIcon -> iconPackDB.deleteIcon(basePack, cn.packageName)
         is VariantPackIcon ->
-          iconPackDB.insertOrUpdatePackageIcon(basePack, cn, icon.entry, icon.pack)
+          iconPackDB.insertOrUpdatePackageIcon(basePack, cn, icon.entry, icon.pack.pack)
       }
       icons[cn]?.copy(entry = getUpdatedEntryWithPack(cn))?.let { icons[cn] = it }
     }

@@ -31,13 +31,13 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.ArrowForward
 import androidx.compose.material.icons.outlined.Done
+import androidx.compose.material.icons.outlined.FilterList
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -66,6 +66,7 @@ import com.richardluo.globalIconPack.R
 import com.richardluo.globalIconPack.iconPack.IconPackApps
 import com.richardluo.globalIconPack.ui.components.AppbarSearchBar
 import com.richardluo.globalIconPack.ui.components.ChooseIconSheet
+import com.richardluo.globalIconPack.ui.components.IconButtonWithTooltip
 import com.richardluo.globalIconPack.ui.components.IconForApp
 import com.richardluo.globalIconPack.ui.components.IconPackItem
 import com.richardluo.globalIconPack.ui.components.InfoDialog
@@ -124,9 +125,7 @@ class IconPackMergerActivity : ComponentActivity() {
         Box {
           TopAppBar(
             navigationIcon = {
-              IconButton(onClick = { finish() }) {
-                Icon(Icons.AutoMirrored.Outlined.ArrowBack, "Back")
-              }
+              IconButtonWithTooltip(Icons.AutoMirrored.Outlined.ArrowBack, "Back") { finish() }
             },
             title = {
               AnimatedContent(targetState = pagerState.currentPage, label = "Title text change") {
@@ -138,10 +137,19 @@ class IconPackMergerActivity : ComponentActivity() {
               }
             },
             actions = {
-              if (pagerState.currentPage == Page.IconList.ordinal)
-                IconButton(onClick = { viewModel.expandSearchBar.value = true }) {
-                  Icon(Icons.Outlined.Search, stringResource(R.string.search))
+              if (pagerState.currentPage == Page.IconList.ordinal) {
+                IconButtonWithTooltip(Icons.Outlined.Search, stringResource(R.string.search)) {
+                  viewModel.expandSearchBar.value = true
                 }
+                viewModel.filterAppsVM.systemOnly.let {
+                  IconButtonWithTooltip(
+                    Icons.Outlined.FilterList,
+                    stringResource(if (it.value) R.string.showUserApp else R.string.showSystemApp),
+                  ) {
+                    it.value = !it.value
+                  }
+                }
+              }
             },
             modifier = Modifier.fillMaxWidth(),
             windowInsets = windowInsets.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top),
@@ -149,7 +157,7 @@ class IconPackMergerActivity : ComponentActivity() {
           )
 
           if (pagerState.currentPage == Page.IconList.ordinal)
-            AppbarSearchBar(viewModel.expandSearchBar, viewModel.searchText)
+            AppbarSearchBar(viewModel.expandSearchBar, viewModel.filterAppsVM.searchText)
         }
       },
       contentWindowInsets = windowInsets,
@@ -233,7 +241,7 @@ class IconPackMergerActivity : ComponentActivity() {
 
   @Composable
   private fun IconList() {
-    val icons = viewModel.filteredIcons.getValue(null)
+    val icons = viewModel.filterAppsVM.filteredApps.getValue(null)
     if (icons != null)
       LazyVerticalGrid(
         modifier = Modifier.fillMaxSize().padding(horizontal = 2.dp),

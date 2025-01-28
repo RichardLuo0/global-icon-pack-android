@@ -14,7 +14,6 @@ import androidx.compose.material.icons.outlined.FilterList
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
@@ -74,8 +73,8 @@ fun ChooseIconSheet(viewModel: ChooseIconVM, replaceIcon: (VariantIcon) -> Unit)
         viewModel.variantSearchText,
         stringResource(R.string.search),
         trailingIcon = {
-          IconButton(onClick = { packDialogState.value = true }) {
-            Icon(Icons.Outlined.FilterList, contentDescription = "By pack")
+          IconButtonWithTooltip(Icons.Outlined.FilterList, "By pack") {
+            packDialogState.value = true
           }
         },
       ) {

@@ -3,11 +3,9 @@ package com.richardluo.globalIconPack.ui
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -20,6 +18,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import com.richardluo.globalIconPack.R
+import com.richardluo.globalIconPack.ui.components.IconButtonWithTooltip
 import com.richardluo.globalIconPack.ui.components.SnackbarErrorVisuals
 import com.richardluo.globalIconPack.utils.log
 import com.topjohnwu.superuser.Shell
@@ -62,8 +61,8 @@ fun MainDropdownMenu(snackbarState: SnackbarHostState) {
     }
   }
 
-  IconButton(onClick = { expanded = !expanded }) {
-    Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.moreOptions))
+  IconButtonWithTooltip(Icons.Outlined.MoreVert, stringResource(R.string.moreOptions)) {
+    expanded = !expanded
   }
   DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
     DropdownMenuItem(
