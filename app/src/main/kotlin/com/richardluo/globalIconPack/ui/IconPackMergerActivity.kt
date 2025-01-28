@@ -105,7 +105,7 @@ class IconPackMergerActivity : ComponentActivity() {
         var isExpand by mutableStateOf(true)
 
         override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-          if (available.y != 0f) isExpand = available.y > 1
+          if (available.y > 1) isExpand = true else if (available.y < -1) isExpand = false
           return Offset.Zero
         }
       }
