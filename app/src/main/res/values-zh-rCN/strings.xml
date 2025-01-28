@@ -44,6 +44,8 @@
     <string name="restoreDefaultWarning">您确定要还原为默认图标吗？</string>
     <string name="suggestedIcons">推荐图标</string>
     <string name="allIcons">所有图标</string>
+    <string name="showUserApp">显示用户应用</string>
+    <string name="showSystemApp">显示系统应用</string>
     <string name="chooseBasePack">选择基本图标包</string>
     <string name="chooseIconToReplace">选择要替换的图标</string>
     <string name="chooseNewIcon">选择一个新图标</string>
