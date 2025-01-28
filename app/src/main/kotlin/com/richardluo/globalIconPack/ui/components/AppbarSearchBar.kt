@@ -44,7 +44,10 @@ fun BoxScope.AppbarSearchBar(
       label = "Expand search bar",
       modifier = Modifier.align(Alignment.Center),
     ) {
-      BackHandler { expandSearchBar.value = false }
+      BackHandler {
+        expandSearchBar.value = false
+        searchText.value = ""
+      }
       val focusRequester = remember { FocusRequester() }
       RoundSearchBar(searchText, placeHolder, modifier = Modifier.focusRequester(focusRequester)) {
         IconButton(
