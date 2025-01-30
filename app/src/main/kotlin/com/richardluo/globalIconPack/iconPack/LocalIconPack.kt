@@ -14,8 +14,10 @@ import com.richardluo.globalIconPack.iconPack.database.ClockMetadata
 import com.richardluo.globalIconPack.iconPack.database.FallbackSettings
 import com.richardluo.globalIconPack.iconPack.database.IconEntry
 import com.richardluo.globalIconPack.iconPack.database.NormalIconEntry
+import com.richardluo.globalIconPack.reflect.Resources.getDrawableForDensity
 import com.richardluo.globalIconPack.utils.get
 import com.richardluo.globalIconPack.utils.getOrNull
+import com.richardluo.globalIconPack.utils.isInMod
 import com.richardluo.globalIconPack.utils.log
 import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserFactory
@@ -24,6 +26,8 @@ open class LocalIconPack(pref: SharedPreferences, pack: String, resources: Resou
   IconPack(pref, pack, resources) {
   protected val indexMap = mutableMapOf<ComponentName, Int>()
   protected val iconEntryList = mutableListOf<IconEntry>()
+
+  private val idCache = mutableMapOf<String, Int>()
 
   init {
     loadIconPack(resources, pack).let { info ->
@@ -39,10 +43,25 @@ open class LocalIconPack(pref: SharedPreferences, pack: String, resources: Resou
     }
   }
 
-  override fun getIconEntry(id: Int): IconEntry? = iconEntryList.getOrNull(id)
-
   override fun getId(cn: ComponentName) =
     indexMap[cn] ?: if (iconPackAsFallback) indexMap[getComponentName(cn.packageName)] else null
+
+  override fun getIconEntry(id: Int): IconEntry? = iconEntryList.getOrNull(id)
+
+  override fun getIconNotAdaptive(entry: IconEntry, iconDpi: Int) =
+    entry.getIcon { getIcon(it, iconDpi) }
+
+  override fun getIcon(name: String, iconDpi: Int) =
+    getDrawableId(name)
+      .takeIf { it != 0 }
+      ?.let {
+        if (isInMod) getDrawableForDensity(resources, it, iconDpi, null)
+        else resources.getDrawableForDensity(it, iconDpi, null)
+      }
+
+  @SuppressLint("DiscouragedApi")
+  protected fun getDrawableId(name: String) =
+    idCache.getOrPut(name) { resources.getIdentifier(name, "drawable", pack) }
 
   val drawables: Set<String> by lazy {
     @SuppressLint("DiscouragedApi")

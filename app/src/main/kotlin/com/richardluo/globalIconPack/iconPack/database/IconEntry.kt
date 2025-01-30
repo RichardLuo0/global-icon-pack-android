@@ -13,12 +13,12 @@ abstract class IconEntry(val name: String) : Serializable {
 
   abstract fun getIcon(getIcon: (String) -> Drawable?): Drawable?
 
-  abstract fun copyTo(
+  open fun copyTo(
     component: String,
     newName: String,
     xml: StringBuilder,
     copyRes: (String, String) -> Unit,
-  )
+  ) {}
 
   fun toByteArray(): ByteArray =
     ByteArrayOutputStream().also { ObjectOutputStream(it).writeObject(this) }.toByteArray()

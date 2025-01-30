@@ -1,6 +1,5 @@
 package com.richardluo.globalIconPack.iconPack
 
-import android.annotation.SuppressLint
 import android.app.AndroidAppHelper
 import android.content.ComponentName
 import android.content.Intent
@@ -16,7 +15,6 @@ import com.richardluo.globalIconPack.PrefDef
 import com.richardluo.globalIconPack.PrefKey
 import com.richardluo.globalIconPack.iconPack.database.FallbackSettings
 import com.richardluo.globalIconPack.iconPack.database.IconEntry
-import com.richardluo.globalIconPack.reflect.Resources.getDrawableForDensity
 import com.richardluo.globalIconPack.utils.IconHelper
 import com.richardluo.globalIconPack.utils.isInMod
 
@@ -44,32 +42,22 @@ abstract class IconPack(pref: SharedPreferences, val pack: String, val resources
       )
   }
 
-  abstract fun getIconEntry(id: Int): IconEntry?
-
   abstract fun getId(cn: ComponentName): Int?
+
+  abstract fun getIconEntry(id: Int): IconEntry?
 
   fun getIconEntry(cn: ComponentName) = getId(cn)?.let { getIconEntry(it) }
 
-  open fun getIcon(entry: IconEntry, iconDpi: Int) =
-    entry
-      .getIcon { getIcon(it, iconDpi) }
-      ?.let { if (useUnClipAdaptive) IconHelper.makeAdaptive(it) else it }
+  protected abstract fun getIconNotAdaptive(entry: IconEntry, iconDpi: Int): Drawable?
 
-  fun getIcon(id: Int, iconDpi: Int): Drawable? = getIconEntry(id)?.let { getIcon(it, iconDpi) }
+  fun getIcon(entry: IconEntry, iconDpi: Int) =
+    getIconNotAdaptive(entry, iconDpi)?.let {
+      if (useUnClipAdaptive) IconHelper.makeAdaptive(it) else it
+    }
 
-  fun getIcon(resName: String, iconDpi: Int = 0) =
-    getDrawableId(resName)
-      .takeIf { it != 0 }
-      ?.let {
-        if (isInMod) getDrawableForDensity(resources, it, iconDpi, null)
-        else resources.getDrawableForDensity(it, iconDpi, null)
-      }
+  fun getIcon(id: Int, iconDpi: Int) = getIconEntry(id)?.let { getIcon(it, iconDpi) }
 
-  private val idCache = mutableMapOf<String, Int>()
-
-  @SuppressLint("DiscouragedApi")
-  protected fun getDrawableId(name: String) =
-    idCache.getOrPut(name) { resources.getIdentifier(name, "drawable", pack) }
+  abstract fun getIcon(name: String, iconDpi: Int = 0): Drawable?
 
   fun genIconFrom(baseIcon: Drawable) =
     iconFallback?.run {
@@ -104,7 +92,7 @@ fun getComponentName(packageName: String): ComponentName = ComponentName(package
  * UnClipAdaptiveIconDrawable does not work correctly for some apps. It maybe clipped by adaptive
  * icon mask or shows black background, but we don't know how to efficiently convert Bitmap to Path.
  */
-val useUnClipAdaptive: Boolean by lazy {
+private val useUnClipAdaptive: Boolean by lazy {
   if (!isInMod) false
   else
     when (val packageName = AndroidAppHelper.currentPackageName()) {
