@@ -32,7 +32,7 @@ This module is designed to extend the customization of icon packs throughout the
 
 * Recent screen will use your default launcher unless you use quickswitch. So you will need to select pixel launcher for that to work.
 * Pixel launcher saves its icon database in `/data/data/com.google.android.apps.nexuslauncher/databases/app_icons.db`.
-* In icon variant, the option `Modified` indicates that you have made changes to the icon variants. If enabled, when the icon pack updates, it will only add new icons instead of modifying existing ones. Note that this could cause issues if any icon entry is missing in the new version!
+* In icon variant, the option `Modified` indicates that you have made changes to the icon variants. If enabled, when the icon pack updates, it will only add new icons instead of replacing all icons. Note that this could cause issues if any icon entry is missing in the new version!
 
 ## Known Issues
 * If the launcher is slow to boot or crashes, switch to 'local' mode.
