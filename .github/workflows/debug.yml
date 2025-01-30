@@ -3,8 +3,9 @@ name: Debug CI
 on:
   push:
     branches: [ "master" ]
-    paths-ignore:
-      - version.properties
+    paths:
+      - "**.kt"
+      - "**.xml"
   workflow_dispatch:
 
 jobs:
