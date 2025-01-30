@@ -72,6 +72,7 @@ fun ChooseIconSheet(viewModel: ChooseIconVM, replaceIcon: (VariantIcon) -> Unit)
       RoundSearchBar(
         viewModel.variantSearchText,
         stringResource(R.string.search),
+        modifier = Modifier.padding(bottom = 8.dp),
         trailingIcon = {
           IconButtonWithTooltip(Icons.Outlined.FilterList, "By pack") {
             packDialogState.value = true
