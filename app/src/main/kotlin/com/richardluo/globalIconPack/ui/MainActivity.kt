@@ -192,6 +192,17 @@ class MainActivity : ComponentActivity() {
           defaultValue = PrefDef.SHORTCUT,
           title = { Text(stringResource(R.string.shortcut)) },
         )
+        preference(
+          key = "openMerger",
+          onClick = { context.startActivity(Intent(context, IconPackMergerActivity::class.java)) },
+          title = { Text(stringResource(R.string.mergeIconPack)) },
+          summary = { Text(stringResource(R.string.mergeIconPackSummary)) },
+        )
+
+        preferenceCategory(
+          key = "iconPackSettings",
+          title = { Text(stringResource(R.string.iconPackSettings)) },
+        )
         item(key = "iconVariant") {
           val isProvider =
             flow.map { (it[PrefKey.MODE] ?: PrefDef.MODE) == MODE_PROVIDER }.getValue(false)
@@ -204,17 +215,6 @@ class MainActivity : ComponentActivity() {
             summary = { Text(stringResource(R.string.iconVariantSummary)) },
           )
         }
-        preference(
-          key = "openMerger",
-          onClick = { context.startActivity(Intent(context, IconPackMergerActivity::class.java)) },
-          title = { Text(stringResource(R.string.mergeIconPack)) },
-          summary = { Text(stringResource(R.string.mergeIconPackSummary)) },
-        )
-
-        preferenceCategory(
-          key = "iconPackSettings",
-          title = { Text(stringResource(R.string.iconPackSettings)) },
-        )
         switchPreference(
           key = PrefKey.ICON_FALLBACK,
           defaultValue = PrefDef.ICON_FALLBACK,
