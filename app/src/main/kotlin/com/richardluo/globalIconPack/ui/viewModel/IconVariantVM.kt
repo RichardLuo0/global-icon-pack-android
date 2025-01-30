@@ -25,6 +25,10 @@ import com.richardluo.globalIconPack.utils.getInstance
 import com.richardluo.globalIconPack.utils.getString
 import kotlin.collections.set
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -42,12 +46,19 @@ class IconVariantVM(app: Application) : AndroidViewModel(app) {
   private val iconPackAsFallback =
     WorldPreference.getPrefInApp(context)
       .getBoolean(PrefKey.ICON_PACK_AS_FALLBACK, PrefDef.ICON_PACK_AS_FALLBACK)
-  var icons = mutableStateMapOf<ComponentName, AppIconInfo>()
-    private set
+  val icons = mutableStateMapOf<ComponentName, AppIconInfo>()
+  private val iconsFlow = snapshotFlow { icons.toMap() }
+
+  private val modifiedChangeFlow = MutableSharedFlow<Boolean>(1).apply { tryEmit(false) }
+  val modified =
+    combine(iconsFlow, modifiedChangeFlow) { _, _ ->
+        return@combine withContext(Dispatchers.IO) { iconPackDB.isPackModified(basePack) }
+      }
+      .stateIn(viewModelScope, SharingStarted.Lazily, false)
 
   val expandSearchBar = mutableStateOf(false)
 
-  val filterAppsVM = FilterAppsVM(snapshotFlow { icons.toMap() })
+  val filterAppsVM = FilterAppsVM(iconsFlow)
   val chooseIconVM = ChooseIconVM(this::basePack, iconCache)
 
   init {
@@ -95,6 +106,12 @@ class IconVariantVM(app: Application) : AndroidViewModel(app) {
       loadIcons()
     }
     isLoading = false
+  }
+
+  suspend fun flipModified() {
+    if (basePack.isEmpty()) return
+    withContext(Dispatchers.IO) { iconPackDB.setPackModified(basePack, !modified.value) }
+    modifiedChangeFlow.emit(true)
   }
 
   suspend fun replaceIcon(icon: VariantIcon) {

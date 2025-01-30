@@ -52,6 +52,7 @@
     <string name="allIcons">All icons</string>
     <string name="showUserApp">Show user app</string>
     <string name="showSystemApp">Show system app</string>
+    <string name="modified">Modified</string>
 
     <string name="chooseBasePack">Choose a base icon pack</string>
     <string name="chooseIconToReplace">Choose the icon to replace</string>

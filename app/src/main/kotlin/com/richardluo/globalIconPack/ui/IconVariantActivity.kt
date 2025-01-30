@@ -21,6 +21,7 @@ import androidx.compose.material.icons.outlined.FilterList
 import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.Restore
 import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -119,6 +120,14 @@ class IconVariantActivity : ComponentActivity() {
                   text = { Text(stringResource(R.string.restoreDefault)) },
                   onClick = {
                     resetWarnDialogState.value = true
+                    expanded = false
+                  },
+                )
+                DropdownMenuItem(
+                  leadingIcon = { Checkbox(viewModel.modified.getValue(), onCheckedChange = null) },
+                  text = { Text(stringResource(R.string.modified)) },
+                  onClick = {
+                    lifecycleScope.launch { viewModel.flipModified() }
                     expanded = false
                   },
                 )

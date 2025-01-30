@@ -11,12 +11,13 @@ import com.richardluo.globalIconPack.iconPack.IconPackApps
 import com.richardluo.globalIconPack.iconPack.loadIconPack
 import com.richardluo.globalIconPack.utils.WorldPreference
 import com.richardluo.globalIconPack.utils.getFirstRow
+import com.richardluo.globalIconPack.utils.getInt
 import com.richardluo.globalIconPack.utils.getLong
 import com.richardluo.globalIconPack.utils.log
 import kotlinx.coroutines.runBlocking
 
 class IconPackDB(private val context: Context, path: String = "iconPack.db") :
-  SQLiteOpenHelper(context.createDeviceProtectedStorageContext(), path, null, 5) {
+  SQLiteOpenHelper(context.createDeviceProtectedStorageContext(), path, null, 6) {
 
   override fun onCreate(db: SQLiteDatabase) {}
 
@@ -31,17 +32,19 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
     }
     db.apply {
       execSQL(
-        "CREATE TABLE IF NOT EXISTS 'fallbacks' (pack TEXT PRIMARY KEY NOT NULL, fallback BLOB NOT NULL, updateAt NUMERIC NOT NULL)"
+        "CREATE TABLE IF NOT EXISTS 'fallbacks' (pack TEXT PRIMARY KEY NOT NULL, fallback BLOB NOT NULL, updateAt NUMERIC NOT NULL, modified INTEGER NOT NULL DEFAULT FALSE)"
       )
       val packTable = pt(pack)
-      rawQuery("select DISTINCT updateAt from fallbacks where pack=?", arrayOf(pack)).use { c ->
-        val info =
-          runCatching { context.packageManager.getPackageInfo(pack, 0) }
-            .getOrElse {
-              return
-            }
-        if (info.lastUpdateTime < (c.getFirstRow { it.getLong("updateAt") } ?: 0)) return
-      }
+      // Check update time
+      val lastUpdateTime =
+        runCatching { context.packageManager.getPackageInfo(pack, 0) }.getOrNull()?.lastUpdateTime
+          ?: return
+      val modified =
+        rawQuery("select DISTINCT updateAt, modified from fallbacks where pack=?", arrayOf(pack))
+          .getFirstRow {
+            if (lastUpdateTime < it.getLong("updateAt")) return
+            it.getInt("modified") != 0
+          } ?: return
       // Create tables
       execSQL(
         "CREATE TABLE IF NOT EXISTS '$packTable' (packageName TEXT NOT NULL, className TEXT NOT NULL, entry BLOB NOT NULL, pack TEXT NOT NULL DEFAULT '')"
@@ -54,9 +57,9 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
       try {
         // Load icon pack
         loadIconPack(context.packageManager.getResourcesForApplication(pack), pack).let { info ->
-          delete("'${pt(pack)}'", null, null)
+          if (!modified) delete("'${pt(pack)}'", null, null)
           // Insert icons
-          insertIcon(db, pack, info.iconEntryMap.toList())
+          insertIcons(db, pack, info.iconEntryMap.toList())
           // Insert fallback
           insertFallbackSettings(
             db,
@@ -82,20 +85,57 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
   }
 
   fun getFallbackSettings(pack: String) =
-    readableDatabase.query("fallbacks", null, "pack=?", arrayOf(pack), null, null, null, "1")
+    readableDatabase.query(
+      "fallbacks",
+      arrayOf("fallback"),
+      "pack=?",
+      arrayOf(pack),
+      null,
+      null,
+      null,
+      "1",
+    )
 
   private fun insertFallbackSettings(db: SQLiteDatabase, pack: String, fs: FallbackSettings) {
-    db.insertWithOnConflict(
+    if (
+      db.query("fallbacks", null, "pack=?", arrayOf(pack), null, null, null, "1").use {
+        it.count > 0
+      }
+    )
+      db.update(
+        "fallbacks",
+        ContentValues().apply {
+          put("fallback", fs.toByteArray())
+          put("updateAt", System.currentTimeMillis())
+        },
+        "pack=?",
+        arrayOf(pack),
+      )
+    else
+      db.insert(
+        "fallbacks",
+        null,
+        ContentValues().apply {
+          put("pack", pack)
+          put("fallback", fs.toByteArray())
+          put("updateAt", System.currentTimeMillis())
+        },
+      )
+  }
+
+  fun setPackModified(pack: String, modified: Boolean = true) {
+    writableDatabase.update(
       "fallbacks",
-      null,
-      ContentValues().apply {
-        put("pack", pack)
-        put("fallback", fs.toByteArray())
-        put("updateAt", System.currentTimeMillis())
-      },
-      SQLiteDatabase.CONFLICT_REPLACE,
+      ContentValues().apply { put("modified", modified) },
+      "pack=?",
+      arrayOf(pack),
     )
   }
+
+  fun isPackModified(pack: String) =
+    readableDatabase
+      .query("fallbacks", arrayOf("modified"), "pack=?", arrayOf(pack), null, null, null, "1")
+      .getFirstRow { it.getInt("modified") != 0 } ?: false
 
   private fun getIconExact(pack: String, cn: ComponentName) =
     readableDatabase.rawQuery(
@@ -117,14 +157,14 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
   fun getIcon(pack: String, cn: ComponentName, fallback: Boolean = false) =
     if (fallback) getIconFallback(pack, cn) else getIconExact(pack, cn)
 
-  private fun insertIcon(
+  private fun insertIcons(
     db: SQLiteDatabase,
     pack: String,
     icons: List<Pair<ComponentName, IconEntry>>,
   ) {
     val insertIcon =
       db.compileStatement(
-        "INSERT OR REPLACE INTO '${pt(pack)}' (packageName, className, entry) VALUES(?, ?, ?) "
+        "INSERT OR IGNORE INTO '${pt(pack)}' (packageName, className, entry) VALUES(?, ?, ?)"
       )
     icons.forEach { icon ->
       insertIcon.apply {
@@ -180,6 +220,7 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
           },
           SQLiteDatabase.CONFLICT_REPLACE,
         )
+        setPackModified(pack)
         setTransactionSuccessful()
       } catch (e: Exception) {
         log(e)
@@ -190,12 +231,16 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
 
   fun deleteIcon(pack: String, packageName: String) {
     writableDatabase.delete("'${pt(pack)}'", "packageName=?", arrayOf(packageName))
+    setPackModified(pack)
   }
 
   fun resetPack(pack: String) {
     writableDatabase.update(
       "fallbacks",
-      ContentValues().apply { put("updateAt", 0) },
+      ContentValues().apply {
+        put("updateAt", 0)
+        put("modified", false)
+      },
       "pack=?",
       arrayOf(pack),
     )
@@ -210,15 +255,18 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
 
   override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
     db.apply {
-      if (oldVersion == 4 && newVersion == 5) {
-        foreachPackTable { execSQL("ALTER TABLE '$it' ADD COLUMN pack TEXT NOT NULL DEFAULT ''") }
-      } else
+      if (oldVersion >= 4) {
+        if (oldVersion == 4)
+          foreachPackTable { execSQL("ALTER TABLE '$it' ADD COLUMN pack TEXT NOT NULL DEFAULT ''") }
+        execSQL("ALTER TABLE 'fallbacks' ADD COLUMN modified INTEGER NOT NULL DEFAULT FALSE")
+      } else {
         foreachPackTable {
-          db.execSQL("DROP TABLE '$it'")
-          db.execSQL("DROP TABLE 'fallbacks'")
+          execSQL("DROP TABLE '$it'")
+          execSQL("DROP TABLE 'fallbacks'")
         }
-      WorldPreference.getPrefInApp(context).getString(PrefKey.ICON_PACK, PrefDef.ICON_PACK)?.let {
-        update(db, it)
+        WorldPreference.getPrefInApp(context).getString(PrefKey.ICON_PACK, PrefDef.ICON_PACK)?.let {
+          update(db, it)
+        }
       }
     }
   }
