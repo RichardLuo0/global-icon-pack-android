@@ -4,7 +4,6 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.pm.ApplicationInfo
 import android.content.pm.LauncherApps
-import android.content.pm.PackageManager
 import android.os.Process
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshotFlow
@@ -47,7 +46,7 @@ class FilterAppsVM(val apps: Flow<Map<ComponentName, AppIconInfo>>) {
       mutableMapOf<String, ApplicationInfo>().apply {
         putAll(
           context.packageManager
-            .getInstalledPackages(PackageManager.GET_META_DATA)
+            .getInstalledPackages(0)
             .filter { it.applicationInfo != null }
             .associate { info -> info.packageName to info.applicationInfo!! }
         )
