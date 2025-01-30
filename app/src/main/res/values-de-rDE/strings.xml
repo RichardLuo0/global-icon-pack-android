@@ -11,11 +11,11 @@
     <string name="iconPackAsFallback">Rückfall-Symbolpaket</string>
     <string name="iconPackAsFallbackSummary">Use icon pack even if class name does not match.</string>
     <string name="shortcut">Generate icons for shortcuts</string>
-    <string name="iconVariant">Icon variant</string>
-    <string name="iconVariantSummary">Choose different variants from icon pack.</string>
     <string name="mergeIconPack">Merge icon pack</string>
     <string name="mergeIconPackSummary">Generate a new icon pack from various icon packs.</string>
     <string name="iconPackSettings">Symbolpaket-Einstellungen</string>
+    <string name="iconVariant">Icon variant</string>
+    <string name="iconVariantSummary">Choose different variants from icon pack.</string>
     <string name="iconFallback">Rückfallsymbole generieren</string>
     <string name="iconFallbackSummary">Hintergrund, Ausschnitt und Skalierung des Symbolpakets auf Symbole von nicht in Symbolpaket enthaltenen Apps anwenden.</string>
     <string name="overrideIconFallback">Rückfall-Einstellungen überschreiben</string>
@@ -46,6 +46,7 @@
     <string name="allIcons">All icons</string>
     <string name="showUserApp">Show user app</string>
     <string name="showSystemApp">Show system app</string>
+    <string name="modified">Modified</string>
     <string name="chooseBasePack">Choose a base icon pack</string>
     <string name="chooseIconToReplace">Choose the icon to replace</string>
     <string name="chooseNewIcon">Choose a new icon</string>
