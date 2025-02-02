@@ -44,7 +44,7 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
           .getFirstRow {
             if (lastUpdateTime < it.getLong("updateAt")) return
             it.getInt("modified") != 0
-          } ?: return
+          } ?: false
       // Create tables
       execSQL(
         "CREATE TABLE IF NOT EXISTS '$packTable' (packageName TEXT NOT NULL, className TEXT NOT NULL, entry BLOB NOT NULL, pack TEXT NOT NULL DEFAULT '')"
@@ -53,8 +53,8 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
         "CREATE UNIQUE INDEX IF NOT EXISTS '${pack}_componentName' ON '$packTable' (packageName, className)"
       )
       execSQL("CREATE INDEX IF NOT EXISTS '${pack}_packageName' ON '$packTable' (packageName)")
-      beginTransaction()
       try {
+        beginTransaction()
         // Load icon pack
         loadIconPack(context.packageManager.getResourcesForApplication(pack), pack).let { info ->
           if (!modified) delete("'${pt(pack)}'", null, null)
@@ -78,8 +78,9 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
         setTransactionSuccessful()
       } catch (e: Exception) {
         log(e)
+      } finally {
+        endTransaction()
       }
-      endTransaction()
       log("database: $pack updated")
     }
   }
