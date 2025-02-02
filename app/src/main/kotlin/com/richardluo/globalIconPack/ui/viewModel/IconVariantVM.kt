@@ -69,16 +69,6 @@ class IconVariantVM(app: Application) : AndroidViewModel(app) {
     if (basePack.isEmpty()) return
     isLoading = true
     withContext(Dispatchers.IO) {
-      val newIcons = mutableMapOf<ComponentName, AppIconInfo>()
-      context
-        .getSystemService(Context.LAUNCHER_APPS_SERVICE)
-        .asType<LauncherApps>()
-        .getActivityList(null, Process.myUserHandle())
-        .forEach { info ->
-          val cn = info.componentName
-          newIcons[cn] =
-            AppIconInfo(cn.packageName, info.label.toString(), false, getUpdatedEntryWithPack(cn))
-        }
       icons.putAll(filterAppsVM.loadApps(context, ::getUpdatedEntryWithPack))
     }
     isLoading = false
