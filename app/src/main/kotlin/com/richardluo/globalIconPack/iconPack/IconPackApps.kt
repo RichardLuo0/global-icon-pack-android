@@ -28,6 +28,7 @@ object IconPackApps {
           "app.lawnchair.icons.THEMED_ICON",
           "org.adw.ActivityStarter.THEMES",
           "com.novalauncher.THEME",
+          "org.adw.launcher.THEMES",
         )
         .map { action -> pm.queryIntentActivities(Intent(action), 0) }
         .flatten()
