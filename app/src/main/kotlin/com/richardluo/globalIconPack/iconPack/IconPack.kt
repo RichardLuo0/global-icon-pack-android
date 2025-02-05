@@ -7,6 +7,7 @@ import android.content.SharedPreferences
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageItemInfo
 import android.content.pm.PackageManager
+import android.content.pm.ShortcutInfo
 import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
@@ -87,6 +88,9 @@ fun getComponentName(info: PackageItemInfo): ComponentName =
   else ComponentName(info.packageName, info.name)
 
 fun getComponentName(packageName: String): ComponentName = ComponentName(packageName, "")
+
+fun getComponentName(shortcut: ShortcutInfo): ComponentName =
+  ComponentName("${shortcut.`package`}@", shortcut.id)
 
 /**
  * UnClipAdaptiveIconDrawable does not work correctly for some apps. It maybe clipped by adaptive

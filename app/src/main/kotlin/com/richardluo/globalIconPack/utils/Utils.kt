@@ -13,7 +13,9 @@ import java.lang.reflect.Field
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.debounce
 import org.xmlpull.v1.XmlPullParser
@@ -127,3 +129,6 @@ inline fun <K : Any, V : Any> LruCache<K, V>.getOrPut(key: K, defaultValue: () -
 
 @OptIn(FlowPreview::class)
 fun Flow<String>.debounceInput(delay: Long = 300L) = debounce { if (it.isEmpty()) 0L else delay }
+
+fun flowTrigger() =
+  MutableSharedFlow<Unit>(1, onBufferOverflow = BufferOverflow.DROP_OLDEST).apply { tryEmit(Unit) }

@@ -5,11 +5,13 @@ import android.content.pm.ApplicationInfo
 import android.content.pm.LauncherApps
 import android.content.pm.PackageItemInfo
 import android.content.pm.ResolveInfo
+import android.content.pm.ShortcutInfo
 import android.graphics.drawable.Drawable
 import com.richardluo.globalIconPack.iconPack.getComponentName
 import com.richardluo.globalIconPack.iconPack.getIP
 import com.richardluo.globalIconPack.reflect.ClockDrawableWrapper
 import com.richardluo.globalIconPack.reflect.Resources.getDrawableForDensityM
+import com.richardluo.globalIconPack.utils.MethodReplacement
 import com.richardluo.globalIconPack.utils.ReflectHelper
 import com.richardluo.globalIconPack.utils.WorldPreference
 import com.richardluo.globalIconPack.utils.asType
@@ -71,15 +73,10 @@ class ReplaceIcon : Hook {
       },
     )
 
-    val replaceIcon: XC_MethodHook =
-      object : XC_MethodHook() {
-        override fun beforeHookedMethod(param: MethodHookParam) {
-          runCatching { param.result = replaceHookedMethod(param) }
-            .exceptionOrNull()
-            ?.let { param.throwable = it }
-        }
-
-        fun replaceHookedMethod(param: MethodHookParam): Drawable? {
+    ReflectHelper.hookMethod(
+      getDrawableForDensityM ?: return,
+      object : MethodReplacement() {
+        override fun replaceHookedMethod(param: MethodHookParam): Drawable? {
           val resId = param.args[0] as Int
           val density = param.args[1] as Int
           return when {
@@ -95,17 +92,22 @@ class ReplaceIcon : Hook {
             else -> callOriginalMethod(param)
           }
         }
-      }
-    getDrawableForDensityM?.let { ReflectHelper.hookMethod(it, replaceIcon) }
+      },
+    )
 
     // Generate shortcut icon
     if (WorldPreference.getPrefInMod().getBoolean(PrefKey.SHORTCUT, PrefDef.SHORTCUT))
       ReflectHelper.hookAllMethodsOrLog(
         LauncherApps::class.java,
         "getShortcutIconDrawable",
-        object : XC_MethodHook() {
-          override fun afterHookedMethod(param: MethodHookParam) {
-            param.result.asType<Drawable?>()?.let { param.result = getIP()?.genIconFrom(it) ?: it }
+        object : MethodReplacement() {
+          override fun replaceHookedMethod(param: MethodHookParam): Drawable {
+            val shortcut = param.args[0].asType<ShortcutInfo>()
+            val density = param.args[1].asType<Int>()
+            return getIP()?.let { ip ->
+              ip.getIconEntry(getComponentName(shortcut))?.let { ip.getIcon(it, density) }
+                ?: ip.genIconFrom(callOriginalMethod(param))
+            } ?: callOriginalMethod(param)
           }
         },
       )

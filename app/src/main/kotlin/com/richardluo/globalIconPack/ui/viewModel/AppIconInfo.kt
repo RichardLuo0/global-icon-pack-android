@@ -1,18 +1,16 @@
 package com.richardluo.globalIconPack.ui.viewModel
 
-import com.richardluo.globalIconPack.utils.IconPackCreator.IconEntryWithPack
+import android.content.ComponentName
+import android.content.pm.ShortcutInfo
 
-data class AppIconInfo(
-  val app: String,
-  val label: String,
-  val isSystem: Boolean,
-  val entry: IconEntryWithPack?,
-) {
+open class AppIconInfo(val componentName: ComponentName, val label: String) {
 
   override fun equals(other: Any?): Boolean {
-    return if (other !is AppIconInfo) false
-    else entry != null && app == other.app && entry == other.entry
+    return if (other !is AppIconInfo) false else componentName == other.componentName
   }
 
-  override fun hashCode() = super.hashCode()
+  override fun hashCode() = componentName.hashCode()
 }
+
+class ShortcutIconInfo(componentName: ComponentName, val shortcut: ShortcutInfo) :
+  AppIconInfo(componentName, shortcut.shortLabel.toString())

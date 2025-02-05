@@ -11,6 +11,11 @@ class XposedMain : IXposedHookLoadPackage {
     if (!lpp.isFirstApplication) return
     if (BuildConfig.APPLICATION_ID == lpp.packageName) return
 
+    if (lpp.packageName == "android") {
+      BypassShortcutPermission.onHookAndroid(lpp)
+      return
+    }
+
     hookList.forEach { it.onHookApp(lpp) }
 
     when (lpp.packageName) {

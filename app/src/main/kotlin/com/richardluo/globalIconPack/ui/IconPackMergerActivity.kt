@@ -35,10 +35,11 @@ import androidx.compose.material.icons.outlined.FilterList
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -141,14 +142,14 @@ class IconPackMergerActivity : ComponentActivity() {
                 IconButtonWithTooltip(Icons.Outlined.Search, stringResource(R.string.search)) {
                   viewModel.expandSearchBar.value = true
                 }
-                viewModel.filterAppsVM.systemOnly.let {
-                  IconButtonWithTooltip(
-                    Icons.Outlined.FilterList,
-                    stringResource(if (it.value) R.string.showUserApp else R.string.showSystemApp),
-                  ) {
-                    it.value = !it.value
-                  }
+                val expandFilter = remember { mutableStateOf(false) }
+                IconButtonWithTooltip(
+                  Icons.Outlined.FilterList,
+                  getLabelByType(viewModel.filterAppsVM.type.value),
+                ) {
+                  expandFilter.value = true
                 }
+                AppFilterByType(expandFilter, viewModel.filterAppsVM.type)
               }
             },
             modifier = Modifier.fillMaxWidth(),
@@ -212,7 +213,7 @@ class IconPackMergerActivity : ComponentActivity() {
         content = { Text(getString(R.string.mergerInstruction)) },
       )
 
-      if (viewModel.isLoading) LoadingDialog()
+      if (viewModel.isCreatingApk) LoadingDialog()
     }
   }
 
@@ -241,21 +242,26 @@ class IconPackMergerActivity : ComponentActivity() {
 
   @Composable
   private fun IconList() {
-    val icons = viewModel.filterAppsVM.filteredApps.getValue(null)
+    val icons = viewModel.filteredIcons.getValue(null)
     if (icons != null)
       LazyVerticalGrid(
         modifier = Modifier.fillMaxSize().padding(horizontal = 2.dp),
         columns = GridCells.Adaptive(minSize = 74.dp),
       ) {
-        items(icons.toList(), key = { entry -> entry.first }) { (cn, info) ->
-          IconForApp(info.label, key = info, loadImage = { viewModel.loadIcon(info) }) {
-            viewModel.openPackDialog(cn)
+        items(icons.toList(), key = { it.first.componentName }) { pair ->
+          val (info, entry) = pair
+          IconForApp(
+            info.label,
+            key = entry?.entry?.name,
+            loadImage = { viewModel.loadIcon(pair) },
+          ) {
+            viewModel.chooseIconVM.openVariantSheet(info)
           }
         }
       }
     else
       Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        LinearProgressIndicator(modifier = Modifier.fillMaxWidth().padding(24.dp))
+        CircularProgressIndicator(trackColor = MaterialTheme.colorScheme.surfaceVariant)
       }
 
     ChooseIconSheet(viewModel.chooseIconVM, viewModel::saveNewIcon)

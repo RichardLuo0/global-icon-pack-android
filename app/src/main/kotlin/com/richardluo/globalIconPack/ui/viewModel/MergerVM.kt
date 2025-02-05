@@ -1,7 +1,6 @@
 package com.richardluo.globalIconPack.ui.viewModel
 
 import android.app.Application
-import android.content.ComponentName
 import android.content.Context
 import android.net.Uri
 import android.widget.Toast
@@ -16,10 +15,13 @@ import com.richardluo.globalIconPack.R
 import com.richardluo.globalIconPack.utils.IconPackCreator
 import com.richardluo.globalIconPack.utils.IconPackCreator.IconEntryWithPack
 import com.richardluo.globalIconPack.utils.getInstance
+import com.richardluo.globalIconPack.utils.getOrPutNullable
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combineTransform
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class MergerVM(app: Application) : AndroidViewModel(app) {
@@ -27,8 +29,6 @@ class MergerVM(app: Application) : AndroidViewModel(app) {
     get() = getApplication()
 
   private val iconCache by getInstance { IconCache(app) }
-  var isLoading by mutableStateOf(false)
-    private set
 
   val basePackFlow = MutableStateFlow("")
   private var basePack
@@ -37,12 +37,38 @@ class MergerVM(app: Application) : AndroidViewModel(app) {
       basePackFlow.value = value
     }
 
-  val icons = mutableStateMapOf<ComponentName, AppIconInfo>()
-
   val expandSearchBar = mutableStateOf(false)
 
-  val filterAppsVM = FilterAppsVM(snapshotFlow { icons.toMap() })
-  val chooseIconVM = ChooseIconVM(this::basePack, iconCache)
+  val filterAppsVM = FilterAppsVM(context)
+  private val changedIcons = mutableStateMapOf<AppIconInfo, IconEntryWithPack?>()
+  private val cachedIcons: MutableMap<AppIconInfo, IconEntryWithPack?> = mutableMapOf()
+  val filteredIcons =
+    combineTransform(
+      basePackFlow,
+      filterAppsVM.filteredApps,
+      snapshotFlow { changedIcons.toMap() },
+    ) { basePack, apps, icons ->
+      if (basePack.isEmpty()) emit(listOf())
+      else if (apps == null) emit(null)
+      else
+        emit(
+          withContext(Dispatchers.Default) {
+            val iconPack = iconCache.getIconPack(basePack)
+            apps.map { info ->
+              info to
+                (if (icons.containsKey(info)) icons[info]
+                else
+                  cachedIcons.getOrPutNullable(info) {
+                    iconPack.getIconEntry(info.componentName)?.let {
+                      IconEntryWithPack(it, iconPack)
+                    }
+                  })
+            }
+          }
+        )
+    }
+
+  val chooseIconVM = ChooseIconVM(iconCache, this::basePack)
 
   var newPackName by mutableStateOf("Merged Icon Pack")
   var newPackPackage by mutableStateOf("com.dummy.iconPack")
@@ -51,68 +77,64 @@ class MergerVM(app: Application) : AndroidViewModel(app) {
   val warningDialogState = mutableStateOf(false)
   val instructionDialogState = mutableStateOf(false)
 
+  var isCreatingApk by mutableStateOf(false)
+    private set
+
   init {
     basePackFlow
       .onEach { pack ->
-        if (pack.isEmpty()) return@onEach
-        isLoading = true
-        chooseIconVM.variantPack.value = pack
-        icons.clear()
-        withContext(Dispatchers.Default) {
-          val iconPack = iconCache.getIconPack(pack)
-          icons.putAll(
-            filterAppsVM.loadApps(context) { cn ->
-              iconPack.getIconEntry(cn)?.let { IconEntryWithPack(it, iconPack) }
-            }
-          )
-        }
-        isLoading = false
+        if (pack.isNotEmpty()) chooseIconVM.variantPack.value = pack
+        cachedIcons.clear()
+        changedIcons.clear()
       }
       .launchIn(viewModelScope)
   }
 
-  suspend fun loadIcon(info: AppIconInfo) = iconCache.loadIcon(info.entry, info.app, basePack)
+  suspend fun loadIcon(pair: Pair<AppIconInfo, IconEntryWithPack?>) =
+    iconCache.loadIcon(pair.first, pair.second, basePack)
 
   fun openWarningDialog() {
     if (basePack.isNotEmpty()) warningDialogState.value = true
   }
 
-  fun openPackDialog(cn: ComponentName) {
-    chooseIconVM.selectedApp.value = cn
-    chooseIconVM.variantSheet = true
-  }
-
   fun saveNewIcon(icon: VariantIcon) {
-    val app = chooseIconVM.selectedApp.value ?: return
-    val entry =
+    val info = chooseIconVM.selectedApp.value ?: return
+    changedIcons[info] =
       when (icon) {
         is VariantPackIcon -> IconEntryWithPack(icon.entry, icon.pack)
         else -> null
       }
-    icons[app] = icons[app]?.copy(entry = entry) ?: return
   }
 
-  suspend fun createIconPack(uri: Uri) {
+  fun createIconPack(uri: Uri) {
     if (basePack.isEmpty()) return
-    isLoading = true
-    try {
-      withContext(Dispatchers.Default) {
-        IconPackCreator.createIconPack(
-          context,
-          uri,
-          newPackName,
-          newPackPackage,
-          iconCache.getIconPack(basePack),
-          icons.mapValues { it.value.entry },
-          installedAppsOnly,
-        )
+    viewModelScope.launch {
+      isCreatingApk = true
+      val pack = iconCache.getIconPack(basePack)
+      try {
+        withContext(Dispatchers.Default) {
+          IconPackCreator.createIconPack(
+            context,
+            uri,
+            newPackName,
+            newPackPackage,
+            pack,
+            filterAppsVM.getAllApps().associate { info ->
+              val cn = info.componentName
+              cn to
+                if (changedIcons.containsKey(info)) changedIcons[info]
+                else pack.getIconEntry(cn)?.let { IconEntryWithPack(it, pack) }
+            },
+            installedAppsOnly,
+          )
+        }
+        instructionDialogState.value = true
+      } catch (e: IconPackCreator.FolderNotEmptyException) {
+        Toast.makeText(context, context.getString(R.string.requiresEmptyFolder), Toast.LENGTH_LONG)
+          .show()
+      } finally {
+        isCreatingApk = false
       }
-      instructionDialogState.value = true
-    } catch (e: IconPackCreator.FolderNotEmptyException) {
-      Toast.makeText(context, context.getString(R.string.requiresEmptyFolder), Toast.LENGTH_LONG)
-        .show()
-    } finally {
-      isLoading = false
     }
   }
 }

@@ -1,6 +1,5 @@
 package com.richardluo.globalIconPack.ui.viewModel
 
-import android.content.ComponentName
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -23,7 +22,7 @@ class VariantPackIcon(val pack: CopyableIconPack, val entry: IconEntry) : Varian
 
 class OriginalIcon : VariantIcon
 
-class ChooseIconVM(private val getBasePack: () -> String, private val iconCache: IconCache) {
+class ChooseIconVM(private val iconCache: IconCache, private val getBasePack: () -> String) {
   val variantPack = mutableStateOf(getBasePack())
   val variantIcons =
     snapshotFlow { variantPack.value }
@@ -39,26 +38,27 @@ class ChooseIconVM(private val getBasePack: () -> String, private val iconCache:
       }
 
   var variantSheet by mutableStateOf(false)
-  val selectedApp = MutableStateFlow<ComponentName?>(null)
+  val selectedApp = MutableStateFlow<AppIconInfo?>(null)
   val variantSearchText = mutableStateOf("")
   val suggestVariantIcons =
     combineTransform(
         variantIcons,
         selectedApp,
         snapshotFlow { variantSearchText.value }.debounceInput(),
-      ) { icons, cn, text ->
+      ) { icons, app, text ->
         emit(null)
         icons ?: return@combineTransform
-        cn ?: return@combineTransform
+        app ?: return@combineTransform
         emit(
           mutableListOf<VariantIcon>(OriginalIcon()).apply {
             addAll(
               withContext(Dispatchers.Default) {
-                val entry = iconCache.getIconPack(variantPack.value).getIconEntry(cn)
+                val iconEntry =
+                  iconCache.getIconPack(variantPack.value).getIconEntry(app.componentName)
                 if (text.isEmpty())
-                  if (entry != null) icons.filter { it.entry.name.startsWith(entry.name) }
+                  if (iconEntry != null) icons.filter { it.entry.name.startsWith(iconEntry.name) }
                   else listOf()
-                else icons.filter { it.entry.name.contains(text) }
+                else icons.filter { it.entry.name.contains(text, ignoreCase = true) }
               }
             )
           }
@@ -72,9 +72,19 @@ class ChooseIconVM(private val getBasePack: () -> String, private val iconCache:
         getBasePack()
           .takeIf { it.isNotEmpty() }
           ?.let { basePack ->
-            selectedApp.value?.packageName?.let { iconCache.loadIcon(null, it, basePack) }
+            selectedApp.value?.let {
+              when (it) {
+                is ShortcutIconInfo -> iconCache.loadIcon(it, basePack)
+                else -> iconCache.loadIcon(it, basePack)
+              }
+            }
           }
       is VariantPackIcon -> iconCache.loadIcon(icon.entry, icon.pack)
       else -> null
     } ?: ImageBitmap(1, 1)
+
+  fun openVariantSheet(entry: AppIconInfo) {
+    selectedApp.value = entry
+    variantSheet = true
+  }
 }

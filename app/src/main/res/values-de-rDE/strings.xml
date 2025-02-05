@@ -44,13 +44,10 @@
     <string name="restoreDefaultWarning">Are you sure you want to restore to the default icons?</string>
     <string name="suggestedIcons">Suggested icons</string>
     <string name="allIcons">All icons</string>
-    <string name="showUserApp">Show user app</string>
-    <string name="showSystemApp">Show system app</string>
     <string name="modified">Modified</string>
     <string name="chooseBasePack">Choose a base icon pack</string>
     <string name="chooseIconToReplace">Choose the icon to replace</string>
     <string name="chooseNewIcon">Choose a new icon</string>
-    <string name="noCandidateIconForThisApp">No candidate icons for this app.</string>
     <string name="originalIcon">Original icon</string>
     <string name="fillNewPackInfo">Fill new pack info</string>
     <string name="newPackName">New pack name</string>

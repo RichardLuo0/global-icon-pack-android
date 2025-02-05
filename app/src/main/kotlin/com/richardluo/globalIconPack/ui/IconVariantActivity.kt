@@ -22,11 +22,12 @@ import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.Restore
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -48,7 +49,6 @@ import com.richardluo.globalIconPack.ui.components.AppbarSearchBar
 import com.richardluo.globalIconPack.ui.components.ChooseIconSheet
 import com.richardluo.globalIconPack.ui.components.IconButtonWithTooltip
 import com.richardluo.globalIconPack.ui.components.IconForApp
-import com.richardluo.globalIconPack.ui.components.LoadingDialog
 import com.richardluo.globalIconPack.ui.components.SampleTheme
 import com.richardluo.globalIconPack.ui.components.WarnDialog
 import com.richardluo.globalIconPack.ui.viewModel.IconVariantVM
@@ -90,29 +90,20 @@ class IconVariantActivity : ComponentActivity() {
               IconButtonWithTooltip(Icons.Outlined.Search, stringResource(R.string.search)) {
                 lifecycleScope.launch { viewModel.expandSearchBar.value = true }
               }
-              var expanded by remember { mutableStateOf(false) }
+              var expand by remember { mutableStateOf(false) }
+              val expandFilter = remember { mutableStateOf(false) }
               IconButtonWithTooltip(Icons.Outlined.MoreVert, stringResource(R.string.moreOptions)) {
-                expanded = true
+                expand = true
               }
-              DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-                viewModel.filterAppsVM.systemOnly.let {
-                  DropdownMenuItem(
-                    leadingIcon = {
-                      Icon(Icons.Outlined.FilterList, stringResource(R.string.restoreDefault))
-                    },
-                    text = {
-                      Text(
-                        stringResource(
-                          if (it.value) R.string.showUserApp else R.string.showSystemApp
-                        )
-                      )
-                    },
-                    onClick = {
-                      it.value = !it.value
-                      expanded = false
-                    },
-                  )
-                }
+              DropdownMenu(expanded = expand, onDismissRequest = { expand = false }) {
+                DropdownMenuItem(
+                  leadingIcon = { Icon(Icons.Outlined.FilterList, "filter") },
+                  text = { Text(getLabelByType(viewModel.filterAppsVM.type.value)) },
+                  onClick = {
+                    expand = false
+                    expandFilter.value = true
+                  },
+                )
                 DropdownMenuItem(
                   leadingIcon = {
                     Icon(Icons.Outlined.Restore, stringResource(R.string.restoreDefault))
@@ -120,18 +111,20 @@ class IconVariantActivity : ComponentActivity() {
                   text = { Text(stringResource(R.string.restoreDefault)) },
                   onClick = {
                     resetWarnDialogState.value = true
-                    expanded = false
+                    expand = false
                   },
                 )
                 DropdownMenuItem(
                   leadingIcon = { Checkbox(viewModel.modified.getValue(), onCheckedChange = null) },
                   text = { Text(stringResource(R.string.modified)) },
                   onClick = {
-                    lifecycleScope.launch { viewModel.flipModified() }
-                    expanded = false
+                    viewModel.flipModified()
+                    expand = false
                   },
                 )
               }
+              // User, system apps or shortcuts
+              AppFilterByType(expandFilter, viewModel.filterAppsVM.type)
             },
             modifier = Modifier.fillMaxWidth(),
             windowInsets = windowInsets.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top),
@@ -143,39 +136,38 @@ class IconVariantActivity : ComponentActivity() {
       },
       contentWindowInsets = windowInsets,
     ) { contentPadding ->
-      val icons = viewModel.filterAppsVM.filteredApps.getValue(null)
+      val icons = viewModel.filteredIcons.getValue(null)
       if (icons != null)
         LazyVerticalGrid(
           contentPadding = contentPadding,
           modifier = Modifier.fillMaxSize().padding(horizontal = 2.dp),
           columns = GridCells.Adaptive(minSize = 74.dp),
         ) {
-          items(icons.toList(), key = { entry -> entry.first }) { (cn, info) ->
+          items(icons, key = { it.first.componentName }) { pair ->
+            val (info, entry) = pair
             IconForApp(
               info.label,
-              key = info.entry?.entry?.name,
-              loadImage = { viewModel.loadIcon(info) },
+              key = entry?.entry?.name,
+              loadImage = { viewModel.loadIcon(pair) },
             ) {
-              viewModel.openVariantSheet(cn)
+              viewModel.chooseIconVM.openVariantSheet(info)
             }
           }
         }
       else
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-          LinearProgressIndicator(modifier = Modifier.fillMaxWidth().padding(24.dp))
+          CircularProgressIndicator(trackColor = MaterialTheme.colorScheme.surfaceVariant)
         }
     }
 
-    ChooseIconSheet(viewModel.chooseIconVM) { lifecycleScope.launch { viewModel.replaceIcon(it) } }
-
-    if (viewModel.isLoading) LoadingDialog()
+    ChooseIconSheet(viewModel.chooseIconVM) { viewModel.replaceIcon(it) }
 
     WarnDialog(
       resetWarnDialogState,
       title = { Text(getString(R.string.restoreDefault)) },
       content = { Text(getString(R.string.restoreDefaultWarning)) },
     ) {
-      lifecycleScope.launch { viewModel.restoreDefault() }
+      viewModel.restoreDefault()
     }
   }
 }

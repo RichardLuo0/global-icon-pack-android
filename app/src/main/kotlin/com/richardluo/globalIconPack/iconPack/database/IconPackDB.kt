@@ -30,7 +30,7 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
       log("No icon pack set")
       return
     }
-    db.apply {
+    db.transaction {
       execSQL(
         "CREATE TABLE IF NOT EXISTS 'fallbacks' (pack TEXT PRIMARY KEY NOT NULL, fallback BLOB NOT NULL, updateAt NUMERIC NOT NULL, modified INTEGER NOT NULL DEFAULT FALSE)"
       )
@@ -53,34 +53,26 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
         "CREATE UNIQUE INDEX IF NOT EXISTS '${pack}_componentName' ON '$packTable' (packageName, className)"
       )
       execSQL("CREATE INDEX IF NOT EXISTS '${pack}_packageName' ON '$packTable' (packageName)")
-      try {
-        beginTransaction()
-        // Load icon pack
-        loadIconPack(context.packageManager.getResourcesForApplication(pack), pack).let { info ->
-          if (!modified) delete("'${pt(pack)}'", null, null)
-          // Insert icons
-          insertIcons(db, pack, info.iconEntryMap.toList())
-          // Insert fallback
-          insertFallbackSettings(
-            db,
-            pack,
-            FallbackSettings(info.iconBacks, info.iconUpons, info.iconMasks, info.iconScale),
-          )
-        }
-        // Get installed icon packs
-        val packs = runBlocking { IconPackApps.get(context).keys }
-        // Delete expired fallbacks
-        val packSet = packs.joinToString(", ") { "'$it'" }
-        delete("fallbacks", "pack not in ($packSet)", null)
-        // Drop expired tables
-        val packTables = packs.map { pt(it) }
-        foreachPackTable { if (!packTables.contains(it)) db.execSQL("DROP TABLE '$it'") }
-        setTransactionSuccessful()
-      } catch (e: Exception) {
-        log(e)
-      } finally {
-        endTransaction()
+      // Load icon pack
+      loadIconPack(context.packageManager.getResourcesForApplication(pack), pack).let { info ->
+        if (!modified) delete("'${pt(pack)}'", null, null)
+        // Insert icons
+        insertIcons(db, pack, info.iconEntryMap.toList())
+        // Insert fallback
+        insertFallbackSettings(
+          db,
+          pack,
+          FallbackSettings(info.iconBacks, info.iconUpons, info.iconMasks, info.iconScale),
+        )
       }
+      // Get installed icon packs
+      val packs = runBlocking { IconPackApps.get(context).keys }
+      // Delete expired fallbacks
+      val packSet = packs.joinToString(", ") { "'$it'" }
+      delete("fallbacks", "pack not in ($packSet)", null)
+      // Drop expired tables
+      val packTables = packs.map { pt(it) }
+      foreachPackTable { if (!packTables.contains(it)) db.execSQL("DROP TABLE '$it'") }
       log("database: $pack updated")
     }
   }
@@ -146,13 +138,11 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
 
   private fun getIconFallback(pack: String, cn: ComponentName) =
     readableDatabase.rawQuery(
-      "SELECT entry, pack FROM '${pt(pack)}' WHERE packageName=? ORDER BY " +
-        "CASE " +
-        "  WHEN className = '${cn.className}' THEN 1 " +
-        "  WHEN className = '' THEN 2 " +
-        "  ELSE 3 " +
-        "END LIMIT 1",
-      arrayOf(cn.packageName),
+      "SELECT entry, pack FROM '${pt(pack)}' " +
+        "WHERE (packageName=?1 AND className=?2) " +
+        "OR (packageName=?1 AND className='') " +
+        "ORDER BY className DESC LIMIT 1",
+      arrayOf(cn.packageName, cn.className),
     )
 
   fun getIcon(pack: String, cn: ComponentName, fallback: Boolean = false) =
@@ -179,54 +169,62 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
     }
   }
 
-  fun insertOrUpdatePackageIcon(
+  private fun insertOrUpdateIcon(
+    pack: String,
+    entry: IconEntry,
+    entryPack: String,
+    block: SQLiteDatabase.(String, ContentValues) -> Unit,
+  ) {
+    writableDatabase.transaction {
+      val packTable = "'${pt(pack)}'"
+      val values =
+        ContentValues().apply {
+          put("entry", entry.toByteArray())
+          put("pack", if (entryPack == pack) "" else entryPack)
+        }
+      block(packTable, values)
+    }
+  }
+
+  fun insertOrUpdateAppIcon(pack: String, cn: ComponentName, entry: IconEntry, entryPack: String) {
+    insertOrUpdateIcon(pack, entry, entryPack) { packTable, values ->
+      update(packTable, values, "packageName=?", arrayOf(cn.packageName))
+      insertWithOnConflict(
+        packTable,
+        null,
+        values.apply {
+          put("packageName", cn.packageName)
+          put("className", "")
+        },
+        SQLiteDatabase.CONFLICT_REPLACE,
+      )
+      insertWithOnConflict(
+        packTable,
+        null,
+        values.apply { put("className", cn.className) },
+        SQLiteDatabase.CONFLICT_REPLACE,
+      )
+      setPackModified(pack)
+    }
+  }
+
+  fun insertOrUpdateShortcutIcon(
     pack: String,
     cn: ComponentName,
     entry: IconEntry,
     entryPack: String,
   ) {
-    writableDatabase.apply {
-      beginTransaction()
-      try {
-        val packTable = "'${pt(pack)}'"
-        val entryPackInTable = if (entryPack == pack) "" else entryPack
-        update(
-          packTable,
-          ContentValues().apply {
-            put("entry", entry.toByteArray())
-            put("pack", entryPackInTable)
-          },
-          "packageName=?",
-          arrayOf(cn.packageName),
-        )
-        insertWithOnConflict(
-          packTable,
-          null,
-          ContentValues().apply {
-            put("packageName", cn.packageName)
-            put("className", "")
-            put("entry", entry.toByteArray())
-            put("pack", entryPackInTable)
-          },
-          SQLiteDatabase.CONFLICT_REPLACE,
-        )
-        insertWithOnConflict(
-          packTable,
-          null,
-          ContentValues().apply {
-            put("packageName", cn.packageName)
-            put("className", cn.className)
-            put("entry", entry.toByteArray())
-            put("pack", entryPackInTable)
-          },
-          SQLiteDatabase.CONFLICT_REPLACE,
-        )
-        setPackModified(pack)
-        setTransactionSuccessful()
-      } catch (e: Exception) {
-        log(e)
-      }
-      endTransaction()
+    insertOrUpdateIcon(pack, entry, entryPack) { packTable, values ->
+      insertWithOnConflict(
+        packTable,
+        null,
+        values.apply {
+          put("packageName", cn.packageName)
+          put("className", cn.className)
+        },
+        SQLiteDatabase.CONFLICT_REPLACE,
+      )
+      setPackModified(pack)
     }
   }
 
@@ -272,3 +270,14 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
     }
   }
 }
+
+private inline fun SQLiteDatabase.transaction(block: SQLiteDatabase.() -> Unit) =
+  try {
+    beginTransaction()
+    block()
+    setTransactionSuccessful()
+  } catch (e: Exception) {
+    log(e)
+  } finally {
+    endTransaction()
+  }
