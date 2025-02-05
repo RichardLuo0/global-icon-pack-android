@@ -83,14 +83,13 @@ abstract class IconPack(pref: SharedPreferences, val pack: String, val resources
     } ?: baseIcon
 }
 
-fun getComponentName(info: PackageItemInfo): ComponentName =
+fun getComponentName(info: PackageItemInfo) =
   if (info is ApplicationInfo) getComponentName(info.packageName)
   else ComponentName(info.packageName, info.name)
 
-fun getComponentName(packageName: String): ComponentName = ComponentName(packageName, "")
+fun getComponentName(packageName: String) = ComponentName(packageName, "")
 
-fun getComponentName(shortcut: ShortcutInfo): ComponentName =
-  ComponentName("${shortcut.`package`}@", shortcut.id)
+fun getComponentName(shortcut: ShortcutInfo) = ComponentName("${shortcut.`package`}@", shortcut.id)
 
 /**
  * UnClipAdaptiveIconDrawable does not work correctly for some apps. It maybe clipped by adaptive
