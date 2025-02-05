@@ -44,6 +44,10 @@
     <string name="restoreDefaultWarning">Are you sure you want to restore to the default icons?</string>
     <string name="suggestedIcons">Suggested icons</string>
     <string name="allIcons">All icons</string>
+    <string name="userApps">User apps</string>
+    <string name="systemApps">System apps</string>
+    <string name="shortcuts">Shortcuts</string>
+    <string name="requiresHookSystem">You must hook system to get shortcuts.</string>
     <string name="modified">Modified</string>
     <string name="chooseBasePack">Choose a base icon pack</string>
     <string name="chooseIconToReplace">Choose the icon to replace</string>
