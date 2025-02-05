@@ -45,11 +45,12 @@ class ReplaceIcon : Hook {
           isInReplaceIconResId.set(true)
 
           val info = param.thisObject as PackageItemInfo
-          info.icon =
-            getIP()?.getId(getComponentName(info))?.let { withHighByteSet(it, IN_IP) }
-              ?: if (isHighTwoByte(info.icon, ANDROID_DEFAULT))
-                withHighByteSet(info.icon, NOT_IN_IP)
-              else info.icon
+          if (info.packageName != null)
+            info.icon =
+              getIP()?.getId(getComponentName(info))?.let { withHighByteSet(it, IN_IP) }
+                ?: if (isHighTwoByte(info.icon, ANDROID_DEFAULT))
+                  withHighByteSet(info.icon, NOT_IN_IP)
+                else info.icon
 
           isInReplaceIconResId.set(false)
         }
@@ -101,13 +102,12 @@ class ReplaceIcon : Hook {
         LauncherApps::class.java,
         "getShortcutIconDrawable",
         object : MethodReplacement() {
-          override fun replaceHookedMethod(param: MethodHookParam): Drawable {
+          override fun replaceHookedMethod(param: MethodHookParam): Drawable? {
             val shortcut = param.args[0].asType<ShortcutInfo>()
             val density = param.args[1].asType<Int>()
-            return getIP()?.let { ip ->
-              ip.getIconEntry(getComponentName(shortcut))?.let { ip.getIcon(it, density) }
-                ?: ip.genIconFrom(callOriginalMethod(param))
-            } ?: callOriginalMethod(param)
+            val ip = getIP() ?: return callOriginalMethod(param)
+            return ip.getIconEntry(getComponentName(shortcut))?.let { ip.getIcon(it, density) }
+              ?: callOriginalMethod<Drawable?>(param)?.let { ip.genIconFrom(it) }
           }
         },
       )
