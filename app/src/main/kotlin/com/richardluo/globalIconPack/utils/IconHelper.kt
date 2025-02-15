@@ -1,8 +1,6 @@
 package com.richardluo.globalIconPack.utils
 
 import android.app.AndroidAppHelper
-import android.content.Intent
-import android.content.pm.PackageManager
 import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.Canvas
@@ -217,21 +215,10 @@ object IconHelper {
 private val useUnClipAdaptive: Boolean by lazy {
   if (!isInMod) false
   else
-    when (val packageName = AndroidAppHelper.currentPackageName()) {
+    when (AndroidAppHelper.currentPackageName()) {
       "com.android.settings" -> false
       "com.android.systemui" -> false
       "com.android.intentresolver" -> true
-      else -> {
-        val intent =
-          Intent().apply {
-            setPackage(packageName)
-            setAction(Intent.ACTION_MAIN)
-            addCategory(Intent.CATEGORY_HOME)
-          }
-        AndroidAppHelper.currentApplication()
-          .packageManager
-          .resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY)
-          .let { it?.activityInfo != null }
-      }
+      else -> true
     }
 }
