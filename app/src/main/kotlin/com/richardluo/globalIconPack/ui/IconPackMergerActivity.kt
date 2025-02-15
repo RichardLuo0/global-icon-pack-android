@@ -1,5 +1,6 @@
 package com.richardluo.globalIconPack.ui
 
+import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -240,6 +241,7 @@ class IconPackMergerActivity : ComponentActivity() {
     }
   }
 
+  @SuppressLint("StateFlowValueCalledInComposition")
   @Composable
   private fun IconList() {
     val icons = viewModel.filteredIcons.getValue(null)
@@ -252,7 +254,7 @@ class IconPackMergerActivity : ComponentActivity() {
           val (info, entry) = pair
           IconForApp(
             info.label,
-            key = entry?.entry?.name,
+            key = viewModel.basePackFlow.value + "/" + (entry?.entry?.name ?: ""),
             loadImage = { viewModel.loadIcon(pair) },
           ) {
             viewModel.chooseIconVM.openVariantSheet(info)
