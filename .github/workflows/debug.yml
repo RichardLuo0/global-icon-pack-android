@@ -6,7 +6,7 @@ on:
     paths:
       - "**.kt"
       - "**.xml"
-      - "!strings.xml"
+      - "!**/strings.xml"
   workflow_dispatch:
 
 jobs:
