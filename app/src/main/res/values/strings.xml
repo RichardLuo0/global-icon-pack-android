@@ -53,7 +53,7 @@
     <string name="userApps">User apps</string>
     <string name="systemApps">System apps</string>
     <string name="shortcuts">Shortcuts</string>
-    <string name="requiresHookSystem">You must hook system to get shortcuts.</string>
+    <string name="requiresHookSystem">You must hook system framework to get shortcuts.</string>
     <string name="modified">Modified</string>
 
     <string name="chooseBasePack">Choose a base icon pack</string>
