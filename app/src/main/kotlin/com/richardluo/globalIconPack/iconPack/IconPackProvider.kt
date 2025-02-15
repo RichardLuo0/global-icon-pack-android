@@ -54,15 +54,16 @@ class IconEntryWithId(private val id: Int, val entry: IconEntry) : IconEntry(ent
 }
 
 class IconPackProvider : ContentProvider() {
-  private val iconPackDB by lazy { IconPackDB(context!!) }
-
   companion object {
     const val AUTHORITIES = "com.richardluo.globalIconPack.IconPackProvider"
     const val ICONS = "ICONS"
     const val FALLBACKS = "FALLBACKS"
   }
 
+  private lateinit var iconPackDB: IconPackDB
+
   override fun onCreate(): Boolean {
+    iconPackDB = IconPackDB(context!!)
     return true
   }
 
