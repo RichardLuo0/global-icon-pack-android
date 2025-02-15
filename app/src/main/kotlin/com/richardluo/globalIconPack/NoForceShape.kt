@@ -1,9 +1,6 @@
 package com.richardluo.globalIconPack
 
-import android.app.AndroidAppHelper
 import android.graphics.Path
-import android.graphics.Rect
-import android.graphics.RectF
 import android.graphics.drawable.AdaptiveIconDrawable
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.LayerDrawable
@@ -14,12 +11,10 @@ import com.richardluo.globalIconPack.utils.ReflectHelper
 import com.richardluo.globalIconPack.utils.UnClipAdaptiveIconDrawable
 import com.richardluo.globalIconPack.utils.WorldPreference.getPrefInMod
 import com.richardluo.globalIconPack.utils.asType
-import com.richardluo.globalIconPack.utils.call
 import com.richardluo.globalIconPack.utils.rGet
 import com.richardluo.globalIconPack.utils.rSet
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
-import java.lang.reflect.Method
 
 class NoForceShape : Hook {
 
@@ -34,7 +29,7 @@ class NoForceShape : Hook {
       object : XC_MethodHook() {
         override fun beforeHookedMethod(param: MethodHookParam) {
           param.args[0].asType<Drawable?>()?.let {
-            if (it is IconHelper.ProcessedBitmapDrawable) param.args[0] = it.makeAdaptive()
+            if (it is IconHelper.Adaptively) param.args[0] = it.makeAdaptive()
           }
         }
       },
@@ -47,7 +42,7 @@ class NoForceShape : Hook {
       object : XC_MethodHook() {
         override fun beforeHookedMethod(param: MethodHookParam) {
           param.args[0].asType<Drawable?>()?.let {
-            if (it is IconHelper.ProcessedBitmapDrawable) param.result = it.makeAdaptive()
+            if (it is IconHelper.Adaptively) param.result = it.makeAdaptive()
           }
         }
       },

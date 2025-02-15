@@ -1,5 +1,8 @@
 package com.richardluo.globalIconPack.utils
 
+import android.app.AndroidAppHelper
+import android.content.Intent
+import android.content.pm.PackageManager
 import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.Canvas
@@ -10,6 +13,7 @@ import android.graphics.Rect
 import android.graphics.drawable.AdaptiveIconDrawable
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
+import android.graphics.drawable.DrawableWrapper
 import android.graphics.drawable.InsetDrawable
 import androidx.core.graphics.drawable.toBitmap
 
@@ -34,8 +38,7 @@ object IconHelper {
     override fun draw(canvas: Canvas) {
       drawIcon(canvas, paint, bounds, back, upon, mask) {
         // Use original mask if mask is not presented
-        if (mask != null) super.draw(canvas)
-        else getMask()?.let { super.draw(canvas, it) } ?: super.drawClip(canvas)
+        if (mask != null) super.draw(canvas) else super.drawClip(canvas)
       }
     }
 
@@ -45,39 +48,68 @@ object IconHelper {
     }
   }
 
-  class ProcessedBitmapDrawable(res: Resources, bitmap: Bitmap) : BitmapDrawable(res, bitmap) {
-
-    fun makeAdaptive() = AdaptiveIconDrawable(null, createScaledDrawable(this))
+  interface Adaptively {
+    fun makeAdaptive() = AdaptiveIconDrawable(null, createScaledDrawable(this as Drawable))
   }
 
-  fun processIconToBitmap(
+  private class CustomBitmapDrawable(
+    res: Resources,
+    drawable: Drawable,
+    back: Bitmap?,
+    upon: Bitmap?,
+    mask: Bitmap?,
+  ) :
+    BitmapDrawable(
+      res,
+      run {
+        val width = drawable.intrinsicWidth.takeIf { it > 0 } ?: 300
+        val height = drawable.intrinsicHeight.takeIf { it > 0 } ?: 300
+        val bounds = Rect(0, 0, width, height)
+        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap)
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.DITHER_FLAG or Paint.FILTER_BITMAP_FLAG)
+        drawIcon(canvas, paint, bounds, back, upon, mask) {
+          canvas.drawBitmap(drawable.toBitmap(), null, bounds, paint)
+        }
+        bitmap
+      },
+    ),
+    Adaptively
+
+  private class CustomDrawable(
+    drawable: Drawable,
+    private val back: Bitmap?,
+    private val upon: Bitmap?,
+    private val mask: Bitmap?,
+  ) : DrawableWrapper(drawable), Adaptively {
+    private val paint =
+      Paint(Paint.ANTI_ALIAS_FLAG or Paint.DITHER_FLAG or Paint.FILTER_BITMAP_FLAG)
+
+    override fun draw(canvas: Canvas) {
+      drawIcon(canvas, paint, bounds, back, upon, mask) { super.draw(canvas) }
+    }
+  }
+
+  fun processIconToStatic(
     res: Resources,
     drawable: Drawable,
     back: Bitmap?,
     upon: Bitmap?,
     mask: Bitmap?,
     iconScale: Float = 1f,
-  ): BitmapDrawable {
-    val width = drawable.intrinsicWidth
-    val height = drawable.intrinsicHeight
-    val bounds = Rect(0, 0, width, height)
-    val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-    val canvas = Canvas(bitmap)
-    val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.DITHER_FLAG or Paint.FILTER_BITMAP_FLAG)
-    drawIcon(canvas, paint, bounds, back, upon, mask) {
-      val scaledDrawable =
-        if (mask != null && drawable is AdaptiveIconDrawable)
-          UnClipAdaptiveIconDrawable(
-            drawable.background,
-            createScaledDrawable(drawable.foreground, iconScale),
-          )
-        else createScaledDrawable(drawable, iconScale)
-      canvas.drawBitmap(scaledDrawable.toBitmap(), null, bounds, paint)
-    }
-    return ProcessedBitmapDrawable(res, bitmap)
-  }
+  ): Drawable =
+    (if (mask != null && drawable is AdaptiveIconDrawable)
+        UnClipAdaptiveIconDrawable(
+          drawable.background,
+          createScaledDrawable(drawable.foreground, iconScale),
+        )
+      else createScaledDrawable(drawable, iconScale))
+      .let {
+        if (drawable is BitmapDrawable) CustomBitmapDrawable(res, it, back, upon, mask)
+        else CustomDrawable(it, back, upon, mask)
+      }
 
-  fun processIcon(
+  fun processIconToAdaptive(
     res: Resources,
     drawable: Drawable,
     back: Bitmap?,
@@ -96,11 +128,22 @@ object IconHelper {
       )
     else if (mask != null)
       CustomAdaptiveIconDrawable(null, createScaledDrawable(drawable), back, upon, mask, iconScale)
-    else processIconToBitmap(res, drawable, back, upon, null, iconScale)
+    else processIconToStatic(res, drawable, back, upon, null, iconScale)
+
+  fun processIcon(
+    res: Resources,
+    drawable: Drawable,
+    back: Bitmap?,
+    upon: Bitmap?,
+    mask: Bitmap?,
+    iconScale: Float = 1f,
+  ) =
+    if (useUnClipAdaptive) processIconToAdaptive(res, drawable, back, upon, mask, iconScale)
+    else processIconToStatic(res, drawable, back, upon, mask, iconScale)
 
   fun makeAdaptive(drawable: Drawable) =
-    if (drawable !is AdaptiveIconDrawable)
-      UnClipAdaptiveIconDrawable(null, createScaledDrawable(drawable, ADAPTIVE_ICON_VIEWPORT_SCALE))
+    if (useUnClipAdaptive && drawable !is AdaptiveIconDrawable)
+      UnClipAdaptiveIconDrawable(null, createScaledDrawable(drawable))
     else drawable
 
   fun drawIcon(
@@ -152,4 +195,30 @@ object IconHelper {
     scaleY = (1 - scaleY) / 2
     return InsetDrawable(drawable, scaleX, scaleY, scaleX, scaleY)
   }
+}
+
+/**
+ * UnClipAdaptiveIconDrawable does not work correctly for some apps. It maybe clipped by adaptive
+ * icon mask or shows black background, but we don't know how to efficiently convert Bitmap to Path.
+ */
+private val useUnClipAdaptive: Boolean by lazy {
+  if (!isInMod) false
+  else
+    when (val packageName = AndroidAppHelper.currentPackageName()) {
+      "com.android.settings" -> false
+      "com.android.systemui" -> false
+      "com.android.intentresolver" -> true
+      else -> {
+        val intent =
+          Intent().apply {
+            setPackage(packageName)
+            setAction(Intent.ACTION_MAIN)
+            addCategory(Intent.CATEGORY_HOME)
+          }
+        AndroidAppHelper.currentApplication()
+          .packageManager
+          .resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY)
+          .let { it?.activityInfo != null }
+      }
+    }
 }

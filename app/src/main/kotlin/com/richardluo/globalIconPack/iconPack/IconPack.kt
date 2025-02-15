@@ -1,12 +1,9 @@
 package com.richardluo.globalIconPack.iconPack
 
-import android.app.AndroidAppHelper
 import android.content.ComponentName
-import android.content.Intent
 import android.content.SharedPreferences
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageItemInfo
-import android.content.pm.PackageManager
 import android.content.pm.ShortcutInfo
 import android.content.res.Resources
 import android.graphics.Bitmap
@@ -17,7 +14,6 @@ import com.richardluo.globalIconPack.PrefKey
 import com.richardluo.globalIconPack.iconPack.database.FallbackSettings
 import com.richardluo.globalIconPack.iconPack.database.IconEntry
 import com.richardluo.globalIconPack.utils.IconHelper
-import com.richardluo.globalIconPack.utils.isInMod
 
 abstract class IconPack(pref: SharedPreferences, val pack: String, val resources: Resources) {
   protected class IconFallback(
@@ -52,9 +48,7 @@ abstract class IconPack(pref: SharedPreferences, val pack: String, val resources
   protected abstract fun getIconNotAdaptive(entry: IconEntry, iconDpi: Int): Drawable?
 
   fun getIcon(entry: IconEntry, iconDpi: Int) =
-    getIconNotAdaptive(entry, iconDpi)?.let {
-      if (useUnClipAdaptive) IconHelper.makeAdaptive(it) else it
-    }
+    getIconNotAdaptive(entry, iconDpi)?.let { IconHelper.makeAdaptive(it) }
 
   fun getIcon(id: Int, iconDpi: Int) = getIconEntry(id)?.let { getIcon(it, iconDpi) }
 
@@ -62,24 +56,14 @@ abstract class IconPack(pref: SharedPreferences, val pack: String, val resources
 
   fun genIconFrom(baseIcon: Drawable) =
     iconFallback?.run {
-      if (useUnClipAdaptive)
-        IconHelper.processIcon(
-          resources,
-          baseIcon,
-          iconBacks.randomOrNull(),
-          iconUpons.randomOrNull(),
-          iconMasks.randomOrNull(),
-          iconScale,
-        )
-      else
-        IconHelper.processIconToBitmap(
-          resources,
-          baseIcon,
-          iconBacks.randomOrNull(),
-          iconUpons.randomOrNull(),
-          iconMasks.randomOrNull(),
-          iconScale,
-        )
+      IconHelper.processIcon(
+        resources,
+        baseIcon,
+        iconBacks.randomOrNull(),
+        iconUpons.randomOrNull(),
+        iconMasks.randomOrNull(),
+        iconScale,
+      )
     } ?: baseIcon
 }
 
@@ -90,29 +74,3 @@ fun getComponentName(info: PackageItemInfo) =
 fun getComponentName(packageName: String) = ComponentName(packageName, "")
 
 fun getComponentName(shortcut: ShortcutInfo) = ComponentName("${shortcut.`package`}@", shortcut.id)
-
-/**
- * UnClipAdaptiveIconDrawable does not work correctly for some apps. It maybe clipped by adaptive
- * icon mask or shows black background, but we don't know how to efficiently convert Bitmap to Path.
- */
-private val useUnClipAdaptive: Boolean by lazy {
-  if (!isInMod) false
-  else
-    when (val packageName = AndroidAppHelper.currentPackageName()) {
-      "com.android.settings" -> false
-      "com.android.systemui" -> false
-      "com.android.intentresolver" -> true
-      else -> {
-        val intent =
-          Intent().apply {
-            setPackage(packageName)
-            setAction(Intent.ACTION_MAIN)
-            addCategory(Intent.CATEGORY_HOME)
-          }
-        AndroidAppHelper.currentApplication()
-          .packageManager
-          .resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY)
-          .let { it?.activityInfo != null }
-      }
-    }
-}
