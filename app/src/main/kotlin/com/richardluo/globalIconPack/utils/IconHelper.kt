@@ -84,9 +84,22 @@ object IconHelper {
   ) : DrawableWrapper(drawable), Adaptively {
     private val paint =
       Paint(Paint.ANTI_ALIAS_FLAG or Paint.DITHER_FLAG or Paint.FILTER_BITMAP_FLAG)
+    private var bitmap: Bitmap? = null
 
     override fun draw(canvas: Canvas) {
-      drawIcon(canvas, paint, bounds, back, upon, mask) { super.draw(canvas) }
+      if (
+        bitmap == null ||
+          bitmap!!.getWidth() != bounds.width() ||
+          bitmap!!.getHeight() != bounds.height()
+      ) {
+        bitmap = Bitmap.createBitmap(bounds.width(), bounds.height(), Bitmap.Config.ARGB_8888)
+        Canvas(bitmap!!).apply {
+          translate(-bounds.left.toFloat(), -bounds.top.toFloat())
+          drawIcon(this, paint, bounds, back, upon, mask) { super.draw(this) }
+        }
+      }
+      paint.xfermode = null
+      canvas.drawBitmap(bitmap!!, null, bounds, paint)
     }
   }
 

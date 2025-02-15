@@ -47,17 +47,17 @@ open class UnClipAdaptiveIconDrawable(background: Drawable?, foreground: Drawabl
   }
 
   protected fun draw(canvas: Canvas, path: Path) {
-    val mLayersBitmap = mLayersBitmapF?.getAs<Bitmap>(this) ?: return
-    val mCanvas = mCanvasF?.getAs<Canvas>(this) ?: return
     val mPaint = mPaintF?.getAs<Paint>(this) ?: return
-    if (mLayersShaderF?.get(this) == null) {
+    val mLayersShaderF = mLayersShaderF ?: return
+    if (mLayersShaderF.get(this) == null) {
+      val mLayersBitmap = mLayersBitmapF?.getAs<Bitmap>(this) ?: return
+      val mCanvas = mCanvasF?.getAs<Canvas>(this) ?: return
       mCanvas.setBitmap(mLayersBitmap)
       background?.draw(mCanvas)
       foreground?.draw(mCanvas)
-      BitmapShader(mLayersBitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP).let {
-        mLayersShaderF?.set(this, it)
-        mPaint.setShader(it)
-      }
+      val shader = BitmapShader(mLayersBitmap, Shader.TileMode.DECAL, Shader.TileMode.DECAL)
+      mLayersShaderF.set(this, shader)
+      mPaint.setShader(shader)
     }
     canvas.apply {
       translate(bounds.left.toFloat(), bounds.top.toFloat())
@@ -66,9 +66,9 @@ open class UnClipAdaptiveIconDrawable(background: Drawable?, foreground: Drawabl
     }
   }
 
-  protected fun drawClip(canvas: Canvas) = super.draw(canvas)
+  protected fun drawClip(canvas: Canvas) = getMask()?.let { draw(canvas, it) }
 
-  protected fun getMask() = mMaskScaleOnly?.getAs<Path>(this)
+  protected fun getMask() = mMaskScaleOnly?.getAs<Path?>(this)
 
   protected fun getFullBoundsPath() = Path().apply { addRect(getFullBounds(), Path.Direction.CW) }
 
