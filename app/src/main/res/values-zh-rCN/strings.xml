@@ -47,7 +47,7 @@
     <string name="userApps">用户应用</string>
     <string name="systemApps">系统应用</string>
     <string name="shortcuts">快捷方式</string>
-    <string name="requiresHookSystem">您必须hook系统才能获取快捷方式。</string>
+    <string name="requiresHookSystem">您必须hook系统框架才能获取快捷方式。</string>
     <string name="modified">已修改</string>
     <string name="chooseBasePack">选择基本图标包</string>
     <string name="chooseIconToReplace">选择要替换的图标</string>
