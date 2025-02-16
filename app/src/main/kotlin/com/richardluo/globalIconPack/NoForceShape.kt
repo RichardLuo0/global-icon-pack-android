@@ -72,7 +72,12 @@ class NoForceShape : Hook {
       object : XC_MethodHook() {
         override fun beforeHookedMethod(param: MethodHookParam) {
           param.args[0].asType<Drawable?>()?.let {
-            if (it !is AdaptiveIconDrawable) param.args[0] = createUnMask(it)
+            param.args[0] =
+              when (it) {
+                is IconHelper.Adaptively -> it.makeAdaptive()
+                !is AdaptiveIconDrawable -> makeUnMask(it)
+                else -> it
+              }
           }
         }
       },
@@ -91,7 +96,12 @@ class NoForceShape : Hook {
       object : XC_MethodHook() {
         override fun beforeHookedMethod(param: MethodHookParam) {
           param.args[0].asType<Drawable?>()?.let {
-            if (it !is AdaptiveIconDrawable) param.args[0] = createUnMask(it)
+            param.args[0] =
+              when (it) {
+                is IconHelper.Adaptively -> it.makeAdaptive()
+                !is AdaptiveIconDrawable -> makeUnMask(it)
+                else -> it
+              }
           }
         }
       },
@@ -168,6 +178,6 @@ class NoForceShape : Hook {
     }
   }
 
-  fun createUnMask(drawable: Drawable) =
+  fun makeUnMask(drawable: Drawable) =
     UnmaskAdaptiveIconDrawable(null, IconHelper.createScaledDrawable(drawable))
 }
