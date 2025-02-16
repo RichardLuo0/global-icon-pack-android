@@ -4,12 +4,14 @@ import android.app.AndroidAppHelper
 import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.Canvas
+import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.PorterDuff
 import android.graphics.PorterDuffXfermode
 import android.graphics.Rect
 import android.graphics.drawable.AdaptiveIconDrawable
 import android.graphics.drawable.BitmapDrawable
+import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.DrawableWrapper
 import android.graphics.drawable.InsetDrawable
@@ -18,7 +20,7 @@ import androidx.core.graphics.drawable.toBitmap
 object IconHelper {
   val ADAPTIVE_ICON_VIEWPORT_SCALE = 1 / (1 + 2 * AdaptiveIconDrawable.getExtraInsetFraction())
 
-  class CustomAdaptiveIconDrawable(
+  private class CustomAdaptiveIconDrawable(
     background: Drawable?,
     foreground: Drawable?,
     private val back: Bitmap?,
@@ -47,7 +49,7 @@ object IconHelper {
   }
 
   interface Adaptively {
-    fun makeAdaptive() = AdaptiveIconDrawable(null, createScaledDrawable(this as Drawable))
+    fun makeAdaptive(): AdaptiveIconDrawable
   }
 
   private class CustomBitmapDrawable(
@@ -72,7 +74,15 @@ object IconHelper {
         bitmap
       },
     ),
-    Adaptively
+    Adaptively {
+    private val hasMask = mask != null
+
+    override fun makeAdaptive() =
+      createScaledDrawable(this).let {
+        if (hasMask) UnClipAdaptiveIconDrawable(null, it)
+        else AdaptiveIconDrawable(ColorDrawable(Color.WHITE), it)
+      }
+  }
 
   private class CustomDrawable(
     drawable: Drawable,
@@ -99,6 +109,12 @@ object IconHelper {
       paint.xfermode = null
       canvas.drawBitmap(bitmap!!, null, bounds, paint)
     }
+
+    override fun makeAdaptive() =
+      createScaledDrawable(this).let {
+        if (mask != null) UnClipAdaptiveIconDrawable(null, it)
+        else AdaptiveIconDrawable(ColorDrawable(Color.WHITE), it)
+      }
   }
 
   fun processIconToStatic(
@@ -109,7 +125,7 @@ object IconHelper {
     mask: Bitmap?,
     iconScale: Float = 1f,
   ): Drawable =
-    (if (mask != null && drawable is AdaptiveIconDrawable)
+    (if (iconScale != 1f && drawable is AdaptiveIconDrawable)
         UnClipAdaptiveIconDrawable(
           drawable.background,
           createScaledDrawable(drawable.foreground, iconScale),
