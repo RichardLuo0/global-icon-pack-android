@@ -21,7 +21,7 @@ class NoForceShape : Hook {
   override fun onHookPixelLauncher(lpp: LoadPackageParam) {
     removeShadow(lpp)
 
-    if (!getPrefInMod().getBoolean(PrefKey.NO_FORCE_SHAPE, PrefDef.NO_FORCE_SHAPE)) return
+    if (!getPrefInMod().get(Pref.NO_FORCE_SHAPE)) return
     // May not be presented on android >= 15
     ReflectHelper.hookAllMethods(
       BaseIconFactory.getClazz(lpp) ?: return,
@@ -52,7 +52,7 @@ class NoForceShape : Hook {
   override fun onHookSystemUI(lpp: LoadPackageParam) {
     removeShadow(lpp)
     // Remove bubble shadow
-    if (getPrefInMod().getBoolean(PrefKey.NO_SHADOW, PrefDef.NO_SHADOW)) {
+    if (getPrefInMod().get(Pref.NO_SHADOW)) {
       ReflectHelper.hookAllConstructors(
         ReflectHelper.findClass("com.android.wm.shell.bubbles.BadgedImageView", lpp) ?: return,
         object : XC_MethodHook() {
@@ -63,7 +63,7 @@ class NoForceShape : Hook {
       )
     }
 
-    if (!getPrefInMod().getBoolean(PrefKey.NO_FORCE_SHAPE, PrefDef.NO_FORCE_SHAPE)) return
+    if (!getPrefInMod().get(Pref.NO_FORCE_SHAPE)) return
     // Fix splash screen
     ReflectHelper.hookAllMethodsOrLog(
       BaseIconFactory.getClazz(lpp) ?: return,
@@ -82,7 +82,7 @@ class NoForceShape : Hook {
   override fun onHookSettings(lpp: LoadPackageParam) {
     removeShadow(lpp)
 
-    if (!getPrefInMod().getBoolean(PrefKey.NO_FORCE_SHAPE, PrefDef.NO_FORCE_SHAPE)) return
+    if (!getPrefInMod().get(Pref.NO_FORCE_SHAPE)) return
     // Fix recent app list
     ReflectHelper.hookAllMethodsOrLog(
       BaseIconFactory.getClazz(lpp) ?: return,
@@ -128,7 +128,7 @@ class NoForceShape : Hook {
 
   @Suppress("LocalVariableName")
   private fun removeShadow(lpp: LoadPackageParam) {
-    if (!getPrefInMod().getBoolean(PrefKey.NO_SHADOW, PrefDef.NO_SHADOW)) return
+    if (!getPrefInMod().get(Pref.NO_SHADOW)) return
     val MODE_DEFAULT = 0
     val MODE_WITH_SHADOW = 2
     val MODE_HARDWARE = 3

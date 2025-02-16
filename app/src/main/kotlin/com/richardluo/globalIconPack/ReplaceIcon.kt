@@ -97,7 +97,7 @@ class ReplaceIcon : Hook {
     )
 
     // Generate shortcut icon
-    if (WorldPreference.getPrefInMod().getBoolean(PrefKey.SHORTCUT, PrefDef.SHORTCUT))
+    if (WorldPreference.getPrefInMod().get(Pref.SHORTCUT))
       ReflectHelper.hookAllMethodsOrLog(
         LauncherApps::class.java,
         "getShortcutIconDrawable",

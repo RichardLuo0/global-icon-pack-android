@@ -2,8 +2,8 @@ package com.richardluo.globalIconPack.iconPack
 
 import android.app.AndroidAppHelper
 import com.richardluo.globalIconPack.MODE_PROVIDER
-import com.richardluo.globalIconPack.PrefDef
-import com.richardluo.globalIconPack.PrefKey
+import com.richardluo.globalIconPack.Pref
+import com.richardluo.globalIconPack.get
 import com.richardluo.globalIconPack.utils.WorldPreference
 import com.richardluo.globalIconPack.utils.log
 
@@ -25,11 +25,11 @@ private fun initIP() {
     runCatching {
         val pref = WorldPreference.getPrefInMod()
         val pack =
-          pref.getString(PrefKey.ICON_PACK, PrefDef.ICON_PACK)?.takeIf { it.isNotEmpty() }
+          pref.get(Pref.ICON_PACK)?.takeIf { it.isNotEmpty() }
             ?: throw Exception("No icon pack set")
         val res = pm.getResourcesForApplication(pack)
         ip =
-          when (pref.getString(PrefKey.MODE, PrefDef.MODE)) {
+          when (pref.get(Pref.MODE)) {
             MODE_PROVIDER -> RemoteIconPack(pref, pack, res)
             else -> LocalIconPack(pref, pack, res)
           }

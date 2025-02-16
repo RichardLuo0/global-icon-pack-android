@@ -37,9 +37,9 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.lifecycle.lifecycleScope
 import com.richardluo.globalIconPack.MODE_LOCAL
 import com.richardluo.globalIconPack.MODE_PROVIDER
-import com.richardluo.globalIconPack.PrefDef
-import com.richardluo.globalIconPack.PrefKey
+import com.richardluo.globalIconPack.Pref
 import com.richardluo.globalIconPack.R
+import com.richardluo.globalIconPack.get
 import com.richardluo.globalIconPack.iconPack.IconPackApps
 import com.richardluo.globalIconPack.ui.components.ComposableSliderPreference
 import com.richardluo.globalIconPack.ui.components.IconPackItem
@@ -140,7 +140,7 @@ class MainActivity : ComponentActivity() {
       LaunchedEffect(flow) {
         viewModel.bindPreferencesFlow(flow)
         flow
-          .map { it[PrefKey.MODE] ?: PrefDef.MODE }
+          .map { it.get(Pref.MODE) }
           .distinctUntilChanged()
           .onEach { mode ->
             // Ask for notification permission used for foreground service
@@ -158,16 +158,16 @@ class MainActivity : ComponentActivity() {
       LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = contentPadding) {
         preferenceCategory(key = "general", title = { Text(stringResource(R.string.general)) })
         listPreference(
-          key = PrefKey.MODE,
-          defaultValue = PrefDef.MODE,
+          key = Pref.MODE.first,
+          defaultValue = Pref.MODE.second,
           values = listOf(MODE_PROVIDER, MODE_LOCAL),
           valueToText = { AnnotatedString(modeToDesc(it)) },
           title = { Text(stringResource(R.string.mode)) },
           summary = { Text(modeToDesc(it)) },
         )
         mapListPreference(
-          key = PrefKey.ICON_PACK,
-          defaultValue = PrefDef.ICON_PACK,
+          key = Pref.ICON_PACK.first,
+          defaultValue = Pref.ICON_PACK.second,
           getValueMap = { IconPackApps.getFlow(context).collectAsState(mapOf()).value },
           item = { key, value, currentKey, onClick ->
             IconPackItem(key, value, currentKey, onClick)
@@ -182,14 +182,14 @@ class MainActivity : ComponentActivity() {
           },
         )
         switchPreference(
-          key = PrefKey.ICON_PACK_AS_FALLBACK,
-          defaultValue = PrefDef.ICON_PACK_AS_FALLBACK,
+          key = Pref.ICON_PACK_AS_FALLBACK.first,
+          defaultValue = Pref.ICON_PACK_AS_FALLBACK.second,
           title = { Text(stringResource(R.string.iconPackAsFallback)) },
           summary = { Text(stringResource(R.string.iconPackAsFallbackSummary)) },
         )
         switchPreference(
-          key = PrefKey.SHORTCUT,
-          defaultValue = PrefDef.SHORTCUT,
+          key = Pref.SHORTCUT.first,
+          defaultValue = Pref.SHORTCUT.second,
           title = { Text(stringResource(R.string.shortcut)) },
         )
         preference(
@@ -204,10 +204,8 @@ class MainActivity : ComponentActivity() {
           title = { Text(stringResource(R.string.iconPackSettings)) },
         )
         item(key = "iconVariant") {
-          val isProvider =
-            flow.map { (it[PrefKey.MODE] ?: PrefDef.MODE) == MODE_PROVIDER }.getValue(false)
-          val isPackSet =
-            flow.map { it.get<String>(PrefKey.ICON_PACK)?.isNotEmpty() ?: false }.getValue(false)
+          val isProvider = flow.map { it.get(Pref.MODE) == MODE_PROVIDER }.getValue(false)
+          val isPackSet = flow.map { it.get(Pref.ICON_PACK).isNotEmpty() }.getValue(false)
           Preference(
             enabled = isProvider && isPackSet,
             onClick = { context.startActivity(Intent(context, IconVariantActivity::class.java)) },
@@ -216,14 +214,17 @@ class MainActivity : ComponentActivity() {
           )
         }
         switchPreference(
-          key = PrefKey.ICON_FALLBACK,
-          defaultValue = PrefDef.ICON_FALLBACK,
+          key = Pref.ICON_FALLBACK.first,
+          defaultValue = Pref.ICON_FALLBACK.second,
           title = { Text(stringResource(R.string.iconFallback)) },
           summary = { Text(stringResource(R.string.iconFallbackSummary)) },
         )
         item {
           val enableState =
-            rememberPreferenceState(PrefKey.OVERRIDE_ICON_FALLBACK, PrefDef.OVERRIDE_ICON_FALLBACK)
+            rememberPreferenceState(
+              Pref.OVERRIDE_ICON_FALLBACK.first,
+              Pref.OVERRIDE_ICON_FALLBACK.second,
+            )
           val enabled by enableState
           SwitchPreference(
             state = enableState,
@@ -232,8 +233,8 @@ class MainActivity : ComponentActivity() {
           )
           ComposableSliderPreference(
             enabled = { enabled },
-            key = PrefKey.ICON_PACK_SCALE,
-            defaultValue = PrefDef.ICON_PACK_SCALE,
+            key = Pref.ICON_PACK_SCALE.first,
+            defaultValue = Pref.ICON_PACK_SCALE.second,
             valueRange = 0f..1.5f,
             valueSteps = 29,
             valueText = { Text("%.2f".format(it)) },
@@ -246,27 +247,27 @@ class MainActivity : ComponentActivity() {
           title = { Text(stringResource(R.string.pixelSettings)) },
         )
         textFieldPreference(
-          key = PrefKey.PIXEL_LAUNCHER_PACKAGE,
-          defaultValue = PrefDef.PIXEL_LAUNCHER_PACKAGE,
+          key = Pref.PIXEL_LAUNCHER_PACKAGE.first,
+          defaultValue = Pref.PIXEL_LAUNCHER_PACKAGE.second,
           textToValue = { it },
           title = { Text(stringResource(R.string.pixelLauncherPackage)) },
           summary = { Text(stringResource(R.string.pixelLauncherPackageSummary)) },
         )
         switchPreference(
-          key = PrefKey.NO_FORCE_SHAPE,
-          defaultValue = PrefDef.NO_FORCE_SHAPE,
+          key = Pref.NO_FORCE_SHAPE.first,
+          defaultValue = Pref.NO_FORCE_SHAPE.second,
           title = { Text(stringResource(R.string.noForceShape)) },
           summary = { Text(stringResource(R.string.noForceShapeSummary)) },
         )
         switchPreference(
-          key = PrefKey.NO_SHADOW,
-          defaultValue = PrefDef.NO_SHADOW,
+          key = Pref.NO_SHADOW.first,
+          defaultValue = Pref.NO_SHADOW.second,
           title = { Text(stringResource(R.string.noShadow)) },
           summary = { Text(stringResource(R.string.noShadowSummary)) },
         )
         switchPreference(
-          key = PrefKey.FORCE_LOAD_CLOCK_AND_CALENDAR,
-          defaultValue = PrefDef.FORCE_LOAD_CLOCK_AND_CALENDAR,
+          key = Pref.FORCE_LOAD_CLOCK_AND_CALENDAR.first,
+          defaultValue = Pref.FORCE_LOAD_CLOCK_AND_CALENDAR.second,
           title = { Text(stringResource(R.string.forceLoadClockAndCalendar)) },
         )
       }

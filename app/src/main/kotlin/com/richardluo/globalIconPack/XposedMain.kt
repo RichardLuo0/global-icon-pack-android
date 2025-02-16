@@ -19,8 +19,7 @@ class XposedMain : IXposedHookLoadPackage {
     hookList.forEach { it.onHookApp(lpp) }
 
     when (lpp.packageName) {
-      WorldPreference.getPrefInMod()
-        .getString(PrefKey.PIXEL_LAUNCHER_PACKAGE, PrefDef.PIXEL_LAUNCHER_PACKAGE) ->
+      WorldPreference.getPrefInMod().get(Pref.PIXEL_LAUNCHER_PACKAGE) ->
         hookList.forEach { it.onHookPixelLauncher(lpp) }
       "com.android.systemui" -> hookList.forEach { it.onHookSystemUI(lpp) }
       "com.android.settings" -> hookList.forEach { it.onHookSettings(lpp) }

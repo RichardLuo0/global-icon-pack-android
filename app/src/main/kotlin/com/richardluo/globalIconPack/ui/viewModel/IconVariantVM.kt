@@ -8,8 +8,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.richardluo.globalIconPack.PrefDef
-import com.richardluo.globalIconPack.PrefKey
+import com.richardluo.globalIconPack.Pref
+import com.richardluo.globalIconPack.get
 import com.richardluo.globalIconPack.iconPack.database.IconEntry
 import com.richardluo.globalIconPack.iconPack.database.IconPackDB
 import com.richardluo.globalIconPack.utils.IconPackCreator.IconEntryWithPack
@@ -35,11 +35,9 @@ class IconVariantVM(app: Application) : AndroidViewModel(app) {
   private val iconCache by getInstance { IconCache(app) }
   private val iconPackDB by getInstance { IconPackDB(app) }
 
-  val basePack =
-    WorldPreference.getPrefInApp(context).getString(PrefKey.ICON_PACK, PrefDef.ICON_PACK)!!
+  val basePack = WorldPreference.getPrefInApp(context).get(Pref.ICON_PACK)!!
   private val iconPackAsFallback =
-    WorldPreference.getPrefInApp(context)
-      .getBoolean(PrefKey.ICON_PACK_AS_FALLBACK, PrefDef.ICON_PACK_AS_FALLBACK)
+    WorldPreference.getPrefInApp(context).get(Pref.ICON_PACK_AS_FALLBACK)
 
   val expandSearchBar = mutableStateOf(false)
 

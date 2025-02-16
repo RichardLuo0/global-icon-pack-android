@@ -7,8 +7,8 @@ import android.content.SharedPreferences
 import android.content.res.Resources
 import android.graphics.drawable.Drawable
 import android.net.Uri
-import com.richardluo.globalIconPack.PrefDef
-import com.richardluo.globalIconPack.PrefKey
+import com.richardluo.globalIconPack.Pref
+import com.richardluo.globalIconPack.get
 import com.richardluo.globalIconPack.iconPack.database.FallbackSettings
 import com.richardluo.globalIconPack.iconPack.database.IconEntry
 import com.richardluo.globalIconPack.reflect.Resources.getDrawableForDensity
@@ -33,7 +33,7 @@ class RemoteIconPack(pref: SharedPreferences, pack: String, resources: Resources
   private val resourcesMap = mutableMapOf<String, Resources>()
 
   init {
-    if (pref.getBoolean(PrefKey.ICON_FALLBACK, PrefDef.ICON_FALLBACK))
+    if (pref.get(Pref.ICON_FALLBACK))
       contentResolver
         .query(
           Uri.parse("content://${IconPackProvider.AUTHORITIES}/${IconPackProvider.FALLBACKS}"),

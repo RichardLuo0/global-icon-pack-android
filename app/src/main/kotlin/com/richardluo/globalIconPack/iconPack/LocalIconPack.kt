@@ -6,8 +6,8 @@ import android.content.SharedPreferences
 import android.content.res.Resources
 import android.content.res.XmlResourceParser
 import android.util.Xml
-import com.richardluo.globalIconPack.PrefDef
-import com.richardluo.globalIconPack.PrefKey
+import com.richardluo.globalIconPack.Pref
+import com.richardluo.globalIconPack.get
 import com.richardluo.globalIconPack.iconPack.database.CalendarIconEntry
 import com.richardluo.globalIconPack.iconPack.database.ClockIconEntry
 import com.richardluo.globalIconPack.iconPack.database.ClockMetadata
@@ -31,7 +31,7 @@ open class LocalIconPack(pref: SharedPreferences, pack: String, resources: Resou
 
   init {
     loadIconPack(resources, pack).let { info ->
-      if (pref.getBoolean(PrefKey.ICON_FALLBACK, PrefDef.ICON_FALLBACK))
+      if (pref.get(Pref.ICON_FALLBACK))
         initFallbackSettings(
           FallbackSettings(info.iconBacks, info.iconUpons, info.iconMasks, info.iconScale),
           pref,
