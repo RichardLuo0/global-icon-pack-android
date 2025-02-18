@@ -48,4 +48,5 @@ jobs:
         with:
           tag: ${{ steps.save_version.outputs.VERSION_NAME }}
           artifacts: "app/build/outputs/apk/release/app-release.apk"
+          generateReleaseNotes: true
           token: ${{ secrets.GITHUB_TOKEN }}
