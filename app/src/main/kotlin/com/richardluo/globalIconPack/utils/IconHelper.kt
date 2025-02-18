@@ -46,6 +46,17 @@ object IconHelper {
       super.setAlpha(alpha)
       paint.alpha = alpha
     }
+
+    override val cState by lazy { CState() }
+
+    override fun getConstantState(): ConstantState = cState
+
+    private inner class CState : ConstantState() {
+      override fun newDrawable(): Drawable =
+        CustomAdaptiveIconDrawable(background, foreground, back, upon, mask, iconScale)
+
+      override fun getChangingConfigurations(): Int = 0
+    }
   }
 
   interface Adaptively {
@@ -232,7 +243,9 @@ private val useUnClipAdaptive: Boolean by lazy {
   if (!isInMod) false
   else
     when (AndroidAppHelper.currentPackageName()) {
+      // Fix app list, black background sometimes
       "com.android.settings" -> false
+      // Fix splash screen
       "com.android.systemui" -> false
       "com.android.intentresolver" -> true
       else -> true
