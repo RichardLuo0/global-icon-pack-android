@@ -2,6 +2,7 @@
 <resources>
     <string-array name="xposedscope">>
         <item>com.android.settings</item>
+        <item>com.google.android.settings.intelligence</item>
         <item>com.google.android.apps.nexuslauncher</item>
         <!--splash screen-->
         <item>com.android.systemui</item>

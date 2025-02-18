@@ -84,6 +84,7 @@ fun MainDropdownMenu(snackbarState: SnackbarHostState) {
       onClick =
         runCommand(
           "am force-stop com.android.settings",
+          "am force-stop com.google.android.settings.intelligence",
           "am force-stop com.android.intentresolver",
           "am force-stop com.android.permissioncontroller",
         ),
