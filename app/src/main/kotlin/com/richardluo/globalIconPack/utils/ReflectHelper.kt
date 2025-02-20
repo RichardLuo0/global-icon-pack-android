@@ -42,38 +42,40 @@ object ReflectHelper {
     findClass(clazzName, lpp)?.let { findMethodFirstMatch(it, methodName, *parameterTypes) }
 
   fun hookAllMethods(
-    clazz: Class<*>,
+    clazz: Class<*>?,
     methodName: String,
     parameterTypes: Array<Class<*>?>,
     hook: XC_MethodHook,
   ) =
     runCatching {
-        clazz.declaredMethods
-          .filter { it.match(methodName, parameterTypes) }
-          .map { XposedBridge.hookMethod(it, hook) }
+        clazz?.run {
+          declaredMethods
+            .filter { it.match(methodName, parameterTypes) }
+            .map { XposedBridge.hookMethod(it, hook) }
+        }
       }
       .getOrNull { log(it) }
 
-  fun hookAllMethods(clazz: Class<*>, methodName: String, hook: XC_MethodHook) =
+  fun hookAllMethods(clazz: Class<*>?, methodName: String, hook: XC_MethodHook) =
     hookAllMethods(clazz, methodName, arrayOf(), hook)
 
   fun hookAllMethodsOrLog(
-    clazz: Class<*>,
+    clazz: Class<*>?,
     methodName: String,
     parameterTypes: Array<Class<*>?>,
     hook: XC_MethodHook,
   ) =
     hookAllMethods(clazz, methodName, parameterTypes, hook).also {
-      if (it.isNullOrEmpty()) log("No method $methodName is found on class ${clazz.name}")
+      if (it.isNullOrEmpty()) log("No method $methodName is found on class ${clazz?.name}")
     }
 
-  fun hookAllMethodsOrLog(clazz: Class<*>, methodName: String, hook: XC_MethodHook) =
+  fun hookAllMethodsOrLog(clazz: Class<*>?, methodName: String, hook: XC_MethodHook) =
     hookAllMethodsOrLog(clazz, methodName, arrayOf(), hook)
 
-  fun hookAllConstructors(clazz: Class<*>, hook: XC_MethodHook) =
-    XposedBridge.hookAllConstructors(clazz, hook).also {
-      if (it.isEmpty()) log("No constructors are found on class ${clazz.name}")
-    }
+  fun hookAllConstructors(clazz: Class<*>?, hook: XC_MethodHook) =
+    clazz
+      ?.run { XposedBridge.hookAllConstructors(this, hook) }
+      .also { if (it.isNullOrEmpty()) log("No constructors are found on class ${clazz?.name}") }
 
   fun hookMethod(method: Method, hook: XC_MethodHook) =
     runCatching { XposedBridge.hookMethod(method, hook) }.getOrNull { log(it) }

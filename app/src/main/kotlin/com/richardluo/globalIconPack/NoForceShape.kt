@@ -11,8 +11,6 @@ import com.richardluo.globalIconPack.utils.ReflectHelper
 import com.richardluo.globalIconPack.utils.UnClipAdaptiveIconDrawable
 import com.richardluo.globalIconPack.utils.WorldPreference.getPrefInMod
 import com.richardluo.globalIconPack.utils.asType
-import com.richardluo.globalIconPack.utils.rGet
-import com.richardluo.globalIconPack.utils.rSet
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 
@@ -24,7 +22,7 @@ class NoForceShape : Hook {
     if (!getPrefInMod().get(Pref.NO_FORCE_SHAPE)) return
     // May not be presented on android >= 15
     ReflectHelper.hookAllMethods(
-      BaseIconFactory.getClazz(lpp) ?: return,
+      BaseIconFactory.getClazz(lpp),
       "normalizeAndWrapToAdaptiveIcon",
       object : XC_MethodHook() {
         override fun beforeHookedMethod(param: MethodHookParam) {
@@ -36,7 +34,7 @@ class NoForceShape : Hook {
     )
     // Fix FloatingIconView and DragView
     ReflectHelper.hookAllMethodsOrLog(
-      BaseIconFactory.getClazz(lpp) ?: return,
+      BaseIconFactory.getClazz(lpp),
       "wrapToAdaptiveIcon",
       arrayOf(Drawable::class.java),
       object : XC_MethodHook() {
@@ -54,7 +52,7 @@ class NoForceShape : Hook {
     // Remove bubble shadow
     if (getPrefInMod().get(Pref.NO_SHADOW)) {
       ReflectHelper.hookAllConstructors(
-        ReflectHelper.findClass("com.android.wm.shell.bubbles.BadgedImageView", lpp) ?: return,
+        ReflectHelper.findClass("com.android.wm.shell.bubbles.BadgedImageView", lpp),
         object : XC_MethodHook() {
           override fun afterHookedMethod(param: MethodHookParam) {
             param.thisObject.asType<View>().outlineProvider = null
@@ -66,7 +64,7 @@ class NoForceShape : Hook {
     if (!getPrefInMod().get(Pref.NO_FORCE_SHAPE)) return
     // Fix splash screen
     ReflectHelper.hookAllMethodsOrLog(
-      BaseIconFactory.getClazz(lpp) ?: return,
+      BaseIconFactory.getClazz(lpp),
       "normalizeAndWrapToAdaptiveIcon",
       arrayOf(Drawable::class.java),
       object : XC_MethodHook() {
@@ -90,7 +88,7 @@ class NoForceShape : Hook {
     if (!getPrefInMod().get(Pref.NO_FORCE_SHAPE)) return
     // Fix recent app list
     ReflectHelper.hookAllMethodsOrLog(
-      BaseIconFactory.getClazz(lpp) ?: return,
+      BaseIconFactory.getClazz(lpp),
       "normalizeAndWrapToAdaptiveIcon",
       arrayOf(Drawable::class.java),
       object : XC_MethodHook() {
@@ -122,7 +120,7 @@ class NoForceShape : Hook {
       ReflectHelper.findClass(
         "com.android.settings.accessibility.AccessibilityActivityPreference",
         lpp,
-      ) ?: return,
+      ),
       "getA11yActivityIcon",
       extractOriIcon,
     )
@@ -130,7 +128,7 @@ class NoForceShape : Hook {
       ReflectHelper.findClass(
         "com.android.settings.accessibility.AccessibilityServicePreference",
         lpp,
-      ) ?: return,
+      ),
       "getA11yServiceIcon",
       extractOriIcon,
     )
