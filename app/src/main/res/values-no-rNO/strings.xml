@@ -18,6 +18,7 @@
     <string name="iconVariantSummary">Choose different variants from icon pack.</string>
     <string name="iconFallback">Generate fallback icons</string>
     <string name="iconFallbackSummary">Apply background, mask, and scale from the icon pack to apps without dedicated icons.</string>
+    <string name="scaleOnlyForeground">Scale only the foreground for adaptive icons</string>
     <string name="overrideIconFallback">Override fallback settings</string>
     <string name="overrideIconFallbackSummary">Use new values for the fallback settings.</string>
     <string name="iconPackScale">Scale</string>

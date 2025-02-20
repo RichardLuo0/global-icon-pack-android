@@ -18,6 +18,7 @@
     <string name="iconVariantSummary">Choose different variants from icon pack.</string>
     <string name="iconFallback">Rückfallsymbole generieren</string>
     <string name="iconFallbackSummary">Hintergrund, Ausschnitt und Skalierung des Symbolpakets auf Symbole von nicht in Symbolpaket enthaltenen Apps anwenden.</string>
+    <string name="scaleOnlyForeground">Scale only the foreground for adaptive icons</string>
     <string name="overrideIconFallback">Rückfall-Einstellungen überschreiben</string>
     <string name="overrideIconFallbackSummary">Andere Werte für Rückfall-Einstellungen verwenden.</string>
     <string name="iconPackScale">Skalierung</string>
