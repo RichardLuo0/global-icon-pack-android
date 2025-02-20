@@ -44,13 +44,9 @@ object IconHelper {
 
     override val cState by lazy { CState() }
 
-    override fun getConstantState(): ConstantState = cState
-
-    private inner class CState : ConstantState() {
-      override fun newDrawable(): Drawable =
-        CustomAdaptiveIconDrawable(background, foreground, back, upon, mask)
-
-      override fun getChangingConfigurations(): Int = 0
+    private inner class CState : UnClipState() {
+      override fun newDrawable() =
+        CustomAdaptiveIconDrawable(newBackground(), newForeground(), back, upon, mask)
     }
   }
 

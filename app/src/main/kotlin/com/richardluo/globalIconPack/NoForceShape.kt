@@ -168,12 +168,8 @@ class NoForceShape : Hook {
 
     override val cState: ConstantState by lazy { CState() }
 
-    override fun getConstantState(): ConstantState = cState
-
-    private inner class CState : ConstantState() {
-      override fun newDrawable(): Drawable = UnmaskAdaptiveIconDrawable(background, foreground)
-
-      override fun getChangingConfigurations(): Int = 0
+    private inner class CState : UnClipState() {
+      override fun newDrawable() = UnmaskAdaptiveIconDrawable(newBackground(), newForeground())
     }
   }
 

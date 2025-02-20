@@ -77,13 +77,17 @@ open class UnClipAdaptiveIconDrawable(background: Drawable?, foreground: Drawabl
       inset(-bounds.width() * getExtraInsetFraction(), -bounds.height() * getExtraInsetFraction())
     }
 
-  open val cState: ConstantState by lazy { CState() }
+  open val cState: ConstantState by lazy { UnClipState() }
 
   override fun getConstantState(): ConstantState = cState
 
-  private inner class CState : ConstantState() {
-    override fun newDrawable(): Drawable = UnClipAdaptiveIconDrawable(background, foreground)
+  protected open inner class UnClipState : ConstantState() {
+    override fun newDrawable() = UnClipAdaptiveIconDrawable(newBackground(), newForeground())
 
     override fun getChangingConfigurations(): Int = 0
+
+    protected fun newBackground() = background.constantState?.newDrawable()
+
+    protected fun newForeground() = foreground.constantState?.newDrawable()
   }
 }
