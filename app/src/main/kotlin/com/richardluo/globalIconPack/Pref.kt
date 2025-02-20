@@ -13,6 +13,7 @@ object Pref {
   val SHORTCUT = Pair("shortcut", true)
 
   val ICON_FALLBACK = Pair("iconFallback", true)
+  val SCALE_ONLY_FOREGROUND = Pair("scaleOnlyForeground", true)
   val OVERRIDE_ICON_FALLBACK = Pair("overrideIconFallback", false)
   val ICON_PACK_SCALE = Pair("iconPackScale", 1f)
 

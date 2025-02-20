@@ -55,6 +55,7 @@ class MainVM(app: Application) : AndroidViewModel(app) {
       val iconFallback: Boolean,
       val overrideIconFallback: Boolean,
       val iconPackScale: Float,
+      val scaleOnlyForeground: Boolean,
     )
     flow
       .map {
@@ -62,6 +63,7 @@ class MainVM(app: Application) : AndroidViewModel(app) {
           it.get(Pref.ICON_FALLBACK),
           it.get(Pref.OVERRIDE_ICON_FALLBACK),
           it.get(Pref.ICON_PACK_SCALE),
+          it.get(Pref.SCALE_ONLY_FOREGROUND),
         )
       }
       .distinctUntilChanged()

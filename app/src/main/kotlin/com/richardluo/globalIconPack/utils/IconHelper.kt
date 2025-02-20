@@ -124,8 +124,9 @@ object IconHelper {
     upon: Bitmap?,
     mask: Bitmap?,
     iconScale: Float = 1f,
+    scaleOnlyForeground: Boolean = true,
   ): Drawable =
-    (if (iconScale != 1f && drawable is AdaptiveIconDrawable)
+    (if (scaleOnlyForeground && iconScale != 1f && drawable is AdaptiveIconDrawable)
         UnClipAdaptiveIconDrawable(
           drawable.background,
           createScaledDrawable(drawable.foreground, iconScale),
@@ -143,10 +144,13 @@ object IconHelper {
     upon: Bitmap?,
     mask: Bitmap?,
     iconScale: Float = 1f,
+    scaleOnlyForeground: Boolean = true,
   ): Drawable =
     if (drawable is AdaptiveIconDrawable)
       CustomAdaptiveIconDrawable(
-        drawable.background,
+        drawable.background?.let {
+          if (scaleOnlyForeground) it else createScaledDrawable(it, iconScale)
+        },
         drawable.foreground?.let { createScaledDrawable(it, iconScale) },
         back,
         upon,
@@ -160,7 +164,7 @@ object IconHelper {
         upon,
         mask,
       )
-    else processIconToStatic(res, drawable, back, upon, null, iconScale)
+    else processIconToStatic(res, drawable, back, upon, null, iconScale, scaleOnlyForeground)
 
   fun processIcon(
     res: Resources,
@@ -169,10 +173,11 @@ object IconHelper {
     upon: Bitmap?,
     mask: Bitmap?,
     iconScale: Float = 1f,
+    scaleOnlyForeground: Boolean = true,
     static: Boolean = false,
   ) =
-    if (static) processIconToStatic(res, drawable, back, upon, mask, iconScale)
-    else processIconToAdaptive(res, drawable, back, upon, mask, iconScale)
+    if (static) processIconToStatic(res, drawable, back, upon, mask, iconScale, scaleOnlyForeground)
+    else processIconToAdaptive(res, drawable, back, upon, mask, iconScale, scaleOnlyForeground)
 
   fun makeAdaptive(drawable: Drawable, static: Boolean = false) =
     if (!static && drawable !is AdaptiveIconDrawable)

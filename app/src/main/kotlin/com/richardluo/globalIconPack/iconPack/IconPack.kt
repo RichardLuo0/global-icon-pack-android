@@ -28,6 +28,7 @@ abstract class IconPack(pref: SharedPreferences, val pack: String, val resources
   }
 
   protected val iconPackAsFallback = pref.get(Pref.ICON_PACK_AS_FALLBACK)
+  protected val scaleOnlyForeground = pref.get(Pref.SCALE_ONLY_FOREGROUND)
   protected var iconFallback: IconFallback? = null
 
   protected fun initFallbackSettings(fs: FallbackSettings, pref: SharedPreferences) {
@@ -64,6 +65,7 @@ abstract class IconPack(pref: SharedPreferences, val pack: String, val resources
         iconUpons.randomOrNull(),
         iconMasks.randomOrNull(),
         iconScale,
+        scaleOnlyForeground,
         staticIcon,
       )
     } ?: baseIcon

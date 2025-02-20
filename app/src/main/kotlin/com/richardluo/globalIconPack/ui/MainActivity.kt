@@ -219,6 +219,11 @@ class MainActivity : ComponentActivity() {
           title = { Text(stringResource(R.string.iconFallback)) },
           summary = { Text(stringResource(R.string.iconFallbackSummary)) },
         )
+        switchPreference(
+          key = Pref.SCALE_ONLY_FOREGROUND.first,
+          defaultValue = Pref.SCALE_ONLY_FOREGROUND.second,
+          title = { Text(stringResource(R.string.scaleOnlyForeground)) },
+        )
         item {
           val enableState =
             rememberPreferenceState(
