@@ -26,7 +26,7 @@ object IconHelper {
     private val back: Bitmap?,
     private val upon: Bitmap?,
     private val mask: Bitmap?,
-    private val iconScale: Float,
+    iconScale: Float,
   ) :
     UnClipAdaptiveIconDrawable(
       background,
@@ -53,7 +53,7 @@ object IconHelper {
 
     private inner class CState : ConstantState() {
       override fun newDrawable(): Drawable =
-        CustomAdaptiveIconDrawable(background, foreground, back, upon, mask, iconScale)
+        CustomAdaptiveIconDrawable(background, foreground, back, upon, mask, 1f)
 
       override fun getChangingConfigurations(): Int = 0
     }
