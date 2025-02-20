@@ -29,12 +29,17 @@ object IconHelper {
   ) : UnClipAdaptiveIconDrawable(background, foreground) {
     private val paint =
       Paint(Paint.ANTI_ALIAS_FLAG or Paint.DITHER_FLAG or Paint.FILTER_BITMAP_FLAG)
+    private val cache = BitmapCache()
 
     override fun draw(canvas: Canvas) {
-      drawIcon(canvas, paint, bounds, back, upon, mask) {
-        // Use original mask if mask is not presented
-        if (mask != null) super.draw(canvas) else super.drawClip(canvas)
-      }
+      cache
+        .getBitmap(bounds) {
+          drawIcon(paint, bounds, back, upon, mask) {
+            // Use original mask if mask is not presented
+            if (mask != null) super.draw(this) else super.drawClip(this)
+          }
+        }
+        .let { canvas.drawBitmap(it, null, bounds, paint) }
     }
 
     override fun setAlpha(alpha: Int) {
@@ -67,13 +72,12 @@ object IconHelper {
         val width = drawable.intrinsicWidth.takeIf { it > 0 } ?: 300
         val height = drawable.intrinsicHeight.takeIf { it > 0 } ?: 300
         val bounds = Rect(0, 0, width, height)
-        val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
-        val canvas = Canvas(bitmap)
         val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.DITHER_FLAG or Paint.FILTER_BITMAP_FLAG)
-        drawIcon(canvas, paint, bounds, back, upon, mask) {
-          canvas.drawBitmap(drawable.toBitmap(), null, bounds, paint)
+        Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888).also {
+          Canvas(it).drawIcon(paint, bounds, back, upon, mask) {
+            drawBitmap(drawable.toBitmap(), null, bounds, paint)
+          }
         }
-        bitmap
       },
     ),
     Adaptively {
@@ -94,22 +98,17 @@ object IconHelper {
   ) : DrawableWrapper(drawable), Adaptively {
     private val paint =
       Paint(Paint.ANTI_ALIAS_FLAG or Paint.DITHER_FLAG or Paint.FILTER_BITMAP_FLAG)
-    private var bitmap: Bitmap? = null
+    private val cache = BitmapCache()
 
     override fun draw(canvas: Canvas) {
-      if (
-        bitmap == null ||
-          bitmap!!.getWidth() != bounds.width() ||
-          bitmap!!.getHeight() != bounds.height()
-      ) {
-        bitmap = Bitmap.createBitmap(bounds.width(), bounds.height(), Bitmap.Config.ARGB_8888)
-        Canvas(bitmap!!).apply {
-          translate(-bounds.left.toFloat(), -bounds.top.toFloat())
-          drawIcon(this, paint, bounds, back, upon, mask) { super.draw(this) }
-        }
-      }
-      paint.xfermode = null
-      canvas.drawBitmap(bitmap!!, null, bounds, paint)
+      cache
+        .getBitmap(bounds) { drawIcon(paint, bounds, back, upon, mask) { super.draw(this) } }
+        .let { canvas.drawBitmap(it, null, bounds, paint) }
+    }
+
+    override fun setAlpha(alpha: Int) {
+      super.setAlpha(alpha)
+      paint.alpha = alpha
     }
 
     override fun makeAdaptive() =
@@ -156,7 +155,7 @@ object IconHelper {
       )
     else if (mask != null)
       CustomAdaptiveIconDrawable(
-        null,
+        ColorDrawable(Color.TRANSPARENT),
         createScaledDrawable(drawable, ADAPTIVE_ICON_VIEWPORT_SCALE * iconScale),
         back,
         upon,
@@ -180,35 +179,36 @@ object IconHelper {
       UnClipAdaptiveIconDrawable(ColorDrawable(Color.TRANSPARENT), createScaledDrawable(drawable))
     else drawable
 
-  fun drawIcon(
-    canvas: Canvas,
+  fun Canvas.drawIcon(
     paint: Paint,
     bounds: Rect,
     back: Bitmap?,
     upon: Bitmap?,
     mask: Bitmap?,
-    drawBaseIcon: () -> Unit,
+    drawBaseIcon: Canvas.() -> Unit,
   ) {
     if (bounds.width() < 0) return
     if (bounds.height() < 0) return
 
-    canvas.clipRect(bounds)
+    clipRect(bounds)
     drawBaseIcon()
 
     mask?.let {
       paint.xfermode = PorterDuffXfermode(PorterDuff.Mode.DST_OUT)
-      canvas.drawBitmap(it, null, bounds, paint)
+      drawBitmap(it, null, bounds, paint)
     }
 
     upon?.let {
       paint.xfermode = PorterDuffXfermode(PorterDuff.Mode.SRC_OVER)
-      canvas.drawBitmap(it, null, bounds, paint)
+      drawBitmap(it, null, bounds, paint)
     }
 
     back?.let {
       paint.xfermode = PorterDuffXfermode(PorterDuff.Mode.DST_OVER)
-      canvas.drawBitmap(it, null, bounds, paint)
+      drawBitmap(it, null, bounds, paint)
     }
+
+    paint.xfermode = null
   }
 
   fun createScaledDrawable(
