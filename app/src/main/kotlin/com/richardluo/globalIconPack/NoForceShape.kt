@@ -4,7 +4,6 @@ import android.graphics.Path
 import android.graphics.drawable.AdaptiveIconDrawable
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.LayerDrawable
-import android.view.View
 import com.richardluo.globalIconPack.reflect.BaseIconFactory
 import com.richardluo.globalIconPack.utils.IconHelper
 import com.richardluo.globalIconPack.utils.ReflectHelper
@@ -17,8 +16,6 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 class NoForceShape : Hook {
 
   override fun onHookPixelLauncher(lpp: LoadPackageParam) {
-    removeShadow(lpp)
-
     if (!getPrefInMod().get(Pref.NO_FORCE_SHAPE)) return
     // May not be presented on android >= 15
     ReflectHelper.hookAllMethods(
@@ -48,19 +45,6 @@ class NoForceShape : Hook {
   }
 
   override fun onHookSystemUI(lpp: LoadPackageParam) {
-    removeShadow(lpp)
-    // Remove bubble shadow
-    if (getPrefInMod().get(Pref.NO_SHADOW)) {
-      ReflectHelper.hookAllConstructors(
-        ReflectHelper.findClass("com.android.wm.shell.bubbles.BadgedImageView", lpp),
-        object : XC_MethodHook() {
-          override fun afterHookedMethod(param: MethodHookParam) {
-            param.thisObject.asType<View>().outlineProvider = null
-          }
-        },
-      )
-    }
-
     if (!getPrefInMod().get(Pref.NO_FORCE_SHAPE)) return
     // Fix splash screen
     ReflectHelper.hookAllMethodsOrLog(
@@ -83,8 +67,6 @@ class NoForceShape : Hook {
   }
 
   override fun onHookSettings(lpp: LoadPackageParam) {
-    removeShadow(lpp)
-
     if (!getPrefInMod().get(Pref.NO_FORCE_SHAPE)) return
     // Fix recent app list
     ReflectHelper.hookAllMethodsOrLog(
@@ -131,32 +113,6 @@ class NoForceShape : Hook {
       ),
       "getA11yServiceIcon",
       extractOriIcon,
-    )
-  }
-
-  @Suppress("LocalVariableName")
-  private fun removeShadow(lpp: LoadPackageParam) {
-    if (!getPrefInMod().get(Pref.NO_SHADOW)) return
-    val MODE_DEFAULT = 0
-    val MODE_WITH_SHADOW = 2
-    val MODE_HARDWARE = 3
-    val MODE_HARDWARE_WITH_SHADOW = 4
-    ReflectHelper.hookAllMethodsOrLog(
-      BaseIconFactory.getClazz(lpp) ?: return,
-      "drawIconBitmap",
-      object : XC_MethodHook() {
-        override fun beforeHookedMethod(param: MethodHookParam) {
-          val bitmapGenerationMode = param.args.rGet(-2) as Int
-          param.args.rSet(
-            -2,
-            when (bitmapGenerationMode) {
-              MODE_WITH_SHADOW -> MODE_DEFAULT
-              MODE_HARDWARE_WITH_SHADOW -> MODE_HARDWARE
-              else -> bitmapGenerationMode
-            },
-          )
-        }
-      },
     )
   }
 

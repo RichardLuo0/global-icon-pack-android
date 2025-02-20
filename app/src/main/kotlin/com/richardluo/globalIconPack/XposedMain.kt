@@ -5,7 +5,7 @@ import de.robv.android.xposed.IXposedHookLoadPackage
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 
 class XposedMain : IXposedHookLoadPackage {
-  private val hookList = arrayOf(ReplaceIcon(), NoForceShape(), CalendarAndClockHook())
+  private val hookList = arrayOf(ReplaceIcon(), NoForceShape(), NoShadow(), CalendarAndClockHook())
 
   override fun handleLoadPackage(lpp: LoadPackageParam) {
     if (!lpp.isFirstApplication) return
