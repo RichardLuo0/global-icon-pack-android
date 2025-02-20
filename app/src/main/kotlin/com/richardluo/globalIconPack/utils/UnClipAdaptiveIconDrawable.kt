@@ -66,7 +66,8 @@ open class UnClipAdaptiveIconDrawable(background: Drawable?, foreground: Drawabl
     }
   }
 
-  protected fun drawClip(canvas: Canvas) = getMask()?.let { draw(canvas, it) }
+  protected fun drawClip(canvas: Canvas) =
+    if (isInMod) getMask()?.let { draw(canvas, it) } else super.draw(canvas)
 
   protected fun getMask() = mMaskScaleOnly?.getAs<Path?>(this)
 
