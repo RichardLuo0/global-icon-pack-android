@@ -1,6 +1,6 @@
 package com.richardluo.globalIconPack.iconPack
 
-import android.app.AndroidAppHelper
+import android.app.Application
 import android.content.ComponentName
 import android.content.SharedPreferences
 import android.content.pm.ApplicationInfo
@@ -28,12 +28,6 @@ abstract class IconPack(pref: SharedPreferences, val pack: String, val resources
   }
 
   protected val iconPackAsFallback = pref.get(Pref.ICON_PACK_AS_FALLBACK)
-  protected val staticIcon =
-    when (AndroidAppHelper.currentPackageName()) {
-      // https://cs.android.com/android/platform/superproject/+/android15-qpr1-release:frameworks/base/libs/WindowManager/Shell/src/com/android/wm/shell/startingsurface/SplashscreenContentDrawer.java;l=676
-      "com.android.systemui" -> true
-      else -> false
-    }
   protected var iconFallback: IconFallback? = null
 
   protected fun initFallbackSettings(fs: FallbackSettings, pref: SharedPreferences) {
@@ -74,6 +68,13 @@ abstract class IconPack(pref: SharedPreferences, val pack: String, val resources
       )
     } ?: baseIcon
 }
+
+private val staticIcon =
+  when (Application.getProcessName()) {
+    // https://cs.android.com/android/platform/superproject/+/android15-qpr1-release:frameworks/base/libs/WindowManager/Shell/src/com/android/wm/shell/startingsurface/SplashscreenContentDrawer.java;l=676
+    "com.android.systemui" -> true
+    else -> false
+  }
 
 fun getComponentName(info: PackageItemInfo) =
   if (info is ApplicationInfo) getComponentName(info.packageName)
