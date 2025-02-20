@@ -12,7 +12,7 @@
     <string name="iconPackAsFallbackSummary">即使类名称不匹配，仍然使用图标包。</string>
     <string name="shortcut">生成快捷方式图标</string>
     <string name="mergeIconPack">合并图标包</string>
-    <string name="mergeIconPackSummary">从各种图标包生成一个新的图标包。</string>
+    <string name="mergeIconPackSummary">从多个图标包生成一个新的图标包。</string>
     <string name="iconPackSettings">图标包设置</string>
     <string name="iconVariant">图标变体</string>
     <string name="iconVariantSummary">从图标包中选择不同的变体。</string>
