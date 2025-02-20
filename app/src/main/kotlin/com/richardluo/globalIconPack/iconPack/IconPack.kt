@@ -21,19 +21,22 @@ abstract class IconPack(pref: SharedPreferences, val pack: String, val resources
     val iconUpons: List<Bitmap>,
     val iconMasks: List<Bitmap>,
     val iconScale: Float = 1f,
-  )
+  ) {
+    fun isEmpty() =
+      iconBacks.isEmpty() && iconUpons.isEmpty() && iconMasks.isEmpty() && iconScale == 1f
+  }
 
   protected val iconPackAsFallback = pref.get(Pref.ICON_PACK_AS_FALLBACK)
   protected var iconFallback: IconFallback? = null
 
   protected fun initFallbackSettings(fs: FallbackSettings, pref: SharedPreferences) {
-    iconFallback =
-      IconFallback(
+    IconFallback(
         fs.iconBacks.mapNotNull { getIcon(it)?.toBitmap() },
         fs.iconUpons.mapNotNull { getIcon(it)?.toBitmap() },
         fs.iconMasks.mapNotNull { getIcon(it)?.toBitmap() },
         if (pref.get(Pref.OVERRIDE_ICON_FALLBACK)) pref.get(Pref.ICON_PACK_SCALE) else fs.iconScale,
       )
+      .also { if (!it.isEmpty()) iconFallback = it }
   }
 
   abstract fun getId(cn: ComponentName): Int?
