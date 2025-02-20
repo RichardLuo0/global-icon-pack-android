@@ -181,7 +181,7 @@ object IconHelper {
 
   fun makeAdaptive(drawable: Drawable) =
     if (useUnClipAdaptive && drawable !is AdaptiveIconDrawable)
-      UnClipAdaptiveIconDrawable(null, createScaledDrawable(drawable))
+      UnClipAdaptiveIconDrawable(ColorDrawable(Color.TRANSPARENT), createScaledDrawable(drawable))
     else drawable
 
   fun drawIcon(
