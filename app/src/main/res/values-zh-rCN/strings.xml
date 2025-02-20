@@ -18,6 +18,7 @@
     <string name="iconVariantSummary">从图标包中选择不同的变体。</string>
     <string name="iconFallback">生成回退图标</string>
     <string name="iconFallbackSummary">从图标包提取背景、遮罩和缩放应用到图标包中所没有的应用。</string>
+    <string name="scaleOnlyForeground">仅缩放自适应图标的前景</string>
     <string name="overrideIconFallback">覆盖回退选项</string>
     <string name="overrideIconFallbackSummary">为回退选项使用新值。</string>
     <string name="iconPackScale">缩放</string>
