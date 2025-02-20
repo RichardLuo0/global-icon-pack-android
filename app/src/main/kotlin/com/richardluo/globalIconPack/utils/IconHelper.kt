@@ -26,12 +26,7 @@ object IconHelper {
     private val back: Bitmap?,
     private val upon: Bitmap?,
     private val mask: Bitmap?,
-    iconScale: Float,
-  ) :
-    UnClipAdaptiveIconDrawable(
-      background,
-      foreground?.let { createScaledDrawable(it, iconScale) },
-    ) {
+  ) : UnClipAdaptiveIconDrawable(background, foreground) {
     private val paint =
       Paint(Paint.ANTI_ALIAS_FLAG or Paint.DITHER_FLAG or Paint.FILTER_BITMAP_FLAG)
 
@@ -53,7 +48,7 @@ object IconHelper {
 
     private inner class CState : ConstantState() {
       override fun newDrawable(): Drawable =
-        CustomAdaptiveIconDrawable(background, foreground, back, upon, mask, 1f)
+        CustomAdaptiveIconDrawable(background, foreground, back, upon, mask)
 
       override fun getChangingConfigurations(): Int = 0
     }
@@ -158,14 +153,19 @@ object IconHelper {
     if (drawable is AdaptiveIconDrawable)
       CustomAdaptiveIconDrawable(
         drawable.background,
-        drawable.foreground,
+        drawable.foreground?.let { createScaledDrawable(it, iconScale) },
         back,
         upon,
         mask,
-        iconScale,
       )
     else if (mask != null)
-      CustomAdaptiveIconDrawable(null, createScaledDrawable(drawable), back, upon, mask, iconScale)
+      CustomAdaptiveIconDrawable(
+        null,
+        createScaledDrawable(drawable, ADAPTIVE_ICON_VIEWPORT_SCALE * iconScale),
+        back,
+        upon,
+        mask,
+      )
     else processIconToStatic(res, drawable, back, upon, null, iconScale)
 
   fun processIcon(
