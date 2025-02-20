@@ -1,6 +1,5 @@
 package com.richardluo.globalIconPack.utils
 
-import android.app.AndroidAppHelper
 import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.Canvas
@@ -118,7 +117,7 @@ object IconHelper {
       }
   }
 
-  fun processIconToStatic(
+  private fun processIconToStatic(
     res: Resources,
     drawable: Drawable,
     back: Bitmap?,
@@ -137,7 +136,7 @@ object IconHelper {
         else CustomDrawable(it, back, upon, mask)
       }
 
-  fun processIconToAdaptive(
+  private fun processIconToAdaptive(
     res: Resources,
     drawable: Drawable,
     back: Bitmap?,
@@ -170,12 +169,13 @@ object IconHelper {
     upon: Bitmap?,
     mask: Bitmap?,
     iconScale: Float = 1f,
+    static: Boolean = false,
   ) =
-    if (useUnClipAdaptive) processIconToAdaptive(res, drawable, back, upon, mask, iconScale)
-    else processIconToStatic(res, drawable, back, upon, mask, iconScale)
+    if (static) processIconToStatic(res, drawable, back, upon, mask, iconScale)
+    else processIconToAdaptive(res, drawable, back, upon, mask, iconScale)
 
-  fun makeAdaptive(drawable: Drawable) =
-    if (useUnClipAdaptive && drawable !is AdaptiveIconDrawable)
+  fun makeAdaptive(drawable: Drawable, static: Boolean = false) =
+    if (!static && drawable !is AdaptiveIconDrawable)
       UnClipAdaptiveIconDrawable(ColorDrawable(Color.TRANSPARENT), createScaledDrawable(drawable))
     else drawable
 
@@ -229,21 +229,4 @@ object IconHelper {
     scaleY = (1 - scaleY) / 2
     return InsetDrawable(drawable, scaleX, scaleY, scaleX, scaleY)
   }
-}
-
-/**
- * UnClipAdaptiveIconDrawable does not work correctly for some apps. It maybe clipped by adaptive
- * icon mask or shows black background, but we don't know how to efficiently convert Bitmap to Path.
- */
-private val useUnClipAdaptive: Boolean by lazy {
-  if (!isInMod) false
-  else
-    when (AndroidAppHelper.currentPackageName()) {
-      // Fix app list, black background sometimes
-      "com.android.settings" -> false
-      // Fix splash screen
-      "com.android.systemui" -> false
-      "com.android.intentresolver" -> true
-      else -> true
-    }
 }
