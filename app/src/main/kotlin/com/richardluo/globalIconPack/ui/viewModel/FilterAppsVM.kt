@@ -56,10 +56,7 @@ class FilterAppsVM(context: Context) {
         val cn = getComponentName(info.packageName)
         add(info.flags, AppIconInfo(cn, info.loadLabel(context.packageManager).toString()))
       }
-    arrayOf(
-      userApps.distinct().sortedBy { it.componentName },
-      systemApps.distinct().sortedBy { it.componentName },
-    )
+    arrayOf(userApps.distinct().sortedBy { it.label }, systemApps.distinct().sortedBy { it.label })
   }
 
   private val shortcuts = lazy {
