@@ -10,6 +10,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshotFlow
 import com.richardluo.globalIconPack.R
 import com.richardluo.globalIconPack.iconPack.getComponentName
+import com.richardluo.globalIconPack.utils.Weak
 import com.richardluo.globalIconPack.utils.asType
 import com.richardluo.globalIconPack.utils.debounceInput
 import com.richardluo.globalIconPack.utils.log
@@ -18,18 +19,8 @@ import kotlinx.coroutines.flow.combineTransform
 import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.withContext
 
-class FilterAppsVM(context: Context) {
-  val searchText = mutableStateOf("")
-
-  enum class Type {
-    User,
-    System,
-    Shortcut,
-  }
-
-  val type = mutableStateOf(Type.User)
-
-  private val apps = lazy {
+private val appsCache =
+  Weak<Array<List<AppIconInfo>>, Context> { context ->
     val userApps = mutableListOf<AppIconInfo>()
     val systemApps = mutableListOf<AppIconInfo>()
 
@@ -58,8 +49,8 @@ class FilterAppsVM(context: Context) {
       }
     arrayOf(userApps.distinct().sortedBy { it.label }, systemApps.distinct().sortedBy { it.label })
   }
-
-  private val shortcuts = lazy {
+private val shortcutsCache =
+  Weak<List<AppIconInfo>, Context> { context ->
     val shortcuts =
       context
         .getSystemService(Context.LAUNCHER_APPS_SERVICE)
@@ -70,39 +61,56 @@ class FilterAppsVM(context: Context) {
               ShortcutQuery.FLAG_MATCH_MANIFEST or ShortcutQuery.FLAG_MATCH_PINNED_BY_ANY_LAUNCHER
             ),
           Process.myUserHandle(),
-        ) ?: return@lazy listOf()
+        ) ?: return@Weak listOf()
     shortcuts
       .map { info -> ShortcutIconInfo(getComponentName(info), info) }
       .distinct()
       .sortedBy { it.componentName }
   }
 
+class FilterAppsVM(context: Context) {
+  val searchText = mutableStateOf("")
+
+  enum class Type {
+    User,
+    System,
+    Shortcut,
+  }
+
+  val type = mutableStateOf(Type.User)
+
+  private val apps by lazy { appsCache.get(context) }
+  private val shortcuts by lazy { shortcutsCache.get(context) }
+
   suspend fun getAllApps(): List<AppIconInfo> =
     withContext(Dispatchers.Default) {
       mutableListOf<AppIconInfo>().apply {
-        apps.value.forEach { addAll(it) }
-        runCatching { addAll(shortcuts.value) }
+        apps.forEach { addAll(it) }
+        runCatching { addAll(shortcuts) }
       }
     }
 
   private suspend fun getCurrentApps(context: Context) =
-    runCatching {
-        withContext(Dispatchers.IO) {
-          when (type.value) {
-            Type.User,
-            Type.System -> apps.value[type.value.ordinal]
-            Type.Shortcut -> shortcuts.value
-          }
-        }
+    withContext(Dispatchers.IO) {
+      when (type.value) {
+        Type.User,
+        Type.System -> apps[type.value.ordinal]
+        Type.Shortcut ->
+          runCatching { shortcuts }
+            .getOrElse {
+              log(it)
+              withContext(Dispatchers.Main) {
+                Toast.makeText(
+                    context,
+                    context.getString(R.string.requiresHookSystem),
+                    Toast.LENGTH_LONG,
+                  )
+                  .show()
+              }
+              listOf()
+            }
       }
-      .getOrElse {
-        log(it)
-        withContext(Dispatchers.Main) {
-          Toast.makeText(context, context.getString(R.string.requiresHookSystem), Toast.LENGTH_LONG)
-            .show()
-        }
-        listOf()
-      }
+    }
 
   val filteredApps =
     combineTransform(
