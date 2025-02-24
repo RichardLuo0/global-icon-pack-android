@@ -14,9 +14,11 @@ import com.richardluo.globalIconPack.iconPack.getComponentName
 import com.richardluo.globalIconPack.iconPack.getIP
 import com.richardluo.globalIconPack.utils.ReflectHelper
 import com.richardluo.globalIconPack.utils.WorldPreference
+import com.richardluo.globalIconPack.utils.asType
 import com.richardluo.globalIconPack.utils.getAs
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
+import java.util.Calendar
 
 class CalendarAndClockHook : Hook {
 
@@ -36,8 +38,6 @@ class CalendarAndClockHook : Hook {
         override fun afterHookedMethod(param: MethodHookParam) {
           mCalendar?.getAs<ComponentName>(param.thisObject)?.let { calendars.add(it.packageName) }
           mClock?.getAs<ComponentName>(param.thisObject)?.let { clocks.add(it.packageName) }
-          mCalendar?.set(param.thisObject, null)
-          mClock?.set(param.thisObject, null)
         }
       },
     )
@@ -65,11 +65,27 @@ class CalendarAndClockHook : Hook {
         }
       },
     )
+    // Change calendar state
+    // https://cs.android.com/android/platform/superproject/+/android15-qpr1-release:frameworks/libs/systemui/iconloaderlib/src/com/android/launcher3/icons/IconProvider.java;l=89
+    ReflectHelper.hookAllMethodsOrLog(
+      iconProvider,
+      "getSystemStateForPackage",
+      arrayOf(String::class.java, String::class.java),
+      object : XC_MethodHook() {
+        override fun beforeHookedMethod(param: MethodHookParam) {
+          val systemState = param.args[0].asType<String>()
+          param.result =
+            if (calendars.contains(param.args[1]))
+              systemState + (Calendar.getInstance().get(Calendar.DAY_OF_MONTH) - 1)
+            else systemState
+        }
+      },
+    )
 
     val iconChangeReceiver =
       ReflectHelper.findClass("com.android.launcher3.icons.IconProvider\$IconChangeReceiver", lpp)
         ?: return
-    val mCallbackField = iconChangeReceiver.let { ReflectHelper.findField(it, "mCallback") }
+    val mCallbackField = ReflectHelper.findField(iconChangeReceiver, "mCallback")
     ReflectHelper.hookAllMethodsOrLog(
       iconChangeReceiver,
       "onReceive",
