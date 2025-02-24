@@ -1,5 +1,7 @@
 package com.richardluo.globalIconPack.utils
 
+import android.os.Build
+import java.io.DataInputStream
 import java.io.InputStream
 
 private const val WORD_START_DOCUMENT: Int = 0x00080003
@@ -20,7 +22,16 @@ class AXMLEditor(input: InputStream) {
   private val data: ByteArray
 
   init {
-    input.use { data = it.readAllBytes() }
+    input.use {
+      data =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) it.readAllBytes()
+        else {
+          ByteArray(it.available().coerceAtMost(8192)).also { bytes ->
+            val dataInputStream = DataInputStream(it)
+            dataInputStream.readFully(bytes)
+          }
+        }
+    }
   }
 
   companion object {
