@@ -24,7 +24,7 @@ A clear and concise description of what you expected to happen.
 If applicable, add screenshots to help explain your problem.
 
 **Smartphone (please complete the following information):**
- - Device: [e.g. iPhone6]
+ - Device: [e.g. Pixel 9]
  - OS: [e.g. Android 15]
  - Version: [e.g. 0.2.10]
 
