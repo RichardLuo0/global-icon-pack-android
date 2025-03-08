@@ -2,7 +2,7 @@
 <resources>
     <string name="appName">Global Icon Pack</string>
     <string name="plzEnableModuleFirst">Пожалуйста, сначала убедитесь, что модуль Xposed включен.</string>
-    <string name="general"></string>
+    <string name="general">General</string>
     <string name="mode">Режим</string>
     <string name="modeProvider">Режим поставщика: это приложение предоставляет данные подключенным приложениям.</string>
     <string name="modeLocal">Локальный режим: Подключенные приложения перезагружают пакет значков при каждом запуске.</string>
