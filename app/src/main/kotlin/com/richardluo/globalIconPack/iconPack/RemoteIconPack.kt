@@ -60,10 +60,10 @@ class RemoteIconPack(pref: SharedPreferences, pack: String, resources: Resources
           null,
         )
         ?.getFirstRow {
-          val pack = it.getString("pack")
           val entry =
             if (it.getColumnIndex("type") > 0) IconEntryWithId.fromCursor(it)
             else IconEntry.from(it.getBlob("entry"))
+          val pack = it.getString("pack")
           iconEntryList.add(if (pack.isEmpty()) entry else IconEntryFromOtherPack(pack, entry))
           iconEntryList.size - 1
         }

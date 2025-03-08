@@ -82,11 +82,8 @@ class ReplaceIcon : Hook {
           val resId = param.args[0] as Int
           val density = param.args[1] as Int
           return when {
-            isHighTwoByte(resId, IN_IP) -> {
-              val id = withHighByteSet(resId, IP_DEFAULT)
-              // Original id has been lost
-              getIP()?.getIcon(id, density)
-            }
+            isHighTwoByte(resId, IN_IP) ->
+              getIP()?.getIcon(withHighByteSet(resId, IP_DEFAULT), density)
             isHighTwoByte(resId, NOT_IN_IP) -> {
               param.args[0] = withHighByteSet(resId, ANDROID_DEFAULT)
               callOriginalMethod<Drawable?>(param)?.let { getIP()?.genIconFrom(it) ?: it }
