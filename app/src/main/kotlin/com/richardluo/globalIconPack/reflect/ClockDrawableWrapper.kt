@@ -2,9 +2,9 @@ package com.richardluo.globalIconPack.reflect
 
 import android.graphics.Color
 import android.graphics.drawable.AdaptiveIconDrawable
-import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
 import android.os.Bundle
+import androidx.core.graphics.drawable.toDrawable
 import com.richardluo.globalIconPack.iconPack.database.ClockMetadata
 import com.richardluo.globalIconPack.utils.ReflectHelper
 import com.richardluo.globalIconPack.utils.call
@@ -43,7 +43,7 @@ object ClockDrawableWrapper {
         object : IntFunction<Drawable> {
           override fun apply(dummy: Int): Drawable =
             if (drawable is AdaptiveIconDrawable) drawable
-            else AdaptiveIconDrawable(ColorDrawable(Color.WHITE), drawable)
+            else AdaptiveIconDrawable(Color.WHITE.toDrawable(), drawable)
         },
       )
     }

@@ -6,7 +6,7 @@ import android.content.ComponentName
 import android.content.SharedPreferences
 import android.content.res.Resources
 import android.graphics.drawable.Drawable
-import android.net.Uri
+import androidx.core.net.toUri
 import com.richardluo.globalIconPack.Pref
 import com.richardluo.globalIconPack.get
 import com.richardluo.globalIconPack.iconPack.database.FallbackSettings
@@ -36,7 +36,7 @@ class RemoteIconPack(pref: SharedPreferences, pack: String, resources: Resources
     if (pref.get(Pref.ICON_FALLBACK))
       contentResolver
         .query(
-          Uri.parse("content://${IconPackProvider.AUTHORITIES}/${IconPackProvider.FALLBACKS}"),
+          "content://${IconPackProvider.AUTHORITIES}/${IconPackProvider.FALLBACKS}".toUri(),
           null,
           null,
           arrayOf(pack),
@@ -50,7 +50,7 @@ class RemoteIconPack(pref: SharedPreferences, pack: String, resources: Resources
     indexMap.getOrPutNullable(cn) {
       contentResolver
         .query(
-          Uri.parse("content://${IconPackProvider.AUTHORITIES}/${IconPackProvider.ICONS}"),
+          "content://${IconPackProvider.AUTHORITIES}/${IconPackProvider.ICONS}".toUri(),
           null,
           null,
           arrayOf(pack, cn.packageName, cn.className, iconPackAsFallback.toString()),

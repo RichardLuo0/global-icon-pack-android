@@ -1,7 +1,6 @@
 package com.richardluo.globalIconPack.ui
 
 import android.content.Intent
-import android.net.Uri
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material3.DropdownMenu
@@ -17,6 +16,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.core.net.toUri
 import com.richardluo.globalIconPack.R
 import com.richardluo.globalIconPack.ui.components.IconButtonWithTooltip
 import com.richardluo.globalIconPack.ui.components.SnackbarErrorVisuals
@@ -94,10 +94,7 @@ fun MainDropdownMenu(snackbarState: SnackbarHostState) {
       text = { Text(stringResource(R.string.openCrowdin)) },
       onClick = {
         context.startActivity(
-          Intent(
-            Intent.ACTION_VIEW,
-            Uri.parse("https://crowdin.com/project/global-icon-pack-android"),
-          )
+          Intent(Intent.ACTION_VIEW, "https://crowdin.com/project/global-icon-pack-android".toUri())
         )
         expanded = false
       },
@@ -109,7 +106,7 @@ fun MainDropdownMenu(snackbarState: SnackbarHostState) {
         context.startActivity(
           Intent(
             Intent.ACTION_VIEW,
-            Uri.parse("https://github.com/RichardLuo0/global-icon-pack-android"),
+            "https://github.com/RichardLuo0/global-icon-pack-android".toUri(),
           )
         )
         expanded = false
@@ -119,7 +116,7 @@ fun MainDropdownMenu(snackbarState: SnackbarHostState) {
       leadingIcon = { Text("☕") },
       text = { Text(stringResource(R.string.buyMeACoffee)) },
       onClick = {
-        context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://ko-fi.com/richardluo")))
+        context.startActivity(Intent(Intent.ACTION_VIEW, "https://ko-fi.com/richardluo".toUri()))
         expanded = false
       },
     )

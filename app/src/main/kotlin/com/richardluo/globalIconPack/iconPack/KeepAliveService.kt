@@ -35,7 +35,7 @@ class KeepAliveService : Service() {
           Notification.Builder(this, CHANNEL_ID)
             .setContentTitle("Providing icon pack to hooked apps")
             .setAutoCancel(true)
-        startForeground(1, builder.build(), ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE)
+        startForeground(1, builder.build(), ServiceInfo.FOREGROUND_SERVICE_TYPE_MANIFEST)
       }
     }
     return START_STICKY

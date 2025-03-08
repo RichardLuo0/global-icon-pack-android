@@ -10,11 +10,12 @@ import android.graphics.PorterDuffXfermode
 import android.graphics.Rect
 import android.graphics.drawable.AdaptiveIconDrawable
 import android.graphics.drawable.BitmapDrawable
-import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.DrawableWrapper
 import android.graphics.drawable.InsetDrawable
+import androidx.core.graphics.createBitmap
 import androidx.core.graphics.drawable.toBitmap
+import androidx.core.graphics.drawable.toDrawable
 
 object IconHelper {
   val ADAPTIVE_ICON_VIEWPORT_SCALE = 1 / (1 + 2 * AdaptiveIconDrawable.getExtraInsetFraction())
@@ -72,7 +73,7 @@ object IconHelper {
         val height = drawable.intrinsicHeight.takeIf { it > 0 } ?: 300
         val bounds = Rect(0, 0, width, height)
         val paint = Paint(Paint.ANTI_ALIAS_FLAG or Paint.DITHER_FLAG or Paint.FILTER_BITMAP_FLAG)
-        Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888).also {
+        createBitmap(width, height).also {
           Canvas(it).drawIcon(paint, bounds, back, upon, mask) {
             drawBitmap(drawable.toBitmap(), null, bounds, paint)
           }
@@ -85,7 +86,7 @@ object IconHelper {
     override fun makeAdaptive() =
       createScaledDrawable(this).let {
         if (hasMask) UnClipAdaptiveIconDrawable(null, it)
-        else AdaptiveIconDrawable(ColorDrawable(Color.WHITE), it)
+        else AdaptiveIconDrawable(Color.WHITE.toDrawable(), it)
       }
   }
 
@@ -113,7 +114,7 @@ object IconHelper {
     override fun makeAdaptive() =
       createScaledDrawable(this).let {
         if (mask != null) UnClipAdaptiveIconDrawable(null, it)
-        else AdaptiveIconDrawable(ColorDrawable(Color.WHITE), it)
+        else AdaptiveIconDrawable(Color.WHITE.toDrawable(), it)
       }
   }
 
@@ -158,7 +159,7 @@ object IconHelper {
       )
     else if (mask != null)
       CustomAdaptiveIconDrawable(
-        ColorDrawable(Color.TRANSPARENT),
+        Color.TRANSPARENT.toDrawable(),
         createScaledDrawable(drawable, ADAPTIVE_ICON_VIEWPORT_SCALE * iconScale),
         back,
         upon,
@@ -181,7 +182,7 @@ object IconHelper {
 
   fun makeAdaptive(drawable: Drawable, static: Boolean = false) =
     if (!static && drawable !is AdaptiveIconDrawable)
-      UnClipAdaptiveIconDrawable(ColorDrawable(Color.TRANSPARENT), createScaledDrawable(drawable))
+      UnClipAdaptiveIconDrawable(Color.TRANSPARENT.toDrawable(), createScaledDrawable(drawable))
     else drawable
 
   fun Canvas.drawIcon(

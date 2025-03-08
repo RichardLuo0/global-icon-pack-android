@@ -3,6 +3,7 @@ package com.richardluo.globalIconPack.utils
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Rect
+import androidx.core.graphics.createBitmap
 
 class BitmapCache {
   private var bitmap: Bitmap? = null
@@ -13,7 +14,7 @@ class BitmapCache {
         bitmap!!.getWidth() != bounds.width() ||
         bitmap!!.getHeight() != bounds.height()
     ) {
-      Bitmap.createBitmap(bounds.width(), bounds.height(), Bitmap.Config.ARGB_8888).also {
+      createBitmap(bounds.width(), bounds.height()).also {
         bitmap = it
         Canvas(it).apply {
           translate(-bounds.left.toFloat(), -bounds.top.toFloat())

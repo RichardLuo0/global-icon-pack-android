@@ -17,7 +17,6 @@
 package com.richardluo.globalIconPack.ui.components
 
 import android.app.Activity
-import android.graphics.drawable.ColorDrawable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
@@ -29,6 +28,7 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
+import androidx.core.graphics.drawable.toDrawable
 import androidx.core.view.WindowCompat
 
 @Composable
@@ -54,7 +54,7 @@ fun SampleTheme(
       val window = (context as Activity).window
       WindowCompat.setDecorFitsSystemWindows(window, false)
       val windowBackgroundColor = colorScheme.background.toArgb()
-      window.setBackgroundDrawable(ColorDrawable(windowBackgroundColor))
+      window.setBackgroundDrawable(windowBackgroundColor.toDrawable())
       val insetsController = WindowCompat.getInsetsController(window, view)
       insetsController.isAppearanceLightStatusBars = !darkTheme
       insetsController.isAppearanceLightNavigationBars = !darkTheme
