@@ -20,7 +20,6 @@ import com.richardluo.globalIconPack.utils.getString
 import com.richardluo.globalIconPack.utils.log
 
 class IconEntryWithId(private val id: Int, val entry: IconEntry) : IconEntry(entry.name) {
-
   enum class Type {
     Normal,
     Clock,
@@ -30,18 +29,28 @@ class IconEntryWithId(private val id: Int, val entry: IconEntry) : IconEntry(ent
 
   override fun getIcon(getIcon: (String) -> Drawable?) = entry.getIcon(getIcon)
 
-  fun toCursor(pack: String, entryBlob: ByteArray): Cursor? =
-    MatrixCursor(arrayOf("pack", "type", "id", "args", "entry")).apply {
-      when (entry) {
-        is NormalIconEntry -> addRow(arrayOf(pack, Type.Normal.ordinal, id, entry.name, entryBlob))
-        is ClockIconEntry -> addRow(arrayOf(pack, Type.Clock.ordinal, id, entryBlob, entryBlob))
-        else -> return null
+  override fun isCalendar() = entry.isCalendar()
+
+  override fun isClock() = entry.isClock()
+
+  companion object {
+    fun toCursor(it: Cursor, getDrawableId: (pack: String, name: String) -> Int): MatrixCursor? {
+      val entryBlob = it.getBlob("entry")
+      val entry = from(entryBlob)
+      val pack = it.getString("pack")
+      return MatrixCursor(arrayOf("pack", "type", "id", "args")).apply {
+        when (entry) {
+          is NormalIconEntry ->
+            addRow(arrayOf(pack, Type.Normal.ordinal, getDrawableId(pack, entry.name), entry.name))
+          is ClockIconEntry ->
+            addRow(arrayOf(pack, Type.Clock.ordinal, getDrawableId(pack, entry.name), entryBlob))
+          else -> return null
+        }
       }
     }
 
-  companion object {
-    fun fromCursor(c: Cursor): IconEntryWithId {
-      return IconEntryWithId(
+    fun fromCursor(c: Cursor) =
+      IconEntryWithId(
         c.getInt("id"),
         when (c.getInt("type")) {
           Type.Normal.ordinal -> NormalIconEntry(c.getString("args"))
@@ -49,7 +58,6 @@ class IconEntryWithId(private val id: Int, val entry: IconEntry) : IconEntry(ent
           else -> throw Exception("Unknown icon entry with id")
         },
       )
-    }
   }
 }
 
@@ -91,18 +99,10 @@ class IconPackProvider : ContentProvider() {
                 )
                 .takeIf { it.moveToFirst() }
                 ?.let {
-                  val entryBlob = it.getBlob("entry")
-                  val entry = IconEntry.from(entryBlob)
-                  val pack = it.getString("pack").ifEmpty { selectionArgs[0] }
-                  when (entry) {
-                    is NormalIconEntry,
-                    is ClockIconEntry -> {
-                      it.close()
-                      IconEntryWithId(getDrawableId(pack, entry.name), entry)
-                        .toCursor(pack, entryBlob)
+                  IconEntryWithId.toCursor(it) { pack, name ->
+                      getDrawableId(pack.ifEmpty { selectionArgs[0] }, name)
                     }
-                    else -> it
-                  }
+                    ?.apply { it.close() } ?: it
                 }
             else null
           else -> null

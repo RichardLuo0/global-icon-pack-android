@@ -18,9 +18,12 @@ import com.richardluo.globalIconPack.utils.getOrPutNullable
 import com.richardluo.globalIconPack.utils.getString
 import com.richardluo.globalIconPack.utils.isInMod
 
-private class IconEntryFromOtherPack(val pack: String, val entry: IconEntry) :
-  IconEntry(entry.name) {
+class IconEntryFromOtherPack(val pack: String, val entry: IconEntry) : IconEntry(entry.name) {
   override fun getIcon(getIcon: (String) -> Drawable?) = entry.getIcon(getIcon)
+
+  override fun isCalendar() = entry.isCalendar()
+
+  override fun isClock() = entry.isClock()
 }
 
 class RemoteIconPack(pref: SharedPreferences, pack: String, resources: Resources) :

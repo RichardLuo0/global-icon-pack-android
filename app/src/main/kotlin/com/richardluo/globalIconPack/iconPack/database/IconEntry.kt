@@ -13,6 +13,10 @@ abstract class IconEntry(val name: String) : Serializable {
 
   abstract fun getIcon(getIcon: (String) -> Drawable?): Drawable?
 
+  abstract fun isCalendar(): Boolean
+
+  abstract fun isClock(): Boolean
+
   open fun copyTo(
     component: String,
     newName: String,
@@ -35,6 +39,10 @@ class NormalIconEntry(name: String) : IconEntry(name) {
 
   override fun getIcon(getIcon: (String) -> Drawable?) = getIcon(name)
 
+  override fun isCalendar() = false
+
+  override fun isClock() = false
+
   override fun copyTo(
     component: String,
     newName: String,
@@ -55,6 +63,10 @@ class CalendarIconEntry(name: String) : IconEntry(name) {
   override fun getIcon(getIcon: (String) -> Drawable?) =
     getIcon("$name${Calendar.getInstance().get(Calendar.DAY_OF_MONTH)}")
 
+  override fun isCalendar() = true
+
+  override fun isClock() = false
+
   override fun copyTo(
     component: String,
     newName: String,
@@ -74,6 +86,10 @@ class ClockIconEntry(name: String, private val metadata: ClockMetadata) : IconEn
 
   override fun getIcon(getIcon: (String) -> Drawable?) =
     getIcon(name)?.let { ClockDrawableWrapper.from(it, metadata) ?: it }
+
+  override fun isCalendar() = false
+
+  override fun isClock() = true
 
   override fun copyTo(
     component: String,

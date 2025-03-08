@@ -21,12 +21,13 @@ import com.richardluo.globalIconPack.utils.withHighByteSet
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 
-private const val IN_IP = 0xff000000.toInt()
-private const val NOT_IN_IP = 0xfe000000.toInt()
-private const val ANDROID_DEFAULT = 0x7f000000
-private const val IP_DEFAULT = 0x00000000
-
 class ReplaceIcon : Hook {
+  companion object {
+    const val IN_IP = 0xff000000.toInt()
+    const val NOT_IN_IP = 0xfe000000.toInt()
+    const val ANDROID_DEFAULT = 0x7f000000
+    const val IP_DEFAULT = 0x00000000
+  }
 
   override fun onHookPixelLauncher(lpp: LoadPackageParam) {
     // Find needed class for clock
