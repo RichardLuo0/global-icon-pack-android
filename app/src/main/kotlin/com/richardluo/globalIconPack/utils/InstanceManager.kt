@@ -15,7 +15,7 @@ inline fun <reified T> getInstance() =
 
 inline fun <reified T> getInstance(noinline create: () -> T) = getInstance(T::class.java, create)
 
-class Weak<T, ARG>(private inline val create: (args: ARG) -> T) {
+class Weak<T, ARG>(private val create: (args: ARG) -> T) {
   private var ref: WeakReference<T>? = null
 
   fun get(args: ARG) = ref?.get() ?: create(args).also { ref = WeakReference<T>(it) }
