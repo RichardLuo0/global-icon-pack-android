@@ -8,7 +8,6 @@ import com.richardluo.globalIconPack.reflect.BaseIconFactory
 import com.richardluo.globalIconPack.utils.IconHelper
 import com.richardluo.globalIconPack.utils.ReflectHelper
 import com.richardluo.globalIconPack.utils.UnClipAdaptiveIconDrawable
-import com.richardluo.globalIconPack.utils.WorldPreference.getPrefInMod
 import com.richardluo.globalIconPack.utils.asType
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
@@ -16,7 +15,6 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 class NoForceShape : Hook {
 
   override fun onHookPixelLauncher(lpp: LoadPackageParam) {
-    if (!getPrefInMod().get(Pref.NO_FORCE_SHAPE)) return
     // May not be presented on android >= 15
     ReflectHelper.hookAllMethods(
       BaseIconFactory.getClazz(lpp),
@@ -45,7 +43,6 @@ class NoForceShape : Hook {
   }
 
   override fun onHookSystemUI(lpp: LoadPackageParam) {
-    if (!getPrefInMod().get(Pref.NO_FORCE_SHAPE)) return
     // Fix splash screen
     ReflectHelper.hookAllMethodsOrLog(
       BaseIconFactory.getClazz(lpp),
@@ -67,7 +64,6 @@ class NoForceShape : Hook {
   }
 
   override fun onHookSettings(lpp: LoadPackageParam) {
-    if (!getPrefInMod().get(Pref.NO_FORCE_SHAPE)) return
     // Fix recent app list
     ReflectHelper.hookAllMethodsOrLog(
       BaseIconFactory.getClazz(lpp),

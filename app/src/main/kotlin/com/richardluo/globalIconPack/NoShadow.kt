@@ -4,7 +4,6 @@ import android.view.View
 import com.richardluo.globalIconPack.reflect.BaseIconFactory
 import com.richardluo.globalIconPack.utils.MethodReplacement
 import com.richardluo.globalIconPack.utils.ReflectHelper
-import com.richardluo.globalIconPack.utils.WorldPreference.getPrefInMod
 import com.richardluo.globalIconPack.utils.asType
 import com.richardluo.globalIconPack.utils.rGet
 import com.richardluo.globalIconPack.utils.rSet
@@ -13,13 +12,9 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 
 class NoShadow : Hook {
 
-  override fun onHookPixelLauncher(lpp: LoadPackageParam) {
-    if (!getPrefInMod().get(Pref.NO_SHADOW)) return
-    removeIconShadow(lpp)
-  }
+  override fun onHookPixelLauncher(lpp: LoadPackageParam) = removeIconShadow(lpp)
 
   override fun onHookSystemUI(lpp: LoadPackageParam) {
-    if (!getPrefInMod().get(Pref.NO_SHADOW)) return
     // Remove bubble shadow
     ReflectHelper.hookAllConstructors(
       ReflectHelper.findClass("com.android.wm.shell.bubbles.BadgedImageView", lpp),
@@ -32,10 +27,7 @@ class NoShadow : Hook {
     removeIconShadow(lpp)
   }
 
-  override fun onHookSettings(lpp: LoadPackageParam) {
-    if (!getPrefInMod().get(Pref.NO_SHADOW)) return
-    removeIconShadow(lpp)
-  }
+  override fun onHookSettings(lpp: LoadPackageParam) = removeIconShadow(lpp)
 
   @Suppress("LocalVariableName")
   private fun removeIconShadow(lpp: LoadPackageParam) {

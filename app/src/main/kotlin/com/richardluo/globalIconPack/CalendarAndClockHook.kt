@@ -27,8 +27,6 @@ import java.util.Calendar
 class CalendarAndClockHook : Hook {
 
   override fun onHookPixelLauncher(lpp: LoadPackageParam) {
-    if (!WorldPreference.getPrefInMod().get(Pref.FORCE_LOAD_CLOCK_AND_CALENDAR)) return
-
     val calendars = mutableSetOf<String>()
     val clocks = mutableSetOf<String>()
 
