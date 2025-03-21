@@ -40,10 +40,12 @@ class CalendarAndClockHook : Hook {
         val ai = getActivityInfo(param)
         val resId = ai.iconResource
         val packageName = ai.packageName
-        if (!isHighTwoByte(resId, IN_IP)) return
-        val entry = ip.getIconEntry(withHighByteSet(resId, IP_DEFAULT))
+        val entry =
+          if (isHighTwoByte(resId, IN_IP)) ip.getIconEntry(withHighByteSet(resId, IP_DEFAULT))
+          else null
+
         if (entry == null) {
-          // Not in icon pack, update the original icon
+          // Not in icon pack, update the original package
           when (packageName) {
             mCalendar?.getAs<ComponentName>(param.thisObject)?.packageName ->
               calendars.add(packageName)
@@ -51,6 +53,7 @@ class CalendarAndClockHook : Hook {
           }
           return
         }
+
         val density =
           param.args.getOrNull(1) as Int?
             ?: AndroidAppHelper.currentApplication().resources.configuration.densityDpi
