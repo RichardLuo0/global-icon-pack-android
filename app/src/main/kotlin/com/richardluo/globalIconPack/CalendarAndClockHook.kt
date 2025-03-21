@@ -15,7 +15,6 @@ import com.richardluo.globalIconPack.ReplaceIcon.Companion.IN_IP
 import com.richardluo.globalIconPack.ReplaceIcon.Companion.IP_DEFAULT
 import com.richardluo.globalIconPack.iconPack.getIP
 import com.richardluo.globalIconPack.utils.ReflectHelper
-import com.richardluo.globalIconPack.utils.WorldPreference
 import com.richardluo.globalIconPack.utils.asType
 import com.richardluo.globalIconPack.utils.getAs
 import com.richardluo.globalIconPack.utils.isHighTwoByte
@@ -30,22 +29,10 @@ class CalendarAndClockHook : Hook {
     val calendars = mutableSetOf<String>()
     val clocks = mutableSetOf<String>()
 
-    var oriCalendar = ""
-    var oriClock = ""
-
     val iconProvider =
       ReflectHelper.findClass("com.android.launcher3.icons.IconProvider", lpp) ?: return
     val mCalendar = ReflectHelper.findField(iconProvider, "mCalendar")
     val mClock = ReflectHelper.findField(iconProvider, "mClock")
-    ReflectHelper.hookAllConstructors(
-      iconProvider,
-      object : XC_MethodHook() {
-        override fun afterHookedMethod(param: MethodHookParam) {
-          mCalendar?.getAs<ComponentName>(param.thisObject)?.let { oriCalendar = it.packageName }
-          mClock?.getAs<ComponentName>(param.thisObject)?.let { oriClock = it.packageName }
-        }
-      },
-    )
     // Collect calendar and clock packages
     class CollectCC(val getActivityInfo: (MethodHookParam) -> ActivityInfo) : XC_MethodHook() {
       override fun beforeHookedMethod(param: MethodHookParam) {
@@ -58,8 +45,9 @@ class CalendarAndClockHook : Hook {
         if (entry == null) {
           // Not in icon pack, update the original icon
           when (packageName) {
-            oriCalendar -> calendars.add(packageName)
-            oriClock -> clocks.add(packageName)
+            mCalendar?.getAs<ComponentName>(param.thisObject)?.packageName ->
+              calendars.add(packageName)
+            mClock?.getAs<ComponentName>(param.thisObject)?.packageName -> clocks.add(packageName)
           }
           return
         }
