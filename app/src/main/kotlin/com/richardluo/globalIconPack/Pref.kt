@@ -7,20 +7,20 @@ const val MODE_PROVIDER = "provider"
 const val MODE_LOCAL = "local"
 
 object Pref {
-  val MODE = Pair("mode", MODE_PROVIDER)
-  val ICON_PACK = Pair("iconPack", "")
-  val ICON_PACK_AS_FALLBACK = Pair("iconPackAsFallback", false)
-  val SHORTCUT = Pair("shortcut", true)
+  val MODE = "mode" to MODE_PROVIDER
+  val ICON_PACK = "iconPack" to ""
+  val ICON_PACK_AS_FALLBACK = "iconPackAsFallback" to false
+  val SHORTCUT = "shortcut" to true
 
-  val ICON_FALLBACK = Pair("iconFallback", true)
-  val SCALE_ONLY_FOREGROUND = Pair("scaleOnlyForeground", true)
-  val OVERRIDE_ICON_FALLBACK = Pair("overrideIconFallback", false)
-  val ICON_PACK_SCALE = Pair("iconPackScale", 1f)
+  val ICON_FALLBACK = "iconFallback" to true
+  val SCALE_ONLY_FOREGROUND = "scaleOnlyForeground" to true
+  val OVERRIDE_ICON_FALLBACK = "overrideIconFallback" to false
+  val ICON_PACK_SCALE = "iconPackScale" to 1f
 
-  val PIXEL_LAUNCHER_PACKAGE = Pair("pixelLauncherPackage", "com.google.android.apps.nexuslauncher")
-  val NO_FORCE_SHAPE = Pair("noForceShape", false)
-  val NO_SHADOW = Pair("noShadow", false)
-  val FORCE_LOAD_CLOCK_AND_CALENDAR = Pair("forceLoadClockAndCalendar", true)
+  val PIXEL_LAUNCHER_PACKAGE = "pixelLauncherPackage" to "com.google.android.apps.nexuslauncher"
+  val NO_FORCE_SHAPE = "noForceShape" to false
+  val NO_SHADOW = "noShadow" to false
+  val FORCE_LOAD_CLOCK_AND_CALENDAR = "forceLoadClockAndCalendar" to true
 }
 
 fun SharedPreferences.get(pair: Pair<String, String>) = getString(pair.first, pair.second)

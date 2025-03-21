@@ -13,7 +13,7 @@ class BitmapCache {
       bitmap == null ||
         bitmap!!.getWidth() != bounds.width() ||
         bitmap!!.getHeight() != bounds.height()
-    ) {
+    )
       createBitmap(bounds.width(), bounds.height()).also {
         bitmap = it
         Canvas(it).apply {
@@ -21,5 +21,5 @@ class BitmapCache {
           draw()
         }
       }
-    } else bitmap!!
+    else bitmap!!
 }
