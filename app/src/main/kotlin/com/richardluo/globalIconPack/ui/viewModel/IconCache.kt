@@ -6,6 +6,7 @@ import android.content.pm.LauncherApps
 import android.graphics.drawable.Drawable
 import androidx.collection.LruCache
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.core.graphics.drawable.toBitmap
 import com.richardluo.globalIconPack.iconPack.CopyableIconPack
@@ -30,7 +31,11 @@ class IconCache(private val context: Application) {
       )
     }
 
-  private val imageCache = LruCache<String, ImageBitmap>(4 * 1024 * 1024)
+  private val imageCache =
+    object : LruCache<String, ImageBitmap>((Runtime.getRuntime().maxMemory() / 1024 / 8).toInt()) {
+      override fun sizeOf(key: String, value: ImageBitmap) =
+        value.asAndroidBitmap().allocationByteCount / 1024
+    }
 
   suspend fun loadIcon(
     appIconInfo: AppIconInfo,
