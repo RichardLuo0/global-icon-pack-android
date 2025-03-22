@@ -4,7 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
-import androidx.activity.compose.BackHandler
+import androidx.activity.compose.PredictiveBackHandler
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
@@ -114,8 +114,18 @@ class IconPackMergerActivity : ComponentActivity() {
       }
     }
 
-    BackHandler(enabled = pagerState.currentPage > 0) {
-      coroutineScope.launch { pagerState.animateScrollToPage(pagerState.currentPage - 1) }
+    PredictiveBackHandler(enabled = pagerState.settledPage > 0) { progress ->
+      val oriPage = pagerState.currentPage
+      val nextPage = oriPage - 1
+      try {
+        progress.collect { event ->
+          if (event.progress < 0.5f) pagerState.scrollToPage(oriPage, -event.progress)
+          else pagerState.scrollToPage(nextPage, 1f - event.progress)
+        }
+        pagerState.animateScrollToPage(nextPage)
+      } catch (e: Exception) {
+        pagerState.animateScrollToPage(oriPage)
+      }
     }
 
     Scaffold(
