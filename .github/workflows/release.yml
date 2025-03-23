@@ -44,9 +44,52 @@ jobs:
           VERSION_NAME=$(./gradlew printVersion -q)
           echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_OUTPUT
 
+      - name: Build Changelog
+        id: build_changelog
+        uses: mikepenz/release-changelog-builder-action@v5
+        with:
+          mode: "HYBRID"
+          configurationJson: |
+            {
+              "categories": [
+                {
+                  "title": "## 🚀 Features",
+                  "labels": [
+                    "feat"
+                  ]
+                },
+                {
+                  "title": "## 🐛 Fixes",
+                  "labels": [
+                    "fix",
+                    "perf"
+                  ]
+                },
+                {
+                  "title": "## 💬 Other",
+                  "labels": [
+                    "build",
+                    "chore",
+                    "ci",
+                    "docs",
+                    "refactor",
+                    "revert"
+                  ]
+                }
+              ],
+              "label_extractor": [
+                {
+                  "pattern": "^(build|chore|ci|docs|feat|fix|perf|refactor|revert)(\\([\\w\\s-]+\\))?:.*",
+                  "target": "$1"
+                }
+              ]
+            }
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - uses: ncipollo/release-action@v1
         with:
           tag: ${{ steps.save_version.outputs.VERSION_NAME }}
           artifacts: "app/build/outputs/apk/release/app-release.apk"
-          generateReleaseNotes: true
+          body: ${{ steps.build_changelog.outputs.changelog }}
           token: ${{ secrets.GITHUB_TOKEN }}
