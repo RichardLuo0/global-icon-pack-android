@@ -77,7 +77,6 @@ import com.richardluo.globalIconPack.ui.components.SampleTheme
 import com.richardluo.globalIconPack.ui.components.WarnDialog
 import com.richardluo.globalIconPack.ui.viewModel.MergerVM
 import com.richardluo.globalIconPack.utils.getValue
-import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 
 class IconPackMergerActivity : ComponentActivity() {
@@ -241,11 +240,9 @@ class IconPackMergerActivity : ComponentActivity() {
     val valueMap = IconPackApps.getFlow(this).getValue(mapOf())
     LazyColumn(modifier = Modifier.fillMaxSize()) {
       items(valueMap.toList()) { (key, value) ->
-        IconPackItem(key, value, viewModel.basePackFlow.getValue()) {
-          lifecycleScope.launch {
-            coroutineScope.async { pagerState.animateScrollToPage(Page.IconList.ordinal) }.await()
-            viewModel.basePackFlow.value = key
-          }
+        IconPackItem(key, value, viewModel.basePack) {
+          coroutineScope.launch { pagerState.animateScrollToPage(Page.IconList.ordinal) }
+          viewModel.basePack = key
         }
       }
     }
@@ -264,7 +261,7 @@ class IconPackMergerActivity : ComponentActivity() {
           val (info, entry) = pair
           IconForApp(
             info.label,
-            key = viewModel.basePackFlow.value + "/" + (entry?.entry?.name ?: ""),
+            key = viewModel.basePack + "/" + (entry?.entry?.name ?: ""),
             loadImage = { viewModel.loadIcon(pair) },
           ) {
             viewModel.chooseIconVM.openVariantSheet(info)

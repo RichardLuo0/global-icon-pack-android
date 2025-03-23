@@ -114,3 +114,7 @@ fun Flow<String>.debounceInput(delay: Long = 300L) = debounce { if (it.isEmpty()
 
 fun flowTrigger() =
   MutableSharedFlow<Unit>(1, onBufferOverflow = BufferOverflow.DROP_OLDEST).apply { tryEmit(Unit) }
+
+suspend fun MutableSharedFlow<Unit>.emit() = emit(Unit)
+
+fun MutableSharedFlow<Unit>.tryEmit() = tryEmit(Unit)

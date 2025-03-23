@@ -19,6 +19,7 @@ import com.richardluo.globalIconPack.utils.getFirstRow
 import com.richardluo.globalIconPack.utils.getInstance
 import com.richardluo.globalIconPack.utils.getOrPutNullable
 import com.richardluo.globalIconPack.utils.getString
+import com.richardluo.globalIconPack.utils.tryEmit
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
@@ -89,7 +90,7 @@ class IconVariantVM(app: Application) : ContextVM(app) {
     if (basePack.isEmpty()) return
     viewModelScope.launch {
       withContext(Dispatchers.IO) { iconPackDB.setPackModified(basePack, !modified.value) }
-      modifiedChangeTrigger.tryEmit(Unit)
+      modifiedChangeTrigger.tryEmit()
     }
   }
 
