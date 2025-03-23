@@ -13,6 +13,7 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.richardluo.globalIconPack.R
 import com.richardluo.globalIconPack.iconPack.CopyableIconPack
+import com.richardluo.globalIconPack.utils.ContextVM
 import com.richardluo.globalIconPack.utils.IconPackCreator
 import com.richardluo.globalIconPack.utils.IconPackCreator.IconEntryWithPack
 import com.richardluo.globalIconPack.utils.getInstance
@@ -26,10 +27,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class MergerVM(app: Application) : AndroidViewModel(app) {
-  private val context: Context
-    get() = getApplication()
-
+class MergerVM(app: Application) : ContextVM(app) {
   private val iconCache by getInstance { IconCache(app) }
 
   val basePackFlow = MutableStateFlow("")

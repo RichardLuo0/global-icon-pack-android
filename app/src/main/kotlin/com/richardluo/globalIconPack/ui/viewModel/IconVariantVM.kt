@@ -2,16 +2,15 @@ package com.richardluo.globalIconPack.ui.viewModel
 
 import android.app.Application
 import android.content.ComponentName
-import android.content.Context
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshotFlow
-import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.richardluo.globalIconPack.Pref
 import com.richardluo.globalIconPack.get
 import com.richardluo.globalIconPack.iconPack.database.IconEntry
 import com.richardluo.globalIconPack.iconPack.database.IconPackDB
+import com.richardluo.globalIconPack.utils.ContextVM
 import com.richardluo.globalIconPack.utils.IconPackCreator.IconEntryWithPack
 import com.richardluo.globalIconPack.utils.WorldPreference
 import com.richardluo.globalIconPack.utils.flowTrigger
@@ -28,10 +27,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-class IconVariantVM(app: Application) : AndroidViewModel(app) {
-  private val context: Context
-    get() = getApplication()
-
+class IconVariantVM(app: Application) : ContextVM(app) {
   private val iconCache by getInstance { IconCache(app) }
   private val iconPackDB by getInstance { IconPackDB(app) }
 

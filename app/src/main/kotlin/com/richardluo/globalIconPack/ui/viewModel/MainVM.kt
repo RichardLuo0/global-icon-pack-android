@@ -13,7 +13,7 @@ import com.richardluo.globalIconPack.get
 import com.richardluo.globalIconPack.iconPack.BootReceiver
 import com.richardluo.globalIconPack.iconPack.KeepAliveService
 import com.richardluo.globalIconPack.iconPack.database.IconPackDB
-import com.richardluo.globalIconPack.utils.WorldPreference
+import com.richardluo.globalIconPack.utils.ContextVM
 import com.richardluo.globalIconPack.utils.getInstance
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -25,10 +25,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.withContext
 import me.zhanghai.compose.preference.Preferences
 
-class MainVM(app: Application) : AndroidViewModel(app) {
-  private val context: Context
-    get() = getApplication()
-
+class MainVM(app: Application) : ContextVM(app) {
   private val iconPackDB by getInstance { IconPackDB(app) }
 
   // Hold a strong reference to icon cache so it never gets recycled before MainVM is destroyed
