@@ -20,8 +20,9 @@ This module is designed to extend the icon packs throughout the entire system.
 </div>
 
 ## Requirements
-* AOSP based OS (I tested on android 14, 15)
 * LSPosed
+* Android 11+ (I tested on android 14, 15)
+* Some features require AOSP-like OS
 
 ## Installation
 1. Install the apk. 
@@ -38,8 +39,17 @@ This module is designed to extend the icon packs throughout the entire system.
 * If it says "Please ensure the Xposed module has been enabled first" and you have the module enabled already, try force stopping then restart the app.
 * Regardless of the minimum SDK version, you must test compatibility with android versions below 14 by yourself.
 
-## Help with localization
+## Help with Localization
 <a href="https://crowdin.com/project/global-icon-pack-android" rel="nofollow"><img style="width:140;height:40px" src="https://badges.crowdin.net/badge/light/crowdin-on-dark.png" srcset="https://badges.crowdin.net/badge/light/crowdin-on-dark.png 1x,https://badges.crowdin.net/badge/light/crowdin-on-dark@2x.png 2x" alt="Crowdin | Agile localization for tech companies" /></a>
+
+### Main Translators
+The list may not be latest.
+- Chinese Simplified
+  - RichardLuo
+- German
+  - elisenlebkuch
+- Russian
+  - Кирилл Гук
 
 ## Disclaimer
 > [!WARNING]
