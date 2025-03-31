@@ -36,29 +36,20 @@ fun <T> LazyDialog(
       color = AlertDialogDefaults.containerColor,
       tonalElevation = AlertDialogDefaults.TonalElevation,
     ) {
-      Column {
+      Column(modifier = Modifier.padding(vertical = 24.dp)) {
         ProvideContentColorTextStyle(
           contentColor = AlertDialogDefaults.titleContentColor,
           textStyle = MaterialTheme.typography.headlineSmall,
         ) {
-          Box(
-            modifier =
-              Modifier.fillMaxWidth()
-                .padding(start = 24.dp, top = 24.dp, end = 24.dp, bottom = 16.dp)
-          ) {
-            title()
-          }
+          Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp)) { title() }
         }
         ProvideContentColorTextStyle(
           contentColor = MaterialTheme.colorScheme.primary,
           textStyle = MaterialTheme.typography.labelLarge,
         ) {
-          Box(modifier = Modifier.fillMaxWidth().padding(bottom = 24.dp)) {
+          Box(modifier = Modifier.fillMaxWidth()) {
             if (value != null) content(value)
-            else
-              LinearProgressIndicator(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp)
-              )
+            else LinearProgressIndicator(modifier = Modifier.fillMaxWidth().padding(24.dp))
           }
         }
       }
@@ -78,7 +69,7 @@ fun <T> LazyListDialog(
   LazyDialog(openState, title, value) { list ->
     if (list.isEmpty()) nothing()
     else
-      LazyColumn(modifier = Modifier.fillMaxWidth()) {
+      LazyColumn(modifier = Modifier.fillMaxWidth().padding(top = 16.dp)) {
         items(list, key) { item -> itemContent(item) { openState.value = false } }
       }
   }
@@ -95,7 +86,7 @@ fun <T> LazyGridDialog(
     if (list.isEmpty()) nothing()
     else
       LazyVerticalGrid(
-        modifier = Modifier.padding(horizontal = 2.dp),
+        modifier = Modifier.padding(horizontal = 2.dp).padding(top = 16.dp),
         columns = GridCells.Adaptive(minSize = 80.dp),
       ) {
         items(list) { item -> itemContent(item) { openState.value = false } }
