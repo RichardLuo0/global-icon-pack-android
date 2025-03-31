@@ -69,29 +69,51 @@ import me.zhanghai.compose.preference.switchPreference
 import me.zhanghai.compose.preference.textFieldPreference
 
 class MainActivity : ComponentActivity() {
-  private val viewModel: MainVM by viewModels()
-
-  companion object {
+  private companion object {
     init {
       Shell.setDefaultBuilder(Shell.Builder.create().setFlags(Shell.FLAG_MOUNT_MASTER))
     }
   }
 
+  private val viewModel: MainVM by viewModels()
+  private val prefFlow by lazy {
+    runCatching { WorldPreference.getPrefInApp(this) }.getOrNull()?.getPreferenceFlow()
+  }
+
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
+
+    // If onNewIntent() is not getting called
+    applyIconPackIfNeeded(intent)
+
+    val prefFlow = prefFlow
     setContent {
-      val pref = runCatching { WorldPreference.getPrefInApp(this) }.getOrNull()
-      if (pref == null) {
+      if (prefFlow == null) {
         WarnDialog(
           openState = remember { mutableStateOf(true) },
-          title = { Text(getString(R.string.warning)) },
+          title = { OneLineText(getString(R.string.warning)) },
           content = { Text(getString(R.string.plzEnableModuleFirst)) },
           onCancel = { finish() },
         ) {
           finish()
         }
-      } else
-        SampleTheme { ProvidePreferenceLocals(flow = pref.getPreferenceFlow()) { SampleScreen() } }
+      } else SampleTheme { ProvidePreferenceLocals(flow = prefFlow) { SampleScreen() } }
+    }
+  }
+
+  override fun onNewIntent(intent: Intent) {
+    super.onNewIntent(intent)
+    applyIconPackIfNeeded(intent)
+  }
+
+  private fun applyIconPackIfNeeded(intent: Intent) {
+    val prefFlow = prefFlow
+    if (prefFlow != null && intent.action == "${BuildConfig.APPLICATION_ID}.APPLY_ICON_PACK") {
+      prefFlow.value =
+        prefFlow.value.toMutablePreferences().apply {
+          this[Pref.ICON_PACK.first] = intent.getStringExtra("packageName")
+        }
+      Toast.makeText(this, R.string.iconPackApplied, Toast.LENGTH_LONG).show()
     }
   }
 
