@@ -3,11 +3,11 @@ package com.richardluo.globalIconPack.utils
 import java.lang.ref.WeakReference
 import java.util.WeakHashMap
 
-private val cache = WeakHashMap<Class<*>, Any>()
+private val cache = WeakHashMap<Class<*>, WeakReference<Any>>()
 
 @Suppress("UNCHECKED_CAST")
 fun <T> getInstance(clazz: Class<T>, create: () -> T) = lazy {
-  cache.getOrPut(clazz) { create() } as T
+  cache[clazz]?.get() as T? ?: create().also { cache.put(clazz, WeakReference(it)) }
 }
 
 inline fun <reified T> getInstance() =
