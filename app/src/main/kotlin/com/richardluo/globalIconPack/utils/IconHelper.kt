@@ -148,15 +148,22 @@ object IconHelper {
     scaleOnlyForeground: Boolean = true,
   ): Drawable =
     if (drawable is AdaptiveIconDrawable)
-      CustomAdaptiveIconDrawable(
-        drawable.background?.let {
-          if (scaleOnlyForeground) it else createScaledDrawable(it, iconScale)
-        },
-        drawable.foreground?.let { createScaledDrawable(it, iconScale) },
-        back,
-        upon,
-        mask,
-      )
+      if (scaleOnlyForeground)
+        CustomAdaptiveIconDrawable(
+          drawable.background,
+          drawable.foreground?.let { createScaledDrawable(it, iconScale) },
+          back,
+          upon,
+          mask,
+        )
+      else
+        CustomAdaptiveIconDrawable(
+          back?.toDrawable(res)?.let { createScaledDrawable(it) } ?: Color.WHITE.toDrawable(),
+          createScaledDrawable(drawable, ADAPTIVE_ICON_VIEWPORT_SCALE * iconScale),
+          null,
+          upon,
+          mask,
+        )
     else if (mask != null)
       CustomAdaptiveIconDrawable(
         Color.TRANSPARENT.toDrawable(),
