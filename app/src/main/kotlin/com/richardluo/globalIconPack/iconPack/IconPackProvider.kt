@@ -128,13 +128,8 @@ class IconPackProvider : ContentProvider() {
   private fun getResources(pack: String) =
     resourcesMap.getOrPut(pack) { context!!.packageManager.getResourcesForApplication(pack) }
 
-  private var isServiceStarted = false
-
   private fun startForegroundAsNeeded() {
-    if (!isServiceStarted) {
-      KeepAliveService.startForeground(context!!)
-      isServiceStarted = true
-    }
+    KeepAliveService.startForeground(context!!)
   }
 
   override fun getType(uri: Uri): String? = null

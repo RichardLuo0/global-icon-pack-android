@@ -15,11 +15,15 @@ private const val STOP_FOREGROUND: String = "STOP_FOREGROUND"
 class KeepAliveService : Service() {
 
   companion object {
+    private var isServiceRunning = false
+
     fun startForeground(context: Context) {
+      if (isServiceRunning) return
       runCatching { context.startForegroundService(Intent(context, KeepAliveService::class.java)) }
     }
 
     fun stopForeground(context: Context) {
+      if (!isServiceRunning) return
       context.startService(
         Intent(context, KeepAliveService::class.java).apply { action = STOP_FOREGROUND }
       )
@@ -28,7 +32,10 @@ class KeepAliveService : Service() {
 
   override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
     when (intent?.action) {
-      STOP_FOREGROUND -> stopForeground(STOP_FOREGROUND_REMOVE)
+      STOP_FOREGROUND -> {
+        stopForeground(STOP_FOREGROUND_REMOVE)
+        isServiceRunning = false
+      }
       else -> {
         createNotificationChannel()
         val builder: Notification.Builder =
@@ -36,6 +43,7 @@ class KeepAliveService : Service() {
             .setContentTitle("Providing icon pack to hooked apps")
             .setAutoCancel(true)
         startForeground(1, builder.build(), ServiceInfo.FOREGROUND_SERVICE_TYPE_MANIFEST)
+        isServiceRunning = true
       }
     }
     return START_STICKY
