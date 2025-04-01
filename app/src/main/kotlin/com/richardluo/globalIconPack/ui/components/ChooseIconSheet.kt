@@ -32,10 +32,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.richardluo.globalIconPack.R
 import com.richardluo.globalIconPack.iconPack.IconPackApps
+import com.richardluo.globalIconPack.ui.model.OriginalIcon
+import com.richardluo.globalIconPack.ui.model.VariantIcon
+import com.richardluo.globalIconPack.ui.model.VariantPackIcon
 import com.richardluo.globalIconPack.ui.viewModel.ChooseIconVM
-import com.richardluo.globalIconPack.ui.viewModel.OriginalIcon
-import com.richardluo.globalIconPack.ui.viewModel.VariantIcon
-import com.richardluo.globalIconPack.ui.viewModel.VariantPackIcon
 import com.richardluo.globalIconPack.utils.getValue
 
 @OptIn(ExperimentalMaterial3Api::class)

@@ -7,7 +7,12 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.graphics.ImageBitmap
 import com.richardluo.globalIconPack.iconPack.database.IconEntry
 import com.richardluo.globalIconPack.iconPack.database.NormalIconEntry
+import com.richardluo.globalIconPack.ui.model.AppIconInfo
+import com.richardluo.globalIconPack.ui.model.IconEntryWithPack
 import com.richardluo.globalIconPack.ui.model.IconPack
+import com.richardluo.globalIconPack.ui.model.OriginalIcon
+import com.richardluo.globalIconPack.ui.model.VariantIcon
+import com.richardluo.globalIconPack.ui.model.VariantPackIcon
 import com.richardluo.globalIconPack.utils.debounceInput
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,12 +20,6 @@ import kotlinx.coroutines.flow.combineTransform
 import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.transform
 import kotlinx.coroutines.withContext
-
-interface VariantIcon
-
-class VariantPackIcon(val pack: IconPack, val entry: IconEntry) : VariantIcon
-
-class OriginalIcon : VariantIcon
 
 class ChooseIconVM(
   basePack: String,

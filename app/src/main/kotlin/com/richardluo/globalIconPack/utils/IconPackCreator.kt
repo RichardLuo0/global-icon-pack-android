@@ -7,8 +7,8 @@ import android.net.Uri
 import androidx.documentfile.provider.DocumentFile
 import com.richardluo.globalIconPack.R
 import com.richardluo.globalIconPack.ui.model.ApkBuilder
+import com.richardluo.globalIconPack.ui.model.IconEntryWithPack
 import com.richardluo.globalIconPack.ui.model.IconPack
-import com.richardluo.globalIconPack.ui.viewModel.IconEntryWithPack
 import java.io.BufferedInputStream
 import java.io.BufferedOutputStream
 import java.io.InputStream

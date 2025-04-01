@@ -29,7 +29,7 @@ import me.zhanghai.compose.preference.Preferences
 class MainVM(app: Application) : ContextVM(app) {
   private val iconPackDB by getInstance { IconPackDB(app) }
 
-  // Hold a strong reference to icon cache so it never gets recycled before MainVM is destroyed
+  // Hold a strong reference to icon pack cache so it never gets recycled before MainVM is destroyed
   @Keep @Suppress("unused") private val iconPackCache = getInstance { IconPackCache(app) }.value
 
   var waiting by mutableIntStateOf(0)

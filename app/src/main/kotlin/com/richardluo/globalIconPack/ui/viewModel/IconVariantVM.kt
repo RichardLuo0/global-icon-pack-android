@@ -11,6 +11,12 @@ import com.richardluo.globalIconPack.get
 import com.richardluo.globalIconPack.iconPack.IconPackConfig
 import com.richardluo.globalIconPack.iconPack.database.IconEntry
 import com.richardluo.globalIconPack.iconPack.database.IconPackDB
+import com.richardluo.globalIconPack.ui.model.AppIconInfo
+import com.richardluo.globalIconPack.ui.model.IconEntryWithPack
+import com.richardluo.globalIconPack.ui.model.OriginalIcon
+import com.richardluo.globalIconPack.ui.model.ShortcutIconInfo
+import com.richardluo.globalIconPack.ui.model.VariantIcon
+import com.richardluo.globalIconPack.ui.model.VariantPackIcon
 import com.richardluo.globalIconPack.utils.ContextVM
 import com.richardluo.globalIconPack.utils.WorldPreference
 import com.richardluo.globalIconPack.utils.flowTrigger

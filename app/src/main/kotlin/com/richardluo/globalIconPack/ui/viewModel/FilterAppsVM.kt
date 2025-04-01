@@ -10,6 +10,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshotFlow
 import com.richardluo.globalIconPack.R
 import com.richardluo.globalIconPack.iconPack.getComponentName
+import com.richardluo.globalIconPack.ui.model.AppIconInfo
+import com.richardluo.globalIconPack.ui.model.ShortcutIconInfo
 import com.richardluo.globalIconPack.utils.Weak
 import com.richardluo.globalIconPack.utils.asType
 import com.richardluo.globalIconPack.utils.debounceInput

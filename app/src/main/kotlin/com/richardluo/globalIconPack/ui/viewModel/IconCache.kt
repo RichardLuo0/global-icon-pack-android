@@ -11,13 +11,14 @@ import androidx.compose.ui.graphics.asImageBitmap
 import androidx.core.graphics.drawable.toBitmap
 import com.richardluo.globalIconPack.iconPack.IconPackConfig
 import com.richardluo.globalIconPack.iconPack.database.IconEntry
+import com.richardluo.globalIconPack.ui.model.AppIconInfo
+import com.richardluo.globalIconPack.ui.model.IconEntryWithPack
 import com.richardluo.globalIconPack.ui.model.IconPack
+import com.richardluo.globalIconPack.ui.model.ShortcutIconInfo
 import com.richardluo.globalIconPack.utils.asType
 import com.richardluo.globalIconPack.utils.getOrPut
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-
-data class IconEntryWithPack(val entry: IconEntry, val pack: IconPack)
 
 class IconCache(private val context: Application, private val getIconPack: (String) -> IconPack) {
   private val imageCache =

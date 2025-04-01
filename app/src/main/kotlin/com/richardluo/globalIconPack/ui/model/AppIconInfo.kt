@@ -1,4 +1,4 @@
-package com.richardluo.globalIconPack.ui.viewModel
+package com.richardluo.globalIconPack.ui.model
 
 import android.content.ComponentName
 import android.content.pm.ShortcutInfo
