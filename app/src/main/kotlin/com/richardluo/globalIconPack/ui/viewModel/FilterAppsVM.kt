@@ -100,12 +100,7 @@ class FilterAppsVM(context: Context) {
             .getOrElse {
               log(it)
               withContext(Dispatchers.Main) {
-                Toast.makeText(
-                    context,
-                    context.getString(R.string.requiresHookSystem),
-                    Toast.LENGTH_LONG,
-                  )
-                  .show()
+                Toast.makeText(context, R.string.requiresHookSystem, Toast.LENGTH_LONG).show()
               }
               listOf()
             }

@@ -44,7 +44,7 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
           .getFirstRow {
             if (lastUpdateTime < it.getLong("updateAt")) return
             it.getInt("modified") != 0
-          } ?: false
+          } == true
       // Create tables
       execSQL(
         "CREATE TABLE IF NOT EXISTS '$packTable' (packageName TEXT NOT NULL, className TEXT NOT NULL, entry BLOB NOT NULL, pack TEXT NOT NULL DEFAULT '')"
@@ -128,7 +128,7 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
   fun isPackModified(pack: String) =
     readableDatabase
       .query("fallbacks", arrayOf("modified"), "pack=?", arrayOf(pack), null, null, null, "1")
-      .getFirstRow { it.getInt("modified") != 0 } ?: false
+      .getFirstRow { it.getInt("modified") != 0 } == true
 
   private fun getIconExact(pack: String, cn: ComponentName) =
     readableDatabase.rawQuery(
@@ -263,7 +263,7 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
           execSQL("DROP TABLE '$it'")
           execSQL("DROP TABLE 'fallbacks'")
         }
-        WorldPreference.getPrefInApp(context).get(Pref.ICON_PACK)?.let { update(db, it) }
+        WorldPreference.getPrefInApp(context).get(Pref.ICON_PACK).let { update(db, it) }
       }
     }
   }

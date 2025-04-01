@@ -28,7 +28,7 @@ import kotlinx.coroutines.launch
 fun MainDropdownMenu(snackbarState: SnackbarHostState) {
   val context = LocalContext.current
   val scope = rememberCoroutineScope()
-  val onShellResult =
+  val onShellResult = remember {
     Shell.ResultCallback { result ->
       scope.launch {
         if (result.isSuccess)
@@ -51,6 +51,7 @@ fun MainDropdownMenu(snackbarState: SnackbarHostState) {
         }
       }
     }
+  }
 
   var expanded by remember { mutableStateOf(false) }
 

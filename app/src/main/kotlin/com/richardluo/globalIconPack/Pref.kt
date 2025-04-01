@@ -23,7 +23,7 @@ object Pref {
   val FORCE_LOAD_CLOCK_AND_CALENDAR = "forceLoadClockAndCalendar" to true
 }
 
-fun SharedPreferences.get(pair: Pair<String, String>) = getString(pair.first, pair.second)
+fun SharedPreferences.get(pair: Pair<String, String>) = getString(pair.first, pair.second) as String
 
 fun SharedPreferences.get(pair: Pair<String, Boolean>) = getBoolean(pair.first, pair.second)
 
