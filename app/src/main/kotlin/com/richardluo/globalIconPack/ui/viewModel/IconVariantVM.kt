@@ -84,7 +84,8 @@ class IconVariantVM(app: Application) : ContextVM(app) {
     iconPackDB.getIcon(basePack, cn, iconPackConfig.iconPackAsFallback).getFirstRow {
       val entry = IconEntry.from(it.getBlob("entry"))
       val pack = it.getString("pack").ifEmpty { basePack }
-      IconEntryWithPack(entry, iconPackCache.getIconPack(pack))
+      val iconPack = iconPackCache.getIconPack(pack)
+      iconPack.makeValidEntry(entry)?.let { entry -> IconEntryWithPack(entry, iconPack) }
     }
 
   suspend fun loadIcon(pair: Pair<AppIconInfo, IconEntryWithPack?>) =

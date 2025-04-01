@@ -7,10 +7,13 @@ import android.graphics.Bitmap
 import android.graphics.Bitmap.CompressFormat
 import android.graphics.drawable.Drawable
 import com.richardluo.globalIconPack.Pref
+import com.richardluo.globalIconPack.iconPack.IconEntryWithId
 import com.richardluo.globalIconPack.iconPack.IconFallback
 import com.richardluo.globalIconPack.iconPack.IconPackConfig
+import com.richardluo.globalIconPack.iconPack.database.ClockIconEntry
 import com.richardluo.globalIconPack.iconPack.database.FallbackSettings
 import com.richardluo.globalIconPack.iconPack.database.IconEntry
+import com.richardluo.globalIconPack.iconPack.database.NormalIconEntry
 import com.richardluo.globalIconPack.iconPack.getComponentName
 import com.richardluo.globalIconPack.iconPack.loadIconPack
 import com.richardluo.globalIconPack.utils.AXMLEditor
@@ -42,12 +45,27 @@ class IconPack(val pack: String, val resources: Resources) {
     }
   }
 
-  fun getIcon(entry: IconEntry, iconDpi: Int) =
-    entry.getIcon { getIcon(it, iconDpi) }?.let { IconHelper.makeAdaptive(it) }
-
   fun getIconEntry(cn: ComponentName, config: IconPackConfig) =
-    iconEntryMap[cn]
-      ?: if (config.iconPackAsFallback) iconEntryMap[getComponentName(cn.packageName)] else null
+    (iconEntryMap[cn]
+        ?: if (config.iconPackAsFallback) iconEntryMap[getComponentName(cn.packageName)] else null)
+      ?.let { entry -> makeValidEntry(entry) }
+
+  fun makeValidEntry(entry: IconEntry) =
+    // Get id now because it will be used anyway, in the meantime exclude those without valid
+    // drawable id
+    when (entry) {
+      is NormalIconEntry,
+      is ClockIconEntry ->
+        getDrawableId(entry.name).takeIf { it != 0 }?.let { IconEntryWithId(entry, it) }
+      else -> entry
+    }
+
+  fun getIcon(entry: IconEntry, iconDpi: Int) =
+    when (entry) {
+      is IconEntryWithId ->
+        entry.getIconWithId { resources.getDrawableForDensity(it, iconDpi, null) }
+      else -> entry.getIcon { getIcon(it, iconDpi) }
+    }?.let { IconHelper.makeAdaptive(it) }
 
   fun getIcon(name: String, iconDpi: Int = 0) =
     getDrawableId(name)

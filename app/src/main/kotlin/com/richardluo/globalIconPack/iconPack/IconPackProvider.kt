@@ -31,22 +31,24 @@ class IconEntryWithId(val entry: IconEntry, private val id: Int) : IconEntry by 
 
   companion object {
     fun toCursor(cur: Cursor, getDrawableId: (pack: String, name: String) -> Int): Cursor? {
-      val entryBlob = cur.getBlob("entry")
-      val entry = from(entryBlob)
+      val data = cur.getBlob("entry")
       val pack = cur.getString("pack")
       return MatrixCursor(arrayOf("pack", "type", "id", "args")).apply {
-        when (entry) {
-          is NormalIconEntry -> {
-            val id = getDrawableId(pack, entry.name).takeIf { it != 0 } ?: return null
-            addRow(arrayOf(pack, Type.Normal.ordinal, id, entry.name))
-            cur.close()
+        DataInputStream(ByteArrayInputStream(data)).use {
+          when (it.readByte()) {
+            IconEntry.Type.Normal.ordinal.toByte() -> {
+              val name = it.readUTF()
+              val id = getDrawableId(pack, name).takeIf { it != 0 } ?: return null
+              addRow(arrayOf(pack, Type.Normal.ordinal, id, name))
+              cur.close()
+            }
+            IconEntry.Type.Clock.ordinal.toByte() -> {
+              val id = getDrawableId(pack, it.readUTF()).takeIf { it != 0 } ?: return null
+              addRow(arrayOf(pack, Type.Clock.ordinal, id, data))
+              cur.close()
+            }
+            else -> return cur
           }
-          is ClockIconEntry -> {
-            val id = getDrawableId(pack, entry.name).takeIf { it != 0 } ?: return null
-            addRow(arrayOf(pack, Type.Clock.ordinal, id, entryBlob))
-            cur.close()
-          }
-          else -> return cur
         }
       }
     }
