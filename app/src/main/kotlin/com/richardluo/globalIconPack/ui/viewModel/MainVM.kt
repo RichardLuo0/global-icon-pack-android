@@ -3,6 +3,7 @@ package com.richardluo.globalIconPack.ui.viewModel
 import android.app.Application
 import android.content.ComponentName
 import android.content.pm.PackageManager
+import androidx.annotation.Keep
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
@@ -29,13 +30,13 @@ class MainVM(app: Application) : ContextVM(app) {
   private val iconPackDB by getInstance { IconPackDB(app) }
 
   // Hold a strong reference to icon cache so it never gets recycled before MainVM is destroyed
-  private val iconCache = getInstance { IconCache(app) }.value
+  @Keep @Suppress("unused") private val iconPackCache = getInstance { IconPackCache(app) }.value
 
   var waiting by mutableIntStateOf(0)
     private set
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  fun bindPreferencesFlow(flow: Flow<Preferences>) {
+  fun bindPrefFlow(flow: Flow<Preferences>) {
     flow
       .mapLatest { Pair(it.get(Pref.MODE), it.get(Pref.ICON_PACK)) }
       .distinctUntilChanged()
@@ -65,26 +66,6 @@ class MainVM(app: Application) : ContextVM(app) {
         }
         waiting--
       }
-      .launchIn(viewModelScope)
-
-    // Invalidate icon cache when pref changes
-    data class CachePref(
-      val iconFallback: Boolean,
-      val overrideIconFallback: Boolean,
-      val iconPackScale: Float,
-      val scaleOnlyForeground: Boolean,
-    )
-    flow
-      .mapLatest {
-        CachePref(
-          it.get(Pref.ICON_FALLBACK),
-          it.get(Pref.OVERRIDE_ICON_FALLBACK),
-          it.get(Pref.ICON_PACK_SCALE),
-          it.get(Pref.SCALE_ONLY_FOREGROUND),
-        )
-      }
-      .distinctUntilChanged()
-      .onEach { iconCache.invalidate() }
       .launchIn(viewModelScope)
   }
 }

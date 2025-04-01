@@ -1,22 +1,37 @@
 package com.richardluo.globalIconPack.ui
 
 import android.Manifest
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.only
-import androidx.compose.foundation.layout.safeDrawing
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.Shortcut
+import androidx.compose.material.icons.outlined.Apps
+import androidx.compose.material.icons.outlined.Backpack
+import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.Merge
+import androidx.compose.material.icons.outlined.PhotoSizeSelectSmall
+import androidx.compose.material.icons.outlined.Restore
+import androidx.compose.material.icons.outlined.SettingsBackupRestore
+import androidx.compose.material.icons.outlined.SettingsRemote
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
@@ -30,11 +45,18 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.unit.dp
+import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.lifecycleScope
+import com.richardluo.globalIconPack.BuildConfig
 import com.richardluo.globalIconPack.MODE_LOCAL
 import com.richardluo.globalIconPack.MODE_PROVIDER
 import com.richardluo.globalIconPack.Pref
@@ -42,10 +64,13 @@ import com.richardluo.globalIconPack.R
 import com.richardluo.globalIconPack.get
 import com.richardluo.globalIconPack.iconPack.IconPackApps
 import com.richardluo.globalIconPack.ui.components.ComposableSliderPreference
+import com.richardluo.globalIconPack.ui.components.IconButtonWithTooltip
 import com.richardluo.globalIconPack.ui.components.IconPackItem
 import com.richardluo.globalIconPack.ui.components.LoadingDialog
+import com.richardluo.globalIconPack.ui.components.OneLineText
 import com.richardluo.globalIconPack.ui.components.SampleTheme
 import com.richardluo.globalIconPack.ui.components.SnackbarErrorVisuals
+import com.richardluo.globalIconPack.ui.components.TwoLineText
 import com.richardluo.globalIconPack.ui.components.WarnDialog
 import com.richardluo.globalIconPack.ui.components.mapListPreference
 import com.richardluo.globalIconPack.ui.viewModel.MainVM
@@ -121,17 +146,23 @@ class MainActivity : ComponentActivity() {
   @OptIn(ExperimentalMaterial3Api::class)
   private fun SampleScreen() {
     val context = this
-    val windowInsets = WindowInsets.safeDrawing
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     val snackbarState = remember { SnackbarHostState() }
     Scaffold(
       modifier = Modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
       topBar = {
-        val appLabel = applicationInfo.loadLabel(packageManager).toString()
         TopAppBar(
-          title = { Text(appLabel) },
+          title = {
+            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterStart) {
+              Icon(
+                getDrawable(R.mipmap.ic_launcher)!!.toBitmap().asImageBitmap(),
+                "Logo",
+                modifier = Modifier.fillMaxHeight(0.5f).padding(horizontal = 8.dp),
+                tint = Color.Unspecified,
+              )
+            }
+          },
           modifier = Modifier.fillMaxWidth(),
-          windowInsets = windowInsets.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top),
           scrollBehavior = scrollBehavior,
           actions = { MainDropdownMenu(snackbarState) },
         )
@@ -154,13 +185,12 @@ class MainActivity : ComponentActivity() {
           },
         )
       },
-      contentWindowInsets = windowInsets,
     ) { contentPadding ->
       if (viewModel.waiting > 0) LoadingDialog()
 
       val flow = LocalPreferenceFlow.current
       LaunchedEffect(flow) {
-        viewModel.bindPreferencesFlow(flow)
+        viewModel.bindPrefFlow(flow)
         flow
           .map { it.get(Pref.MODE) }
           .distinctUntilChanged()
@@ -178,133 +208,175 @@ class MainActivity : ComponentActivity() {
       }
 
       LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = contentPadding) {
-        preferenceCategory(key = "general", title = { Text(stringResource(R.string.general)) })
-        listPreference(
-          key = Pref.MODE.first,
-          defaultValue = Pref.MODE.second,
-          values = listOf(MODE_PROVIDER, MODE_LOCAL),
-          valueToText = { AnnotatedString(modeToDesc(it)) },
-          title = { Text(stringResource(R.string.mode)) },
-          summary = { Text(modeToDesc(it)) },
-        )
-        mapListPreference(
-          key = Pref.ICON_PACK.first,
-          defaultValue = Pref.ICON_PACK.second,
-          getValueMap = { IconPackApps.getFlow(context).collectAsState(mapOf()).value },
-          item = { key, value, currentKey, onClick ->
-            IconPackItem(key, value, currentKey, onClick)
-          },
-          title = { Text(stringResource(R.string.iconPack)) },
-          summary = { key, value ->
-            Text(
-              value?.label
-                ?: key.takeIf { it.isNotEmpty() }
-                ?: stringResource(R.string.iconPackSummary)
-            )
-          },
-        )
-        switchPreference(
-          key = Pref.ICON_PACK_AS_FALLBACK.first,
-          defaultValue = Pref.ICON_PACK_AS_FALLBACK.second,
-          title = { Text(stringResource(R.string.iconPackAsFallback)) },
-          summary = { Text(stringResource(R.string.iconPackAsFallbackSummary)) },
-        )
-        switchPreference(
-          key = Pref.SHORTCUT.first,
-          defaultValue = Pref.SHORTCUT.second,
-          title = { Text(stringResource(R.string.shortcut)) },
-        )
-        preference(
-          key = "openMerger",
-          onClick = { context.startActivity(Intent(context, IconPackMergerActivity::class.java)) },
-          title = { Text(stringResource(R.string.mergeIconPack)) },
-          summary = { Text(stringResource(R.string.mergeIconPackSummary)) },
-        )
-
-        preferenceCategory(
-          key = "iconPackSettings",
-          title = { Text(stringResource(R.string.iconPackSettings)) },
-        )
-        item(key = "iconVariant") {
-          val isProvider = flow.map { it.get(Pref.MODE) == MODE_PROVIDER }.getValue(false)
-          val isPackSet = flow.map { it.get(Pref.ICON_PACK).isNotEmpty() }.getValue(false)
-          Preference(
-            enabled = isProvider && isPackSet,
-            onClick = { context.startActivity(Intent(context, IconVariantActivity::class.java)) },
-            title = { Text(stringResource(R.string.iconVariant)) },
-            summary = { Text(stringResource(R.string.iconVariantSummary)) },
-          )
+        MainPreference.run {
+          general(this@MainActivity)
+          iconPack(this@MainActivity)
+          pixel()
         }
-        switchPreference(
-          key = Pref.ICON_FALLBACK.first,
-          defaultValue = Pref.ICON_FALLBACK.second,
-          title = { Text(stringResource(R.string.iconFallback)) },
-          summary = { Text(stringResource(R.string.iconFallbackSummary)) },
-        )
-        switchPreference(
-          key = Pref.SCALE_ONLY_FOREGROUND.first,
-          defaultValue = Pref.SCALE_ONLY_FOREGROUND.second,
-          title = { Text(stringResource(R.string.scaleOnlyForeground)) },
-        )
-        item {
-          val enableState =
-            rememberPreferenceState(
-              Pref.OVERRIDE_ICON_FALLBACK.first,
-              Pref.OVERRIDE_ICON_FALLBACK.second,
-            )
-          val enabled by enableState
-          SwitchPreference(
-            state = enableState,
-            title = { Text(stringResource(R.string.overrideIconFallback)) },
-            summary = { Text(stringResource(R.string.overrideIconFallbackSummary)) },
-          )
-          ComposableSliderPreference(
-            enabled = { enabled },
-            key = Pref.ICON_PACK_SCALE.first,
-            defaultValue = Pref.ICON_PACK_SCALE.second,
-            valueRange = 0f..1.5f,
-            valueSteps = 29,
-            valueText = { Text("%.2f".format(it)) },
-            title = { Text(stringResource(R.string.iconPackScale)) },
-          )
-        }
-
-        preferenceCategory(
-          key = "pixelSettings",
-          title = { Text(stringResource(R.string.pixelSettings)) },
-        )
-        textFieldPreference(
-          key = Pref.PIXEL_LAUNCHER_PACKAGE.first,
-          defaultValue = Pref.PIXEL_LAUNCHER_PACKAGE.second,
-          textToValue = { it },
-          title = { Text(stringResource(R.string.pixelLauncherPackage)) },
-          summary = { Text(stringResource(R.string.pixelLauncherPackageSummary)) },
-        )
-        switchPreference(
-          key = Pref.NO_FORCE_SHAPE.first,
-          defaultValue = Pref.NO_FORCE_SHAPE.second,
-          title = { Text(stringResource(R.string.noForceShape)) },
-          summary = { Text(stringResource(R.string.noForceShapeSummary)) },
-        )
-        switchPreference(
-          key = Pref.NO_SHADOW.first,
-          defaultValue = Pref.NO_SHADOW.second,
-          title = { Text(stringResource(R.string.noShadow)) },
-          summary = { Text(stringResource(R.string.noShadowSummary)) },
-        )
-        switchPreference(
-          key = Pref.FORCE_LOAD_CLOCK_AND_CALENDAR.first,
-          defaultValue = Pref.FORCE_LOAD_CLOCK_AND_CALENDAR.second,
-          title = { Text(stringResource(R.string.forceLoadClockAndCalendar)) },
-        )
       }
     }
   }
+}
 
-  private fun modeToDesc(mode: String) =
+object MainPreference {
+  fun LazyListScope.general(context: Context) {
+    preferenceCategory(
+      key = "generalCat",
+      title = { OneLineText(stringResource(R.string.general)) },
+    )
+    listPreference(
+      icon = { Icon(Icons.Outlined.SettingsRemote, Pref.MODE.first) },
+      key = Pref.MODE.first,
+      defaultValue = Pref.MODE.second,
+      values = listOf(MODE_PROVIDER, MODE_LOCAL),
+      valueToText = { AnnotatedString(modeToDesc(context, it)) },
+      title = { OneLineText(stringResource(R.string.mode)) },
+      summary = { TwoLineText(modeToDesc(context, it)) },
+    )
+    mapListPreference(
+      icon = { Icon(Icons.Outlined.Backpack, Pref.ICON_PACK.first) },
+      key = Pref.ICON_PACK.first,
+      defaultValue = Pref.ICON_PACK.second,
+      getValueMap = { IconPackApps.getFlow(context).collectAsState(mapOf()).value },
+      item = { key, value, currentKey, onClick -> IconPackItem(key, value, currentKey, onClick) },
+      title = { OneLineText(stringResource(R.string.iconPack)) },
+      summary = { key, value ->
+        Text(
+          value?.label ?: key.takeIf { it.isNotEmpty() } ?: stringResource(R.string.iconPackSummary)
+        )
+      },
+    )
+    switchPreference(
+      icon = {},
+      key = Pref.ICON_PACK_AS_FALLBACK.first,
+      defaultValue = Pref.ICON_PACK_AS_FALLBACK.second,
+      title = { OneLineText(stringResource(R.string.iconPackAsFallback)) },
+      summary = { TwoLineText(stringResource(R.string.iconPackAsFallbackSummary)) },
+    )
+    switchPreference(
+      icon = { Icon(Icons.AutoMirrored.Outlined.Shortcut, Pref.SHORTCUT.first) },
+      key = Pref.SHORTCUT.first,
+      defaultValue = Pref.SHORTCUT.second,
+      title = { OneLineText(stringResource(R.string.shortcut)) },
+    )
+    preference(
+      icon = { Icon(Icons.Outlined.Merge, "openMerger") },
+      key = "openMerger",
+      onClick = { context.startActivity(Intent(context, IconPackMergerActivity::class.java)) },
+      title = { OneLineText(stringResource(R.string.mergeIconPack)) },
+      summary = { TwoLineText(stringResource(R.string.mergeIconPackSummary)) },
+    )
+  }
+
+  fun LazyListScope.iconPack(context: Context, onlyOptions: Boolean = false) {
+    if (!onlyOptions) {
+      preferenceCategory(
+        key = "iconPackCat",
+        title = { OneLineText(stringResource(R.string.iconPackSettings)) },
+      )
+      item(key = "iconVariant") {
+        val pref = LocalPreferenceFlow.current.getValue()
+        Preference(
+          icon = { Icon(Icons.Outlined.Edit, "iconVariant") },
+          enabled = pref.get(Pref.MODE) == MODE_PROVIDER && pref.get(Pref.ICON_PACK).isNotEmpty(),
+          onClick = { context.startActivity(Intent(context, IconVariantActivity::class.java)) },
+          title = { OneLineText(stringResource(R.string.iconVariant)) },
+          summary = { TwoLineText(stringResource(R.string.iconVariantSummary)) },
+        )
+      }
+    }
+    switchPreference(
+      icon = { Icon(Icons.Outlined.SettingsBackupRestore, Pref.ICON_FALLBACK.first) },
+      key = Pref.ICON_FALLBACK.first,
+      defaultValue = Pref.ICON_FALLBACK.second,
+      title = { OneLineText(stringResource(R.string.iconFallback)) },
+      summary = { TwoLineText(stringResource(R.string.iconFallbackSummary)) },
+    )
+    switchPreference(
+      icon = {},
+      key = Pref.SCALE_ONLY_FOREGROUND.first,
+      defaultValue = Pref.SCALE_ONLY_FOREGROUND.second,
+      title = { OneLineText(stringResource(R.string.scaleOnlyForeground)) },
+    )
+    item {
+      val enableState =
+        rememberPreferenceState(
+          Pref.OVERRIDE_ICON_FALLBACK.first,
+          Pref.OVERRIDE_ICON_FALLBACK.second,
+        )
+      val enabled by enableState
+      SwitchPreference(
+        icon = {},
+        state = enableState,
+        title = { OneLineText(stringResource(R.string.overrideIconFallback)) },
+        summary = { TwoLineText(stringResource(R.string.overrideIconFallbackSummary)) },
+      )
+      ComposableSliderPreference(
+        icon = { Icon(Icons.Outlined.PhotoSizeSelectSmall, Pref.ICON_PACK_SCALE.first) },
+        enabled = { enabled },
+        key = Pref.ICON_PACK_SCALE.first,
+        defaultValue = Pref.ICON_PACK_SCALE.second,
+        valueRange = 0f..1.5f,
+        valueSteps = 29,
+        valueText = { Text("%.2f".format(it)) },
+        title = { OneLineText(stringResource(R.string.iconPackScale)) },
+      )
+    }
+  }
+
+  fun LazyListScope.pixel() {
+    preferenceCategory(
+      key = "pixelCat",
+      title = { OneLineText(stringResource(R.string.pixelSettings)) },
+    )
+    textFieldPreference(
+      icon = { Icon(Icons.Outlined.Apps, Pref.PIXEL_LAUNCHER_PACKAGE.first) },
+      key = Pref.PIXEL_LAUNCHER_PACKAGE.first,
+      defaultValue = Pref.PIXEL_LAUNCHER_PACKAGE.second,
+      textToValue = { it },
+      textField = { value, onValueChange, onOk ->
+        OutlinedTextField(
+          value = value,
+          onValueChange = onValueChange,
+          modifier = Modifier.fillMaxWidth(),
+          keyboardActions = KeyboardActions { onOk() },
+          singleLine = true,
+          trailingIcon = {
+            IconButtonWithTooltip(Icons.Outlined.Restore, "Restore") {
+              onValueChange(TextFieldValue(Pref.PIXEL_LAUNCHER_PACKAGE.second))
+            }
+          },
+        )
+      },
+      title = { OneLineText(stringResource(R.string.pixelLauncherPackage)) },
+      summary = { TwoLineText(stringResource(R.string.pixelLauncherPackageSummary)) },
+    )
+    switchPreference(
+      icon = {},
+      key = Pref.NO_FORCE_SHAPE.first,
+      defaultValue = Pref.NO_FORCE_SHAPE.second,
+      title = { OneLineText(stringResource(R.string.noForceShape)) },
+      summary = { TwoLineText(stringResource(R.string.noForceShapeSummary)) },
+    )
+    switchPreference(
+      icon = {},
+      key = Pref.NO_SHADOW.first,
+      defaultValue = Pref.NO_SHADOW.second,
+      title = { OneLineText(stringResource(R.string.noShadow)) },
+      summary = { TwoLineText(stringResource(R.string.noShadowSummary)) },
+    )
+    switchPreference(
+      icon = {},
+      key = Pref.FORCE_LOAD_CLOCK_AND_CALENDAR.first,
+      defaultValue = Pref.FORCE_LOAD_CLOCK_AND_CALENDAR.second,
+      title = { OneLineText(stringResource(R.string.forceLoadClockAndCalendar)) },
+    )
+  }
+
+  private fun modeToDesc(context: Context, mode: String) =
     when (mode) {
-      MODE_PROVIDER -> getString(R.string.modeProvider)
-      MODE_LOCAL -> getString(R.string.modeLocal)
+      MODE_PROVIDER -> context.getString(R.string.modeProvider)
+      MODE_LOCAL -> context.getString(R.string.modeLocal)
       else -> mode
     }
 }
