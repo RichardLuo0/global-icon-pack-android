@@ -25,7 +25,8 @@ class IconEntryWithId(private val id: Int, val entry: IconEntry) : IconEntry(ent
     Clock,
   }
 
-  fun getIconWithId(getIconFromId: (Int) -> Drawable?) = getIcon { getIconFromId(id) }
+  fun getIconWithId(getIconFromId: (Int) -> Drawable?) =
+    if (id == 0) null else getIcon { getIconFromId(id) }
 
   override fun getIcon(getIcon: (String) -> Drawable?) = entry.getIcon(getIcon)
 
@@ -34,17 +35,23 @@ class IconEntryWithId(private val id: Int, val entry: IconEntry) : IconEntry(ent
   override fun isClock() = entry.isClock()
 
   companion object {
-    fun toCursor(it: Cursor, getDrawableId: (pack: String, name: String) -> Int): MatrixCursor? {
-      val entryBlob = it.getBlob("entry")
+    fun toCursor(cur: Cursor, getDrawableId: (pack: String, name: String) -> Int): Cursor? {
+      val entryBlob = cur.getBlob("entry")
       val entry = from(entryBlob)
-      val pack = it.getString("pack")
+      val pack = cur.getString("pack")
       return MatrixCursor(arrayOf("pack", "type", "id", "args")).apply {
         when (entry) {
-          is NormalIconEntry ->
-            addRow(arrayOf(pack, Type.Normal.ordinal, getDrawableId(pack, entry.name), entry.name))
-          is ClockIconEntry ->
-            addRow(arrayOf(pack, Type.Clock.ordinal, getDrawableId(pack, entry.name), entryBlob))
-          else -> return null
+          is NormalIconEntry -> {
+            val id = getDrawableId(pack, entry.name).takeIf { it != 0 } ?: return null
+            addRow(arrayOf(pack, Type.Normal.ordinal, id, entry.name))
+            cur.close()
+          }
+          is ClockIconEntry -> {
+            val id = getDrawableId(pack, entry.name).takeIf { it != 0 } ?: return null
+            addRow(arrayOf(pack, Type.Clock.ordinal, id, entryBlob))
+            cur.close()
+          }
+          else -> return cur
         }
       }
     }
@@ -100,9 +107,8 @@ class IconPackProvider : ContentProvider() {
                 .takeIf { it.moveToFirst() }
                 ?.let {
                   IconEntryWithId.toCursor(it) { pack, name ->
-                      getDrawableId(pack.ifEmpty { selectionArgs[0] }, name)
-                    }
-                    ?.apply { it.close() } ?: it
+                    getDrawableId(pack.ifEmpty { selectionArgs[0] }, name)
+                  }
                 }
             else null
           else -> null
