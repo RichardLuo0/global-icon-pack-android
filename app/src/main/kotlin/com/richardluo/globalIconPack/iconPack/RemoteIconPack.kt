@@ -13,15 +13,8 @@ import com.richardluo.globalIconPack.utils.getBlob
 import com.richardluo.globalIconPack.utils.getFirstRow
 import com.richardluo.globalIconPack.utils.getOrPutNullable
 import com.richardluo.globalIconPack.utils.getString
-import com.richardluo.globalIconPack.utils.isInMod
 
-class IconEntryFromOtherPack(val pack: String, val entry: IconEntry) : IconEntry(entry.name) {
-  override fun getIcon(getIcon: (String) -> Drawable?) = entry.getIcon(getIcon)
-
-  override fun isCalendar() = entry.isCalendar()
-
-  override fun isClock() = entry.isClock()
-}
+class IconEntryFromOtherPack(val entry: IconEntry, val pack: String) : IconEntry by entry
 
 class RemoteIconPack(
   pack: String,
@@ -76,7 +69,7 @@ class RemoteIconPack(
             if (it.getColumnIndex("type") > 0) IconEntryWithId.fromCursor(it)
             else IconEntry.from(it.getBlob("entry"))
           val pack = it.getString("pack")
-          iconEntryList.add(if (pack.isEmpty()) entry else IconEntryFromOtherPack(pack, entry))
+          iconEntryList.add(if (pack.isEmpty()) entry else IconEntryFromOtherPack(entry, pack))
           iconEntryList.size - 1
         }
     }
@@ -103,8 +96,7 @@ class RemoteIconPack(
     getDrawableId(pr, name).takeIf { it != 0 }?.let { getIconWithDrawableId(pr, it, iconDpi) }
 
   private fun getIconWithDrawableId(pr: PackResources, id: Int, iconDpi: Int = 0) =
-    if (isInMod) getDrawableForDensity(pr.res, id, iconDpi, null)
-    else pr.res.getDrawableForDensity(id, iconDpi, null)
+    getDrawableForDensity(pr.res, id, iconDpi, null)
 
   @SuppressLint("DiscouragedApi")
   private fun getDrawableId(pr: PackResources, name: String) =

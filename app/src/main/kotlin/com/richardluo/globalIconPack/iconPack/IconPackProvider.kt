@@ -9,7 +9,6 @@ import android.database.Cursor
 import android.database.MatrixCursor
 import android.graphics.drawable.Drawable
 import android.net.Uri
-import com.richardluo.globalIconPack.iconPack.database.ClockIconEntry
 import com.richardluo.globalIconPack.iconPack.database.IconEntry
 import com.richardluo.globalIconPack.iconPack.database.IconPackDB
 import com.richardluo.globalIconPack.iconPack.database.NormalIconEntry
@@ -18,21 +17,17 @@ import com.richardluo.globalIconPack.utils.getInt
 import com.richardluo.globalIconPack.utils.getOrNull
 import com.richardluo.globalIconPack.utils.getString
 import com.richardluo.globalIconPack.utils.log
+import java.io.ByteArrayInputStream
+import java.io.DataInputStream
 
-class IconEntryWithId(private val id: Int, val entry: IconEntry) : IconEntry(entry.name) {
-  enum class Type {
+class IconEntryWithId(val entry: IconEntry, private val id: Int) : IconEntry by entry {
+  private enum class Type {
     Normal,
     Clock,
   }
 
   fun getIconWithId(getIconFromId: (Int) -> Drawable?) =
     if (id == 0) null else getIcon { getIconFromId(id) }
-
-  override fun getIcon(getIcon: (String) -> Drawable?) = entry.getIcon(getIcon)
-
-  override fun isCalendar() = entry.isCalendar()
-
-  override fun isClock() = entry.isClock()
 
   companion object {
     fun toCursor(cur: Cursor, getDrawableId: (pack: String, name: String) -> Int): Cursor? {
@@ -58,12 +53,12 @@ class IconEntryWithId(private val id: Int, val entry: IconEntry) : IconEntry(ent
 
     fun fromCursor(c: Cursor) =
       IconEntryWithId(
-        c.getInt("id"),
         when (c.getInt("type")) {
           Type.Normal.ordinal -> NormalIconEntry(c.getString("args"))
-          Type.Clock.ordinal -> from(c.getBlob("args"))
+          Type.Clock.ordinal -> IconEntry.from(c.getBlob("args"))
           else -> throw Exception("Unknown icon entry with id")
         },
+        c.getInt("id"),
       )
   }
 }

@@ -11,6 +11,7 @@ import android.content.pm.ActivityInfo
 import android.content.pm.LauncherActivityInfo
 import android.os.Process
 import android.os.UserManager
+import com.richardluo.globalIconPack.iconPack.database.IconEntry
 import com.richardluo.globalIconPack.iconPack.getIP
 import com.richardluo.globalIconPack.utils.ReflectHelper
 import com.richardluo.globalIconPack.utils.asType
@@ -57,9 +58,10 @@ class CalendarAndClockHook : Hook {
         val density =
           param.args.getOrNull(1) as Int?
             ?: AndroidAppHelper.currentApplication().resources.configuration.densityDpi
-        when {
-          entry.isCalendar() -> calendars.add(packageName)
-          entry.isClock() -> clocks.add(ai.packageName)
+        when (entry.type) {
+          IconEntry.Type.Calendar -> calendars.add(packageName)
+          IconEntry.Type.Clock -> clocks.add(ai.packageName)
+          else -> {}
         }
         param.result = ip.getIcon(entry, density)
       }

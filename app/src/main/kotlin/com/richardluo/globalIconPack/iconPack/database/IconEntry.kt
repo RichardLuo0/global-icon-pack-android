@@ -1,48 +1,50 @@
 package com.richardluo.globalIconPack.iconPack.database
 
 import android.graphics.drawable.Drawable
-import androidx.annotation.Keep
+import com.richardluo.globalIconPack.iconPack.database.IconEntry.Type
 import com.richardluo.globalIconPack.reflect.ClockDrawableWrapper
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
-import java.io.ObjectInputStream
-import java.io.ObjectOutputStream
-import java.io.Serializable
+import java.io.DataInputStream
+import java.io.DataOutputStream
 import java.util.Calendar
 
-abstract class IconEntry(val name: String) : Serializable {
+interface IconEntry {
+  enum class Type {
+    Normal,
+    Calendar,
+    Clock,
+  }
 
-  abstract fun getIcon(getIcon: (String) -> Drawable?): Drawable?
+  val name: String
+  val type: Type
 
-  abstract fun isCalendar(): Boolean
+  fun getIcon(getIcon: (String) -> Drawable?): Drawable?
 
-  abstract fun isClock(): Boolean
-
-  open fun copyTo(
+  fun copyTo(
     component: String,
     newName: String,
     xml: StringBuilder,
     copyRes: (String, String) -> Unit,
   ) {}
 
-  fun toByteArray(): ByteArray =
-    ByteArrayOutputStream().also { ObjectOutputStream(it).writeObject(this) }.toByteArray()
+  fun toByteArray(): ByteArray
 
   companion object {
-    @Keep @Suppress("unused") private const val serialVersionUID = 1L
-
-    fun from(data: ByteArray) =
-      ObjectInputStream(ByteArrayInputStream(data)).readObject() as IconEntry
+    fun from(data: ByteArray): IconEntry =
+      when (data[0]) {
+        Type.Normal.ordinal.toByte() -> NormalIconEntry.from(data)
+        Type.Calendar.ordinal.toByte() -> CalendarIconEntry.from(data)
+        Type.Clock.ordinal.toByte() -> ClockIconEntry.from(data)
+        else -> throw Exception("Broken data")
+      }
   }
 }
 
-class NormalIconEntry(name: String) : IconEntry(name) {
+class NormalIconEntry(override val name: String) : IconEntry {
+  override val type = Type.Normal
 
   override fun getIcon(getIcon: (String) -> Drawable?) = getIcon(name)
-
-  override fun isCalendar() = false
-
-  override fun isClock() = false
 
   override fun copyTo(
     component: String,
@@ -54,19 +56,30 @@ class NormalIconEntry(name: String) : IconEntry(name) {
     copyRes(name, newName)
   }
 
+  override fun toByteArray(): ByteArray =
+    ByteArrayOutputStream()
+      .also {
+        DataOutputStream(it).apply {
+          writeByte(type.ordinal)
+          writeUTF(name)
+        }
+      }
+      .toByteArray()
+
   companion object {
-    @Keep @Suppress("unused") private const val serialVersionUID = 1L
+    fun from(data: ByteArray) =
+      DataInputStream(ByteArrayInputStream(data)).use {
+        it.readByte()
+        NormalIconEntry(it.readUTF())
+      }
   }
 }
 
-class CalendarIconEntry(name: String) : IconEntry(name) {
+class CalendarIconEntry(override val name: String) : IconEntry {
+  override val type = Type.Calendar
 
   override fun getIcon(getIcon: (String) -> Drawable?) =
     getIcon("$name${Calendar.getInstance().get(Calendar.DAY_OF_MONTH)}")
-
-  override fun isCalendar() = true
-
-  override fun isClock() = false
 
   override fun copyTo(
     component: String,
@@ -78,19 +91,39 @@ class CalendarIconEntry(name: String) : IconEntry(name) {
     (1..31).mapNotNull { copyRes("$name${it}", "${newName}_$it") }
   }
 
+  override fun toByteArray(): ByteArray =
+    ByteArrayOutputStream()
+      .also {
+        DataOutputStream(it).apply {
+          writeByte(type.ordinal)
+          writeUTF(name)
+        }
+      }
+      .toByteArray()
+
   companion object {
-    @Keep @Suppress("unused") private const val serialVersionUID = 1L
+    fun from(data: ByteArray) =
+      DataInputStream(ByteArrayInputStream(data)).use {
+        it.readByte()
+        CalendarIconEntry(it.readUTF())
+      }
   }
 }
 
-class ClockIconEntry(name: String, private val metadata: ClockMetadata) : IconEntry(name) {
+data class ClockMetadata(
+  val hourLayerIndex: Int,
+  val minuteLayerIndex: Int,
+  val secondLayerIndex: Int,
+  val defaultHour: Int,
+  val defaultMinute: Int,
+  val defaultSecond: Int,
+)
+
+class ClockIconEntry(override val name: String, private val metadata: ClockMetadata) : IconEntry {
+  override val type = Type.Clock
 
   override fun getIcon(getIcon: (String) -> Drawable?) =
     getIcon(name)?.let { ClockDrawableWrapper.from(it, metadata) ?: it }
-
-  override fun isCalendar() = false
-
-  override fun isClock() = true
 
   override fun copyTo(
     component: String,
@@ -111,7 +144,37 @@ class ClockIconEntry(name: String, private val metadata: ClockMetadata) : IconEn
     copyRes(name, newName)
   }
 
+  override fun toByteArray(): ByteArray =
+    ByteArrayOutputStream()
+      .also {
+        DataOutputStream(it).apply {
+          writeByte(type.ordinal)
+          writeUTF(name)
+          writeInt(metadata.hourLayerIndex)
+          writeInt(metadata.minuteLayerIndex)
+          writeInt(metadata.secondLayerIndex)
+          writeInt(metadata.defaultHour)
+          writeInt(metadata.defaultMinute)
+          writeInt(metadata.defaultSecond)
+        }
+      }
+      .toByteArray()
+
   companion object {
-    @Keep @Suppress("unused") private const val serialVersionUID = 1L
+    fun from(data: ByteArray) =
+      DataInputStream(ByteArrayInputStream(data)).use {
+        it.readByte()
+        ClockIconEntry(
+          it.readUTF(),
+          ClockMetadata(
+            it.readInt(),
+            it.readInt(),
+            it.readInt(),
+            it.readInt(),
+            it.readInt(),
+            it.readInt(),
+          ),
+        )
+      }
   }
 }
