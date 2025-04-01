@@ -20,7 +20,7 @@
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
 
--keep class com.richardluo.globalIconPack.XposedMain
+-keep class com.richardluo.globalIconPack.xposed.XposedMain
 -keep class com.richardluo.globalIconPack.iconPack.database.FallbackSettings
 -keep class com.richardluo.globalIconPack.iconPack.database.*IconEntry
 -keepclassmembers class ** {

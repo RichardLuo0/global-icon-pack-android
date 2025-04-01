@@ -1,4 +1,4 @@
-package com.richardluo.globalIconPack
+package com.richardluo.globalIconPack.xposed
 
 import android.app.AndroidAppHelper
 import android.content.ComponentName
@@ -11,14 +11,14 @@ import android.content.pm.ActivityInfo
 import android.content.pm.LauncherActivityInfo
 import android.os.Process
 import android.os.UserManager
-import com.richardluo.globalIconPack.ReplaceIcon.Companion.IN_IP
-import com.richardluo.globalIconPack.ReplaceIcon.Companion.IP_DEFAULT
 import com.richardluo.globalIconPack.iconPack.getIP
 import com.richardluo.globalIconPack.utils.ReflectHelper
 import com.richardluo.globalIconPack.utils.asType
 import com.richardluo.globalIconPack.utils.getAs
 import com.richardluo.globalIconPack.utils.isHighTwoByte
 import com.richardluo.globalIconPack.utils.withHighByteSet
+import com.richardluo.globalIconPack.xposed.ReplaceIcon.Companion.IN_IP
+import com.richardluo.globalIconPack.xposed.ReplaceIcon.Companion.IP_DEFAULT
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 import java.util.Calendar

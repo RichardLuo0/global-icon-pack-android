@@ -1,5 +1,6 @@
-package com.richardluo.globalIconPack
+package com.richardluo.globalIconPack.xposed
 
+import com.richardluo.globalIconPack.BuildConfig
 import com.richardluo.globalIconPack.utils.ReflectHelper
 import com.richardluo.globalIconPack.utils.rGet
 import de.robv.android.xposed.XC_MethodHook

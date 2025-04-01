@@ -1,4 +1,4 @@
-package com.richardluo.globalIconPack
+package com.richardluo.globalIconPack.xposed
 
 import android.view.View
 import com.richardluo.globalIconPack.reflect.BaseIconFactory

@@ -1,4 +1,4 @@
-package com.richardluo.globalIconPack
+package com.richardluo.globalIconPack.xposed
 
 import android.graphics.Path
 import android.graphics.drawable.AdaptiveIconDrawable

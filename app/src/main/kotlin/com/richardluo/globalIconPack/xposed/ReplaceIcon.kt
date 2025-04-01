@@ -1,4 +1,4 @@
-package com.richardluo.globalIconPack
+package com.richardluo.globalIconPack.xposed
 
 import android.content.pm.ActivityInfo
 import android.content.pm.ApplicationInfo
@@ -7,6 +7,8 @@ import android.content.pm.PackageItemInfo
 import android.content.pm.ResolveInfo
 import android.content.pm.ShortcutInfo
 import android.graphics.drawable.Drawable
+import com.richardluo.globalIconPack.Pref
+import com.richardluo.globalIconPack.get
 import com.richardluo.globalIconPack.iconPack.getComponentName
 import com.richardluo.globalIconPack.iconPack.getIP
 import com.richardluo.globalIconPack.reflect.ClockDrawableWrapper

@@ -1,5 +1,8 @@
-package com.richardluo.globalIconPack
+package com.richardluo.globalIconPack.xposed
 
+import com.richardluo.globalIconPack.BuildConfig
+import com.richardluo.globalIconPack.Pref
+import com.richardluo.globalIconPack.get
 import com.richardluo.globalIconPack.utils.WorldPreference.getPrefInMod
 import de.robv.android.xposed.IXposedHookLoadPackage
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam

@@ -1,4 +1,4 @@
-package com.richardluo.globalIconPack
+package com.richardluo.globalIconPack.xposed
 
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 
