@@ -1,10 +1,10 @@
 [versions]
-agp = "8.9.0"
-kotlin = "2.0.21"
+agp = "8.9.1"
+kotlin = "2.1.20"
 core-ktx = "1.15.0"
 activity = "1.10.1"
 viewmodel = "2.8.7"
-material3 = "1.3.1"
+material3 = "1.4.0-alpha11" # Fix https://issuetracker.google.com/issues/353304855
 material-icons-extended = "1.7.8"
 ui-tooling-preview-android = "1.7.8"
 libsu = "6.0.0"

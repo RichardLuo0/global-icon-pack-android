@@ -42,8 +42,8 @@ import com.richardluo.globalIconPack.utils.getValue
 @Composable
 fun ChooseIconSheet(viewModel: ChooseIconVM, replaceIcon: (VariantIcon) -> Unit) {
   val context = LocalContext.current
-
   val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
+
   LaunchedEffect(viewModel.variantSheet) {
     if (viewModel.variantSheet) sheetState.show()
     else {
@@ -51,6 +51,7 @@ fun ChooseIconSheet(viewModel: ChooseIconVM, replaceIcon: (VariantIcon) -> Unit)
       viewModel.variantSearchText.value = ""
     }
   }
+
   if (viewModel.variantSheet)
     ModalBottomSheet(
       sheetState = sheetState,

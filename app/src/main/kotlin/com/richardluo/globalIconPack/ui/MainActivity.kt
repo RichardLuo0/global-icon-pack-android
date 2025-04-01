@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
@@ -153,7 +154,10 @@ class MainActivity : ComponentActivity() {
       topBar = {
         TopAppBar(
           title = {
-            Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterStart) {
+            Box(
+              modifier = Modifier.fillMaxWidth().height(TopAppBarDefaults.TopAppBarExpandedHeight),
+              contentAlignment = Alignment.CenterStart,
+            ) {
               Icon(
                 getDrawable(R.mipmap.ic_launcher)!!.toBitmap().asImageBitmap(),
                 "Logo",
