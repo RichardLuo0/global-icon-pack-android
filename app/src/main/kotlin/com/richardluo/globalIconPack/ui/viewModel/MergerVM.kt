@@ -64,7 +64,7 @@ class MergerVM(app: Application) : ContextVM(app) {
       .map { IconPackConfig(it) }
       .distinctUntilChanged()
       .onEach {
-        iconCache.clearIcons()
+        iconCache.clearGeneratedIcons()
         iconCacheToken = System.currentTimeMillis()
       }
       .stateIn(viewModelScope, SharingStarted.Eagerly, IconPackConfig())

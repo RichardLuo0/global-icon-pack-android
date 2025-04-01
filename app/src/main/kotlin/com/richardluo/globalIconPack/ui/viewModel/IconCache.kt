@@ -20,12 +20,15 @@ import com.richardluo.globalIconPack.utils.getOrPut
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
+private class BitmapLruCache<K : Any>(bytes: Long) :
+  LruCache<K, ImageBitmap>((bytes / 1024).toInt()) {
+  override fun sizeOf(key: K, value: ImageBitmap): Int =
+    value.asAndroidBitmap().allocationByteCount / 1024
+}
+
 class IconCache(private val context: Application, private val getIconPack: (String) -> IconPack) {
-  private val imageCache =
-    object : LruCache<String, ImageBitmap>((Runtime.getRuntime().maxMemory() / 1024 / 8).toInt()) {
-      override fun sizeOf(key: String, value: ImageBitmap) =
-        value.asAndroidBitmap().allocationByteCount / 1024
-    }
+  private val generatedBitmapCache = BitmapLruCache<String>(Runtime.getRuntime().maxMemory() / 16)
+  private val staticBitmapCache = BitmapLruCache<String>(Runtime.getRuntime().maxMemory() / 16)
 
   suspend fun loadIcon(
     appIconInfo: AppIconInfo,
@@ -39,7 +42,7 @@ class IconCache(private val context: Application, private val getIconPack: (Stri
   }
 
   suspend fun loadIcon(info: AppIconInfo, basePack: String, config: IconPackConfig) =
-    imageCache.getOrPut("$basePack/fallback/${info.componentName}") {
+    generatedBitmapCache.getOrPut("$basePack/fallback/${info.componentName}") {
       withContext(Dispatchers.Default) {
         getIconPack(basePack)
           .genIconFrom(
@@ -52,7 +55,7 @@ class IconCache(private val context: Application, private val getIconPack: (Stri
     }
 
   suspend fun loadIcon(info: ShortcutIconInfo, basePack: String, config: IconPackConfig) =
-    imageCache.getOrPut("$basePack/shortcut/${info.componentName}") {
+    generatedBitmapCache.getOrPut("$basePack/shortcut/${info.componentName}") {
       withContext(Dispatchers.IO) {
         getIconPack(basePack)
           .genIconFrom(
@@ -68,14 +71,14 @@ class IconCache(private val context: Application, private val getIconPack: (Stri
     }
 
   suspend fun loadIcon(entry: IconEntry, pack: IconPack) =
-    imageCache.getOrPut("$pack/icon/${entry.name}") {
+    staticBitmapCache.getOrPut("$pack/icon/${entry.name}") {
       withContext(Dispatchers.IO) {
         pack.getIcon(entry, 0)?.toSafeBitmap(300, 300)?.asImageBitmap() ?: ImageBitmap(1, 1)
       }
     }
 
-  fun clearIcons() {
-    imageCache.evictAll()
+  fun clearGeneratedIcons() {
+    generatedBitmapCache.evictAll()
   }
 }
 
