@@ -1,6 +1,7 @@
 package com.richardluo.globalIconPack.iconPack.database
 
 import android.graphics.drawable.Drawable
+import androidx.annotation.Keep
 import com.richardluo.globalIconPack.reflect.ClockDrawableWrapper
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
@@ -28,7 +29,7 @@ abstract class IconEntry(val name: String) : Serializable {
     ByteArrayOutputStream().also { ObjectOutputStream(it).writeObject(this) }.toByteArray()
 
   companion object {
-    private const val serialVersionUID = 1L
+    @Keep @Suppress("unused") private const val serialVersionUID = 1L
 
     fun from(data: ByteArray) =
       ObjectInputStream(ByteArrayInputStream(data)).readObject() as IconEntry
@@ -54,7 +55,7 @@ class NormalIconEntry(name: String) : IconEntry(name) {
   }
 
   companion object {
-    private const val serialVersionUID = 1L
+    @Keep @Suppress("unused") private const val serialVersionUID = 1L
   }
 }
 
@@ -78,7 +79,7 @@ class CalendarIconEntry(name: String) : IconEntry(name) {
   }
 
   companion object {
-    private const val serialVersionUID = 1L
+    @Keep @Suppress("unused") private const val serialVersionUID = 1L
   }
 }
 
@@ -111,6 +112,6 @@ class ClockIconEntry(name: String, private val metadata: ClockMetadata) : IconEn
   }
 
   companion object {
-    private const val serialVersionUID = 1L
+    @Keep @Suppress("unused") private const val serialVersionUID = 1L
   }
 }

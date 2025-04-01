@@ -1,5 +1,6 @@
 package com.richardluo.globalIconPack.iconPack.database
 
+import androidx.annotation.Keep
 import java.io.Serializable
 
 data class ClockMetadata(
@@ -12,6 +13,6 @@ data class ClockMetadata(
 ) : Serializable {
 
   companion object {
-    private const val serialVersionUID = 1L
+    @Keep @Suppress("unused") private const val serialVersionUID = 1L
   }
 }

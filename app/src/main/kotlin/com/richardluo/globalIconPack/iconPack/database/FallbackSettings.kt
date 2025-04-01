@@ -1,5 +1,6 @@
 package com.richardluo.globalIconPack.iconPack.database
 
+import androidx.annotation.Keep
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.ObjectInputStream
@@ -17,7 +18,7 @@ data class FallbackSettings(
     ByteArrayOutputStream().also { ObjectOutputStream(it).writeObject(this) }.toByteArray()
 
   companion object {
-    private const val serialVersionUID = 1L
+    @Keep @Suppress("unused") private const val serialVersionUID = 1L
 
     fun from(data: ByteArray) =
       ObjectInputStream(ByteArrayInputStream(data)).readObject() as FallbackSettings
