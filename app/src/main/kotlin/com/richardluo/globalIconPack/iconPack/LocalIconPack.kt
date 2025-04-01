@@ -15,7 +15,6 @@ import com.richardluo.globalIconPack.iconPack.database.NormalIconEntry
 import com.richardluo.globalIconPack.reflect.Resources.getDrawableForDensity
 import com.richardluo.globalIconPack.utils.get
 import com.richardluo.globalIconPack.utils.getOrNull
-import com.richardluo.globalIconPack.utils.isInMod
 import com.richardluo.globalIconPack.utils.log
 import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserFactory
@@ -60,10 +59,7 @@ class LocalIconPack(pack: String, resources: Resources, config: IconPackConfig =
   override fun getIcon(name: String, iconDpi: Int) =
     getDrawableId(name)
       .takeIf { it != 0 }
-      ?.let {
-        if (isInMod) getDrawableForDensity(resources, it, iconDpi, null)
-        else resources.getDrawableForDensity(it, iconDpi, null)
-      }
+      ?.let { getDrawableForDensity(resources, it, iconDpi, null) }
 
   @SuppressLint("DiscouragedApi")
   private fun getDrawableId(name: String) =
