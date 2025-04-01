@@ -6,7 +6,6 @@ import android.content.Context
 import android.net.Uri
 import androidx.documentfile.provider.DocumentFile
 import com.richardluo.globalIconPack.R
-import com.richardluo.globalIconPack.ui.model.ApkBuilder
 import com.richardluo.globalIconPack.ui.model.IconEntryWithPack
 import com.richardluo.globalIconPack.ui.model.IconPack
 import java.io.BufferedInputStream
@@ -16,6 +15,14 @@ import java.io.OutputStream
 import java.io.OutputStreamWriter
 
 object IconPackCreator {
+  interface ApkBuilder {
+    fun addColor(color: Int): Int
+
+    fun addDrawable(input: InputStream, name: String, suffix: String = ""): Int
+
+    fun addDimen(dimen: Float): Int
+  }
+
   @OptIn(ExperimentalStdlibApi::class)
   class IconPackApkBuilder(
     private val packageName: String,

@@ -15,20 +15,12 @@ import com.richardluo.globalIconPack.iconPack.getComponentName
 import com.richardluo.globalIconPack.iconPack.loadIconPack
 import com.richardluo.globalIconPack.utils.AXMLEditor
 import com.richardluo.globalIconPack.utils.IconHelper
+import com.richardluo.globalIconPack.utils.IconPackCreator.ApkBuilder
 import com.richardluo.globalIconPack.utils.get
 import com.richardluo.globalIconPack.utils.isHighTwoByte
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
-import java.io.InputStream
 import org.xmlpull.v1.XmlPullParser
-
-interface ApkBuilder {
-  fun addColor(color: Int): Int
-
-  fun addDrawable(input: InputStream, name: String, suffix: String = ""): Int
-
-  fun addDimen(dimen: Float): Int
-}
 
 class IconPack(val pack: String, val resources: Resources) {
   private val iconFallback: IconFallback?
