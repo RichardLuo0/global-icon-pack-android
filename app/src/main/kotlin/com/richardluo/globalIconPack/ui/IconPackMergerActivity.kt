@@ -66,6 +66,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import com.richardluo.globalIconPack.R
 import com.richardluo.globalIconPack.iconPack.IconPackApps
+import com.richardluo.globalIconPack.ui.components.AnimatedFab
 import com.richardluo.globalIconPack.ui.components.AppbarSearchBar
 import com.richardluo.globalIconPack.ui.components.ChooseIconSheet
 import com.richardluo.globalIconPack.ui.components.IconButtonWithTooltip
@@ -98,14 +99,11 @@ class IconPackMergerActivity : ComponentActivity() {
   @Preview
   @Composable
   private fun Screen() {
-    val windowInsets = WindowInsets.safeDrawing
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     val pagerState = rememberPagerState(pageCount = { Page.Count.ordinal })
     val coroutineScope = rememberCoroutineScope()
     val expandFabScrollConnection = remember {
-      object : NestedScrollConnection {
-        var isExpand by mutableStateOf(true)
-
+      object : ExpandFabScrollConnection() {
         override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
           if (available.y > 1) isExpand = true else if (available.y < -1) isExpand = false
           return Offset.Zero
@@ -122,7 +120,7 @@ class IconPackMergerActivity : ComponentActivity() {
           else pagerState.scrollToPage(nextPage, 1f - event.progress)
         }
         pagerState.animateScrollToPage(nextPage)
-      } catch (e: Exception) {
+      } catch (_: Exception) {
         pagerState.animateScrollToPage(oriPage)
       }
     }
@@ -163,7 +161,6 @@ class IconPackMergerActivity : ComponentActivity() {
               }
             },
             modifier = Modifier.fillMaxWidth(),
-            windowInsets = windowInsets.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top),
             scrollBehavior = scrollBehavior,
           )
 
@@ -171,32 +168,35 @@ class IconPackMergerActivity : ComponentActivity() {
             AppbarSearchBar(viewModel.expandSearchBar, viewModel.filterAppsVM.searchText)
         }
       },
-      contentWindowInsets = windowInsets,
       floatingActionButton = {
-        class FabState(val icon: ImageVector, val text: String, val onClick: () -> Unit)
-        val nextStep =
-          FabState(Icons.AutoMirrored.Outlined.ArrowForward, getString(R.string.nextStep)) {
-            coroutineScope.launch { pagerState.animateScrollToPage(pagerState.currentPage + 1) }
-          }
-        val done =
-          FabState(Icons.Outlined.Done, getString(R.string.done), viewModel::openWarningDialog)
-        val fabState by remember {
-          derivedStateOf {
-            if (pagerState.currentPage != pagerState.pageCount - 1) nextStep else done
-          }
-        }
-        FloatingActionButton(onClick = fabState.onClick) {
-          Row(
-            modifier = Modifier.padding(horizontal = 16.dp),
-            verticalAlignment = Alignment.CenterVertically,
+        Column {
+          AnimatedVisibility(
+            pagerState.currentPage == Page.IconList.ordinal,
+            enter = fadeIn() + scaleIn(),
+            exit = scaleOut() + fadeOut(),
+            modifier = Modifier.align(Alignment.End).padding(bottom = 12.dp),
           ) {
-            Icon(fabState.icon, fabState.text)
-            AnimatedVisibility(expandFabScrollConnection.isExpand) {
-              AnimatedContent(targetState = fabState, label = "Fab text change") {
-                Text(text = it.text, modifier = Modifier.padding(start = 8.dp))
-              }
+            FloatingActionButton(onClick = { iconOptionDialogState.value = true }) {
+              Icon(Icons.Outlined.Settings, getString(R.string.options))
             }
           }
+
+          val nextStep = remember {
+            FabSnapshot(Icons.AutoMirrored.Outlined.ArrowForward, getString(R.string.nextStep)) {
+              coroutineScope.launch { pagerState.animateScrollToPage(pagerState.currentPage + 1) }
+            }
+          }
+          val done = remember {
+            FabSnapshot(Icons.Outlined.Done, getString(R.string.done), viewModel::openWarningDialog)
+          }
+          AnimatedFab(
+            remember {
+              derivedStateOf {
+                if (pagerState.currentPage != pagerState.pageCount - 1) nextStep else done
+              }
+            },
+            expandFabScrollConnection.isExpand,
+          )
         }
       },
     ) { contentPadding ->
