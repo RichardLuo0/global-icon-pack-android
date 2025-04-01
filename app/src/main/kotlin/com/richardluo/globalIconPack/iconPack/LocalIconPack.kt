@@ -2,12 +2,10 @@ package com.richardluo.globalIconPack.iconPack
 
 import android.annotation.SuppressLint
 import android.content.ComponentName
-import android.content.SharedPreferences
 import android.content.res.Resources
 import android.content.res.XmlResourceParser
+import android.graphics.drawable.Drawable
 import android.util.Xml
-import com.richardluo.globalIconPack.Pref
-import com.richardluo.globalIconPack.get
 import com.richardluo.globalIconPack.iconPack.database.CalendarIconEntry
 import com.richardluo.globalIconPack.iconPack.database.ClockIconEntry
 import com.richardluo.globalIconPack.iconPack.database.ClockMetadata
@@ -22,20 +20,28 @@ import com.richardluo.globalIconPack.utils.log
 import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserFactory
 
-open class LocalIconPack(pref: SharedPreferences, pack: String, resources: Resources) :
-  IconPack(pref, pack, resources) {
-  protected val indexMap = mutableMapOf<ComponentName, Int>()
-  protected val iconEntryList = mutableListOf<IconEntry>()
+class LocalIconPack(pack: String, resources: Resources, config: IconPackConfig = IconPackConfig()) :
+  IconPack(pack, resources) {
+  private val iconPackAsFallback = config.iconPackAsFallback
+  private val iconFallback: IconFallback?
+
+  private val indexMap = mutableMapOf<ComponentName, Int>()
+  private val iconEntryList = mutableListOf<IconEntry>()
 
   private val idCache = mutableMapOf<String, Int>()
 
   init {
     loadIconPack(resources, pack).let { info ->
-      if (pref.get(Pref.ICON_FALLBACK))
-        initFallbackSettings(
-          FallbackSettings(info.iconBacks, info.iconUpons, info.iconMasks, info.iconScale),
-          pref,
-        )
+      iconFallback =
+        if (config.iconFallback)
+          IconFallback(
+              FallbackSettings(info.iconBacks, info.iconUpons, info.iconMasks, info.iconScale),
+              ::getIcon,
+              config.scale,
+              config.scaleOnlyForeground,
+            )
+            .orNullIfEmpty()
+        else null
       info.iconEntryMap.forEach { (cn, entry) ->
         iconEntryList.add(entry)
         indexMap[cn] = iconEntryList.size - 1
@@ -60,25 +66,10 @@ open class LocalIconPack(pref: SharedPreferences, pack: String, resources: Resou
       }
 
   @SuppressLint("DiscouragedApi")
-  protected fun getDrawableId(name: String) =
+  private fun getDrawableId(name: String) =
     idCache.getOrPut(name) { resources.getIdentifier(name, "drawable", pack) }
 
-  val drawables: Set<String> by lazy {
-    @SuppressLint("DiscouragedApi")
-    val parser =
-      resources
-        .getIdentifier("drawable", "xml", pack)
-        .takeIf { 0 != it }
-        ?.let { resources.getXml(it) } ?: return@lazy setOf()
-    val drawableList = mutableSetOf<String>()
-    while (parser.next() != XmlPullParser.END_DOCUMENT) {
-      if (parser.eventType != XmlPullParser.START_TAG) continue
-      when (parser.name) {
-        "item" -> drawableList.add(parser["drawable"] ?: continue)
-      }
-    }
-    drawableList
-  }
+  override fun genIconFrom(baseIcon: Drawable) = genIconFrom(baseIcon, iconFallback)
 }
 
 open class IconPackInfo {

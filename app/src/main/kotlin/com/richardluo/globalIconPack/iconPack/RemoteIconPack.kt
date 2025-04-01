@@ -3,12 +3,9 @@ package com.richardluo.globalIconPack.iconPack
 import android.annotation.SuppressLint
 import android.app.AndroidAppHelper
 import android.content.ComponentName
-import android.content.SharedPreferences
 import android.content.res.Resources
 import android.graphics.drawable.Drawable
 import androidx.core.net.toUri
-import com.richardluo.globalIconPack.Pref
-import com.richardluo.globalIconPack.get
 import com.richardluo.globalIconPack.iconPack.database.FallbackSettings
 import com.richardluo.globalIconPack.iconPack.database.IconEntry
 import com.richardluo.globalIconPack.reflect.Resources.getDrawableForDensity
@@ -26,8 +23,14 @@ class IconEntryFromOtherPack(val pack: String, val entry: IconEntry) : IconEntry
   override fun isClock() = entry.isClock()
 }
 
-class RemoteIconPack(pref: SharedPreferences, pack: String, resources: Resources) :
-  IconPack(pref, pack, resources) {
+class RemoteIconPack(
+  pack: String,
+  resources: Resources,
+  config: IconPackConfig = IconPackConfig(),
+) : IconPack(pack, resources) {
+  private val iconPackAsFallback = config.iconPackAsFallback
+  private val iconFallback: IconFallback?
+
   private val indexMap = mutableMapOf<ComponentName, Int?>()
   private val iconEntryList = mutableListOf<IconEntry>()
 
@@ -36,17 +39,26 @@ class RemoteIconPack(pref: SharedPreferences, pack: String, resources: Resources
   private val resourcesMap = mutableMapOf<String, Resources>()
 
   init {
-    if (pref.get(Pref.ICON_FALLBACK))
-      contentResolver
-        .query(
-          "content://${IconPackProvider.AUTHORITIES}/${IconPackProvider.FALLBACKS}".toUri(),
-          null,
-          null,
-          arrayOf(pack),
-          null,
-        )
-        ?.getFirstRow { FallbackSettings.from(it.getBlob("fallback")) }
-        ?.let { initFallbackSettings(it, pref) }
+    iconFallback =
+      if (config.iconFallback)
+        contentResolver
+          .query(
+            "content://${IconPackProvider.AUTHORITIES}/${IconPackProvider.FALLBACKS}".toUri(),
+            null,
+            null,
+            arrayOf(pack),
+            null,
+          )
+          ?.getFirstRow {
+            IconFallback(
+                FallbackSettings.from(it.getBlob("fallback")),
+                ::getIcon,
+                config.scale,
+                config.scaleOnlyForeground,
+              )
+              .orNullIfEmpty()
+          }
+      else null
   }
 
   override fun getId(cn: ComponentName): Int? =
@@ -102,4 +114,6 @@ class RemoteIconPack(pref: SharedPreferences, pack: String, resources: Resources
     resourcesMap.getOrPut(pack) {
       AndroidAppHelper.currentApplication().packageManager.getResourcesForApplication(pack)
     }
+
+  override fun genIconFrom(baseIcon: Drawable) = genIconFrom(baseIcon, iconFallback)
 }

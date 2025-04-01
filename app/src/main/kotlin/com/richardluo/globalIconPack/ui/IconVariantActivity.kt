@@ -5,13 +5,9 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.WindowInsetsSides
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -73,7 +69,6 @@ class IconVariantActivity : ComponentActivity() {
   @Preview
   @Composable
   private fun Screen() {
-    val windowInsets = WindowInsets.safeDrawing
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     val resetWarnDialogState = remember { mutableStateOf(false) }
 
@@ -127,14 +122,12 @@ class IconVariantActivity : ComponentActivity() {
               AppFilterByType(expandFilter, viewModel.filterAppsVM.type)
             },
             modifier = Modifier.fillMaxWidth(),
-            windowInsets = windowInsets.only(WindowInsetsSides.Horizontal + WindowInsetsSides.Top),
             scrollBehavior = scrollBehavior,
           )
 
           AppbarSearchBar(viewModel.expandSearchBar, viewModel.filterAppsVM.searchText)
         }
       },
-      contentWindowInsets = windowInsets,
     ) { contentPadding ->
       val icons = viewModel.filteredIcons.getValue(null)
       if (icons != null)

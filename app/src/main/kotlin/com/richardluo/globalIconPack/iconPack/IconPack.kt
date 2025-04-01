@@ -2,7 +2,6 @@ package com.richardluo.globalIconPack.iconPack
 
 import android.app.Application
 import android.content.ComponentName
-import android.content.SharedPreferences
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageItemInfo
 import android.content.pm.ShortcutInfo
@@ -10,36 +9,37 @@ import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
 import androidx.core.graphics.drawable.toBitmap
-import com.richardluo.globalIconPack.Pref
-import com.richardluo.globalIconPack.get
 import com.richardluo.globalIconPack.iconPack.database.FallbackSettings
 import com.richardluo.globalIconPack.iconPack.database.IconEntry
 import com.richardluo.globalIconPack.utils.IconHelper
 
-abstract class IconPack(pref: SharedPreferences, val pack: String, val resources: Resources) {
-  protected class IconFallback(
-    val iconBacks: List<Bitmap>,
-    val iconUpons: List<Bitmap>,
-    val iconMasks: List<Bitmap>,
-    val iconScale: Float = 1f,
-  ) {
-    fun isEmpty() =
-      iconBacks.isEmpty() && iconUpons.isEmpty() && iconMasks.isEmpty() && iconScale == 1f
-  }
+class IconFallback(
+  val iconBacks: List<Bitmap>,
+  val iconUpons: List<Bitmap>,
+  val iconMasks: List<Bitmap>,
+  val iconScale: Float = 1f,
+  val scaleOnlyForeground: Boolean,
+) {
+  constructor(
+    fs: FallbackSettings,
+    getIcon: (String) -> Drawable?,
+    scale: Float?,
+    scaleOnlyForeground: Boolean,
+  ) : this(
+    fs.iconBacks.mapNotNull { getIcon(it)?.toBitmap() },
+    fs.iconUpons.mapNotNull { getIcon(it)?.toBitmap() },
+    fs.iconMasks.mapNotNull { getIcon(it)?.toBitmap() },
+    scale ?: fs.iconScale,
+    scaleOnlyForeground,
+  )
 
-  protected val iconPackAsFallback = pref.get(Pref.ICON_PACK_AS_FALLBACK)
-  protected val scaleOnlyForeground = pref.get(Pref.SCALE_ONLY_FOREGROUND)
-  protected var iconFallback: IconFallback? = null
+  fun isEmpty() =
+    iconBacks.isEmpty() && iconUpons.isEmpty() && iconMasks.isEmpty() && iconScale == 1f
 
-  protected fun initFallbackSettings(fs: FallbackSettings, pref: SharedPreferences) {
-    IconFallback(
-        fs.iconBacks.mapNotNull { getIcon(it)?.toBitmap() },
-        fs.iconUpons.mapNotNull { getIcon(it)?.toBitmap() },
-        fs.iconMasks.mapNotNull { getIcon(it)?.toBitmap() },
-        if (pref.get(Pref.OVERRIDE_ICON_FALLBACK)) pref.get(Pref.ICON_PACK_SCALE) else fs.iconScale,
-      )
-      .also { if (!it.isEmpty()) iconFallback = it }
-  }
+  fun orNullIfEmpty() = if (isEmpty()) null else this
+}
+
+abstract class IconPack(val pack: String, val resources: Resources) {
 
   abstract fun getId(cn: ComponentName): Int?
 
@@ -56,7 +56,9 @@ abstract class IconPack(pref: SharedPreferences, val pack: String, val resources
 
   abstract fun getIcon(name: String, iconDpi: Int = 0): Drawable?
 
-  fun genIconFrom(baseIcon: Drawable) =
+  abstract fun genIconFrom(baseIcon: Drawable): Drawable
+
+  protected fun genIconFrom(baseIcon: Drawable, iconFallback: IconFallback?) =
     iconFallback?.run {
       IconHelper.processIcon(
         resources,

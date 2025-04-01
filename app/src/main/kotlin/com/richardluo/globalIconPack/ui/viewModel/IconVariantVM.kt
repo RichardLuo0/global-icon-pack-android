@@ -8,10 +8,10 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.viewModelScope
 import com.richardluo.globalIconPack.Pref
 import com.richardluo.globalIconPack.get
+import com.richardluo.globalIconPack.iconPack.IconPackConfig
 import com.richardluo.globalIconPack.iconPack.database.IconEntry
 import com.richardluo.globalIconPack.iconPack.database.IconPackDB
 import com.richardluo.globalIconPack.utils.ContextVM
-import com.richardluo.globalIconPack.utils.IconPackCreator.IconEntryWithPack
 import com.richardluo.globalIconPack.utils.WorldPreference
 import com.richardluo.globalIconPack.utils.flowTrigger
 import com.richardluo.globalIconPack.utils.getBlob
@@ -29,12 +29,12 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class IconVariantVM(app: Application) : ContextVM(app) {
-  private val iconCache by getInstance { IconCache(app) }
+  private val iconPackCache by getInstance { IconPackCache(app) }
+  private val iconCache = IconCache(app) { iconPackCache.getIconPack(it) }
   private val iconPackDB by getInstance { IconPackDB(app) }
 
-  val basePack = WorldPreference.getPrefInApp(context).get(Pref.ICON_PACK)!!
-  private val iconPackAsFallback =
-    WorldPreference.getPrefInApp(context).get(Pref.ICON_PACK_AS_FALLBACK)
+  val basePack = WorldPreference.getPrefInApp(app).get(Pref.ICON_PACK)
+  private val iconPackConfig = IconPackConfig(WorldPreference.getPrefInApp(app))
 
   val expandSearchBar = mutableStateOf(false)
 
@@ -57,7 +57,15 @@ class IconVariantVM(app: Application) : ContextVM(app) {
         )
     }
 
-  val chooseIconVM = ChooseIconVM(iconCache, this::basePack)
+  val chooseIconVM =
+    ChooseIconVM(
+      basePack,
+      { iconPackCache.getIconPack(it) },
+      { pack, info ->
+        iconPackCache.getIconPack(pack).getIconEntry(info.componentName, iconPackConfig)
+      },
+      { loadIcon(it) },
+    )
 
   private val modifiedChangeTrigger = flowTrigger()
   val modified =
@@ -67,14 +75,14 @@ class IconVariantVM(app: Application) : ContextVM(app) {
       .stateIn(viewModelScope, SharingStarted.Lazily, false)
 
   private fun getUpdatedEntryWithPack(cn: ComponentName) =
-    iconPackDB.getIcon(basePack, cn, iconPackAsFallback).getFirstRow {
+    iconPackDB.getIcon(basePack, cn, iconPackConfig.iconPackAsFallback).getFirstRow {
       val entry = IconEntry.from(it.getBlob("entry"))
       val pack = it.getString("pack").ifEmpty { basePack }
-      IconEntryWithPack(entry, iconCache.getIconPack(pack))
+      IconEntryWithPack(entry, iconPackCache.getIconPack(pack))
     }
 
   suspend fun loadIcon(pair: Pair<AppIconInfo, IconEntryWithPack?>) =
-    iconCache.loadIcon(pair.first, pair.second, basePack)
+    iconCache.loadIcon(pair.first, pair.second, basePack, iconPackConfig)
 
   fun restoreDefault() {
     if (basePack.isEmpty()) return

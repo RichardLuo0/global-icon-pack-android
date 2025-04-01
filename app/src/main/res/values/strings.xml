@@ -2,6 +2,7 @@
     <string name="appName">Global Icon Pack</string>
 
     <string name="plzEnableModuleFirst">Please ensure the Xposed module has been enabled first.</string>
+    <string name="iconPackApplied">Icon pack has been applied. Please click "Restart XXX" manually.</string>
 
     <string name="general">General</string>
     <string name="mode">Mode</string>
@@ -15,7 +16,7 @@
     <string name="mergeIconPack">Merge icon pack</string>
     <string name="mergeIconPackSummary">Generate a new icon pack from various icon packs.</string>
 
-    <string name="iconPackSettings">Icon pack settings</string>
+    <string name="iconPackSettings">Icon pack</string>
     <string name="iconVariant">Icon variant</string>
     <string name="iconVariantSummary">Choose different variants from icon pack.</string>
     <string name="iconFallback">Generate fallback icons</string>
@@ -25,7 +26,7 @@
     <string name="overrideIconFallbackSummary">Use new values for the fallback settings.</string>
     <string name="iconPackScale">Scale</string>
 
-    <string name="pixelSettings">Pixel settings</string>
+    <string name="pixelSettings">Pixel</string>
     <string name="pixelLauncherPackage">Launcher package name</string>
     <string name="pixelLauncherPackageSummary">Used to identify a launcher 3 based launcher, but the features below are not guaranteed.</string>
     <string name="noForceShape">No force shape</string>
@@ -46,6 +47,7 @@
     <string name="warning">Warning</string>
     <string name="notice">Notice</string>
     <string name="search">Search</string>
+    <string name="options">Options</string>
 
     <string name="restoreDefault">Restore default</string>
     <string name="restoreDefaultWarning">Are you sure you want to restore to the default icons?</string>

@@ -9,28 +9,17 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.core.graphics.drawable.toBitmap
-import com.richardluo.globalIconPack.iconPack.CopyableIconPack
-import com.richardluo.globalIconPack.iconPack.IconPack
+import com.richardluo.globalIconPack.iconPack.IconPackConfig
 import com.richardluo.globalIconPack.iconPack.database.IconEntry
-import com.richardluo.globalIconPack.utils.IconPackCreator
-import com.richardluo.globalIconPack.utils.WorldPreference
+import com.richardluo.globalIconPack.ui.model.IconPack
 import com.richardluo.globalIconPack.utils.asType
 import com.richardluo.globalIconPack.utils.getOrPut
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
-class IconCache(private val context: Application) {
-  private val iconPackCache = mutableMapOf<String, CopyableIconPack>()
+data class IconEntryWithPack(val entry: IconEntry, val pack: IconPack)
 
-  fun getIconPack(pack: String) =
-    iconPackCache.getOrPut(pack) {
-      CopyableIconPack(
-        WorldPreference.getPrefInApp(context),
-        pack,
-        context.packageManager.getResourcesForApplication(pack),
-      )
-    }
-
+class IconCache(private val context: Application, private val getIconPack: (String) -> IconPack) {
   private val imageCache =
     object : LruCache<String, ImageBitmap>((Runtime.getRuntime().maxMemory() / 1024 / 8).toInt()) {
       override fun sizeOf(key: String, value: ImageBitmap) =
@@ -39,25 +28,29 @@ class IconCache(private val context: Application) {
 
   suspend fun loadIcon(
     appIconInfo: AppIconInfo,
-    entry: IconPackCreator.IconEntryWithPack?,
+    entry: IconEntryWithPack?,
     basePack: String,
+    config: IconPackConfig,
   ): ImageBitmap {
     return if (entry != null) loadIcon(entry.entry, entry.pack)
-    else if (appIconInfo is ShortcutIconInfo) loadIcon(appIconInfo, basePack)
-    else loadIcon(appIconInfo, basePack)
+    else if (appIconInfo is ShortcutIconInfo) loadIcon(appIconInfo, basePack, config)
+    else loadIcon(appIconInfo, basePack, config)
   }
 
-  suspend fun loadIcon(info: AppIconInfo, basePack: String) =
+  suspend fun loadIcon(info: AppIconInfo, basePack: String, config: IconPackConfig) =
     imageCache.getOrPut("$basePack/fallback/${info.componentName}") {
       withContext(Dispatchers.Default) {
         getIconPack(basePack)
-          .genIconFrom(context.packageManager.getApplicationIcon(info.componentName.packageName))
+          .genIconFrom(
+            context.packageManager.getApplicationIcon(info.componentName.packageName),
+            config,
+          )
           .toSafeBitmap(300, 300)
           .asImageBitmap()
       }
     }
 
-  suspend fun loadIcon(info: ShortcutIconInfo, basePack: String) =
+  suspend fun loadIcon(info: ShortcutIconInfo, basePack: String, config: IconPackConfig) =
     imageCache.getOrPut("$basePack/shortcut/${info.componentName}") {
       withContext(Dispatchers.IO) {
         getIconPack(basePack)
@@ -65,7 +58,8 @@ class IconCache(private val context: Application) {
             context
               .getSystemService(Context.LAUNCHER_APPS_SERVICE)
               .asType<LauncherApps>()
-              .getShortcutIconDrawable(info.shortcut, 0)
+              .getShortcutIconDrawable(info.shortcut, 0),
+            config,
           )
           .toSafeBitmap(300, 300)
           .asImageBitmap()
@@ -79,8 +73,7 @@ class IconCache(private val context: Application) {
       }
     }
 
-  fun invalidate() {
-    iconPackCache.clear()
+  fun clearIcons() {
     imageCache.evictAll()
   }
 }

@@ -27,11 +27,13 @@ private fun initIP() {
         val pack =
           pref.get(Pref.ICON_PACK)?.takeIf { it.isNotEmpty() }
             ?: throw Exception("No icon pack set")
+
         val res = pm.getResourcesForApplication(pack)
+        val config = IconPackConfig(pref)
         ip =
           when (pref.get(Pref.MODE)) {
-            MODE_PROVIDER -> RemoteIconPack(pref, pack, res)
-            else -> LocalIconPack(pref, pack, res)
+            MODE_PROVIDER -> RemoteIconPack(pack, res, config)
+            else -> LocalIconPack(pack, res, config)
           }
       }
       .exceptionOrNull()

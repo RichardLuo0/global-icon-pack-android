@@ -5,9 +5,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.graphics.ImageBitmap
-import com.richardluo.globalIconPack.iconPack.CopyableIconPack
 import com.richardluo.globalIconPack.iconPack.database.IconEntry
 import com.richardluo.globalIconPack.iconPack.database.NormalIconEntry
+import com.richardluo.globalIconPack.ui.model.IconPack
 import com.richardluo.globalIconPack.utils.debounceInput
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -18,12 +18,17 @@ import kotlinx.coroutines.withContext
 
 interface VariantIcon
 
-class VariantPackIcon(val pack: CopyableIconPack, val entry: IconEntry) : VariantIcon
+class VariantPackIcon(val pack: IconPack, val entry: IconEntry) : VariantIcon
 
 class OriginalIcon : VariantIcon
 
-class ChooseIconVM(private val iconCache: IconCache, private val getBasePack: () -> String) {
-  val variantPack = mutableStateOf(getBasePack())
+class ChooseIconVM(
+  basePack: String,
+  getIconPack: (String) -> IconPack,
+  getIconEntry: (String, AppIconInfo) -> IconEntry?,
+  private val loadIcon: suspend (Pair<AppIconInfo, IconEntryWithPack?>) -> ImageBitmap,
+) {
+  val variantPack = mutableStateOf(basePack)
   val variantIcons =
     snapshotFlow { variantPack.value }
       .transform { pack ->
@@ -31,7 +36,7 @@ class ChooseIconVM(private val iconCache: IconCache, private val getBasePack: ()
         emit(null)
         emit(
           withContext(Dispatchers.IO) {
-            val iconPack = iconCache.getIconPack(pack)
+            val iconPack = getIconPack(pack)
             iconPack.drawables.map { VariantPackIcon(iconPack, NormalIconEntry(it)) }
           }
         )
@@ -51,16 +56,15 @@ class ChooseIconVM(private val iconCache: IconCache, private val getBasePack: ()
         app ?: return@combineTransform
         emit(
           mutableListOf<VariantIcon>(OriginalIcon()).apply {
-            addAll(
-              withContext(Dispatchers.Default) {
-                val iconEntry =
-                  iconCache.getIconPack(variantPack.value).getIconEntry(app.componentName)
+            withContext(Dispatchers.Default) {
+              val iconEntry = getIconEntry(variantPack.value, app)
+              addAll(
                 if (text.isEmpty())
                   if (iconEntry != null) icons.filter { it.entry.name.startsWith(iconEntry.name) }
                   else listOf()
                 else icons.filter { it.entry.name.contains(text, ignoreCase = true) }
-              }
-            )
+              )
+            }
           }
         )
       }
@@ -68,18 +72,9 @@ class ChooseIconVM(private val iconCache: IconCache, private val getBasePack: ()
 
   suspend fun loadIconForSelectedApp(icon: VariantIcon) =
     when (icon) {
-      is OriginalIcon ->
-        getBasePack()
-          .takeIf { it.isNotEmpty() }
-          ?.let { basePack ->
-            selectedApp.value?.let {
-              when (it) {
-                is ShortcutIconInfo -> iconCache.loadIcon(it, basePack)
-                else -> iconCache.loadIcon(it, basePack)
-              }
-            }
-          }
-      is VariantPackIcon -> iconCache.loadIcon(icon.entry, icon.pack)
+      is OriginalIcon -> selectedApp.value?.let { loadIcon(it to null) }
+      is VariantPackIcon ->
+        selectedApp.value?.let { loadIcon(it to IconEntryWithPack(icon.entry, icon.pack)) }
       else -> null
     } ?: ImageBitmap(1, 1)
 

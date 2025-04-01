@@ -6,9 +6,9 @@ import android.content.Context
 import android.net.Uri
 import androidx.documentfile.provider.DocumentFile
 import com.richardluo.globalIconPack.R
-import com.richardluo.globalIconPack.iconPack.ApkBuilder
-import com.richardluo.globalIconPack.iconPack.CopyableIconPack
-import com.richardluo.globalIconPack.iconPack.database.IconEntry
+import com.richardluo.globalIconPack.ui.model.ApkBuilder
+import com.richardluo.globalIconPack.ui.model.IconPack
+import com.richardluo.globalIconPack.ui.viewModel.IconEntryWithPack
 import java.io.BufferedInputStream
 import java.io.BufferedOutputStream
 import java.io.InputStream
@@ -16,8 +16,6 @@ import java.io.OutputStream
 import java.io.OutputStreamWriter
 
 object IconPackCreator {
-  data class IconEntryWithPack(val entry: IconEntry, val pack: CopyableIconPack)
-
   @OptIn(ExperimentalStdlibApi::class)
   class IconPackApkBuilder(
     private val packageName: String,
@@ -114,7 +112,7 @@ object IconPackCreator {
     uri: Uri,
     label: String,
     packageName: String,
-    baseIconPack: CopyableIconPack,
+    baseIconPack: IconPack,
     newIcons: Map<ComponentName, IconEntryWithPack?>,
     installedAppsOnly: Boolean,
   ) {
@@ -135,9 +133,7 @@ object IconPackCreator {
     else
       baseIconPack.getAllIconEntries().forEach { (cn, entry) ->
         val iconName = "icon_${i++}"
-        val newEntry =
-          if (newIcons.containsKey(cn)) if (newIcons[cn] == null) return@forEach else newIcons[cn]
-          else null
+        val newEntry = if (newIcons.containsKey(cn)) newIcons[cn] ?: return@forEach else null
         val finalIconEntry = newEntry?.entry ?: entry
         val finalIconPack = newEntry?.pack ?: baseIconPack
         finalIconPack.copyIcon(
