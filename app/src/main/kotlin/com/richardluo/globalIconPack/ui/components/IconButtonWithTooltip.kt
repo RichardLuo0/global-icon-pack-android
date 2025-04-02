@@ -15,7 +15,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 @Composable
 fun IconButtonWithTooltip(icon: ImageVector, tooltip: String, onClick: () -> Unit) {
   TooltipBox(
-    positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+    positionProvider = TooltipDefaults.rememberTooltipPositionProvider(),
     tooltip = { PlainTooltip { Text(tooltip) } },
     state = rememberTooltipState(isPersistent = false),
   ) {
