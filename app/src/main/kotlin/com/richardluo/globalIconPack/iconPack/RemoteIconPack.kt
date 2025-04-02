@@ -5,7 +5,6 @@ import android.app.AndroidAppHelper
 import android.content.ComponentName
 import android.content.res.Resources
 import android.graphics.drawable.Drawable
-import androidx.core.net.toUri
 import com.richardluo.globalIconPack.iconPack.database.FallbackSettings
 import com.richardluo.globalIconPack.iconPack.database.IconEntry
 import com.richardluo.globalIconPack.reflect.Resources.getDrawableForDensity
@@ -35,13 +34,7 @@ class RemoteIconPack(
     iconFallback =
       if (config.iconFallback)
         contentResolver
-          .query(
-            "content://${IconPackProvider.AUTHORITIES}/${IconPackProvider.FALLBACKS}".toUri(),
-            null,
-            null,
-            arrayOf(pack),
-            null,
-          )
+          .query(IconPackProvider.FALLBACKS, null, null, arrayOf(pack), null)
           ?.getFirstRow {
             IconFallback(
                 FallbackSettings.from(it.getBlob("fallback")),
@@ -58,7 +51,7 @@ class RemoteIconPack(
     indexMap.getOrPutNullable(cn) {
       contentResolver
         .query(
-          "content://${IconPackProvider.AUTHORITIES}/${IconPackProvider.ICONS}".toUri(),
+          IconPackProvider.ICONS,
           null,
           null,
           arrayOf(pack, cn.packageName, cn.className, iconPackAsFallback.toString()),

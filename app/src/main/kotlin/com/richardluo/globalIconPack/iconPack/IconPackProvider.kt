@@ -9,6 +9,8 @@ import android.database.Cursor
 import android.database.MatrixCursor
 import android.graphics.drawable.Drawable
 import android.net.Uri
+import androidx.core.net.toUri
+import com.richardluo.globalIconPack.BuildConfig
 import com.richardluo.globalIconPack.iconPack.database.IconEntry
 import com.richardluo.globalIconPack.iconPack.database.IconPackDB
 import com.richardluo.globalIconPack.iconPack.database.NormalIconEntry
@@ -67,9 +69,9 @@ class IconEntryWithId(val entry: IconEntry, private val id: Int) : IconEntry by 
 
 class IconPackProvider : ContentProvider() {
   companion object {
-    const val AUTHORITIES = "com.richardluo.globalIconPack.IconPackProvider"
-    const val ICONS = "ICONS"
-    const val FALLBACKS = "FALLBACKS"
+    const val AUTHORITIES = "${BuildConfig.APPLICATION_ID}.IconPackProvider"
+    val ICONS = "content://$AUTHORITIES/ICONS".toUri()
+    val FALLBACKS = "content://$AUTHORITIES/FALLBACKS".toUri()
   }
 
   private lateinit var iconPackDB: IconPackDB
@@ -88,7 +90,7 @@ class IconPackProvider : ContentProvider() {
   ): Cursor? {
     startForegroundAsNeeded()
     return runCatching {
-        when (uri.path?.removePrefix("/")) {
+        when (uri) {
           FALLBACKS ->
             if (selectionArgs != null && selectionArgs.isNotEmpty())
               iconPackDB.getFallbackSettings(selectionArgs[0])
