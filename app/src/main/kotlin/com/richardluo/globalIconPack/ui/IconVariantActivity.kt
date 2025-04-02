@@ -3,6 +3,7 @@ package com.richardluo.globalIconPack.ui
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -13,10 +14,12 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.outlined.Download
 import androidx.compose.material.icons.outlined.FilterList
 import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.Restore
 import androidx.compose.material.icons.outlined.Search
+import androidx.compose.material.icons.outlined.Upload
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
@@ -37,7 +40,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import com.richardluo.globalIconPack.R
@@ -49,6 +51,7 @@ import com.richardluo.globalIconPack.ui.components.SampleTheme
 import com.richardluo.globalIconPack.ui.components.WarnDialog
 import com.richardluo.globalIconPack.ui.viewModel.IconVariantVM
 import com.richardluo.globalIconPack.utils.getValue
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class IconVariantActivity : ComponentActivity() {
@@ -66,7 +69,6 @@ class IconVariantActivity : ComponentActivity() {
   }
 
   @OptIn(ExperimentalMaterial3Api::class)
-  @Preview
   @Composable
   private fun Screen() {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
@@ -113,7 +115,30 @@ class IconVariantActivity : ComponentActivity() {
                   leadingIcon = { Checkbox(viewModel.modified.getValue(), onCheckedChange = null) },
                   text = { Text(stringResource(R.string.modified)) },
                   onClick = {
-                    viewModel.flipModified()
+                    lifecycleScope.launch {
+                      viewModel.flipModified()
+                      delay(100)
+                      expand = false
+                    }
+                  },
+                )
+                DropdownMenuItem(
+                  leadingIcon = {
+                    Icon(Icons.Outlined.Upload, stringResource(R.string.exportIconPack))
+                  },
+                  text = { Text(stringResource(R.string.exportIconPack)) },
+                  onClick = {
+                    exportLauncher.launch("${viewModel.basePack}.xml")
+                    expand = false
+                  },
+                )
+                DropdownMenuItem(
+                  leadingIcon = {
+                    Icon(Icons.Outlined.Download, stringResource(R.string.importIconPack))
+                  },
+                  text = { Text(stringResource(R.string.importIconPack)) },
+                  onClick = {
+                    importLauncher.launch(arrayOf("text/xml"))
                     expand = false
                   },
                 )
@@ -163,4 +188,14 @@ class IconVariantActivity : ComponentActivity() {
       viewModel.restoreDefault()
     }
   }
+
+  private val exportLauncher =
+    registerForActivityResult(ActivityResultContracts.CreateDocument("text/xml")) { result ->
+      if (result != null) viewModel.export(result)
+    }
+
+  private val importLauncher =
+    registerForActivityResult(ActivityResultContracts.OpenDocument()) { result ->
+      if (result != null) viewModel.import(result)
+    }
 }

@@ -1,7 +1,9 @@
 package com.richardluo.globalIconPack.utils
 
 import android.app.Application
+import android.content.Context
 import android.database.Cursor
+import android.widget.Toast
 import androidx.annotation.CheckResult
 import androidx.collection.LruCache
 import androidx.compose.runtime.Composable
@@ -12,12 +14,14 @@ import de.robv.android.xposed.XposedBridge
 import java.lang.reflect.Field
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.withContext
 import org.xmlpull.v1.XmlPullParser
 
 @Suppress("UNCHECKED_CAST")
@@ -118,3 +122,10 @@ fun flowTrigger() =
 suspend fun MutableSharedFlow<Unit>.emit() = emit(Unit)
 
 fun MutableSharedFlow<Unit>.tryEmit() = tryEmit(Unit)
+
+suspend inline fun <R> runCatchingToast(context: Context, block: () -> R) =
+  runCatching(block).getOrNull {
+    withContext(Dispatchers.Main) {
+      Toast.makeText(context, it.toString(), Toast.LENGTH_LONG).show()
+    }
+  }

@@ -113,13 +113,13 @@ class IconPack(val pack: String, val resources: Resources) {
   }
 
   fun copyIcon(
-    iconEntry: IconEntry,
+    entry: IconEntry,
     component: String,
     name: String,
     appfilterXML: StringBuilder,
     apkBuilder: ApkBuilder,
   ) =
-    iconEntry.copyTo(component, name, appfilterXML) { resName, newName ->
+    entry.copyTo(component, name, appfilterXML) { resName, newName ->
       getDrawableId(resName).takeIf { it != 0 }?.let { addAllFiles(it, newName, apkBuilder) }
     }
 

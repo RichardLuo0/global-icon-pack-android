@@ -73,7 +73,7 @@ class MergerVM(app: Application) : ContextVM(app) {
   private val changedIcons = mutableStateMapOf<AppIconInfo, IconEntryWithPack?>()
   private val cachedIcons = mutableMapOf<AppIconInfo, IconEntryWithPack?>()
 
-  private fun getIcon(iconPack: IconPack, info: AppIconInfo) =
+  private fun getIconEntry(iconPack: IconPack, info: AppIconInfo) =
     if (changedIcons.containsKey(info)) changedIcons[info]
     else
       cachedIcons.getOrPutNullable(info) {
@@ -84,24 +84,25 @@ class MergerVM(app: Application) : ContextVM(app) {
 
   val filteredIcons =
     combineTransform(
-      snapshotFlow { basePack },
-      filterAppsVM.filteredApps,
-      snapshotFlow { changedIcons.toMap() },
-    ) { basePack, apps, _ ->
-      when {
-        basePack.isEmpty() -> emit(listOf())
-        apps == null -> emit(null)
-        else -> {
-          if (cachedIcons.isEmpty()) emit(null)
-          emit(
-            withContext(Dispatchers.Default) {
-              val iconPack = iconPackCache.getIconPack(basePack)
-              apps.map { info -> info to getIcon(iconPack, info) }
-            }
-          )
+        snapshotFlow { basePack },
+        filterAppsVM.filteredApps,
+        snapshotFlow { changedIcons.toMap() },
+      ) { basePack, apps, _ ->
+        when {
+          basePack.isEmpty() -> emit(listOf())
+          apps == null -> emit(null)
+          else -> {
+            if (cachedIcons.isEmpty()) emit(null)
+            emit(
+              withContext(Dispatchers.Default) {
+                val iconPack = iconPackCache.getIconPack(basePack)
+                apps.map { info -> info to getIconEntry(iconPack, info) }
+              }
+            )
+          }
         }
       }
-    }
+      .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
   val chooseIconVM = ChooseIconVM(basePack, { iconPackCache.getIconPack(it) }, { loadIcon(it) })
 
@@ -145,7 +146,7 @@ class MergerVM(app: Application) : ContextVM(app) {
             newPackPackage,
             pack,
             filterAppsVM.getAllApps().associate { info ->
-              info.componentName to getIcon(pack, info)
+              info.componentName to getIconEntry(pack, info)
             },
             installedAppsOnly,
           )

@@ -5,19 +5,20 @@ import android.content.ContentValues
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
-import com.richardluo.globalIconPack.Pref
-import com.richardluo.globalIconPack.get
 import com.richardluo.globalIconPack.iconPack.IconPackApps
 import com.richardluo.globalIconPack.iconPack.loadIconPack
-import com.richardluo.globalIconPack.utils.WorldPreference
+import com.richardluo.globalIconPack.utils.flowTrigger
 import com.richardluo.globalIconPack.utils.getFirstRow
 import com.richardluo.globalIconPack.utils.getInt
 import com.richardluo.globalIconPack.utils.getLong
 import com.richardluo.globalIconPack.utils.log
+import com.richardluo.globalIconPack.utils.tryEmit
 import kotlinx.coroutines.runBlocking
 
 class IconPackDB(private val context: Context, path: String = "iconPack.db") :
-  SQLiteOpenHelper(context.createDeviceProtectedStorageContext(), path, null, 6) {
+  SQLiteOpenHelper(context.createDeviceProtectedStorageContext(), path, null, 7) {
+  val iconsUpdateFlow = flowTrigger()
+  val modifiedUpdateFlow = flowTrigger()
 
   override fun onCreate(db: SQLiteDatabase) {}
 
@@ -32,7 +33,7 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
     }
     db.transaction {
       execSQL(
-        "CREATE TABLE IF NOT EXISTS 'fallbacks' (pack TEXT PRIMARY KEY NOT NULL, fallback BLOB NOT NULL, updateAt NUMERIC NOT NULL, modified INTEGER NOT NULL DEFAULT FALSE)"
+        "CREATE TABLE IF NOT EXISTS 'iconPack' (pack TEXT PRIMARY KEY NOT NULL, fallback BLOB NOT NULL, updateAt NUMERIC NOT NULL, modified INTEGER NOT NULL DEFAULT FALSE)"
       )
       val packTable = pt(pack)
       // Check update time
@@ -40,7 +41,7 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
         runCatching { context.packageManager.getPackageInfo(pack, 0) }.getOrNull()?.lastUpdateTime
           ?: return
       val modified =
-        rawQuery("select DISTINCT updateAt, modified from fallbacks where pack=?", arrayOf(pack))
+        rawQuery("select DISTINCT updateAt, modified from iconPack where pack=?", arrayOf(pack))
           .getFirstRow {
             if (lastUpdateTime < it.getLong("updateAt")) return
             it.getInt("modified") != 0
@@ -67,19 +68,20 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
       }
       // Get installed icon packs
       val packs = runBlocking { IconPackApps.get(context).keys }
-      // Delete expired fallbacks
+      // Delete expired iconPack
       val packSet = packs.joinToString(", ") { "'$it'" }
-      delete("fallbacks", "pack not in ($packSet)", null)
+      delete("iconPack", "pack not in ($packSet)", null)
       // Drop expired tables
       val packTables = packs.map { pt(it) }
       foreachPackTable { if (!packTables.contains(it)) db.execSQL("DROP TABLE '$it'") }
       log("database: $pack updated")
+      iconsUpdateFlow.tryEmit()
     }
   }
 
   fun getFallbackSettings(pack: String) =
     readableDatabase.query(
-      "fallbacks",
+      "iconPack",
       arrayOf("fallback"),
       "pack=?",
       arrayOf(pack),
@@ -91,12 +93,12 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
 
   private fun insertFallbackSettings(db: SQLiteDatabase, pack: String, fs: FallbackSettings) {
     if (
-      db.query("fallbacks", null, "pack=?", arrayOf(pack), null, null, null, "1").use {
+      db.query("iconPack", null, "pack=?", arrayOf(pack), null, null, null, "1").use {
         it.count > 0
       }
     )
       db.update(
-        "fallbacks",
+        "iconPack",
         ContentValues().apply {
           put("fallback", fs.toByteArray())
           put("updateAt", System.currentTimeMillis())
@@ -106,7 +108,7 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
       )
     else
       db.insert(
-        "fallbacks",
+        "iconPack",
         null,
         ContentValues().apply {
           put("pack", pack)
@@ -117,17 +119,20 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
   }
 
   fun setPackModified(pack: String, modified: Boolean = true) {
-    writableDatabase.update(
-      "fallbacks",
-      ContentValues().apply { put("modified", modified) },
-      "pack=?",
-      arrayOf(pack),
-    )
+    writableDatabase.transaction {
+      update(
+        "iconPack",
+        ContentValues().apply { put("modified", modified) },
+        "pack=?",
+        arrayOf(pack),
+      )
+      modifiedUpdateFlow.tryEmit()
+    }
   }
 
   fun isPackModified(pack: String) =
     readableDatabase
-      .query("fallbacks", arrayOf("modified"), "pack=?", arrayOf(pack), null, null, null, "1")
+      .query("iconPack", arrayOf("modified"), "pack=?", arrayOf(pack), null, null, null, "1")
       .getFirstRow { it.getInt("modified") != 0 } == true
 
   private fun getIconExact(pack: String, cn: ComponentName) =
@@ -169,25 +174,16 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
     }
   }
 
-  private fun insertOrUpdateIcon(
-    pack: String,
-    entry: IconEntry,
-    entryPack: String,
-    block: SQLiteDatabase.(String, ContentValues) -> Unit,
-  ) {
-    writableDatabase.transaction {
-      val packTable = "'${pt(pack)}'"
-      val values =
-        ContentValues().apply {
-          put("entry", entry.toByteArray())
-          put("pack", if (entryPack == pack) "" else entryPack)
-        }
-      block(packTable, values)
-    }
-  }
+  private fun getIconUpdateInfo(pack: String, entry: IconEntry, entryPack: String) =
+    "'${pt(pack)}'" to
+      ContentValues().apply {
+        put("entry", entry.toByteArray())
+        put("pack", if (entryPack == pack) "" else entryPack)
+      }
 
   fun insertOrUpdateAppIcon(pack: String, cn: ComponentName, entry: IconEntry, entryPack: String) {
-    insertOrUpdateIcon(pack, entry, entryPack) { packTable, values ->
+    val (packTable, values) = getIconUpdateInfo(pack, entry, entryPack)
+    writableDatabase.transaction {
       update(packTable, values, "packageName=?", arrayOf(cn.packageName))
       insertWithOnConflict(
         packTable,
@@ -205,6 +201,7 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
         SQLiteDatabase.CONFLICT_REPLACE,
       )
       setPackModified(pack)
+      iconsUpdateFlow.tryEmit()
     }
   }
 
@@ -214,7 +211,8 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
     entry: IconEntry,
     entryPack: String,
   ) {
-    insertOrUpdateIcon(pack, entry, entryPack) { packTable, values ->
+    val (packTable, values) = getIconUpdateInfo(pack, entry, entryPack)
+    writableDatabase.transaction {
       insertWithOnConflict(
         packTable,
         null,
@@ -225,57 +223,53 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
         SQLiteDatabase.CONFLICT_REPLACE,
       )
       setPackModified(pack)
+      iconsUpdateFlow.tryEmit()
     }
   }
 
   fun deleteIcon(pack: String, packageName: String) {
-    writableDatabase.delete("'${pt(pack)}'", "packageName=?", arrayOf(packageName))
-    setPackModified(pack)
+    writableDatabase.transaction {
+      delete("'${pt(pack)}'", "packageName=?", arrayOf(packageName))
+      setPackModified(pack)
+      iconsUpdateFlow.tryEmit()
+    }
   }
 
   fun resetPack(pack: String) {
-    writableDatabase.update(
-      "fallbacks",
-      ContentValues().apply {
-        put("updateAt", 0)
-        put("modified", false)
-      },
-      "pack=?",
-      arrayOf(pack),
-    )
-    update(writableDatabase, pack)
+    writableDatabase.transaction {
+      update(
+        "iconPack",
+        ContentValues().apply {
+          put("updateAt", 0)
+          put("modified", false)
+        },
+        "pack=?",
+        arrayOf(pack),
+      )
+      update(this, pack)
+      iconsUpdateFlow.tryEmit()
+    }
   }
 
-  private fun pt(pack: String) = "pack_$pack"
+  inline fun transaction(block: IconPackDB.() -> Unit) = writableDatabase.transaction { block() }
+
+  private fun pt(pack: String) = "pack/$pack"
 
   private fun SQLiteDatabase.foreachPackTable(block: (String) -> Unit) =
     rawQuery("select DISTINCT tbl_name from sqlite_master WHERE tbl_name LIKE '${pt("%")}'", null)
       .use { while (it.moveToNext()) block(it.getString(0)) }
 
-  override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
-    db.apply {
-      if (oldVersion >= 4) {
-        if (oldVersion == 4)
-          foreachPackTable { execSQL("ALTER TABLE '$it' ADD COLUMN pack TEXT NOT NULL DEFAULT ''") }
-        execSQL("ALTER TABLE 'fallbacks' ADD COLUMN modified INTEGER NOT NULL DEFAULT FALSE")
-      } else {
-        foreachPackTable {
-          execSQL("DROP TABLE '$it'")
-          execSQL("DROP TABLE 'fallbacks'")
-        }
-        WorldPreference.getPrefInApp(context).get(Pref.ICON_PACK).let { update(db, it) }
-      }
-    }
-  }
+  override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {}
 }
 
-private inline fun SQLiteDatabase.transaction(block: SQLiteDatabase.() -> Unit) =
+inline fun SQLiteDatabase.transaction(block: SQLiteDatabase.() -> Unit) =
   try {
     beginTransaction()
     block()
     setTransactionSuccessful()
   } catch (e: Exception) {
     log(e)
+    throw e
   } finally {
     endTransaction()
   }

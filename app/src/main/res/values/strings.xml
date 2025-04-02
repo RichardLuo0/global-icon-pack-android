@@ -58,6 +58,10 @@
     <string name="shortcuts">Shortcuts</string>
     <string name="requiresHookSystem">You must hook system framework to get shortcuts.</string>
     <string name="modified">Modified</string>
+    <string name="exportIconPack">Export</string>
+    <string name="exportedIconPack">Icon pack has been exported.</string>
+    <string name="importIconPack">Import</string>
+    <string name="importedIconPack">Icon pack has been imported.</string>
 
     <string name="chooseBasePack">Choose a base icon pack</string>
     <string name="chooseIconToReplace">Choose the icon to replace</string>

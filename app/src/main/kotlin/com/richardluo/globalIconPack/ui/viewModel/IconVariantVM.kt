@@ -2,15 +2,18 @@ package com.richardluo.globalIconPack.ui.viewModel
 
 import android.app.Application
 import android.content.ComponentName
-import androidx.compose.runtime.mutableStateMapOf
+import android.net.Uri
+import android.util.Xml
+import android.widget.Toast
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.viewModelScope
 import com.richardluo.globalIconPack.Pref
+import com.richardluo.globalIconPack.R
 import com.richardluo.globalIconPack.get
 import com.richardluo.globalIconPack.iconPack.IconPackConfig
 import com.richardluo.globalIconPack.iconPack.database.IconEntry
 import com.richardluo.globalIconPack.iconPack.database.IconPackDB
+import com.richardluo.globalIconPack.iconPack.database.NormalIconEntry
 import com.richardluo.globalIconPack.ui.model.AppIconInfo
 import com.richardluo.globalIconPack.ui.model.IconEntryWithPack
 import com.richardluo.globalIconPack.ui.model.OriginalIcon
@@ -19,20 +22,23 @@ import com.richardluo.globalIconPack.ui.model.VariantIcon
 import com.richardluo.globalIconPack.ui.model.VariantPackIcon
 import com.richardluo.globalIconPack.utils.ContextVM
 import com.richardluo.globalIconPack.utils.WorldPreference
-import com.richardluo.globalIconPack.utils.flowTrigger
+import com.richardluo.globalIconPack.utils.get
 import com.richardluo.globalIconPack.utils.getBlob
 import com.richardluo.globalIconPack.utils.getFirstRow
 import com.richardluo.globalIconPack.utils.getInstance
-import com.richardluo.globalIconPack.utils.getOrPutNullable
 import com.richardluo.globalIconPack.utils.getString
-import com.richardluo.globalIconPack.utils.tryEmit
+import com.richardluo.globalIconPack.utils.ifNotEmpty
+import com.richardluo.globalIconPack.utils.runCatchingToast
+import java.io.OutputStreamWriter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.combineTransform
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.xmlpull.v1.XmlPullParser
+import org.xmlpull.v1.XmlPullParserFactory
 
 class IconVariantVM(app: Application) : ContextVM(app) {
   private val iconPackCache by getInstance { IconPackCache(app) }
@@ -45,34 +51,21 @@ class IconVariantVM(app: Application) : ContextVM(app) {
   val expandSearchBar = mutableStateOf(false)
 
   val filterAppsVM = FilterAppsVM(context)
-  private val changedIcons = mutableStateMapOf<AppIconInfo, IconEntryWithPack?>()
-  private val cachedIcons: MutableMap<AppIconInfo, IconEntryWithPack?> = mutableMapOf()
   val filteredIcons =
-    combineTransform(filterAppsVM.filteredApps, snapshotFlow { changedIcons.toMap() }) { apps, icons
-      ->
-      if (apps == null) emit(null)
-      else
-        emit(
-          withContext(Dispatchers.Default) {
-            apps.map {
-              it to
-                (if (icons.containsKey(it)) icons[it]
-                else cachedIcons.getOrPutNullable(it) { getUpdatedEntryWithPack(it.componentName) })
-            }
-          }
-        )
-    }
+    combineTransform(filterAppsVM.filteredApps, iconPackDB.iconsUpdateFlow) { apps, _ ->
+        if (apps == null) emit(null)
+        else emit(withContext(Dispatchers.IO) { apps.map { it to getIconEntry(it.componentName) } })
+      }
+      .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
   val chooseIconVM = ChooseIconVM(basePack, { iconPackCache.getIconPack(it) }, { loadIcon(it) })
 
-  private val modifiedChangeTrigger = flowTrigger()
   val modified =
-    combine(snapshotFlow { changedIcons.toMap() }, modifiedChangeTrigger) { _, _ ->
-        return@combine withContext(Dispatchers.IO) { iconPackDB.isPackModified(basePack) }
-      }
+    iconPackDB.modifiedUpdateFlow
+      .map { withContext(Dispatchers.IO) { iconPackDB.isPackModified(basePack) } }
       .stateIn(viewModelScope, SharingStarted.Lazily, false)
 
-  private fun getUpdatedEntryWithPack(cn: ComponentName) =
+  private fun getIconEntry(cn: ComponentName) =
     iconPackDB.getIcon(basePack, cn, iconPackConfig.iconPackAsFallback).getFirstRow {
       val entry = IconEntry.from(it.getBlob("entry"))
       val pack = it.getString("pack").ifEmpty { basePack }
@@ -86,18 +79,16 @@ class IconVariantVM(app: Application) : ContextVM(app) {
   fun restoreDefault() {
     if (basePack.isEmpty()) return
     viewModelScope.launch {
-      withContext(Dispatchers.IO) {
-        iconPackDB.resetPack(basePack)
-        changedIcons.clear()
-      }
+      runCatchingToast(context) { withContext(Dispatchers.IO) { iconPackDB.resetPack(basePack) } }
     }
   }
 
   fun flipModified() {
     if (basePack.isEmpty()) return
     viewModelScope.launch {
-      withContext(Dispatchers.IO) { iconPackDB.setPackModified(basePack, !modified.value) }
-      modifiedChangeTrigger.tryEmit()
+      runCatchingToast(context) {
+        withContext(Dispatchers.IO) { iconPackDB.setPackModified(basePack, !modified.value) }
+      }
     }
   }
 
@@ -105,17 +96,78 @@ class IconVariantVM(app: Application) : ContextVM(app) {
     val info = chooseIconVM.selectedApp.value ?: return
     val cn = info.componentName
     viewModelScope.launch {
-      withContext(Dispatchers.IO) {
-        when (icon) {
-          is OriginalIcon -> iconPackDB.deleteIcon(basePack, cn.packageName)
-          is VariantPackIcon ->
-            when (info) {
-              is ShortcutIconInfo ->
-                iconPackDB.insertOrUpdateShortcutIcon(basePack, cn, icon.entry, icon.pack.pack)
-              else -> iconPackDB.insertOrUpdateAppIcon(basePack, cn, icon.entry, icon.pack.pack)
-            }
+      runCatchingToast(context) {
+        withContext(Dispatchers.IO) {
+          when (icon) {
+            is OriginalIcon -> iconPackDB.deleteIcon(basePack, cn.packageName)
+            is VariantPackIcon ->
+              when (info) {
+                is ShortcutIconInfo ->
+                  iconPackDB.insertOrUpdateShortcutIcon(basePack, cn, icon.entry, icon.pack.pack)
+                else -> iconPackDB.insertOrUpdateAppIcon(basePack, cn, icon.entry, icon.pack.pack)
+              }
+          }
         }
-        changedIcons[info] = getUpdatedEntryWithPack(cn)
+      }
+    }
+  }
+
+  fun export(uri: Uri) {
+    viewModelScope.launch {
+      runCatchingToast(context) {
+        withContext(Dispatchers.Default) {
+          val xml = StringBuilder("<?xml version=\"1.0\" encoding=\"UTF-8\"?><resources>")
+          filterAppsVM.getAllApps().forEach {
+            getIconEntry(it.componentName)?.let { entry ->
+              if (entry.entry.type == IconEntry.Type.Normal) {
+                val cn = it.componentName.flattenToString()
+                val name = entry.entry.name
+                val pack = if (entry.pack.pack == basePack) "" else entry.pack.pack
+                xml.append(
+                  "<item component=\"$cn\" drawable=\"$name\"${pack.ifNotEmpty { " pack=\"$it\"" }}/>"
+                )
+              }
+              // Can not handle entries of other type
+            }
+          }
+          OutputStreamWriter(context.contentResolver.openOutputStream(uri)).use {
+            it.write(xml.append("</resources>").toString())
+          }
+        }
+        Toast.makeText(context, R.string.exportedIconPack, Toast.LENGTH_LONG).show()
+      }
+    }
+  }
+
+  fun import(uri: Uri) {
+    viewModelScope.launch {
+      runCatchingToast(context) {
+        withContext(Dispatchers.IO) {
+          context.contentResolver.openInputStream(uri).use {
+            val parser =
+              XmlPullParserFactory.newInstance().newPullParser().apply {
+                setInput(it, Xml.Encoding.UTF_8.toString())
+              }
+            iconPackDB.transaction {
+              while (parser.next() != XmlPullParser.END_DOCUMENT) {
+                if (parser.eventType != XmlPullParser.START_TAG) continue
+                when (parser.name) {
+                  "item" -> {
+                    var cn =
+                      parser["component"]?.let { ComponentName.unflattenFromString(it) } ?: continue
+                    insertOrUpdateAppIcon(
+                      basePack,
+                      cn,
+                      NormalIconEntry(parser["drawable"] ?: continue),
+                      parser["pack"] ?: "",
+                    )
+                  }
+                }
+              }
+            }
+          }
+        }
+        Toast.makeText(context, R.string.importedIconPack, Toast.LENGTH_LONG).show()
       }
     }
   }

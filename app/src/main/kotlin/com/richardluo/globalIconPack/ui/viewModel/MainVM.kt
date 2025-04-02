@@ -16,6 +16,7 @@ import com.richardluo.globalIconPack.iconPack.KeepAliveService
 import com.richardluo.globalIconPack.iconPack.database.IconPackDB
 import com.richardluo.globalIconPack.utils.ContextVM
 import com.richardluo.globalIconPack.utils.getInstance
+import com.richardluo.globalIconPack.utils.runCatchingToast
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -52,7 +53,7 @@ class MainVM(app: Application) : ContextVM(app) {
                 PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
                 PackageManager.DONT_KILL_APP,
               )
-              iconPackDB.onIconPackChange(pack)
+              runCatchingToast(context) { iconPackDB.onIconPackChange(pack) }
             }
             else -> {
               KeepAliveService.stopForeground(context)

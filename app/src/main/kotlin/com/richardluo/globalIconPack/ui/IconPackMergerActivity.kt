@@ -1,6 +1,5 @@
 package com.richardluo.globalIconPack.ui
 
-import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.PredictiveBackHandler
@@ -60,7 +59,6 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.lifecycleScope
 import com.richardluo.globalIconPack.R
 import com.richardluo.globalIconPack.iconPack.IconPackApps
 import com.richardluo.globalIconPack.ui.components.AnimatedFab
@@ -215,7 +213,7 @@ class IconPackMergerActivity : ComponentActivity() {
         title = { Text(getString(R.string.warning)) },
         content = { Text(getString(R.string.mergerWarning)) },
       ) {
-        requestIconPackStorage.launch(Intent(Intent.ACTION_OPEN_DOCUMENT_TREE))
+        createIconPackLauncher.launch(null)
       }
 
       InfoDialog(
@@ -229,11 +227,9 @@ class IconPackMergerActivity : ComponentActivity() {
     }
   }
 
-  private val requestIconPackStorage =
-    registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-      if (result.resultCode == RESULT_OK) {
-        result.data?.data?.let { uri -> lifecycleScope.launch { viewModel.createIconPack(uri) } }
-      }
+  private val createIconPackLauncher =
+    registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) {
+      if (it != null) viewModel.createIconPack(it)
     }
 
   @Composable
