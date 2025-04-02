@@ -5,6 +5,7 @@ import android.content.ContentValues
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
+import android.widget.Toast
 import com.richardluo.globalIconPack.iconPack.IconPackApps
 import com.richardluo.globalIconPack.iconPack.loadIconPack
 import com.richardluo.globalIconPack.utils.flowTrigger
@@ -13,7 +14,9 @@ import com.richardluo.globalIconPack.utils.getInt
 import com.richardluo.globalIconPack.utils.getLong
 import com.richardluo.globalIconPack.utils.log
 import com.richardluo.globalIconPack.utils.tryEmit
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 
 class IconPackDB(private val context: Context, path: String = "iconPack.db") :
   SQLiteOpenHelper(context.createDeviceProtectedStorageContext(), path, null, 7) {
@@ -260,7 +263,21 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
     rawQuery("select DISTINCT tbl_name from sqlite_master WHERE tbl_name LIKE '${pt("%")}'", null)
       .use { while (it.moveToNext()) block(it.getString(0)) }
 
-  override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {}
+  override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
+    if (oldVersion < 7) {
+      runBlocking {
+        withContext(Dispatchers.Main) {
+          Toast.makeText(
+              context,
+              "Please clear data, the db version is not compatible.",
+              Toast.LENGTH_LONG,
+            )
+            .show()
+        }
+      }
+      throw Exception("Old version < 7!")
+    }
+  }
 }
 
 inline fun SQLiteDatabase.transaction(block: SQLiteDatabase.() -> Unit) =
