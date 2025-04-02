@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="appName">Global Icon Pack</string>
-    <string name="plzEnableModuleFirst">Please ensure the Xposed module has been enabled first.</string>
     <string name="general">Allgemein</string>
     <string name="mode">Modus</string>
     <string name="modeProvider">Anbietermodus: Den gehookten Apps die Daten über diese App bereitstellen.</string>
@@ -9,26 +8,13 @@
     <string name="iconPack">Symbolpaket</string>
     <string name="iconPackSummary">Der Paketname des Symbolpakets.</string>
     <string name="iconPackAsFallback">Rückfall-Symbolpaket</string>
-    <string name="iconPackAsFallbackSummary">Use icon pack even if class name does not match.</string>
-    <string name="shortcut">Generate icons for shortcuts</string>
-    <string name="mergeIconPack">Merge icon pack</string>
-    <string name="mergeIconPackSummary">Generate a new icon pack from various icon packs.</string>
-    <string name="iconPackSettings">Symbolpaket-Einstellungen</string>
-    <string name="iconVariant">Icon variant</string>
-    <string name="iconVariantSummary">Choose different variants from icon pack.</string>
     <string name="iconFallback">Rückfallsymbole generieren</string>
     <string name="iconFallbackSummary">Hintergrund, Ausschnitt und Skalierung des Symbolpakets auf Symbole von nicht in Symbolpaket enthaltenen Apps anwenden.</string>
-    <string name="scaleOnlyForeground">Scale only the foreground for adaptive icons</string>
     <string name="overrideIconFallback">Rückfall-Einstellungen überschreiben</string>
     <string name="overrideIconFallbackSummary">Andere Werte für Rückfall-Einstellungen verwenden.</string>
     <string name="iconPackScale">Skalierung</string>
-    <string name="pixelSettings">Pixel settings</string>
-    <string name="pixelLauncherPackage">Launcher package name</string>
-    <string name="pixelLauncherPackageSummary">Used to identify a launcher 3 based launcher, but the features below are not guaranteed.</string>
     <string name="noForceShape">Keine Form erzwingen</string>
     <string name="noForceShapeSummary">Entfernt den weißen Hintergrund hinter ungewöhnlich geformten Symbolen.</string>
-    <string name="noShadow">Remove shadow underneath</string>
-    <string name="noShadowSummary">Remove the shadow generated for system icon mask.</string>
     <string name="forceLoadClockAndCalendar">Laden des Uhr- und Kalendersymbols erzwingen</string>
     <string name="moreOptions">Weitere Optionen</string>
     <string name="restartSystemUI">SystemUI neustarten</string>
@@ -36,31 +22,5 @@
     <string name="restartOthers">Andere neustarten</string>
     <string name="openCrowdin">Hilf bei der Übersetzung mit</string>
     <string name="openGithub">Github</string>
-    <string name="buyMeACoffee">Buy me a coffee</string>
     <string name="restartedSuccessfully">Neustart erfolgreich</string>
-    <string name="warning">Warning</string>
-    <string name="notice">Notice</string>
-    <string name="search">Search</string>
-    <string name="restoreDefault">Restore default</string>
-    <string name="restoreDefaultWarning">Are you sure you want to restore to the default icons?</string>
-    <string name="suggestedIcons">Suggested icons</string>
-    <string name="allIcons">All icons</string>
-    <string name="userApps">User apps</string>
-    <string name="systemApps">System apps</string>
-    <string name="shortcuts">Shortcuts</string>
-    <string name="requiresHookSystem">You must hook system framework to get shortcuts.</string>
-    <string name="modified">Modified</string>
-    <string name="chooseBasePack">Choose a base icon pack</string>
-    <string name="chooseIconToReplace">Choose the icon to replace</string>
-    <string name="chooseNewIcon">Choose a new icon</string>
-    <string name="originalIcon">Original icon</string>
-    <string name="fillNewPackInfo">Fill new pack info</string>
-    <string name="newPackName">New pack name</string>
-    <string name="newPackPackage">New pack package</string>
-    <string name="installedAppsOnly">Generate icons only for installed apps</string>
-    <string name="nextStep">Next step</string>
-    <string name="done">Done</string>
-    <string name="mergerWarning">The app will collect and generate the necessary files for creating a new icon pack.\nYou are not permitted to distribute the generated content without the original creators\' permission.\nYou have been warned!</string>
-    <string name="requiresEmptyFolder">An empty folder is necessary!</string>
-    <string name="mergerInstruction">Follow the steps below:\n1. Install Termux and grant storage permission.\n2. Run command `cd &lt;the output folder&gt; &amp;&amp; bash create_icon_pack.sh`.</string>
 </resources>

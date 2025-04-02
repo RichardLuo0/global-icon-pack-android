@@ -2,7 +2,8 @@
 <resources>
     <string name="appName">全局图标包</string>
     <string name="plzEnableModuleFirst">请先确认Xposed模块已启用。</string>
-    <string name="general">总体设置</string>
+    <string name="iconPackApplied">图标包已应用。请手动点击“重启XXX”。</string>
+    <string name="general">总体</string>
     <string name="mode">模式</string>
     <string name="modeProvider">提供器模式：此应用向其他被hook的应用提供数据。</string>
     <string name="modeLocal">本地模式：被hook的应用在每次启动时重载图标包。</string>
@@ -13,7 +14,7 @@
     <string name="shortcut">生成快捷方式图标</string>
     <string name="mergeIconPack">合并图标包</string>
     <string name="mergeIconPackSummary">从多个图标包生成一个新的图标包。</string>
-    <string name="iconPackSettings">图标包设置</string>
+    <string name="iconPackSettings">图标包</string>
     <string name="iconVariant">图标变体</string>
     <string name="iconVariantSummary">从图标包中选择不同的变体。</string>
     <string name="iconFallback">生成回退图标</string>
@@ -22,7 +23,7 @@
     <string name="overrideIconFallback">覆盖回退选项</string>
     <string name="overrideIconFallbackSummary">为回退选项使用新值。</string>
     <string name="iconPackScale">缩放</string>
-    <string name="pixelSettings">Pixel 设置</string>
+    <string name="pixelSettings">Pixel</string>
     <string name="pixelLauncherPackage">启动器包名</string>
     <string name="pixelLauncherPackageSummary">用于识别基于launcher 3的启动器，但以下功能不保证正常工作。</string>
     <string name="noForceShape">阻止强制形状</string>
@@ -41,6 +42,7 @@
     <string name="warning">警告</string>
     <string name="notice">提示</string>
     <string name="search">搜索</string>
+    <string name="options">选项</string>
     <string name="restoreDefault">恢复默认</string>
     <string name="restoreDefaultWarning">您确定要还原为默认图标吗？</string>
     <string name="suggestedIcons">推荐图标</string>
@@ -50,6 +52,10 @@
     <string name="shortcuts">快捷方式</string>
     <string name="requiresHookSystem">您必须hook系统框架才能获取快捷方式。</string>
     <string name="modified">已修改</string>
+    <string name="exportIconPack">导出</string>
+    <string name="exportedIconPack">图标包已导出。</string>
+    <string name="importIconPack">导入</string>
+    <string name="importedIconPack">图标包已导入。</string>
     <string name="chooseBasePack">选择基本图标包</string>
     <string name="chooseIconToReplace">选择要替换的图标</string>
     <string name="chooseNewIcon">选择一个新图标</string>

@@ -2,7 +2,6 @@
 <resources>
     <string name="appName">Global Icon Pack</string>
     <string name="plzEnableModuleFirst">Пожалуйста, сначала убедитесь, что модуль Xposed включен.</string>
-    <string name="general">General</string>
     <string name="mode">Режим</string>
     <string name="modeProvider">Режим поставщика: это приложение предоставляет данные подключенным приложениям.</string>
     <string name="modeLocal">Локальный режим: Подключенные приложения перезагружают пакет значков при каждом запуске.</string>
@@ -13,20 +12,9 @@
     <string name="shortcut">Генерация значков для ярлыков</string>
     <string name="mergeIconPack">Объединить набор значков</string>
     <string name="mergeIconPackSummary">Создать новый набор иконок из различных наборов.</string>
-    <string name="iconPackSettings">Настройки набора иконок</string>
     <string name="iconVariant">Варианты иконок</string>
-    <string name="iconVariantSummary">Choose different variants from icon pack.</string>
-    <string name="iconFallback">Generate fallback icons</string>
-    <string name="iconFallbackSummary">Apply background, mask, and scale from the icon pack to apps without dedicated icons.</string>
-    <string name="scaleOnlyForeground">Scale only the foreground for adaptive icons</string>
-    <string name="overrideIconFallback">Override fallback settings</string>
-    <string name="overrideIconFallbackSummary">Use new values for the fallback settings.</string>
     <string name="iconPackScale">Масштаб</string>
-    <string name="pixelSettings">Настройки Pixel</string>
     <string name="pixelLauncherPackage">Имя пакета лаунчера</string>
-    <string name="pixelLauncherPackageSummary">Used to identify a launcher 3 based launcher, but the features below are not guaranteed.</string>
-    <string name="noForceShape">No force shape</string>
-    <string name="noForceShapeSummary">Remove the white background behind irregular icon.</string>
     <string name="noShadow">Удалите тень снизу</string>
     <string name="noShadowSummary">Удалить тень, созданную для маски системной иконки.</string>
     <string name="forceLoadClockAndCalendar">Принудительная загрузка иконок часов и календаря</string>
