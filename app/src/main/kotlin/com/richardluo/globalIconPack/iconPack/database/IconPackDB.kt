@@ -248,6 +248,7 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
       )
       update(this, pack)
       iconsUpdateFlow.tryEmit()
+      modifiedUpdateFlow.tryEmit()
     }
   }
 
