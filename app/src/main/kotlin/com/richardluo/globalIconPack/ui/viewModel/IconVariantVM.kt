@@ -63,15 +63,7 @@ class IconVariantVM(app: Application) : ContextVM(app) {
         )
     }
 
-  val chooseIconVM =
-    ChooseIconVM(
-      basePack,
-      { iconPackCache.getIconPack(it) },
-      { pack, info ->
-        iconPackCache.getIconPack(pack).getIconEntry(info.componentName, iconPackConfig)
-      },
-      { loadIcon(it) },
-    )
+  val chooseIconVM = ChooseIconVM(basePack, { iconPackCache.getIconPack(it) }, { loadIcon(it) })
 
   private val modifiedChangeTrigger = flowTrigger()
   val modified =

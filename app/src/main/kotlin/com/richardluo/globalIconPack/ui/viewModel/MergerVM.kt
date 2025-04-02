@@ -48,7 +48,7 @@ class MergerVM(app: Application) : ContextVM(app) {
     set(value) {
       if (basePackState.value == value) return
       basePackState.value = value
-      if (value.isNotEmpty()) chooseIconVM.variantPack.value = value
+      if (value.isNotEmpty()) chooseIconVM.pack.value = value
       cachedIcons.clear()
       changedIcons.clear()
     }
@@ -103,15 +103,7 @@ class MergerVM(app: Application) : ContextVM(app) {
       }
     }
 
-  val chooseIconVM =
-    ChooseIconVM(
-      basePack,
-      { iconPackCache.getIconPack(it) },
-      { pack, info ->
-        iconPackCache.getIconPack(pack).getIconEntry(info.componentName, iconPackConfigFlow.value)
-      },
-      { loadIcon(it) },
-    )
+  val chooseIconVM = ChooseIconVM(basePack, { iconPackCache.getIconPack(it) }, { loadIcon(it) })
 
   var newPackName by mutableStateOf("Merged Icon Pack")
   var newPackPackage by mutableStateOf("com.dummy.iconPack")

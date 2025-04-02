@@ -5,7 +5,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.graphics.ImageBitmap
-import com.richardluo.globalIconPack.iconPack.database.IconEntry
 import com.richardluo.globalIconPack.iconPack.database.NormalIconEntry
 import com.richardluo.globalIconPack.ui.model.AppIconInfo
 import com.richardluo.globalIconPack.ui.model.IconEntryWithPack
@@ -24,14 +23,13 @@ import kotlinx.coroutines.withContext
 class ChooseIconVM(
   basePack: String,
   getIconPack: (String) -> IconPack,
-  getIconEntry: (String, AppIconInfo) -> IconEntry?,
   private val loadIcon: suspend (Pair<AppIconInfo, IconEntryWithPack?>) -> ImageBitmap,
 ) {
-  val variantPack = mutableStateOf(basePack)
-  val variantIcons =
-    snapshotFlow { variantPack.value }
+  val pack = mutableStateOf(basePack)
+  val icons =
+    snapshotFlow { pack.value }
       .transform { pack ->
-        if (variantPack.value.isEmpty()) return@transform
+        if (pack.isEmpty()) return@transform
         emit(null)
         emit(
           withContext(Dispatchers.IO) {
@@ -43,20 +41,19 @@ class ChooseIconVM(
 
   var variantSheet by mutableStateOf(false)
   val selectedApp = MutableStateFlow<AppIconInfo?>(null)
-  val variantSearchText = mutableStateOf("")
-  val suggestVariantIcons =
-    combineTransform(
-        variantIcons,
-        selectedApp,
-        snapshotFlow { variantSearchText.value }.debounceInput(),
-      ) { icons, app, text ->
+  val searchText = mutableStateOf("")
+  val suggestIcons =
+    combineTransform(icons, selectedApp, snapshotFlow { searchText.value }.debounceInput()) {
+        icons,
+        app,
+        text ->
         emit(null)
         icons ?: return@combineTransform
         app ?: return@combineTransform
         emit(
           mutableListOf<VariantIcon>(OriginalIcon()).apply {
             withContext(Dispatchers.Default) {
-              val iconEntry = getIconEntry(variantPack.value, app)
+              val iconEntry = getIconPack(pack.value).getIconEntry(app.componentName, true)
               addAll(
                 if (text.isEmpty())
                   if (iconEntry != null) icons.filter { it.entry.name.startsWith(iconEntry.name) }

@@ -46,8 +46,11 @@ class IconPack(val pack: String, val resources: Resources) {
   }
 
   fun getIconEntry(cn: ComponentName, config: IconPackConfig) =
+    getIconEntry(cn, config.iconPackAsFallback)
+
+  fun getIconEntry(cn: ComponentName, iconPackAsFallback: Boolean) =
     (iconEntryMap[cn]
-        ?: if (config.iconPackAsFallback) iconEntryMap[getComponentName(cn.packageName)] else null)
+        ?: if (iconPackAsFallback) iconEntryMap[getComponentName(cn.packageName)] else null)
       ?.let { entry -> makeValidEntry(entry) }
 
   fun makeValidEntry(entry: IconEntry) =

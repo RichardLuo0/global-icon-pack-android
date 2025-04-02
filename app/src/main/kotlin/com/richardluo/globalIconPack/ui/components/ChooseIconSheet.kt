@@ -48,7 +48,7 @@ fun ChooseIconSheet(viewModel: ChooseIconVM, replaceIcon: (VariantIcon) -> Unit)
     if (viewModel.variantSheet) sheetState.show()
     else {
       sheetState.hide()
-      viewModel.variantSearchText.value = ""
+      viewModel.searchText.value = ""
     }
   }
 
@@ -64,14 +64,14 @@ fun ChooseIconSheet(viewModel: ChooseIconVM, replaceIcon: (VariantIcon) -> Unit)
         value = IconPackApps.getFlow(context).collectAsState(mapOf()).value.toList(),
         key = { it.first },
       ) { item, dismiss ->
-        IconPackItem(item.first, item.second, viewModel.variantPack.value) {
-          viewModel.variantPack.value = item.first
+        IconPackItem(item.first, item.second, viewModel.pack.value) {
+          viewModel.pack.value = item.first
           dismiss()
         }
       }
 
       RoundSearchBar(
-        viewModel.variantSearchText,
+        viewModel.searchText,
         stringResource(R.string.search),
         modifier = Modifier.padding(bottom = 8.dp),
         trailingIcon = {
@@ -89,10 +89,10 @@ fun ChooseIconSheet(viewModel: ChooseIconVM, replaceIcon: (VariantIcon) -> Unit)
           viewModel.variantSheet = false
         }
 
-      val suggestIcons = viewModel.suggestVariantIcons.getValue(null)
+      val suggestIcons = viewModel.suggestIcons.getValue(null)
       if (suggestIcons != null)
-        if (viewModel.variantSearchText.value.isEmpty()) {
-          val variantIcons = viewModel.variantIcons.getValue(null) ?: setOf()
+        if (viewModel.searchText.value.isEmpty()) {
+          val variantIcons = viewModel.icons.getValue(null) ?: setOf()
           LazyVerticalGrid(
             modifier = Modifier.fillMaxSize().padding(horizontal = 2.dp),
             columns = GridCells.Adaptive(minSize = 74.dp),
