@@ -2,6 +2,17 @@
 <shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
     <shortcut
         android:enabled="true"
+        android:icon="@mipmap/merge_iconpack"
+        android:shortcutId="mergeIconPack"
+        android:shortcutLongLabel="@string/mergeIconPackSummary"
+        android:shortcutShortLabel="@string/mergeIconPack">
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetClass="com.richardluo.globalIconPack.ui.IconPackMergerActivity"
+            android:targetPackage="com.richardluo.globalIconPack" />
+    </shortcut>
+    <shortcut
+        android:enabled="true"
         android:icon="@mipmap/icon_variant"
         android:shortcutId="iconVariant"
         android:shortcutLongLabel="@string/iconVariantSummary"
