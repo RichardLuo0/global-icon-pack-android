@@ -48,7 +48,7 @@
         <activity
             android:name=".ui.MainActivity"
             android:exported="true"
-            android:launchMode="singleTask">
+            android:launchMode="singleTop">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -66,12 +66,12 @@
         <activity
             android:name=".ui.IconVariantActivity"
             android:exported="false"
-            android:launchMode="singleTask" />
+            android:launchMode="singleTop" />
 
         <activity
             android:name=".ui.IconPackMergerActivity"
             android:exported="false"
-            android:launchMode="singleTask" />
+            android:launchMode="singleTop" />
 
         <provider
             android:name=".iconPack.IconPackProvider"
