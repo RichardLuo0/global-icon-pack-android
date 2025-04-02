@@ -93,4 +93,5 @@ jobs:
           tag: ${{ steps.save_version.outputs.VERSION_NAME }}
           artifacts: "app/build/outputs/apk/release/app-release.apk"
           body: ${{ steps.build_changelog.outputs.changelog }}
+          draft: true
           token: ${{ secrets.GITHUB_TOKEN }}
