@@ -1,0 +1,1 @@
+Since 0.3.0, you must clear data or delete /data/user_de/0/com.richardluo.globalIconPack/databases/iconPack.db
