@@ -30,6 +30,7 @@ import kotlinx.coroutines.flow.combineTransform
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
@@ -93,15 +94,12 @@ class MergerVM(app: Application) : ContextVM(app) {
           apps == null -> emit(null)
           else -> {
             if (cachedIcons.isEmpty()) emit(null)
-            emit(
-              withContext(Dispatchers.Default) {
-                val iconPack = iconPackCache.getIconPack(basePack)
-                apps.map { info -> info to getIconEntry(iconPack, info) }
-              }
-            )
+            val iconPack = iconPackCache.getIconPack(basePack)
+            emit(apps.map { info -> info to getIconEntry(iconPack, info) })
           }
         }
       }
+      .flowOn(Dispatchers.Default)
       .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
   val chooseIconVM = ChooseIconVM(basePack, { iconPackCache.getIconPack(it) }, { loadIcon(it) })
@@ -134,26 +132,26 @@ class MergerVM(app: Application) : ContextVM(app) {
 
   fun createIconPack(uri: Uri) {
     if (basePack.isEmpty()) return
-    viewModelScope.launch {
+    viewModelScope.launch(Dispatchers.Default) {
       isCreatingApk = true
       try {
-        withContext(Dispatchers.Default) {
-          val pack = iconPackCache.getIconPack(basePack)
-          IconPackCreator.createIconPack(
-            context,
-            uri,
-            newPackName,
-            newPackPackage,
-            pack,
-            filterAppsVM.getAllApps().associate { info ->
-              info.componentName to getIconEntry(pack, info)
-            },
-            installedAppsOnly,
-          )
-        }
+        val pack = iconPackCache.getIconPack(basePack)
+        IconPackCreator.createIconPack(
+          context,
+          uri,
+          newPackName,
+          newPackPackage,
+          pack,
+          filterAppsVM.getAllApps().associate { info ->
+            info.componentName to getIconEntry(pack, info)
+          },
+          installedAppsOnly,
+        )
         instructionDialogState.value = true
       } catch (_: IconPackCreator.FolderNotEmptyException) {
-        Toast.makeText(context, R.string.requiresEmptyFolder, Toast.LENGTH_LONG).show()
+        withContext(Dispatchers.Main) {
+          Toast.makeText(context, R.string.requiresEmptyFolder, Toast.LENGTH_LONG).show()
+        }
       } finally {
         isCreatingApk = false
       }

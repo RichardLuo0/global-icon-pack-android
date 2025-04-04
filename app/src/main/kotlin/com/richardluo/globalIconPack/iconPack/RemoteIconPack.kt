@@ -9,9 +9,9 @@ import com.richardluo.globalIconPack.iconPack.database.FallbackSettings
 import com.richardluo.globalIconPack.iconPack.database.IconEntry
 import com.richardluo.globalIconPack.reflect.Resources.getDrawableForDensity
 import com.richardluo.globalIconPack.utils.getBlob
-import com.richardluo.globalIconPack.utils.getFirstRow
 import com.richardluo.globalIconPack.utils.getOrPutNullable
 import com.richardluo.globalIconPack.utils.getString
+import com.richardluo.globalIconPack.utils.useFirstRow
 
 class IconEntryFromOtherPack(val entry: IconEntry, val pack: String) : IconEntry by entry
 
@@ -35,7 +35,7 @@ class RemoteIconPack(
       if (config.iconFallback)
         contentResolver
           .query(IconPackProvider.FALLBACKS, null, null, arrayOf(pack), null)
-          ?.getFirstRow {
+          ?.useFirstRow {
             IconFallback(
                 FallbackSettings.from(it.getBlob("fallback")),
                 ::getIcon,
@@ -57,7 +57,7 @@ class RemoteIconPack(
           arrayOf(pack, cn.packageName, cn.className, iconPackAsFallback.toString()),
           null,
         )
-        ?.getFirstRow {
+        ?.useFirstRow {
           val entry =
             if (it.getColumnIndex("type") > 0) IconEntryWithId.fromCursor(it)
             else IconEntry.from(it.getBlob("entry"))

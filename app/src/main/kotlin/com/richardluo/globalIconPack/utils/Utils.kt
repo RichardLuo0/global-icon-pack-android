@@ -81,7 +81,7 @@ val isInMod by lazy {
   }
 }
 
-inline fun <T> Cursor.getFirstRow(block: (Cursor) -> T) =
+inline fun <T> Cursor.useFirstRow(block: (Cursor) -> T) =
   this.takeIf { it.moveToFirst() }?.use(block)
 
 fun Cursor.getBlob(name: String) = this.getBlob(getColumnIndexOrThrow(name))

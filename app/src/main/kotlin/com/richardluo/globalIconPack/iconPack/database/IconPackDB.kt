@@ -9,11 +9,11 @@ import android.widget.Toast
 import com.richardluo.globalIconPack.iconPack.IconPackApps
 import com.richardluo.globalIconPack.iconPack.loadIconPack
 import com.richardluo.globalIconPack.utils.flowTrigger
-import com.richardluo.globalIconPack.utils.getFirstRow
 import com.richardluo.globalIconPack.utils.getInt
 import com.richardluo.globalIconPack.utils.getLong
 import com.richardluo.globalIconPack.utils.log
 import com.richardluo.globalIconPack.utils.tryEmit
+import com.richardluo.globalIconPack.utils.useFirstRow
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -45,7 +45,7 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
           ?: return
       val modified =
         rawQuery("select DISTINCT updateAt, modified from iconPack where pack=?", arrayOf(pack))
-          .getFirstRow {
+          .useFirstRow {
             if (lastUpdateTime < it.getLong("updateAt")) return
             it.getInt("modified") != 0
           } == true
@@ -136,7 +136,7 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
   fun isPackModified(pack: String) =
     readableDatabase
       .query("iconPack", arrayOf("modified"), "pack=?", arrayOf(pack), null, null, null, "1")
-      .getFirstRow { it.getInt("modified") != 0 } == true
+      .useFirstRow { it.getInt("modified") != 0 } == true
 
   private fun getIconExact(pack: String, cn: ComponentName) =
     readableDatabase.rawQuery(

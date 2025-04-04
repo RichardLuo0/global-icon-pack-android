@@ -21,10 +21,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.withContext
 import me.zhanghai.compose.preference.Preferences
 
 class MainVM(app: Application) : ContextVM(app) {
@@ -43,30 +43,29 @@ class MainVM(app: Application) : ContextVM(app) {
       .distinctUntilChanged()
       .onEach { (mode, pack) ->
         waiting++
-        withContext(Dispatchers.IO) {
-          when (mode) {
-            MODE_PROVIDER -> {
-              KeepAliveService.startForeground(context)
-              // Enable boot receiver
-              context.packageManager.setComponentEnabledSetting(
-                ComponentName(context, BootReceiver::class.java),
-                PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
-                PackageManager.DONT_KILL_APP,
-              )
-              runCatchingToast(context) { iconPackDB.onIconPackChange(pack) }
-            }
-            else -> {
-              KeepAliveService.stopForeground(context)
-              context.packageManager.setComponentEnabledSetting(
-                ComponentName(context, BootReceiver::class.java),
-                PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
-                PackageManager.DONT_KILL_APP,
-              )
-            }
+        when (mode) {
+          MODE_PROVIDER -> {
+            KeepAliveService.startForeground(context)
+            // Enable boot receiver
+            context.packageManager.setComponentEnabledSetting(
+              ComponentName(context, BootReceiver::class.java),
+              PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
+              PackageManager.DONT_KILL_APP,
+            )
+            runCatchingToast(context) { iconPackDB.onIconPackChange(pack) }
+          }
+          else -> {
+            KeepAliveService.stopForeground(context)
+            context.packageManager.setComponentEnabledSetting(
+              ComponentName(context, BootReceiver::class.java),
+              PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+              PackageManager.DONT_KILL_APP,
+            )
           }
         }
         waiting--
       }
+      .flowOn(Dispatchers.IO)
       .launchIn(viewModelScope)
   }
 }

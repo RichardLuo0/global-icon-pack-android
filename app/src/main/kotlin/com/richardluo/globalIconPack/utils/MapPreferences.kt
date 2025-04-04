@@ -5,13 +5,14 @@ import androidx.core.content.edit
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.launchIn
+import kotlinx.coroutines.flow.onEach
 import me.zhanghai.compose.preference.MutablePreferences
 import me.zhanghai.compose.preference.Preferences
 
 @OptIn(DelicateCoroutinesApi::class)
 fun SharedPreferences.getPreferenceFlow(): MutableStateFlow<Preferences> =
-  MutableStateFlow(preferences).also { GlobalScope.launch { it.collect { preferences = it } } }
+  MutableStateFlow(preferences).apply { onEach { preferences = it }.launchIn(GlobalScope) }
 
 class MapMutablePreferences(private val map: MutableMap<String, Any> = mutableMapOf()) :
   MutablePreferences {

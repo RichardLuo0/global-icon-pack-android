@@ -24,15 +24,16 @@ import com.richardluo.globalIconPack.utils.ContextVM
 import com.richardluo.globalIconPack.utils.WorldPreference
 import com.richardluo.globalIconPack.utils.get
 import com.richardluo.globalIconPack.utils.getBlob
-import com.richardluo.globalIconPack.utils.getFirstRow
 import com.richardluo.globalIconPack.utils.getInstance
 import com.richardluo.globalIconPack.utils.getString
 import com.richardluo.globalIconPack.utils.ifNotEmpty
 import com.richardluo.globalIconPack.utils.runCatchingToast
+import com.richardluo.globalIconPack.utils.useFirstRow
 import java.io.OutputStreamWriter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combineTransform
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -53,20 +54,21 @@ class IconVariantVM(app: Application) : ContextVM(app) {
   val filterAppsVM = FilterAppsVM(context)
   val filteredIcons =
     combineTransform(filterAppsVM.filteredApps, iconPackDB.iconsUpdateFlow) { apps, _ ->
-        if (apps == null) emit(null)
-        else emit(withContext(Dispatchers.IO) { apps.map { it to getIconEntry(it.componentName) } })
+        if (apps == null) emit(null) else emit(apps.map { it to getIconEntry(it.componentName) })
       }
+      .flowOn(Dispatchers.IO)
       .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
   val chooseIconVM = ChooseIconVM(basePack, { iconPackCache.getIconPack(it) }, { loadIcon(it) })
 
   val modified =
     iconPackDB.modifiedUpdateFlow
-      .map { withContext(Dispatchers.IO) { iconPackDB.isPackModified(basePack) } }
+      .map { iconPackDB.isPackModified(basePack) }
+      .flowOn(Dispatchers.IO)
       .stateIn(viewModelScope, SharingStarted.Lazily, false)
 
   private fun getIconEntry(cn: ComponentName) =
-    iconPackDB.getIcon(basePack, cn, iconPackConfig.iconPackAsFallback).getFirstRow {
+    iconPackDB.getIcon(basePack, cn, iconPackConfig.iconPackAsFallback).useFirstRow {
       val entry = IconEntry.from(it.getBlob("entry"))
       val pack = it.getString("pack").ifEmpty { basePack }
       val iconPack = iconPackCache.getIconPack(pack)
@@ -78,96 +80,92 @@ class IconVariantVM(app: Application) : ContextVM(app) {
 
   fun restoreDefault() {
     if (basePack.isEmpty()) return
-    viewModelScope.launch {
-      runCatchingToast(context) { withContext(Dispatchers.IO) { iconPackDB.resetPack(basePack) } }
+    viewModelScope.launch(Dispatchers.IO) {
+      runCatchingToast(context) { iconPackDB.resetPack(basePack) }
     }
   }
 
   fun flipModified() {
     if (basePack.isEmpty()) return
-    viewModelScope.launch {
-      runCatchingToast(context) {
-        withContext(Dispatchers.IO) { iconPackDB.setPackModified(basePack, !modified.value) }
-      }
+    viewModelScope.launch(Dispatchers.IO) {
+      runCatchingToast(context) { iconPackDB.setPackModified(basePack, !modified.value) }
     }
   }
 
   fun replaceIcon(icon: VariantIcon) {
     val info = chooseIconVM.selectedApp.value ?: return
     val cn = info.componentName
-    viewModelScope.launch {
+    viewModelScope.launch(Dispatchers.IO) {
       runCatchingToast(context) {
-        withContext(Dispatchers.IO) {
-          when (icon) {
-            is OriginalIcon -> iconPackDB.deleteIcon(basePack, cn.packageName)
-            is VariantPackIcon ->
-              when (info) {
-                is ShortcutIconInfo ->
-                  iconPackDB.insertOrUpdateShortcutIcon(basePack, cn, icon.entry, icon.pack.pack)
-                else -> iconPackDB.insertOrUpdateAppIcon(basePack, cn, icon.entry, icon.pack.pack)
-              }
-          }
+        when (icon) {
+          is OriginalIcon -> iconPackDB.deleteIcon(basePack, cn.packageName)
+          is VariantPackIcon ->
+            when (info) {
+              is ShortcutIconInfo ->
+                iconPackDB.insertOrUpdateShortcutIcon(basePack, cn, icon.entry, icon.pack.pack)
+              else -> iconPackDB.insertOrUpdateAppIcon(basePack, cn, icon.entry, icon.pack.pack)
+            }
         }
       }
     }
   }
 
   fun export(uri: Uri) {
-    viewModelScope.launch {
+    viewModelScope.launch(Dispatchers.Default) {
       runCatchingToast(context) {
-        withContext(Dispatchers.Default) {
-          val xml = StringBuilder("<?xml version=\"1.0\" encoding=\"UTF-8\"?><resources>")
-          filterAppsVM.getAllApps().forEach {
-            getIconEntry(it.componentName)?.let { entry ->
-              if (entry.entry.type == IconEntry.Type.Normal) {
-                val cn = it.componentName.flattenToString()
-                val name = entry.entry.name
-                val pack = if (entry.pack.pack == basePack) "" else entry.pack.pack
-                xml.append(
-                  "<item component=\"$cn\" drawable=\"$name\"${pack.ifNotEmpty { " pack=\"$it\"" }}/>"
-                )
-              }
-              // Can not handle entries of other type
+        val xml = StringBuilder("<?xml version=\"1.0\" encoding=\"UTF-8\"?><resources>")
+        filterAppsVM.getAllApps().forEach {
+          getIconEntry(it.componentName)?.let { entry ->
+            if (entry.entry.type == IconEntry.Type.Normal) {
+              val cn = it.componentName.flattenToString()
+              val name = entry.entry.name
+              val pack = if (entry.pack.pack == basePack) "" else entry.pack.pack
+              xml.append(
+                "<item component=\"$cn\" drawable=\"$name\"${pack.ifNotEmpty { " pack=\"$it\"" }}/>"
+              )
             }
-          }
-          OutputStreamWriter(context.contentResolver.openOutputStream(uri)).use {
-            it.write(xml.append("</resources>").toString())
+            // Can not handle entries of other type
           }
         }
-        Toast.makeText(context, R.string.exportedIconPack, Toast.LENGTH_LONG).show()
+        OutputStreamWriter(context.contentResolver.openOutputStream(uri, "wt")).use {
+          it.write(xml.append("</resources>").toString())
+        }
+        withContext(Dispatchers.Main) {
+          Toast.makeText(context, R.string.exportedIconPack, Toast.LENGTH_LONG).show()
+        }
       }
     }
   }
 
   fun import(uri: Uri) {
-    viewModelScope.launch {
+    viewModelScope.launch(Dispatchers.IO) {
       runCatchingToast(context) {
-        withContext(Dispatchers.IO) {
-          context.contentResolver.openInputStream(uri).use {
-            val parser =
-              XmlPullParserFactory.newInstance().newPullParser().apply {
-                setInput(it, Xml.Encoding.UTF_8.toString())
-              }
-            iconPackDB.transaction {
-              while (parser.next() != XmlPullParser.END_DOCUMENT) {
-                if (parser.eventType != XmlPullParser.START_TAG) continue
-                when (parser.name) {
-                  "item" -> {
-                    var cn =
-                      parser["component"]?.let { ComponentName.unflattenFromString(it) } ?: continue
-                    insertOrUpdateAppIcon(
-                      basePack,
-                      cn,
-                      NormalIconEntry(parser["drawable"] ?: continue),
-                      parser["pack"] ?: "",
-                    )
-                  }
+        context.contentResolver.openInputStream(uri).use {
+          val parser =
+            XmlPullParserFactory.newInstance().newPullParser().apply {
+              setInput(it, Xml.Encoding.UTF_8.toString())
+            }
+          iconPackDB.transaction {
+            while (parser.next() != XmlPullParser.END_DOCUMENT) {
+              if (parser.eventType != XmlPullParser.START_TAG) continue
+              when (parser.name) {
+                "item" -> {
+                  var cn =
+                    parser["component"]?.let { ComponentName.unflattenFromString(it) } ?: continue
+                  insertOrUpdateAppIcon(
+                    basePack,
+                    cn,
+                    NormalIconEntry(parser["drawable"] ?: continue),
+                    parser["pack"] ?: "",
+                  )
                 }
               }
             }
           }
         }
-        Toast.makeText(context, R.string.importedIconPack, Toast.LENGTH_LONG).show()
+        withContext(Dispatchers.Main) {
+          Toast.makeText(context, R.string.importedIconPack, Toast.LENGTH_LONG).show()
+        }
       }
     }
   }

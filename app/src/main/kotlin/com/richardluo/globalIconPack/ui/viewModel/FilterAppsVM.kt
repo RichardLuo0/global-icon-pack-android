@@ -19,6 +19,8 @@ import com.richardluo.globalIconPack.utils.log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.combineTransform
 import kotlinx.coroutines.flow.conflate
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 
 private val appsCache =
@@ -92,37 +94,33 @@ class FilterAppsVM(context: Context) {
       }
     }
 
-  private suspend fun getCurrentApps(context: Context) =
-    withContext(Dispatchers.IO) {
-      when (type.value) {
-        Type.User,
-        Type.System -> apps[type.value.ordinal]
-        Type.Shortcut ->
-          runCatching { shortcuts }
-            .getOrElse {
-              log(it)
-              withContext(Dispatchers.Main) {
-                Toast.makeText(context, R.string.requiresHookSystem, Toast.LENGTH_LONG).show()
+  private val currentApps =
+    snapshotFlow { type.value }
+      .map { type ->
+        when (type) {
+          Type.User,
+          Type.System -> apps[type.ordinal]
+          Type.Shortcut ->
+            runCatching { shortcuts }
+              .getOrElse {
+                log(it)
+                withContext(Dispatchers.Main) {
+                  Toast.makeText(context, R.string.requiresHookSystem, Toast.LENGTH_LONG).show()
+                }
+                listOf()
               }
-              listOf()
-            }
+        }
       }
-    }
+      .flowOn(Dispatchers.IO)
 
   val filteredApps =
-    combineTransform(
-        snapshotFlow { type.value },
-        snapshotFlow { searchText.value }.debounceInput(),
-      ) { _, text ->
+    combineTransform(currentApps, snapshotFlow { searchText.value }.debounceInput()) { apps, text ->
         emit(null)
-        val apps = getCurrentApps(context)
         emit(
           if (text.isEmpty()) apps
-          else
-            withContext(Dispatchers.Default) {
-              apps.filter { info -> info.label.contains(text, ignoreCase = true) }
-            }
+          else apps.filter { info -> info.label.contains(text, ignoreCase = true) }
         )
       }
       .conflate()
+      .flowOn(Dispatchers.Default)
 }

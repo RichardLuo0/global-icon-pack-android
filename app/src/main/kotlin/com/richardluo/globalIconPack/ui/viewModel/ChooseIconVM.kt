@@ -17,8 +17,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combineTransform
 import kotlinx.coroutines.flow.conflate
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.transform
-import kotlinx.coroutines.withContext
 
 class ChooseIconVM(
   basePack: String,
@@ -31,13 +31,10 @@ class ChooseIconVM(
       .transform { pack ->
         if (pack.isEmpty()) return@transform
         emit(null)
-        emit(
-          withContext(Dispatchers.IO) {
-            val iconPack = getIconPack(pack)
-            iconPack.drawables.map { VariantPackIcon(iconPack, NormalIconEntry(it)) }
-          }
-        )
+        val iconPack = getIconPack(pack)
+        emit(iconPack.drawables.map { VariantPackIcon(iconPack, NormalIconEntry(it)) })
       }
+      .flowOn(Dispatchers.IO)
 
   var variantSheet by mutableStateOf(false)
   val selectedApp = MutableStateFlow<AppIconInfo?>(null)
@@ -52,19 +49,18 @@ class ChooseIconVM(
         app ?: return@combineTransform
         emit(
           mutableListOf<VariantIcon>(OriginalIcon()).apply {
-            withContext(Dispatchers.Default) {
-              val iconEntry = getIconPack(pack.value).getIconEntry(app.componentName, true)
-              addAll(
-                if (text.isEmpty())
-                  if (iconEntry != null) icons.filter { it.entry.name.startsWith(iconEntry.name) }
-                  else listOf()
-                else icons.filter { it.entry.name.contains(text, ignoreCase = true) }
-              )
-            }
+            val iconEntry = getIconPack(pack.value).getIconEntry(app.componentName, true)
+            addAll(
+              if (text.isEmpty())
+                if (iconEntry != null) icons.filter { it.entry.name.startsWith(iconEntry.name) }
+                else listOf()
+              else icons.filter { it.entry.name.contains(text, ignoreCase = true) }
+            )
           }
         )
       }
       .conflate()
+      .flowOn(Dispatchers.Default)
 
   suspend fun loadIconForSelectedApp(icon: VariantIcon) =
     when (icon) {
