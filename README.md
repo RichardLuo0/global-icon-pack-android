@@ -50,6 +50,8 @@ The list may not be latest.
   - elisenlebkuch
 - Russian
   - Кирилл Гук
+- Chinese Traditional
+  - Jia-Bin
 
 ## Disclaimer
 > [!WARNING]
