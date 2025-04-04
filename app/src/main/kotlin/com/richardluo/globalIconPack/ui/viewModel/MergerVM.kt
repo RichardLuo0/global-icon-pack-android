@@ -19,6 +19,7 @@ import com.richardluo.globalIconPack.ui.model.VariantIcon
 import com.richardluo.globalIconPack.ui.model.VariantPackIcon
 import com.richardluo.globalIconPack.utils.ContextVM
 import com.richardluo.globalIconPack.utils.IconPackCreator
+import com.richardluo.globalIconPack.utils.MapPreferences
 import com.richardluo.globalIconPack.utils.getInstance
 import com.richardluo.globalIconPack.utils.getOrPutNullable
 import kotlinx.coroutines.Dispatchers
@@ -34,7 +35,6 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import me.zhanghai.compose.preference.MutablePreferences
 import me.zhanghai.compose.preference.Preferences
 
 @OptIn(FlowPreview::class)
@@ -159,35 +159,4 @@ class MergerVM(app: Application) : ContextVM(app) {
       }
     }
   }
-}
-
-private class MapMutablePreferences(private val map: MutableMap<String, Any> = mutableMapOf()) :
-  MutablePreferences {
-  @Suppress("UNCHECKED_CAST") override fun <T> get(key: String): T? = map[key] as T?
-
-  override fun asMap(): Map<String, Any> = map
-
-  override fun toMutablePreferences(): MutablePreferences =
-    MapMutablePreferences(map.toMutableMap())
-
-  override fun <T> set(key: String, value: T?) {
-    if (value != null) {
-      map[key] = value
-    } else {
-      map -= key
-    }
-  }
-
-  override fun clear() {
-    map.clear()
-  }
-}
-
-private class MapPreferences(private val map: Map<String, Any> = emptyMap()) : Preferences {
-  @Suppress("UNCHECKED_CAST") override fun <T> get(key: String): T? = map[key] as T?
-
-  override fun asMap(): Map<String, Any> = map
-
-  override fun toMutablePreferences(): MutablePreferences =
-    MapMutablePreferences(map.toMutableMap())
 }

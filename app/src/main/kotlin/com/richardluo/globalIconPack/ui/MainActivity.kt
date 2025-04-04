@@ -76,17 +76,18 @@ import com.richardluo.globalIconPack.ui.components.WarnDialog
 import com.richardluo.globalIconPack.ui.components.mapListPreference
 import com.richardluo.globalIconPack.ui.viewModel.MainVM
 import com.richardluo.globalIconPack.utils.WorldPreference
+import com.richardluo.globalIconPack.utils.getPreferenceFlow
 import com.richardluo.globalIconPack.utils.getValue
 import com.topjohnwu.superuser.Shell
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.update
 import me.zhanghai.compose.preference.LocalPreferenceFlow
 import me.zhanghai.compose.preference.Preference
 import me.zhanghai.compose.preference.ProvidePreferenceLocals
 import me.zhanghai.compose.preference.SwitchPreference
-import me.zhanghai.compose.preference.getPreferenceFlow
 import me.zhanghai.compose.preference.listPreference
 import me.zhanghai.compose.preference.preference
 import me.zhanghai.compose.preference.preferenceCategory
@@ -135,10 +136,11 @@ class MainActivity : ComponentActivity() {
   private fun applyIconPackIfNeeded(intent: Intent) {
     val prefFlow = prefFlow
     if (prefFlow != null && intent.action == "${BuildConfig.APPLICATION_ID}.APPLY_ICON_PACK") {
-      prefFlow.value =
-        prefFlow.value.toMutablePreferences().apply {
+      prefFlow.update {
+        it.toMutablePreferences().apply {
           this[Pref.ICON_PACK.first] = intent.getStringExtra("packageName")
         }
+      }
       Toast.makeText(this, R.string.iconPackApplied, Toast.LENGTH_LONG).show()
     }
   }
