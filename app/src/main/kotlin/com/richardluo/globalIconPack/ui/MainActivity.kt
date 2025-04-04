@@ -10,6 +10,7 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -24,6 +25,7 @@ import androidx.compose.material.icons.automirrored.outlined.Shortcut
 import androidx.compose.material.icons.outlined.Apps
 import androidx.compose.material.icons.outlined.Backpack
 import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.Memory
 import androidx.compose.material.icons.outlined.Merge
 import androidx.compose.material.icons.outlined.PhotoSizeSelectSmall
 import androidx.compose.material.icons.outlined.Restore
@@ -231,7 +233,14 @@ object MainPreference {
       title = { OneLineText(stringResource(R.string.general)) },
     )
     listPreference(
-      icon = { Icon(Icons.Outlined.SettingsRemote, Pref.MODE.first) },
+      icon = {
+        AnimatedContent(it) {
+          when (it) {
+            MODE_PROVIDER -> Icon(Icons.Outlined.SettingsRemote, it)
+            MODE_LOCAL -> Icon(Icons.Outlined.Memory, it)
+          }
+        }
+      },
       key = Pref.MODE.first,
       defaultValue = Pref.MODE.second,
       values = listOf(MODE_PROVIDER, MODE_LOCAL),
