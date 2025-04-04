@@ -87,9 +87,8 @@ class IconPackProvider : ContentProvider() {
     selection: String?,
     selectionArgs: Array<out String>?,
     sortOrder: String?,
-  ): Cursor? {
-    startForegroundAsNeeded()
-    return runCatching {
+  ) =
+    runCatching {
         when (uri) {
           FALLBACKS ->
             if (selectionArgs != null && selectionArgs.isNotEmpty())
@@ -114,7 +113,6 @@ class IconPackProvider : ContentProvider() {
         }
       }
       .getOrNull { log(it) }
-  }
 
   private val idCacheMap = mutableMapOf<String, Int>()
 
@@ -126,10 +124,6 @@ class IconPackProvider : ContentProvider() {
 
   private fun getResources(pack: String) =
     resourcesMap.getOrPut(pack) { context!!.packageManager.getResourcesForApplication(pack) }
-
-  private fun startForegroundAsNeeded() {
-    KeepAliveService.startForeground(context!!)
-  }
 
   override fun getType(uri: Uri): String? = null
 

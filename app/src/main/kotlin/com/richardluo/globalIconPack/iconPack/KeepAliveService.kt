@@ -9,6 +9,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
+import com.richardluo.globalIconPack.utils.log
 
 private const val CHANNEL_ID: String = "IconPackProvider"
 
@@ -16,7 +17,11 @@ class KeepAliveService : Service() {
 
   companion object {
     fun startForeground(context: Context) {
-      runCatching { context.startForegroundService(Intent(context, KeepAliveService::class.java)) }
+      try {
+        context.startForegroundService(Intent(context, KeepAliveService::class.java))
+      } catch (e: Exception) {
+        log(e)
+      }
     }
 
     @SuppressLint("ImplicitSamInstance")
@@ -25,14 +30,13 @@ class KeepAliveService : Service() {
     }
   }
 
-  override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+  override fun onCreate() {
     createNotificationChannel()
     val builder: Notification.Builder =
       Notification.Builder(this, CHANNEL_ID)
         .setContentTitle("Providing icon pack to hooked apps")
         .setAutoCancel(true)
     startForeground(1, builder.build(), ServiceInfo.FOREGROUND_SERVICE_TYPE_MANIFEST)
-    return START_STICKY
   }
 
   private fun createNotificationChannel() {
