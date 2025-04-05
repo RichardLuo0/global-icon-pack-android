@@ -45,7 +45,6 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -66,7 +65,6 @@ import com.richardluo.globalIconPack.Pref
 import com.richardluo.globalIconPack.R
 import com.richardluo.globalIconPack.get
 import com.richardluo.globalIconPack.iconPack.IconPackApps
-import com.richardluo.globalIconPack.ui.components.ComposableSliderPreference
 import com.richardluo.globalIconPack.ui.components.IconButtonWithTooltip
 import com.richardluo.globalIconPack.ui.components.IconPackItem
 import com.richardluo.globalIconPack.ui.components.LoadingDialog
@@ -77,6 +75,7 @@ import com.richardluo.globalIconPack.ui.components.TwoLineText
 import com.richardluo.globalIconPack.ui.components.WarnDialog
 import com.richardluo.globalIconPack.ui.components.mapListPreference
 import com.richardluo.globalIconPack.ui.components.myPreferenceTheme
+import com.richardluo.globalIconPack.ui.components.sliderPreference
 import com.richardluo.globalIconPack.ui.viewModel.MainVM
 import com.richardluo.globalIconPack.utils.WorldPreference
 import com.richardluo.globalIconPack.utils.getPreferenceFlow
@@ -90,11 +89,9 @@ import kotlinx.coroutines.flow.update
 import me.zhanghai.compose.preference.LocalPreferenceFlow
 import me.zhanghai.compose.preference.Preference
 import me.zhanghai.compose.preference.ProvidePreferenceLocals
-import me.zhanghai.compose.preference.SwitchPreference
 import me.zhanghai.compose.preference.listPreference
 import me.zhanghai.compose.preference.preference
 import me.zhanghai.compose.preference.preferenceCategory
-import me.zhanghai.compose.preference.rememberPreferenceState
 import me.zhanghai.compose.preference.switchPreference
 import me.zhanghai.compose.preference.textFieldPreference
 
@@ -317,30 +314,24 @@ object MainPreference {
       defaultValue = Pref.SCALE_ONLY_FOREGROUND.second,
       title = { OneLineText(stringResource(R.string.scaleOnlyForeground)) },
     )
-    item {
-      val enableState =
-        rememberPreferenceState(
-          Pref.OVERRIDE_ICON_FALLBACK.first,
-          Pref.OVERRIDE_ICON_FALLBACK.second,
-        )
-      val enabled by enableState
-      SwitchPreference(
-        icon = {},
-        state = enableState,
-        title = { OneLineText(stringResource(R.string.overrideIconFallback)) },
-        summary = { TwoLineText(stringResource(R.string.overrideIconFallbackSummary)) },
-      )
-      ComposableSliderPreference(
-        icon = { Icon(Icons.Outlined.PhotoSizeSelectSmall, Pref.ICON_PACK_SCALE.first) },
-        enabled = { enabled },
-        key = Pref.ICON_PACK_SCALE.first,
-        defaultValue = Pref.ICON_PACK_SCALE.second,
-        valueRange = 0f..1.5f,
-        valueSteps = 29,
-        valueText = { Text("%.2f".format(it)) },
-        title = { OneLineText(stringResource(R.string.iconPackScale)) },
-      )
-    }
+    switchPreference(
+      icon = {},
+      key = Pref.OVERRIDE_ICON_FALLBACK.first,
+      defaultValue = Pref.OVERRIDE_ICON_FALLBACK.second,
+      title = { OneLineText(stringResource(R.string.overrideIconFallback)) },
+      summary = { TwoLineText(stringResource(R.string.overrideIconFallbackSummary)) },
+    )
+    sliderPreference(
+      icon = { Icon(Icons.Outlined.PhotoSizeSelectSmall, Pref.ICON_PACK_SCALE.first) },
+      enabled = { it.get(Pref.OVERRIDE_ICON_FALLBACK) },
+      key = Pref.ICON_PACK_SCALE.first,
+      defaultValue = Pref.ICON_PACK_SCALE.second,
+      valueRange = 0f..1.5f,
+      valueSteps = 29,
+      valueText = { Text("%.2f".format(it)) },
+      valueToText = { "%.2f".format(it) },
+      title = { OneLineText(stringResource(R.string.iconPackScale)) },
+    )
   }
 
   fun LazyListScope.pixel() {
