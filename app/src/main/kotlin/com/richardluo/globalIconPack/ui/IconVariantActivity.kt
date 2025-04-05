@@ -22,7 +22,6 @@ import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Upload
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -47,6 +46,7 @@ import com.richardluo.globalIconPack.ui.components.AppbarSearchBar
 import com.richardluo.globalIconPack.ui.components.ChooseIconSheet
 import com.richardluo.globalIconPack.ui.components.IconButtonWithTooltip
 import com.richardluo.globalIconPack.ui.components.IconForApp
+import com.richardluo.globalIconPack.ui.components.MyDropdownMenu
 import com.richardluo.globalIconPack.ui.components.SampleTheme
 import com.richardluo.globalIconPack.ui.components.WarnDialog
 import com.richardluo.globalIconPack.ui.viewModel.IconVariantVM
@@ -92,7 +92,7 @@ class IconVariantActivity : ComponentActivity() {
               IconButtonWithTooltip(Icons.Outlined.MoreVert, stringResource(R.string.moreOptions)) {
                 expand = true
               }
-              DropdownMenu(expanded = expand, onDismissRequest = { expand = false }) {
+              MyDropdownMenu(expanded = expand, onDismissRequest = { expand = false }) {
                 DropdownMenuItem(
                   leadingIcon = { Icon(Icons.Outlined.FilterList, "filter") },
                   text = { Text(getLabelByType(viewModel.filterAppsVM.type.value)) },
