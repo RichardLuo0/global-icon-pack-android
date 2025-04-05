@@ -75,7 +75,7 @@ import com.richardluo.globalIconPack.ui.components.TwoLineText
 import com.richardluo.globalIconPack.ui.components.WarnDialog
 import com.richardluo.globalIconPack.ui.components.mapListPreference
 import com.richardluo.globalIconPack.ui.components.myPreferenceTheme
-import com.richardluo.globalIconPack.ui.components.sliderPreference
+import com.richardluo.globalIconPack.ui.components.mySliderPreference
 import com.richardluo.globalIconPack.ui.viewModel.MainVM
 import com.richardluo.globalIconPack.utils.WorldPreference
 import com.richardluo.globalIconPack.utils.getPreferenceFlow
@@ -321,7 +321,7 @@ object MainPreference {
       title = { OneLineText(stringResource(R.string.overrideIconFallback)) },
       summary = { TwoLineText(stringResource(R.string.overrideIconFallbackSummary)) },
     )
-    sliderPreference(
+    mySliderPreference(
       icon = { Icon(Icons.Outlined.PhotoSizeSelectSmall, Pref.ICON_PACK_SCALE.first) },
       enabled = { it.get(Pref.OVERRIDE_ICON_FALLBACK) },
       key = Pref.ICON_PACK_SCALE.first,
@@ -329,8 +329,8 @@ object MainPreference {
       valueRange = 0f..1.5f,
       valueSteps = 29,
       valueText = { Text("%.2f".format(it)) },
-      valueToText = { "%.2f".format(it) },
       title = { OneLineText(stringResource(R.string.iconPackScale)) },
+      summary = { OneLineText("%.2f".format(it)) },
     )
   }
 

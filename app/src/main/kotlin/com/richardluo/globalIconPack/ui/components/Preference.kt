@@ -1,15 +1,23 @@
 package com.richardluo.globalIconPack.ui.components
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Label
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.PlainTooltip
+import androidx.compose.material3.Slider
+import androidx.compose.material3.SliderDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -25,8 +33,8 @@ import androidx.compose.ui.text.input.TextFieldValue
 import com.richardluo.globalIconPack.utils.getValue
 import me.zhanghai.compose.preference.ListPreference
 import me.zhanghai.compose.preference.LocalPreferenceFlow
+import me.zhanghai.compose.preference.Preference
 import me.zhanghai.compose.preference.Preferences
-import me.zhanghai.compose.preference.SliderPreference
 import me.zhanghai.compose.preference.preferenceTheme
 import me.zhanghai.compose.preference.rememberPreferenceState
 
@@ -64,70 +72,146 @@ inline fun <T, U> LazyListScope.mapListPreference(
   }
 }
 
-fun LazyListScope.sliderPreference(
+inline fun LazyListScope.mySliderPreference(
   key: String,
   defaultValue: Float,
-  title: @Composable (Float) -> Unit,
+  noinline title: @Composable (Float) -> Unit,
   modifier: Modifier = Modifier.fillMaxWidth(),
-  rememberState: @Composable () -> MutableState<Float> = {
+  noinline rememberState: @Composable () -> MutableState<Float> = {
     rememberPreferenceState(key, defaultValue)
   },
   valueRange: ClosedFloatingPointRange<Float> = 0f..1f,
   valueSteps: Int = 0,
-  rememberSliderState: @Composable (Float) -> MutableState<Float> = {
+  crossinline rememberSliderState: @Composable (Float) -> MutableState<Float> = {
     remember { mutableFloatStateOf(it) }
   },
-  enabled: (Preferences) -> Boolean = { true },
-  icon: @Composable ((Float) -> Unit)? = null,
-  summary: @Composable ((Float) -> Unit)? = null,
-  valueText: @Composable ((Float) -> Unit)? = null,
-  valueToText: (Float) -> String = { it.toString() },
-  textToValue: (String) -> Float = { it.toFloat() },
+  crossinline enabled: (Preferences) -> Boolean = { true },
+  noinline icon: @Composable ((Float) -> Unit)? = null,
+  noinline summary: @Composable ((Float) -> Unit)? = null,
+  noinline valueText: @Composable ((Float) -> Unit)? = null,
+  noinline valueToText: (Float) -> String = { it.toString() },
+  noinline textToValue: (String) -> Float = { it.toFloat() },
 ) {
   item(key = key, contentType = "MySliderPreference") {
-    var dialogState = remember { mutableStateOf(false) }
-
     val state = rememberState()
     var value by state
     val sliderState = rememberSliderState(value)
-    val sliderValue by sliderState
-    SliderPreference(
-      state = state,
+    var sliderValue by sliderState
+    MySliderPreference(
+      value = value,
+      onValueChange = { value = it },
+      sliderValue = sliderValue,
+      onSliderValueChange = { sliderValue = it },
       title = { title(sliderValue) },
-      modifier = modifier.clickable { dialogState.value = true },
+      modifier = modifier,
       valueRange = valueRange,
       valueSteps = valueSteps,
-      sliderState = sliderState,
       enabled = enabled(LocalPreferenceFlow.current.getValue()),
       icon = icon?.let { { it(sliderValue) } },
       summary = summary?.let { { it(sliderValue) } },
       valueText = valueText?.let { { it(sliderValue) } },
+      valueToText = valueToText,
+      textToValue = textToValue,
     )
+  }
+}
 
-    if (dialogState.value) {
-      var dialogText by
-        rememberSaveable(stateSaver = TextFieldValue.Saver) {
-          val text = valueToText(value)
-          mutableStateOf(TextFieldValue(text, TextRange(text.length)))
-        }
-      val onOk = { runCatching { value = textToValue(dialogText.text) } }
-      InfoDialog(
-        dialogState,
-        title = { title(sliderValue) },
-        content = {
-          val focusRequester = remember { FocusRequester() }
-          OutlinedTextField(
-            value = dialogText,
-            onValueChange = { dialogText = it },
-            modifier = Modifier.fillMaxWidth().focusRequester(focusRequester),
-            keyboardActions = KeyboardActions { onOk() },
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-            singleLine = true,
-          )
-          LaunchedEffect(focusRequester) { focusRequester.requestFocus() }
-        },
-        onOk = { onOk() },
-      )
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun MySliderPreference(
+  value: Float,
+  onValueChange: (Float) -> Unit,
+  sliderValue: Float,
+  onSliderValueChange: (Float) -> Unit,
+  title: @Composable () -> Unit,
+  modifier: Modifier = Modifier,
+  valueRange: ClosedFloatingPointRange<Float> = 0f..1f,
+  valueSteps: Int = 0,
+  enabled: Boolean = true,
+  icon: @Composable (() -> Unit)? = null,
+  summary: @Composable (() -> Unit)? = null,
+  valueText: @Composable (() -> Unit)? = null,
+  valueToText: (Float) -> String = { it.toString() },
+  textToValue: (String) -> Float = { it.toFloat() },
+) {
+  var lastValue by remember { mutableFloatStateOf(value) }
+  SideEffect {
+    if (value != lastValue) {
+      onSliderValueChange(value)
+      lastValue = value
     }
+  }
+  var dialogState = remember { mutableStateOf(false) }
+
+  Preference(
+    title = title,
+    modifier = modifier.clickable { dialogState.value = true },
+    enabled = enabled,
+    icon = icon,
+    summary = {
+      Column {
+        summary?.invoke()
+        // onValueChangeFinished() may be invoked before a recomposition has
+        // happened for onValueChange(), for example in the clicking case, so make
+        // onValueChange() share the latest value to onValueChangeFinished().
+        var latestSliderValue = sliderValue
+        val interactionSource = remember { MutableInteractionSource() }
+        Slider(
+          value = sliderValue,
+          onValueChange = {
+            onSliderValueChange(it)
+            latestSliderValue = it
+          },
+          enabled = enabled,
+          valueRange = valueRange,
+          steps = valueSteps,
+          onValueChangeFinished = { onValueChange(latestSliderValue) },
+          interactionSource = interactionSource,
+          thumb = {
+            val thumb =
+              @Composable {
+                SliderDefaults.Thumb(
+                  interactionSource = interactionSource,
+                  colors = SliderDefaults.colors(),
+                  enabled = enabled,
+                )
+              }
+            if (valueText != null)
+              Label(
+                label = { PlainTooltip(content = valueText) },
+                interactionSource = interactionSource,
+                content = thumb,
+              )
+            else thumb()
+          },
+        )
+      }
+    },
+  )
+
+  if (dialogState.value) {
+    var dialogText by
+      rememberSaveable(stateSaver = TextFieldValue.Saver) {
+        val text = valueToText(value)
+        mutableStateOf(TextFieldValue(text, TextRange(text.length)))
+      }
+    val onOk = { runCatching { onValueChange(textToValue(dialogText.text)) } }
+    InfoDialog(
+      dialogState,
+      title = { title() },
+      content = {
+        val focusRequester = remember { FocusRequester() }
+        OutlinedTextField(
+          value = dialogText,
+          onValueChange = { dialogText = it },
+          modifier = Modifier.fillMaxWidth().focusRequester(focusRequester),
+          keyboardActions = KeyboardActions { onOk() },
+          keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+          singleLine = true,
+        )
+        LaunchedEffect(focusRequester) { focusRequester.requestFocus() }
+      },
+      onOk = { onOk() },
+    )
   }
 }
