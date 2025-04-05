@@ -73,6 +73,7 @@ import com.richardluo.globalIconPack.ui.components.LazyDialog
 import com.richardluo.globalIconPack.ui.components.LoadingDialog
 import com.richardluo.globalIconPack.ui.components.SampleTheme
 import com.richardluo.globalIconPack.ui.components.WarnDialog
+import com.richardluo.globalIconPack.ui.components.myPreferenceTheme
 import com.richardluo.globalIconPack.ui.viewModel.MergerVM
 import com.richardluo.globalIconPack.utils.getValue
 import kotlinx.coroutines.launch
@@ -275,7 +276,7 @@ class IconPackMergerActivity : ComponentActivity() {
       title = { Text(getString(R.string.options)) },
       value = viewModel.optionsFlow,
     ) {
-      ProvidePreferenceLocals(flow = it) {
+      ProvidePreferenceLocals(flow = it, myPreferenceTheme()) {
         LazyColumn(modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
           MainPreference.run { iconPack(this@IconPackMergerActivity, true) }
         }

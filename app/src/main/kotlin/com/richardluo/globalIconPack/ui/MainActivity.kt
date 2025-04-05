@@ -76,6 +76,7 @@ import com.richardluo.globalIconPack.ui.components.SnackbarErrorVisuals
 import com.richardluo.globalIconPack.ui.components.TwoLineText
 import com.richardluo.globalIconPack.ui.components.WarnDialog
 import com.richardluo.globalIconPack.ui.components.mapListPreference
+import com.richardluo.globalIconPack.ui.components.myPreferenceTheme
 import com.richardluo.globalIconPack.ui.viewModel.MainVM
 import com.richardluo.globalIconPack.utils.WorldPreference
 import com.richardluo.globalIconPack.utils.getPreferenceFlow
@@ -126,7 +127,10 @@ class MainActivity : ComponentActivity() {
         ) {
           finish()
         }
-      } else SampleTheme { ProvidePreferenceLocals(flow = prefFlow) { SampleScreen() } }
+      } else
+        SampleTheme {
+          ProvidePreferenceLocals(flow = prefFlow, myPreferenceTheme()) { SampleScreen() }
+        }
     }
   }
 
