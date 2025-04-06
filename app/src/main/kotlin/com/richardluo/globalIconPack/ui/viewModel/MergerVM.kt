@@ -39,7 +39,7 @@ import kotlinx.coroutines.withContext
 import me.zhanghai.compose.preference.Preferences
 
 @OptIn(FlowPreview::class)
-class MergerVM(app: Application) : ContextVM(app) {
+class MergerVM(app: Application) : ContextVM(app), IFilterApps by FilterApps(app) {
   private val iconPackCache by getInstance { IconPackCache(app) }
   private val iconCache = IconCache(app) { iconPackCache.getIconPack(it) }
 
@@ -49,7 +49,6 @@ class MergerVM(app: Application) : ContextVM(app) {
     set(value) {
       if (basePackState.value == value) return
       basePackState.value = value
-      if (value.isNotEmpty()) chooseIconVM.pack.value = value
       cachedIcons.clear()
       changedIcons.clear()
     }
@@ -70,7 +69,6 @@ class MergerVM(app: Application) : ContextVM(app) {
       }
       .stateIn(viewModelScope, SharingStarted.Eagerly, IconPackConfig())
 
-  val filterAppsVM = FilterAppsVM(context)
   private val changedIcons = mutableStateMapOf<AppIconInfo, IconEntryWithPack?>()
   private val cachedIcons = mutableMapOf<AppIconInfo, IconEntryWithPack?>()
 
@@ -86,7 +84,7 @@ class MergerVM(app: Application) : ContextVM(app) {
   val filteredIcons =
     combineTransform(
         snapshotFlow { basePack },
-        filterAppsVM.filteredApps,
+        filteredApps,
         snapshotFlow { changedIcons.toMap() },
       ) { basePack, apps, _ ->
         when {
@@ -101,8 +99,6 @@ class MergerVM(app: Application) : ContextVM(app) {
       }
       .flowOn(Dispatchers.Default)
       .stateIn(viewModelScope, SharingStarted.Eagerly, null)
-
-  val chooseIconVM = ChooseIconVM(basePack, { iconPackCache.getIconPack(it) }, { loadIcon(it) })
 
   var newPackName by mutableStateOf("Merged Icon Pack")
   var newPackPackage by mutableStateOf("com.dummy.iconPack")
@@ -121,8 +117,7 @@ class MergerVM(app: Application) : ContextVM(app) {
     if (basePack.isNotEmpty()) warningDialogState.value = true
   }
 
-  fun saveNewIcon(icon: VariantIcon) {
-    val info = chooseIconVM.selectedApp.value ?: return
+  fun saveNewIcon(info: AppIconInfo, icon: VariantIcon) {
     changedIcons[info] =
       when (icon) {
         is VariantPackIcon -> IconEntryWithPack(icon.entry, icon.pack)
@@ -142,9 +137,7 @@ class MergerVM(app: Application) : ContextVM(app) {
           newPackName,
           newPackPackage,
           pack,
-          filterAppsVM.getAllApps().associate { info ->
-            info.componentName to getIconEntry(pack, info)
-          },
+          getAllApps().associate { info -> info.componentName to getIconEntry(pack, info) },
           installedAppsOnly,
         )
         instructionDialogState.value = true

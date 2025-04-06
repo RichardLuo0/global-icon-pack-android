@@ -33,7 +33,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -41,14 +41,18 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.richardluo.globalIconPack.R
+import com.richardluo.globalIconPack.ui.components.AppFilterByType
+import com.richardluo.globalIconPack.ui.components.AppIcon
 import com.richardluo.globalIconPack.ui.components.AppbarSearchBar
-import com.richardluo.globalIconPack.ui.components.ChooseIconSheet
 import com.richardluo.globalIconPack.ui.components.IconButtonWithTooltip
-import com.richardluo.globalIconPack.ui.components.IconForApp
+import com.richardluo.globalIconPack.ui.components.IconChooserSheet
 import com.richardluo.globalIconPack.ui.components.MyDropdownMenu
 import com.richardluo.globalIconPack.ui.components.SampleTheme
 import com.richardluo.globalIconPack.ui.components.WarnDialog
+import com.richardluo.globalIconPack.ui.components.getLabelByType
+import com.richardluo.globalIconPack.ui.viewModel.IconChooserVM
 import com.richardluo.globalIconPack.ui.viewModel.IconVariantVM
 import com.richardluo.globalIconPack.utils.getValue
 import kotlinx.coroutines.delay
@@ -72,7 +76,8 @@ class IconVariantActivity : ComponentActivity() {
   @Composable
   private fun Screen() {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
-    val resetWarnDialogState = remember { mutableStateOf(false) }
+    val resetWarnDialogState = rememberSaveable { mutableStateOf(false) }
+    val iconChooser: IconChooserVM = viewModel()
 
     Scaffold(
       modifier = Modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -87,15 +92,15 @@ class IconVariantActivity : ComponentActivity() {
               IconButtonWithTooltip(Icons.Outlined.Search, stringResource(R.string.search)) {
                 lifecycleScope.launch { viewModel.expandSearchBar.value = true }
               }
-              var expand by remember { mutableStateOf(false) }
-              val expandFilter = remember { mutableStateOf(false) }
+              var expand by rememberSaveable { mutableStateOf(false) }
+              val expandFilter = rememberSaveable { mutableStateOf(false) }
               IconButtonWithTooltip(Icons.Outlined.MoreVert, stringResource(R.string.moreOptions)) {
                 expand = true
               }
               MyDropdownMenu(expanded = expand, onDismissRequest = { expand = false }) {
                 DropdownMenuItem(
                   leadingIcon = { Icon(Icons.Outlined.FilterList, "filter") },
-                  text = { Text(getLabelByType(viewModel.filterAppsVM.type.value)) },
+                  text = { Text(getLabelByType(viewModel.filterType.value)) },
                   onClick = {
                     expand = false
                     expandFilter.value = true
@@ -143,14 +148,13 @@ class IconVariantActivity : ComponentActivity() {
                   },
                 )
               }
-              // User, system apps or shortcuts
-              AppFilterByType(expandFilter, viewModel.filterAppsVM.type)
+              AppFilterByType(expandFilter, viewModel.filterType)
             },
             modifier = Modifier.fillMaxWidth(),
             scrollBehavior = scrollBehavior,
           )
 
-          AppbarSearchBar(viewModel.expandSearchBar, viewModel.filterAppsVM.searchText)
+          AppbarSearchBar(viewModel.expandSearchBar, viewModel.searchText)
         }
       },
     ) { contentPadding ->
@@ -163,12 +167,12 @@ class IconVariantActivity : ComponentActivity() {
         ) {
           items(icons, key = { it.first.componentName }) { pair ->
             val (info, entry) = pair
-            IconForApp(
+            AppIcon(
               info.label,
               key = entry?.entry?.name,
               loadImage = { viewModel.loadIcon(pair) },
             ) {
-              viewModel.chooseIconVM.openVariantSheet(info)
+              iconChooser.open(info, viewModel.basePack)
             }
           }
         }
@@ -178,7 +182,7 @@ class IconVariantActivity : ComponentActivity() {
         }
     }
 
-    ChooseIconSheet(viewModel.chooseIconVM) { viewModel.replaceIcon(it) }
+    IconChooserSheet(iconChooser, viewModel::replaceIcon)
 
     WarnDialog(
       resetWarnDialogState,

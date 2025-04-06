@@ -1,4 +1,4 @@
-package com.richardluo.globalIconPack.ui
+package com.richardluo.globalIconPack.ui.components
 
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.RadioButton
@@ -9,8 +9,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
 import com.richardluo.globalIconPack.R
-import com.richardluo.globalIconPack.ui.components.MyDropdownMenu
-import com.richardluo.globalIconPack.ui.viewModel.FilterAppsVM.Type
+import com.richardluo.globalIconPack.ui.viewModel.IFilterApps.Type
 
 @Composable
 fun AppFilterByType(enabledState: MutableState<Boolean>, typeState: MutableState<Type>) {

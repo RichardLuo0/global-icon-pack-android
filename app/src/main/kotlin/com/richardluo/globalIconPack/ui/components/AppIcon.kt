@@ -1,6 +1,7 @@
 package com.richardluo.globalIconPack.ui.components
 
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
@@ -18,17 +19,19 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun IconForApp(
+fun AppIcon(
   label: String,
   key: Any? = label,
   loadImage: suspend () -> ImageBitmap,
+  onLongClick: (() -> Unit)? = null,
   onClick: () -> Unit,
 ) {
   Column(
     modifier =
       Modifier.clip(MaterialTheme.shapes.medium)
-        .clickable { onClick() }
+        .combinedClickable(onClick = onClick, onLongClick = onLongClick)
         .fillMaxWidth()
         .padding(vertical = 18.dp, horizontal = 4.dp)
   ) {

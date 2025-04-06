@@ -31,14 +31,14 @@ class IconCache(private val context: Application, private val getIconPack: (Stri
   private val staticBitmapCache = BitmapLruCache<String>(Runtime.getRuntime().maxMemory() / 16)
 
   suspend fun loadIcon(
-    appIconInfo: AppIconInfo,
+    info: AppIconInfo,
     entry: IconEntryWithPack?,
     basePack: String,
     config: IconPackConfig,
   ): ImageBitmap {
     return if (entry != null) loadIcon(entry.entry, entry.pack)
-    else if (appIconInfo is ShortcutIconInfo) loadIcon(appIconInfo, basePack, config)
-    else loadIcon(appIconInfo, basePack, config)
+    else if (info is ShortcutIconInfo) loadIcon(info, basePack, config)
+    else loadIcon(info, basePack, config)
   }
 
   suspend fun loadIcon(info: AppIconInfo, basePack: String, config: IconPackConfig) =

@@ -26,21 +26,25 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.richardluo.globalIconPack.R
 import com.richardluo.globalIconPack.iconPack.IconPackApps
+import com.richardluo.globalIconPack.ui.model.AppIconInfo
 import com.richardluo.globalIconPack.ui.model.OriginalIcon
 import com.richardluo.globalIconPack.ui.model.VariantIcon
 import com.richardluo.globalIconPack.ui.model.VariantPackIcon
-import com.richardluo.globalIconPack.ui.viewModel.ChooseIconVM
+import com.richardluo.globalIconPack.ui.viewModel.IconChooserVM
 import com.richardluo.globalIconPack.utils.getValue
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ChooseIconSheet(viewModel: ChooseIconVM, replaceIcon: (VariantIcon) -> Unit) {
+fun IconChooserSheet(
+  viewModel: IconChooserVM = viewModel(),
+  replaceIcon: (AppIconInfo, VariantIcon) -> Unit,
+) {
   val context = LocalContext.current
   val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
 
@@ -64,8 +68,8 @@ fun ChooseIconSheet(viewModel: ChooseIconVM, replaceIcon: (VariantIcon) -> Unit)
         value = IconPackApps.getFlow(context).collectAsState(mapOf()).value.toList(),
         key = { it.first },
       ) { item, dismiss ->
-        IconPackItem(item.first, item.second, viewModel.pack.value) {
-          viewModel.pack.value = item.first
+        IconPackItem(item.first, item.second, viewModel.pack) {
+          viewModel.pack = item.first
           dismiss()
         }
       }
@@ -83,11 +87,31 @@ fun ChooseIconSheet(viewModel: ChooseIconVM, replaceIcon: (VariantIcon) -> Unit)
         Icon(Icons.Outlined.Search, contentDescription = "Search")
       }
 
-      fun LazyGridScope.variantIconItemsBound(icons: List<VariantIcon>) =
-        variantIconItems(icons, { viewModel.loadIconForSelectedApp(it) }) {
-          replaceIcon(it)
-          viewModel.variantSheet = false
+      fun LazyGridScope.variantIconTitle(text: String) {
+        item(span = { GridItemSpan(maxLineSpan) }, contentType = "Title") {
+          Text(
+            text,
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.padding(top = 12.dp, start = 12.dp, end = 12.dp),
+          )
         }
+      }
+
+      fun LazyGridScope.variantIconItems(icons: List<VariantIcon>) {
+        items(icons) { icon ->
+          AppIcon(
+            when (icon) {
+              is OriginalIcon -> stringResource(R.string.originalIcon)
+              is VariantPackIcon -> icon.entry.name
+              else -> ""
+            },
+            loadImage = { viewModel.loadIconForSelectedApp(icon) },
+          ) {
+            replaceIcon(viewModel.appInfo ?: return@AppIcon, icon)
+            viewModel.variantSheet = false
+          }
+        }
+      }
 
       val suggestIcons = viewModel.suggestIcons.getValue(null)
       if (suggestIcons != null)
@@ -98,49 +122,20 @@ fun ChooseIconSheet(viewModel: ChooseIconVM, replaceIcon: (VariantIcon) -> Unit)
             columns = GridCells.Adaptive(minSize = 74.dp),
           ) {
             variantIconTitle(context.getString(R.string.suggestedIcons))
-            variantIconItemsBound(suggestIcons)
+            variantIconItems(suggestIcons)
             variantIconTitle(context.getString(R.string.allIcons))
-            variantIconItemsBound(variantIcons.toList())
+            variantIconItems(variantIcons.toList())
           }
         } else
           LazyVerticalGrid(
             modifier = Modifier.fillMaxSize().padding(horizontal = 2.dp),
             columns = GridCells.Adaptive(minSize = 74.dp),
           ) {
-            variantIconItemsBound(suggestIcons)
+            variantIconItems(suggestIcons)
           }
       else
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
           LinearProgressIndicator(modifier = Modifier.fillMaxWidth().padding(24.dp))
         }
     }
-}
-
-private fun LazyGridScope.variantIconTitle(text: String) {
-  item(span = { GridItemSpan(maxLineSpan) }, contentType = "Title") {
-    Text(
-      text,
-      style = MaterialTheme.typography.titleMedium,
-      modifier = Modifier.padding(top = 12.dp, start = 12.dp, end = 12.dp),
-    )
-  }
-}
-
-private fun LazyGridScope.variantIconItems(
-  icons: List<VariantIcon>,
-  loadImage: suspend (VariantIcon) -> ImageBitmap,
-  onClick: (VariantIcon) -> Unit,
-) {
-  items(icons) { icon ->
-    IconForApp(
-      when (icon) {
-        is OriginalIcon -> stringResource(R.string.originalIcon)
-        is VariantPackIcon -> icon.entry.name
-        else -> ""
-      },
-      loadImage = { loadImage(icon) },
-    ) {
-      onClick(icon)
-    }
-  }
 }

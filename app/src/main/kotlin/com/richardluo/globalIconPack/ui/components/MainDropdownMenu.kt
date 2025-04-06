@@ -1,4 +1,4 @@
-package com.richardluo.globalIconPack.ui
+package com.richardluo.globalIconPack.ui.components
 
 import android.content.Intent
 import androidx.compose.material.icons.Icons
@@ -17,9 +17,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.core.net.toUri
 import com.richardluo.globalIconPack.R
-import com.richardluo.globalIconPack.ui.components.IconButtonWithTooltip
-import com.richardluo.globalIconPack.ui.components.MyDropdownMenu
-import com.richardluo.globalIconPack.ui.components.SnackbarErrorVisuals
 import com.richardluo.globalIconPack.utils.log
 import com.topjohnwu.superuser.Shell
 import kotlinx.coroutines.launch

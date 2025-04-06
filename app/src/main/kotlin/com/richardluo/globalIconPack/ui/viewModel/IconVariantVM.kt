@@ -41,7 +41,7 @@ import kotlinx.coroutines.withContext
 import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserFactory
 
-class IconVariantVM(app: Application) : ContextVM(app) {
+class IconVariantVM(app: Application) : ContextVM(app), IFilterApps by FilterApps(app) {
   private val iconPackCache by getInstance { IconPackCache(app) }
   private val iconCache = IconCache(app) { iconPackCache.getIconPack(it) }
   private val iconPackDB by getInstance { IconPackDB(app) }
@@ -51,15 +51,12 @@ class IconVariantVM(app: Application) : ContextVM(app) {
 
   val expandSearchBar = mutableStateOf(false)
 
-  val filterAppsVM = FilterAppsVM(context)
   val filteredIcons =
-    combineTransform(filterAppsVM.filteredApps, iconPackDB.iconsUpdateFlow) { apps, _ ->
+    combineTransform(filteredApps, iconPackDB.iconsUpdateFlow) { apps, _ ->
         if (apps == null) emit(null) else emit(apps.map { it to getIconEntry(it.componentName) })
       }
       .flowOn(Dispatchers.IO)
       .stateIn(viewModelScope, SharingStarted.Eagerly, null)
-
-  val chooseIconVM = ChooseIconVM(basePack, { iconPackCache.getIconPack(it) }, { loadIcon(it) })
 
   val modified =
     iconPackDB.modifiedUpdateFlow
@@ -92,8 +89,7 @@ class IconVariantVM(app: Application) : ContextVM(app) {
     }
   }
 
-  fun replaceIcon(icon: VariantIcon) {
-    val info = chooseIconVM.selectedApp.value ?: return
+  fun replaceIcon(info: AppIconInfo, icon: VariantIcon) {
     val cn = info.componentName
     viewModelScope.launch(Dispatchers.IO) {
       runCatchingToast(context) {
@@ -114,7 +110,7 @@ class IconVariantVM(app: Application) : ContextVM(app) {
     viewModelScope.launch(Dispatchers.Default) {
       runCatchingToast(context) {
         val xml = StringBuilder("<?xml version=\"1.0\" encoding=\"UTF-8\"?><resources>")
-        filterAppsVM.getAllApps().forEach {
+        getAllApps().forEach {
           getIconEntry(it.componentName)?.let { entry ->
             if (entry.entry.type == IconEntry.Type.Normal) {
               val cn = it.componentName.flattenToString()

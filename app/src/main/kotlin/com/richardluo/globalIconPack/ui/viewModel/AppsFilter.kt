@@ -6,17 +6,20 @@ import android.content.pm.LauncherApps
 import android.content.pm.LauncherApps.ShortcutQuery
 import android.os.Process
 import android.widget.Toast
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshotFlow
 import com.richardluo.globalIconPack.R
 import com.richardluo.globalIconPack.iconPack.getComponentName
 import com.richardluo.globalIconPack.ui.model.AppIconInfo
 import com.richardluo.globalIconPack.ui.model.ShortcutIconInfo
+import com.richardluo.globalIconPack.ui.viewModel.IFilterApps.Type
 import com.richardluo.globalIconPack.utils.Weak
 import com.richardluo.globalIconPack.utils.asType
 import com.richardluo.globalIconPack.utils.debounceInput
 import com.richardluo.globalIconPack.utils.log
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combineTransform
 import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.flowOn
@@ -72,21 +75,28 @@ private val shortcutsCache =
       .sortedBy { it.componentName }
   }
 
-class FilterAppsVM(context: Context) {
-  val searchText = mutableStateOf("")
-
+interface IFilterApps {
   enum class Type {
     User,
     System,
     Shortcut,
   }
 
-  val type = mutableStateOf(Type.User)
+  val searchText: MutableState<String>
+  val filterType: MutableState<Type>
+  val filteredApps: Flow<List<AppIconInfo>?>
+
+  suspend fun getAllApps(): List<AppIconInfo>
+}
+
+class FilterApps(context: Context) : IFilterApps {
+  override val searchText = mutableStateOf("")
+  override val filterType = mutableStateOf(Type.User)
 
   private val apps by lazy { appsCache.get(context) }
   private val shortcuts by lazy { shortcutsCache.get(context) }
 
-  suspend fun getAllApps(): List<AppIconInfo> =
+  override suspend fun getAllApps(): List<AppIconInfo> =
     withContext(Dispatchers.Default) {
       mutableListOf<AppIconInfo>().apply {
         apps.forEach { addAll(it) }
@@ -95,7 +105,7 @@ class FilterAppsVM(context: Context) {
     }
 
   private val currentApps =
-    snapshotFlow { type.value }
+    snapshotFlow { filterType.value }
       .map { type ->
         when (type) {
           Type.User,
@@ -113,7 +123,7 @@ class FilterAppsVM(context: Context) {
       }
       .flowOn(Dispatchers.IO)
 
-  val filteredApps =
+  override val filteredApps =
     combineTransform(currentApps, snapshotFlow { searchText.value }.debounceInput()) { apps, text ->
         emit(null)
         emit(

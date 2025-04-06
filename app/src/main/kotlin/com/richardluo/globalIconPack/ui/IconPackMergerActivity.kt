@@ -51,6 +51,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -58,22 +59,26 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.richardluo.globalIconPack.R
 import com.richardluo.globalIconPack.iconPack.IconPackApps
 import com.richardluo.globalIconPack.ui.components.AnimatedFab
+import com.richardluo.globalIconPack.ui.components.AppFilterByType
+import com.richardluo.globalIconPack.ui.components.AppIcon
 import com.richardluo.globalIconPack.ui.components.AppbarSearchBar
-import com.richardluo.globalIconPack.ui.components.ChooseIconSheet
 import com.richardluo.globalIconPack.ui.components.ExpandFabScrollConnection
 import com.richardluo.globalIconPack.ui.components.FabSnapshot
 import com.richardluo.globalIconPack.ui.components.IconButtonWithTooltip
-import com.richardluo.globalIconPack.ui.components.IconForApp
+import com.richardluo.globalIconPack.ui.components.IconChooserSheet
 import com.richardluo.globalIconPack.ui.components.IconPackItem
 import com.richardluo.globalIconPack.ui.components.InfoDialog
 import com.richardluo.globalIconPack.ui.components.LazyDialog
 import com.richardluo.globalIconPack.ui.components.LoadingDialog
 import com.richardluo.globalIconPack.ui.components.SampleTheme
 import com.richardluo.globalIconPack.ui.components.WarnDialog
+import com.richardluo.globalIconPack.ui.components.getLabelByType
 import com.richardluo.globalIconPack.ui.components.myPreferenceTheme
+import com.richardluo.globalIconPack.ui.viewModel.IconChooserVM
 import com.richardluo.globalIconPack.ui.viewModel.MergerVM
 import com.richardluo.globalIconPack.utils.getValue
 import kotlinx.coroutines.launch
@@ -149,14 +154,14 @@ class IconPackMergerActivity : ComponentActivity() {
                 IconButtonWithTooltip(Icons.Outlined.Search, stringResource(R.string.search)) {
                   viewModel.expandSearchBar.value = true
                 }
-                val expandFilter = remember { mutableStateOf(false) }
+                val expandFilter = rememberSaveable { mutableStateOf(false) }
                 IconButtonWithTooltip(
                   Icons.Outlined.FilterList,
-                  getLabelByType(viewModel.filterAppsVM.type.value),
+                  getLabelByType(viewModel.filterType.value),
                 ) {
                   expandFilter.value = true
                 }
-                AppFilterByType(expandFilter, viewModel.filterAppsVM.type)
+                AppFilterByType(expandFilter, viewModel.filterType)
               }
             },
             modifier = Modifier.fillMaxWidth(),
@@ -164,7 +169,7 @@ class IconPackMergerActivity : ComponentActivity() {
           )
 
           if (pagerState.currentPage == Page.IconList.ordinal)
-            AppbarSearchBar(viewModel.expandSearchBar, viewModel.filterAppsVM.searchText)
+            AppbarSearchBar(viewModel.expandSearchBar, viewModel.searchText)
         }
       },
       floatingActionButton = {
@@ -247,6 +252,7 @@ class IconPackMergerActivity : ComponentActivity() {
 
   @Composable
   private fun IconList() {
+    val iconChooser: IconChooserVM = viewModel()
     val icons = viewModel.filteredIcons.getValue(null)
     if (icons != null)
       LazyVerticalGrid(
@@ -255,12 +261,12 @@ class IconPackMergerActivity : ComponentActivity() {
       ) {
         items(icons.toList(), key = { it.first.componentName }) { pair ->
           val (info, entry) = pair
-          IconForApp(
+          AppIcon(
             info.label,
             key = "${viewModel.basePack}/${entry?.entry?.name ?: ""}/${viewModel.iconCacheToken}",
             loadImage = { viewModel.loadIcon(pair) },
           ) {
-            viewModel.chooseIconVM.openVariantSheet(info)
+            iconChooser.open(info, viewModel.basePack)
           }
         }
       }
@@ -269,7 +275,7 @@ class IconPackMergerActivity : ComponentActivity() {
         CircularProgressIndicator(trackColor = MaterialTheme.colorScheme.surfaceVariant)
       }
 
-    ChooseIconSheet(viewModel.chooseIconVM, viewModel::saveNewIcon)
+    IconChooserSheet(iconChooser, viewModel::saveNewIcon)
 
     LazyDialog(
       iconOptionDialogState,
