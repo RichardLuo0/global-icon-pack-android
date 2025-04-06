@@ -18,7 +18,7 @@ class IconEntryFromOtherPack(val entry: IconEntry, val pack: String) : IconEntry
 class RemoteIconPack(
   pack: String,
   resources: Resources,
-  config: IconPackConfig = IconPackConfig(),
+  config: IconPackConfig = defaultIconPackConfig,
 ) : IconPack(pack, resources) {
   private val iconPackAsFallback = config.iconPackAsFallback
   private val iconFallback: IconFallback?

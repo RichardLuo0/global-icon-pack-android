@@ -12,6 +12,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.viewModelScope
 import com.richardluo.globalIconPack.R
 import com.richardluo.globalIconPack.iconPack.IconPackConfig
+import com.richardluo.globalIconPack.iconPack.defaultIconPackConfig
 import com.richardluo.globalIconPack.ui.model.AppIconInfo
 import com.richardluo.globalIconPack.ui.model.IconEntryWithPack
 import com.richardluo.globalIconPack.ui.model.IconPack
@@ -67,7 +68,7 @@ class MergerVM(app: Application) : ContextVM(app), IFilterApps by FilterApps(app
         iconCache.clearGeneratedIcons()
         iconCacheToken = System.currentTimeMillis()
       }
-      .stateIn(viewModelScope, SharingStarted.Eagerly, IconPackConfig())
+      .stateIn(viewModelScope, SharingStarted.Eagerly, defaultIconPackConfig)
 
   private val changedIcons = mutableStateMapOf<AppIconInfo, IconEntryWithPack?>()
   private val cachedIcons = mutableMapOf<AppIconInfo, IconEntryWithPack?>()

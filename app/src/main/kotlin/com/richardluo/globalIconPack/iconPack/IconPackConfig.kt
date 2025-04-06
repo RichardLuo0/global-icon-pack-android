@@ -29,3 +29,5 @@ data class IconPackConfig(
     pref.get(Pref.SCALE_ONLY_FOREGROUND),
   )
 }
+
+val defaultIconPackConfig = IconPackConfig()

@@ -19,8 +19,11 @@ import com.richardluo.globalIconPack.utils.log
 import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserFactory
 
-class LocalIconPack(pack: String, resources: Resources, config: IconPackConfig = IconPackConfig()) :
-  IconPack(pack, resources) {
+class LocalIconPack(
+  pack: String,
+  resources: Resources,
+  config: IconPackConfig = defaultIconPackConfig,
+) : IconPack(pack, resources) {
   private val iconPackAsFallback = config.iconPackAsFallback
   private val iconFallback: IconFallback?
 

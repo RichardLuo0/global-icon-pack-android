@@ -73,7 +73,7 @@ class IconChooserVM(app: Application) : ContextVM(app) {
       .stateIn(viewModelScope, SharingStarted.Lazily, null)
 
   suspend fun loadIcon(pair: Pair<AppIconInfo, IconEntryWithPack?>) =
-    iconCache.loadIcon(pair.first, pair.second, pack, IconPackConfig())
+    iconCache.loadIcon(pair.first, pair.second, pack, defaultIconPackConfig)
 
   suspend fun loadIconForSelectedApp(icon: VariantIcon): ImageBitmap {
     val appInfo = appInfo ?: return ImageBitmap(1, 1)
