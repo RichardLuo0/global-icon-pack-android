@@ -328,9 +328,9 @@ object MainPreference {
       defaultValue = Pref.ICON_PACK_SCALE.second,
       valueRange = 0f..1.5f,
       valueSteps = 29,
-      valueText = { Text("%.2f".format(it)) },
       title = { OneLineText(stringResource(R.string.iconPackScale)) },
       summary = { OneLineText("%.2f".format(it)) },
+      valueToText = { "%.2f".format(it) },
     )
   }
 

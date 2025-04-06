@@ -14,6 +14,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
@@ -88,7 +89,6 @@ inline fun LazyListScope.mySliderPreference(
   crossinline enabled: (Preferences) -> Boolean = { true },
   noinline icon: @Composable ((Float) -> Unit)? = null,
   noinline summary: @Composable ((Float) -> Unit)? = null,
-  noinline valueText: @Composable ((Float) -> Unit)? = null,
   noinline valueToText: (Float) -> String = { it.toString() },
   noinline textToValue: (String) -> Float = { it.toFloat() },
 ) {
@@ -109,7 +109,6 @@ inline fun LazyListScope.mySliderPreference(
       enabled = enabled(LocalPreferenceFlow.current.getValue()),
       icon = icon?.let { { it(sliderValue) } },
       summary = summary?.let { { it(sliderValue) } },
-      valueText = valueText?.let { { it(sliderValue) } },
       valueToText = valueToText,
       textToValue = textToValue,
     )
@@ -130,7 +129,6 @@ fun MySliderPreference(
   enabled: Boolean = true,
   icon: @Composable (() -> Unit)? = null,
   summary: @Composable (() -> Unit)? = null,
-  valueText: @Composable (() -> Unit)? = null,
   valueToText: (Float) -> String = { it.toString() },
   textToValue: (String) -> Float = { it.toFloat() },
 ) {
@@ -168,21 +166,18 @@ fun MySliderPreference(
           onValueChangeFinished = { onValueChange(latestSliderValue) },
           interactionSource = interactionSource,
           thumb = {
-            val thumb =
-              @Composable {
-                SliderDefaults.Thumb(
-                  interactionSource = interactionSource,
-                  colors = SliderDefaults.colors(),
-                  enabled = enabled,
-                )
-              }
-            if (valueText != null)
-              Label(
-                label = { PlainTooltip(content = valueText) },
-                interactionSource = interactionSource,
-                content = thumb,
-              )
-            else thumb()
+            Label(
+              label = { PlainTooltip(content = { Text(valueToText(sliderValue)) }) },
+              interactionSource = interactionSource,
+              content =
+                @Composable {
+                  SliderDefaults.Thumb(
+                    interactionSource = interactionSource,
+                    colors = SliderDefaults.colors(),
+                    enabled = enabled,
+                  )
+                },
+            )
           },
         )
       }
