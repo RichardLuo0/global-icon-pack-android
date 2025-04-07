@@ -26,24 +26,14 @@ import java.io.ByteArrayOutputStream
 import org.xmlpull.v1.XmlPullParser
 
 class IconPack(val pack: String, val resources: Resources) {
-  private val iconFallback: IconFallback?
-  private val iconEntryMap: Map<ComponentName, IconEntry>
+  val info by lazy { loadIconPack(resources, pack) }
+  val iconFallback by lazy {
+    IconFallback(FallbackSettings(info), ::getIcon, null, Pref.SCALE_ONLY_FOREGROUND.second)
+      .orNullIfEmpty()
+  }
+  val iconEntryMap by lazy { info.iconEntryMap }
 
   private val idCache = mutableMapOf<String, Int>()
-
-  init {
-    loadIconPack(resources, pack).let { info ->
-      iconFallback =
-        IconFallback(
-            FallbackSettings(info.iconBacks, info.iconUpons, info.iconMasks, info.iconScale),
-            ::getIcon,
-            info.iconScale,
-            Pref.SCALE_ONLY_FOREGROUND.second,
-          )
-          .orNullIfEmpty()
-      iconEntryMap = info.iconEntryMap
-    }
-  }
 
   fun getIconEntry(cn: ComponentName, config: IconPackConfig) =
     getIconEntry(cn, config.iconPackAsFallback)
@@ -79,21 +69,8 @@ class IconPack(val pack: String, val resources: Resources) {
   private fun getDrawableId(name: String) =
     idCache.getOrPut(name) { resources.getIdentifier(name, "drawable", pack) }
 
-  fun genIconFrom(baseIcon: Drawable, config: IconPackConfig): Drawable {
-    return if (config.iconFallback) {
-      iconFallback.run {
-        IconHelper.processIcon(
-          resources,
-          baseIcon,
-          this?.iconBacks?.randomOrNull(),
-          this?.iconUpons?.randomOrNull(),
-          this?.iconMasks?.randomOrNull(),
-          config.scale ?: (this?.iconScale ?: return baseIcon),
-          config.scaleOnlyForeground,
-        )
-      }
-    } else baseIcon
-  }
+  fun genIconFrom(baseIcon: Drawable, config: IconPackConfig) =
+    genIconFrom(resources, baseIcon, iconFallback, config)
 
   val drawables: Set<String> by lazy {
     @SuppressLint("DiscouragedApi")
@@ -170,5 +147,26 @@ class IconPack(val pack: String, val resources: Resources) {
     xml.append("/>")
   }
 
-  fun getAllIconEntries() = iconEntryMap
+  companion object {
+    fun genIconFrom(
+      resources: Resources,
+      baseIcon: Drawable,
+      iconFallback: IconFallback?,
+      config: IconPackConfig,
+    ): Drawable {
+      return if (config.iconFallback) {
+        iconFallback.run {
+          IconHelper.processIcon(
+            resources,
+            baseIcon,
+            this?.iconBacks?.randomOrNull(),
+            this?.iconUpons?.randomOrNull(),
+            this?.iconMasks?.randomOrNull(),
+            config.scale ?: (this?.iconScale ?: return baseIcon),
+            config.scaleOnlyForeground,
+          )
+        }
+      } else baseIcon
+    }
+  }
 }

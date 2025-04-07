@@ -7,7 +7,7 @@ import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import android.widget.Toast
 import com.richardluo.globalIconPack.iconPack.IconPackApps
-import com.richardluo.globalIconPack.iconPack.loadIconPack
+import com.richardluo.globalIconPack.ui.model.IconPack
 import com.richardluo.globalIconPack.utils.flowTrigger
 import com.richardluo.globalIconPack.utils.getInt
 import com.richardluo.globalIconPack.utils.getLong
@@ -25,15 +25,12 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
 
   override fun onCreate(db: SQLiteDatabase) {}
 
-  fun onIconPackChange(pack: String) {
-    update(writableDatabase, pack)
+  fun onIconPackChange(iconPack: IconPack) {
+    update(writableDatabase, iconPack)
   }
 
-  private fun update(db: SQLiteDatabase, pack: String) {
-    pack.ifEmpty {
-      log("No icon pack set")
-      return
-    }
+  private fun update(db: SQLiteDatabase, iconPack: IconPack) {
+    val pack = iconPack.pack
     db.transaction {
       execSQL(
         "CREATE TABLE IF NOT EXISTS 'iconPack' (pack TEXT PRIMARY KEY NOT NULL, fallback BLOB NOT NULL, updateAt NUMERIC NOT NULL, modified INTEGER NOT NULL DEFAULT FALSE)"
@@ -57,18 +54,12 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
         "CREATE UNIQUE INDEX IF NOT EXISTS '${pack}_componentName' ON '$packTable' (packageName, className)"
       )
       execSQL("CREATE INDEX IF NOT EXISTS '${pack}_packageName' ON '$packTable' (packageName)")
-      // Load icon pack
-      loadIconPack(context.packageManager.getResourcesForApplication(pack), pack).let { info ->
-        if (!modified) delete("'${pt(pack)}'", null, null)
-        // Insert icons
-        insertIcons(db, pack, info.iconEntryMap.toList())
-        // Insert fallback
-        insertFallbackSettings(
-          db,
-          pack,
-          FallbackSettings(info.iconBacks, info.iconUpons, info.iconMasks, info.iconScale),
-        )
-      }
+      // If not modified, delete everything
+      if (!modified) delete("'${pt(pack)}'", null, null)
+      // Insert icons
+      insertIcons(db, pack, iconPack.iconEntryMap.toList())
+      // Insert fallback
+      insertFallbackSettings(db, pack, FallbackSettings(iconPack.info))
       // Get installed icon packs
       val packs = runBlocking { IconPackApps.get(context).keys }
       // Delete expired iconPack
@@ -140,7 +131,7 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
 
   private fun getIconExact(pack: String, cn: ComponentName) =
     readableDatabase.rawQuery(
-      "SELECT entry, pack FROM '${pt(pack)}' WHERE packageName=? and className=? LIMIT 1",
+      "SELECT entry, pack FROM '${pt(pack)}' WHERE packageName=? AND className=? LIMIT 1",
       arrayOf(cn.packageName, cn.className),
     )
 
@@ -177,45 +168,26 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
     }
   }
 
-  private fun getIconUpdateInfo(pack: String, entry: IconEntry, entryPack: String) =
-    "'${pt(pack)}'" to
+  fun insertOrUpdateIcon(pack: String, cn: ComponentName, entry: IconEntry, entryPack: String) {
+    val packTable = "'${pt(pack)}'"
+    val values =
       ContentValues().apply {
         put("entry", entry.toByteArray())
         put("pack", if (entryPack == pack) "" else entryPack)
       }
-
-  fun insertOrUpdateAppIcon(pack: String, cn: ComponentName, entry: IconEntry, entryPack: String) {
-    val (packTable, values) = getIconUpdateInfo(pack, entry, entryPack)
     writableDatabase.transaction {
-      update(packTable, values, "packageName=?", arrayOf(cn.packageName))
-      insertWithOnConflict(
-        packTable,
-        null,
-        values.apply {
-          put("packageName", cn.packageName)
-          put("className", "")
-        },
-        SQLiteDatabase.CONFLICT_REPLACE,
-      )
-      insertWithOnConflict(
-        packTable,
-        null,
-        values.apply { put("className", cn.className) },
-        SQLiteDatabase.CONFLICT_REPLACE,
-      )
-      setPackModified(pack)
-      iconsUpdateFlow.tryEmit()
-    }
-  }
-
-  fun insertOrUpdateShortcutIcon(
-    pack: String,
-    cn: ComponentName,
-    entry: IconEntry,
-    entryPack: String,
-  ) {
-    val (packTable, values) = getIconUpdateInfo(pack, entry, entryPack)
-    writableDatabase.transaction {
+      if (!cn.packageName.endsWith("@")) {
+        update(packTable, values, "packageName=?", arrayOf(cn.packageName))
+        insertWithOnConflict(
+          packTable,
+          null,
+          values.apply {
+            put("packageName", cn.packageName)
+            put("className", "")
+          },
+          SQLiteDatabase.CONFLICT_REPLACE,
+        )
+      }
       insertWithOnConflict(
         packTable,
         null,
@@ -230,15 +202,22 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
     }
   }
 
-  fun deleteIcon(pack: String, packageName: String) {
+  fun deleteIcon(pack: String, cn: ComponentName) {
     writableDatabase.transaction {
-      delete("'${pt(pack)}'", "packageName=?", arrayOf(packageName))
+      if (!cn.packageName.endsWith("@"))
+        delete("'${pt(pack)}'", "packageName=?", arrayOf(cn.packageName))
+      else
+        delete(
+          "'${pt(pack)}'",
+          "packageName=? AND className=?",
+          arrayOf(cn.packageName, cn.className),
+        )
       setPackModified(pack)
       iconsUpdateFlow.tryEmit()
     }
   }
 
-  fun resetPack(pack: String) {
+  fun resetPack(iconPack: IconPack) {
     writableDatabase.transaction {
       update(
         "iconPack",
@@ -247,9 +226,9 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
           put("modified", false)
         },
         "pack=?",
-        arrayOf(pack),
+        arrayOf(iconPack.pack),
       )
-      update(this, pack)
+      update(this, iconPack)
       iconsUpdateFlow.tryEmit()
       modifiedUpdateFlow.tryEmit()
     }

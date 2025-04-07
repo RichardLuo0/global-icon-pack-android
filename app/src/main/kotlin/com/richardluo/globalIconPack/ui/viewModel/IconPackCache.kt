@@ -8,8 +8,12 @@ import com.richardluo.globalIconPack.utils.getOrPut
 class IconPackCache(private val context: Application) {
   private val iconPackCache = LruCache<String, IconPack>(8)
 
-  fun getIconPack(pack: String) =
+  fun get(pack: String) =
     iconPackCache.getOrPut(pack) {
       IconPack(pack, context.packageManager.getResourcesForApplication(pack))
     }
+
+  fun delete(pack: String) {
+    iconPackCache.remove(pack)
+  }
 }

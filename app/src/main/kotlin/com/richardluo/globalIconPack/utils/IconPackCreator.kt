@@ -138,7 +138,7 @@ object IconPackCreator {
         entry.pack.copyIcon(entry.entry, cn.flattenToString(), iconName, appfilterXML, apkBuilder)
       }
     else
-      baseIconPack.getAllIconEntries().forEach { (cn, entry) ->
+      baseIconPack.iconEntryMap.forEach { (cn, entry) ->
         val iconName = "icon_${i++}"
         val newEntry = if (newIcons.containsKey(cn)) newIcons[cn] ?: return@forEach else null
         val finalIconEntry = newEntry?.entry ?: entry

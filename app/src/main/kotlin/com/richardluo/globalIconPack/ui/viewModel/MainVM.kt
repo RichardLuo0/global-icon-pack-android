@@ -3,7 +3,6 @@ package com.richardluo.globalIconPack.ui.viewModel
 import android.app.Application
 import android.content.ComponentName
 import android.content.pm.PackageManager
-import androidx.annotation.Keep
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
@@ -27,11 +26,10 @@ import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onEach
 import me.zhanghai.compose.preference.Preferences
 
-class MainVM(app: Application) : ContextVM(app) {
-  private val iconPackDB by getInstance { IconPackDB(app) }
-
+class MainVM(context: Application) : ContextVM(context) {
+  private val iconPackDB by getInstance { IconPackDB(context) }
   // Hold a strong reference to icon pack cache so it never gets recycled before MainVM is destroyed
-  @Keep @Suppress("unused") private val iconPackCache = getInstance { IconPackCache(app) }.value
+  private val iconPackCache = getInstance { IconPackCache(context) }.value
 
   var waiting by mutableIntStateOf(0)
     private set
@@ -52,7 +50,11 @@ class MainVM(app: Application) : ContextVM(app) {
               PackageManager.COMPONENT_ENABLED_STATE_ENABLED,
               PackageManager.DONT_KILL_APP,
             )
-            runCatchingToast(context) { iconPackDB.onIconPackChange(pack) }
+            runCatchingToast(context) {
+              // Reload pack from icon pack
+              iconPackCache.delete(pack)
+              iconPackDB.onIconPackChange(iconPackCache.get(pack))
+            }
           }
           else -> {
             KeepAliveService.stopForeground(context)
