@@ -1,13 +1,13 @@
 package com.richardluo.globalIconPack.utils
 
-import java.lang.ref.WeakReference
+import java.lang.ref.SoftReference
 import java.util.WeakHashMap
 
-private val cache = WeakHashMap<Class<*>, WeakReference<Any>>()
+private val cache = WeakHashMap<Class<*>, SoftReference<Any>>()
 
 @Suppress("UNCHECKED_CAST")
 fun <T> getInstance(clazz: Class<T>, create: () -> T) = lazy {
-  cache[clazz]?.get() as T? ?: create().also { cache.put(clazz, WeakReference(it)) }
+  cache[clazz]?.get() as T? ?: create().also { cache.put(clazz, SoftReference(it)) }
 }
 
 inline fun <reified T> getInstance() =
@@ -16,7 +16,7 @@ inline fun <reified T> getInstance() =
 inline fun <reified T> getInstance(noinline create: () -> T) = getInstance(T::class.java, create)
 
 class Weak<T, ARG>(private val create: (args: ARG) -> T) {
-  private var ref: WeakReference<T>? = null
+  private var ref: SoftReference<T>? = null
 
-  fun get(args: ARG) = ref?.get() ?: create(args).also { ref = WeakReference<T>(it) }
+  fun get(args: ARG) = ref?.get() ?: create(args).also { ref = SoftReference<T>(it) }
 }
