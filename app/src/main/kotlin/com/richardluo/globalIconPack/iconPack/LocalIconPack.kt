@@ -36,12 +36,7 @@ class LocalIconPack(
     loadIconPack(resources, pack).let { info ->
       iconFallback =
         if (config.iconFallback)
-          IconFallback(
-              FallbackSettings(info.iconBacks, info.iconUpons, info.iconMasks, info.iconScale),
-              ::getIcon,
-              config.scale,
-              config.scaleOnlyForeground,
-            )
+          IconFallback(FallbackSettings(info), ::getIcon, config.scale, config.scaleOnlyForeground)
             .orNullIfEmpty()
         else null
       info.iconEntryMap.forEach { (cn, entry) ->
@@ -71,15 +66,15 @@ class LocalIconPack(
   override fun genIconFrom(baseIcon: Drawable) = genIconFrom(baseIcon, iconFallback)
 }
 
-open class IconPackInfo {
-  open val iconBacks = listOf<String>()
-  open val iconUpons = listOf<String>()
-  open val iconMasks = listOf<String>()
-  open val iconScale: Float = 1f
-  open val iconEntryMap = mapOf<ComponentName, IconEntry>()
+interface IconPackInfo {
+  val iconBacks: List<String>
+  val iconUpons: List<String>
+  val iconMasks: List<String>
+  val iconScale: Float
+  val iconEntryMap: Map<ComponentName, IconEntry>
 }
 
-private class MutableIconPackInfo : IconPackInfo() {
+private class MutableIconPackInfo : IconPackInfo {
   override val iconBacks: MutableList<String> = mutableListOf()
   override val iconUpons: MutableList<String> = mutableListOf()
   override val iconMasks: MutableList<String> = mutableListOf()

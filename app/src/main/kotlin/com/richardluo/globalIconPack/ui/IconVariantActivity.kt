@@ -64,10 +64,11 @@ class IconVariantActivity : ComponentActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
 
-    if (viewModel.basePack.isEmpty()) {
-      finish()
-      return
-    }
+    runCatching { viewModel.iconPack }
+      .getOrElse {
+        finish()
+        return
+      }
 
     setContent { SampleTheme { Screen() } }
   }
@@ -133,7 +134,7 @@ class IconVariantActivity : ComponentActivity() {
                   },
                   text = { Text(stringResource(R.string.exportIconPack)) },
                   onClick = {
-                    exportLauncher.launch("${viewModel.basePack}.xml")
+                    exportLauncher.launch("${viewModel.iconPack}.xml")
                     expand = false
                   },
                 )
@@ -172,7 +173,7 @@ class IconVariantActivity : ComponentActivity() {
               key = entry?.entry?.name,
               loadImage = { viewModel.loadIcon(pair) },
             ) {
-              iconChooser.open(info, viewModel.basePack)
+              iconChooser.open(info, viewModel.iconPack)
             }
           }
         }
@@ -182,7 +183,7 @@ class IconVariantActivity : ComponentActivity() {
         }
     }
 
-    IconChooserSheet(iconChooser, viewModel::replaceIcon)
+    IconChooserSheet(iconChooser, { viewModel.loadIcon(it to null) }, viewModel::replaceIcon)
 
     WarnDialog(
       resetWarnDialogState,

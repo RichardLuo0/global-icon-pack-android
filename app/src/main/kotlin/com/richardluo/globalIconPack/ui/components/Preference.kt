@@ -35,12 +35,20 @@ import com.richardluo.globalIconPack.utils.getValue
 import me.zhanghai.compose.preference.ListPreference
 import me.zhanghai.compose.preference.LocalPreferenceFlow
 import me.zhanghai.compose.preference.Preference
+import me.zhanghai.compose.preference.PreferenceTheme
 import me.zhanghai.compose.preference.Preferences
+import me.zhanghai.compose.preference.ProvidePreferenceTheme
 import me.zhanghai.compose.preference.preferenceTheme
 import me.zhanghai.compose.preference.rememberPreferenceState
 
 @Composable
 fun myPreferenceTheme() = preferenceTheme(iconColor = MaterialTheme.colorScheme.secondary)
+
+@Composable
+fun ProvideMyPreferenceTheme(
+  theme: PreferenceTheme = myPreferenceTheme(),
+  content: @Composable (() -> Unit),
+) = ProvidePreferenceTheme(theme, content)
 
 inline fun <T, U> LazyListScope.mapListPreference(
   key: String,

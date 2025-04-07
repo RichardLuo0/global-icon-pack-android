@@ -242,7 +242,7 @@ class IconPackMergerActivity : ComponentActivity() {
     val valueMap = IconPackApps.getFlow(this).getValue(mapOf())
     LazyColumn(modifier = Modifier.fillMaxSize()) {
       items(valueMap.toList()) { (key, value) ->
-        IconPackItem(key, value, viewModel.basePack) {
+        IconPackItem(key, value, viewModel.basePack ?: "") {
           coroutineScope.launch { pagerState.animateScrollToPage(Page.IconList.ordinal) }
           viewModel.basePack = key
         }
@@ -266,7 +266,7 @@ class IconPackMergerActivity : ComponentActivity() {
             key = "${viewModel.basePack}/${entry?.entry?.name ?: ""}/${viewModel.iconCacheToken}",
             loadImage = { viewModel.loadIcon(pair) },
           ) {
-            iconChooser.open(info, viewModel.basePack)
+            iconChooser.open(info, viewModel.baseIconPack ?: return@AppIcon)
           }
         }
       }
@@ -275,7 +275,7 @@ class IconPackMergerActivity : ComponentActivity() {
         CircularProgressIndicator(trackColor = MaterialTheme.colorScheme.surfaceVariant)
       }
 
-    IconChooserSheet(iconChooser, viewModel::saveNewIcon)
+    IconChooserSheet(iconChooser, { viewModel.loadIcon(it to null) }, viewModel::saveNewIcon)
 
     LazyDialog(
       iconOptionDialogState,

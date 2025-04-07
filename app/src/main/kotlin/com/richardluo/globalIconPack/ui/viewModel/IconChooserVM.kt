@@ -5,19 +5,17 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
-import androidx.compose.ui.graphics.ImageBitmap
 import androidx.lifecycle.viewModelScope
-import com.richardluo.globalIconPack.iconPack.IconPackConfig
+import com.richardluo.globalIconPack.iconPack.database.CalendarIconEntry
 import com.richardluo.globalIconPack.iconPack.database.NormalIconEntry
-import com.richardluo.globalIconPack.ui.model.AppIconInfo
-import com.richardluo.globalIconPack.ui.model.IconEntryWithPack
+import com.richardluo.globalIconPack.ui.model.IconInfo
+import com.richardluo.globalIconPack.ui.model.IconPack
 import com.richardluo.globalIconPack.ui.model.OriginalIcon
 import com.richardluo.globalIconPack.ui.model.VariantIcon
 import com.richardluo.globalIconPack.ui.model.VariantPackIcon
 import com.richardluo.globalIconPack.utils.ContextVM
 import com.richardluo.globalIconPack.utils.debounceInput
 import com.richardluo.globalIconPack.utils.getInstance
-import kotlin.getValue
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combineTransform
@@ -26,21 +24,21 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.transform
 
-class IconChooserVM(app: Application) : ContextVM(app) {
-  private val iconPackCache by getInstance { IconPackCache(app) }
-  private val iconCache = IconCache(app) { iconPackCache.getIconPack(it) }
+class IconChooserVM(context: Application) : ContextVM(context) {
+  private val iconPackCache by getInstance { IconPackCache(context) }
+  private val iconCache by getInstance { IconCache(context) }
 
   var variantSheet by mutableStateOf(false)
-  var pack by mutableStateOf("")
-  var appInfo by mutableStateOf<AppIconInfo?>(null)
+  var iconPack by mutableStateOf<IconPack?>(null)
+  var iconInfo by mutableStateOf<IconInfo?>(null)
     private set
 
   val icons =
-    snapshotFlow { pack }
+    snapshotFlow { iconPack }
       .transform { pack ->
-        if (pack.isEmpty()) return@transform
+        val iconPack = iconPack
+        iconPack ?: return@transform
         emit(null)
-        val iconPack = iconPackCache.getIconPack(pack)
         emit(iconPack.drawables.map { VariantPackIcon(iconPack, NormalIconEntry(it)) })
       }
       .flowOn(Dispatchers.IO)
@@ -50,21 +48,21 @@ class IconChooserVM(app: Application) : ContextVM(app) {
   val suggestIcons =
     combineTransform(
         icons,
-        snapshotFlow { appInfo },
+        snapshotFlow { iconInfo },
         snapshotFlow { searchText.value }.debounceInput(),
-      ) { icons, app, text ->
+      ) { icons, appInfo, text ->
         emit(null)
         icons ?: return@combineTransform
-        app ?: return@combineTransform
+        appInfo ?: return@combineTransform
         emit(
           mutableListOf<VariantIcon>(OriginalIcon()).apply {
-            val iconEntry = iconPackCache.getIconPack(pack).getIconEntry(app.componentName, true)
-            addAll(
-              if (text.isEmpty())
-                if (iconEntry != null) icons.filter { it.entry.name.startsWith(iconEntry.name) }
-                else listOf()
-              else icons.filter { it.entry.name.contains(text, ignoreCase = true) }
-            )
+            val keyword =
+              text.ifEmpty {
+                appInfo.componentName.packageName.let {
+                  it.substringAfterLast(".").takeIf { it.length > 3 } ?: it
+                }
+              }
+            addAll(icons.filter { it.entry.name.contains(keyword, ignoreCase = true) })
           }
         )
       }
@@ -72,21 +70,26 @@ class IconChooserVM(app: Application) : ContextVM(app) {
       .flowOn(Dispatchers.Default)
       .stateIn(viewModelScope, SharingStarted.Lazily, null)
 
-  suspend fun loadIcon(pair: Pair<AppIconInfo, IconEntryWithPack?>) =
-    iconCache.loadIcon(pair.first, pair.second, pack, defaultIconPackConfig)
+  suspend fun loadIcon(icon: VariantPackIcon) = iconCache.loadIcon(icon.entry, icon.pack)
 
-  suspend fun loadIconForSelectedApp(icon: VariantIcon): ImageBitmap {
-    val appInfo = appInfo ?: return ImageBitmap(1, 1)
-    return when (icon) {
-      is OriginalIcon -> loadIcon(appInfo to null)
-      is VariantPackIcon -> loadIcon(appInfo to IconEntryWithPack(icon.entry, icon.pack))
-      else -> null
-    } ?: ImageBitmap(1, 1)
+  fun setPack(pack: String) {
+    this.iconPack = iconPackCache.get(pack)
   }
 
-  fun open(appInfo: AppIconInfo, pack: String) {
-    this.appInfo = appInfo
-    this.pack = pack
+  fun open(iconInfo: IconInfo, iconPack: IconPack) {
+    this.iconInfo = iconInfo
+    this.iconPack = iconPack
     variantSheet = true
+  }
+
+  class NotCalendarEntryException : Exception("Not a calendar entry")
+
+  fun asCalendarEntry(icon: VariantIcon): VariantPackIcon {
+    icon as? VariantPackIcon ?: throw NotCalendarEntryException()
+    val name = icon.entry.name
+    val calendarPrefix = name.removeSuffix(name.takeLastWhile { it.isDigit() })
+    // Detect if it is in icon pack, 15 is just a random number
+    iconPack?.getIcon("${calendarPrefix}15") ?: throw NotCalendarEntryException()
+    return VariantPackIcon(icon.pack, CalendarIconEntry(calendarPrefix))
   }
 }

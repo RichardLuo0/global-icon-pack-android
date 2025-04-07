@@ -80,15 +80,8 @@ class IconCache(private val context: Context, factor: Double = 1.0 / 8) {
       }
     }
 
-  suspend fun loadIcon(entry: IconEntry, pack: IconPack) =
-    staticBitmapCache.getOrPut("$pack/icon/${entry.name}") {
-      withContext(Dispatchers.IO) {
-        pack.getIcon(entry, 0)?.toSafeBitmap(300, 300)?.asImageBitmap() ?: ImageBitmap(1, 1)
-      }
-    }
-
-  fun clearGeneratedIcons() {
-    generatedBitmapCache.evictAll()
+  fun clear() {
+    bitmapCache.evictAll()
   }
 }
 

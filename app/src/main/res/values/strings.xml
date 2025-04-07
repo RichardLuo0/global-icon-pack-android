@@ -1,4 +1,4 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
     <string name="appName">Global Icon Pack</string>
 
     <string name="plzEnableModuleFirst">Please ensure the Xposed module has been enabled first.</string>
@@ -76,4 +76,8 @@
     <string name="mergerWarning">The app will collect and generate the necessary files for creating a new icon pack.\nYou are not permitted to distribute the generated content without the original creators\' permission.\nYou have been warned!</string>
     <string name="requiresEmptyFolder">An empty folder is necessary!</string>
     <string name="mergerInstruction">Follow the steps below:\n1. Install Termux and grant storage permission.\n2. Run command `cd &lt;the output folder&gt; &amp;&amp; bash create_icon_pack.sh`.</string>
+
+    <string name="asNormalIcon">As normal icon</string>
+    <string name="asCalendarIcon">As calendar icon</string>
+    <string name="notCalendarIcon">Not a valid calendar icon!</string>
 </resources>

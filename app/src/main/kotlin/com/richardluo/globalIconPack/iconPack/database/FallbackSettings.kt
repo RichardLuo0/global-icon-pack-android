@@ -1,5 +1,6 @@
 package com.richardluo.globalIconPack.iconPack.database
 
+import com.richardluo.globalIconPack.iconPack.IconPackInfo
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.DataInputStream
@@ -11,6 +12,9 @@ data class FallbackSettings(
   val iconMasks: List<String>,
   val iconScale: Float = 1f,
 ) {
+  constructor(
+    info: IconPackInfo
+  ) : this(info.iconBacks, info.iconUpons, info.iconMasks, info.iconScale)
 
   fun toByteArray(): ByteArray =
     ByteArrayOutputStream()
