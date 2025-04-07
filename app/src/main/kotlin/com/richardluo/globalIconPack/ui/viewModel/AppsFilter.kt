@@ -10,8 +10,8 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshotFlow
 import com.richardluo.globalIconPack.R
-import com.richardluo.globalIconPack.iconPack.getComponentName
 import com.richardluo.globalIconPack.ui.model.AppIconInfo
+import com.richardluo.globalIconPack.ui.model.IconInfo
 import com.richardluo.globalIconPack.ui.model.ShortcutIconInfo
 import com.richardluo.globalIconPack.ui.viewModel.IFilterApps.Type
 import com.richardluo.globalIconPack.utils.Weak
@@ -27,14 +27,14 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 
 private val appsCache =
-  Weak<Array<List<AppIconInfo>>, Context> { context ->
-    val userApps = mutableListOf<AppIconInfo>()
-    val systemApps = mutableListOf<AppIconInfo>()
+  Weak<Array<List<IconInfo>>, Context> { context ->
+    val userApps = mutableListOf<IconInfo>()
+    val systemApps = mutableListOf<IconInfo>()
 
-    fun add(flags: Int, appIconInfo: AppIconInfo) =
+    fun add(flags: Int, iconInfo: IconInfo) =
       if ((flags and ApplicationInfo.FLAG_SYSTEM) == ApplicationInfo.FLAG_SYSTEM)
-        systemApps.add(appIconInfo)
-      else userApps.add(appIconInfo)
+        systemApps.add(iconInfo)
+      else userApps.add(iconInfo)
 
     val launcherApps =
       context
@@ -42,22 +42,19 @@ private val appsCache =
         .asType<LauncherApps>()
         .getActivityList(null, Process.myUserHandle())
         .map { info ->
-          val cn = info.componentName
-          add(info.applicationInfo.flags, AppIconInfo(cn, info.label.toString()))
-          cn.packageName
+          add(info.applicationInfo.flags, AppIconInfo(info))
+          info.componentName.packageName
         }
         .toSet()
     context.packageManager
       .getInstalledApplications(0)
       .filter { !launcherApps.contains(it.packageName) }
-      .forEach { info ->
-        val cn = getComponentName(info.packageName)
-        add(info.flags, AppIconInfo(cn, info.loadLabel(context.packageManager).toString()))
-      }
+      .forEach { info -> add(info.flags, AppIconInfo(context, info)) }
+
     arrayOf(userApps.distinct().sortedBy { it.label }, systemApps.distinct().sortedBy { it.label })
   }
 private val shortcutsCache =
-  Weak<List<AppIconInfo>, Context> { context ->
+  Weak<List<IconInfo>, Context> { context ->
     val shortcuts =
       context
         .getSystemService(Context.LAUNCHER_APPS_SERVICE)
@@ -65,14 +62,13 @@ private val shortcutsCache =
         .getShortcuts(
           ShortcutQuery()
             .setQueryFlags(
-              ShortcutQuery.FLAG_MATCH_MANIFEST or ShortcutQuery.FLAG_MATCH_PINNED_BY_ANY_LAUNCHER
+              ShortcutQuery.FLAG_MATCH_MANIFEST or
+                ShortcutQuery.FLAG_MATCH_PINNED_BY_ANY_LAUNCHER or
+                ShortcutQuery.FLAG_MATCH_DYNAMIC
             ),
           Process.myUserHandle(),
         ) ?: return@Weak listOf()
-    shortcuts
-      .map { info -> ShortcutIconInfo(getComponentName(info), info) }
-      .distinct()
-      .sortedBy { it.componentName }
+    shortcuts.map { info -> ShortcutIconInfo(info) }.distinct().sortedBy { it.componentName }
   }
 
 interface IFilterApps {
@@ -84,9 +80,9 @@ interface IFilterApps {
 
   val searchText: MutableState<String>
   val filterType: MutableState<Type>
-  val filteredApps: Flow<List<AppIconInfo>?>
+  val filteredApps: Flow<List<IconInfo>?>
 
-  suspend fun getAllApps(): List<AppIconInfo>
+  suspend fun getAllApps(): List<IconInfo>
 }
 
 class FilterApps(context: Context) : IFilterApps {
@@ -96,9 +92,9 @@ class FilterApps(context: Context) : IFilterApps {
   private val apps by lazy { appsCache.get(context) }
   private val shortcuts by lazy { shortcutsCache.get(context) }
 
-  override suspend fun getAllApps(): List<AppIconInfo> =
+  override suspend fun getAllApps(): List<IconInfo> =
     withContext(Dispatchers.Default) {
-      mutableListOf<AppIconInfo>().apply {
+      mutableListOf<IconInfo>().apply {
         apps.forEach { addAll(it) }
         runCatching { addAll(shortcuts) }
       }
