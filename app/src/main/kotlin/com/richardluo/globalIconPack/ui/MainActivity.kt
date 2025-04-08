@@ -75,12 +75,13 @@ import com.richardluo.globalIconPack.ui.components.SnackbarErrorVisuals
 import com.richardluo.globalIconPack.ui.components.TwoLineText
 import com.richardluo.globalIconPack.ui.components.WarnDialog
 import com.richardluo.globalIconPack.ui.components.mapListPreference
+import com.richardluo.globalIconPack.ui.components.myPreference
 import com.richardluo.globalIconPack.ui.components.myPreferenceTheme
 import com.richardluo.globalIconPack.ui.components.mySliderPreference
+import com.richardluo.globalIconPack.ui.components.mySwitchPreference
 import com.richardluo.globalIconPack.ui.viewModel.MainVM
 import com.richardluo.globalIconPack.utils.WorldPreference
 import com.richardluo.globalIconPack.utils.getPreferenceFlow
-import com.richardluo.globalIconPack.utils.getValue
 import com.topjohnwu.superuser.Shell
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.launchIn
@@ -88,7 +89,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import me.zhanghai.compose.preference.LocalPreferenceFlow
-import me.zhanghai.compose.preference.Preference
 import me.zhanghai.compose.preference.ProvidePreferenceLocals
 import me.zhanghai.compose.preference.listPreference
 import me.zhanghai.compose.preference.preference
@@ -219,8 +219,8 @@ class MainActivity : ComponentActivity() {
 
       LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = contentPadding) {
         MainPreference.run {
-          general(this@MainActivity)
-          iconPack(this@MainActivity)
+          general(context)
+          iconPack(context)
           pixel()
         }
       }
@@ -291,16 +291,14 @@ object MainPreference {
         key = "iconPackCat",
         title = { OneLineText(stringResource(R.string.iconPackSettings)) },
       )
-      item(key = "iconVariant") {
-        val pref = LocalPreferenceFlow.current.getValue()
-        Preference(
-          icon = { Icon(Icons.Outlined.Edit, "iconVariant") },
-          enabled = pref.get(Pref.MODE) == MODE_PROVIDER && pref.get(Pref.ICON_PACK).isNotEmpty(),
-          onClick = { context.startActivity(Intent(context, IconVariantActivity::class.java)) },
-          title = { OneLineText(stringResource(R.string.iconVariant)) },
-          summary = { TwoLineText(stringResource(R.string.iconVariantSummary)) },
-        )
-      }
+      myPreference(
+        icon = { Icon(Icons.Outlined.Edit, "iconVariant") },
+        key = "iconVariant",
+        enabled = { it.get(Pref.MODE) == MODE_PROVIDER && it.get(Pref.ICON_PACK).isNotEmpty() },
+        onClick = { context.startActivity(Intent(context, IconVariantActivity::class.java)) },
+        title = { OneLineText(stringResource(R.string.iconVariant)) },
+        summary = { TwoLineText(stringResource(R.string.iconVariantSummary)) },
+      )
     }
     switchPreference(
       icon = { Icon(Icons.Outlined.SettingsBackupRestore, Pref.ICON_FALLBACK.first) },
@@ -309,22 +307,24 @@ object MainPreference {
       title = { OneLineText(stringResource(R.string.iconFallback)) },
       summary = { TwoLineText(stringResource(R.string.iconFallbackSummary)) },
     )
-    switchPreference(
+    mySwitchPreference(
       icon = {},
       key = Pref.SCALE_ONLY_FOREGROUND.first,
+      enabled = { it.get(Pref.ICON_FALLBACK) },
       defaultValue = Pref.SCALE_ONLY_FOREGROUND.second,
       title = { OneLineText(stringResource(R.string.scaleOnlyForeground)) },
     )
-    switchPreference(
+    mySwitchPreference(
       icon = {},
       key = Pref.OVERRIDE_ICON_FALLBACK.first,
+      enabled = { it.get(Pref.ICON_FALLBACK) },
       defaultValue = Pref.OVERRIDE_ICON_FALLBACK.second,
       title = { OneLineText(stringResource(R.string.overrideIconFallback)) },
       summary = { TwoLineText(stringResource(R.string.overrideIconFallbackSummary)) },
     )
     mySliderPreference(
       icon = { Icon(Icons.Outlined.PhotoSizeSelectSmall, Pref.ICON_PACK_SCALE.first) },
-      enabled = { it.get(Pref.OVERRIDE_ICON_FALLBACK) },
+      enabled = { it.get(Pref.ICON_FALLBACK) && it.get(Pref.OVERRIDE_ICON_FALLBACK) },
       key = Pref.ICON_PACK_SCALE.first,
       defaultValue = Pref.ICON_PACK_SCALE.second,
       valueRange = 0f..1.5f,

@@ -38,6 +38,7 @@ import me.zhanghai.compose.preference.Preference
 import me.zhanghai.compose.preference.PreferenceTheme
 import me.zhanghai.compose.preference.Preferences
 import me.zhanghai.compose.preference.ProvidePreferenceTheme
+import me.zhanghai.compose.preference.SwitchPreference
 import me.zhanghai.compose.preference.preferenceTheme
 import me.zhanghai.compose.preference.rememberPreferenceState
 
@@ -50,6 +51,29 @@ fun ProvideMyPreferenceTheme(
   content: @Composable (() -> Unit),
 ) = ProvidePreferenceTheme(theme, content)
 
+fun LazyListScope.myPreference(
+  key: String,
+  title: @Composable () -> Unit,
+  modifier: Modifier = Modifier.fillMaxWidth(),
+  enabled: (Preferences) -> Boolean = { true },
+  icon: @Composable (() -> Unit)? = null,
+  summary: @Composable (() -> Unit)? = null,
+  widgetContainer: @Composable (() -> Unit)? = null,
+  onClick: (() -> Unit)? = null,
+) {
+  item(key = key, contentType = "Preference") {
+    Preference(
+      title = title,
+      modifier = modifier,
+      enabled = enabled(LocalPreferenceFlow.current.getValue()),
+      icon = icon,
+      summary = summary,
+      widgetContainer = widgetContainer,
+      onClick = onClick,
+    )
+  }
+}
+
 inline fun <T, U> LazyListScope.mapListPreference(
   key: String,
   defaultValue: T,
@@ -59,12 +83,12 @@ inline fun <T, U> LazyListScope.mapListPreference(
   crossinline rememberState: @Composable () -> MutableState<T> = {
     rememberPreferenceState(key, defaultValue)
   },
-  crossinline enabled: (T) -> Boolean = { true },
+  crossinline enabled: (Preferences) -> Boolean = { true },
   noinline icon: @Composable ((T) -> Unit)? = null,
   noinline summary: @Composable ((T, U?) -> Unit)? = null,
   noinline item: @Composable (key: T, value: U, currentKey: T, onClick: () -> Unit) -> Unit,
 ) {
-  item(key = key, contentType = "lazyListPreference") {
+  item(key = key, contentType = "LazyListPreference") {
     val state = rememberState()
     val valueMap = getValueMap()
     val valueKey by state
@@ -73,7 +97,7 @@ inline fun <T, U> LazyListScope.mapListPreference(
       modifier = modifier,
       values = valueMap.keys.toList(),
       title = { title(valueKey) },
-      enabled = enabled(valueKey),
+      enabled = enabled(LocalPreferenceFlow.current.getValue()),
       icon = icon?.let { { it(valueKey) } },
       summary = summary?.let { { it(valueKey, valueMap[valueKey]) } },
       item = { key, currentKey, onClick -> item(key, valueMap.getValue(key), currentKey, onClick) },
@@ -215,6 +239,32 @@ fun MySliderPreference(
         LaunchedEffect(focusRequester) { focusRequester.requestFocus() }
       },
       onOk = { onOk() },
+    )
+  }
+}
+
+inline fun LazyListScope.mySwitchPreference(
+  key: String,
+  defaultValue: Boolean,
+  crossinline title: @Composable (Boolean) -> Unit,
+  modifier: Modifier = Modifier.fillMaxWidth(),
+  crossinline rememberState: @Composable () -> MutableState<Boolean> = {
+    rememberPreferenceState(key, defaultValue)
+  },
+  crossinline enabled: (Preferences) -> Boolean = { true },
+  noinline icon: @Composable ((Boolean) -> Unit)? = null,
+  noinline summary: @Composable ((Boolean) -> Unit)? = null,
+) {
+  item(key = key, contentType = "SwitchPreference") {
+    val state = rememberState()
+    val value by state
+    SwitchPreference(
+      state = state,
+      title = { title(value) },
+      modifier = modifier,
+      enabled = enabled(LocalPreferenceFlow.current.getValue()),
+      icon = icon?.let { { it(value) } },
+      summary = summary?.let { { it(value) } },
     )
   }
 }
