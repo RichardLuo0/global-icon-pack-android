@@ -169,10 +169,12 @@ fun IconChooserSheet(
             modifier = Modifier.fillMaxSize().padding(horizontal = 2.dp),
             columns = GridCells.Adaptive(minSize = 74.dp),
           ) {
-            // TODO
-            if (suggestIcons.size > 10) {
+            val shrinkSize = gridState.layoutInfo.maxSpan * 2
+            if (suggestIcons.size > shrinkSize) {
               variantIconTitle(context.getString(R.string.suggestedIcons), expandState)
-              variantIconItems(if (expandState.value) suggestIcons else suggestIcons.take(10))
+              variantIconItems(
+                if (expandState.value) suggestIcons else suggestIcons.take(shrinkSize)
+              )
             } else {
               variantIconTitle(context.getString(R.string.suggestedIcons))
               variantIconItems(suggestIcons)

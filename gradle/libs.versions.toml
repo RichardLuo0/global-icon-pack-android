@@ -1,33 +1,18 @@
-[versions]
-agp = "8.9.1"
-kotlin = "2.1.20"
-core-ktx = "1.15.0"
-activity = "1.10.1"
-viewmodel = "2.8.7"
-material3 = "1.4.0-alpha11" # Fix https://issuetracker.google.com/issues/353304855
-material-icons-extended = "1.7.8"
-ui-tooling-preview-android = "1.7.8"
-libsu = "6.0.0"
-documentfile = "1.0.1"
-#junit = "4.13.2"
-#junitVersion = "1.2.1"
-#espressoCore = "3.6.1"
-
 [libraries]
-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "core-ktx" }
-activity = { group = "androidx.activity", name = "activity-compose", version.ref = "activity" }
-viewmodel = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "viewmodel" }
+core-ktx = { group = "androidx.core", name = "core-ktx", version = "1.15.0" }
+activity = { group = "androidx.activity", name = "activity-compose", version = "1.10.1" }
+viewmodel = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose", version = "2.8.7" }
+compose-foundation = { group = "androidx.compose.foundation", name = "foundation", version = "1.8.0-rc02" } # https://developer.android.com/reference/kotlin/androidx/compose/foundation/lazy/grid/LazyGridLayoutInfo#maxSpan()
 preference = { group = "me.zhanghai.compose.preference", name = "library", version = "1.1.1" }
-material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "material3" }
-material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended", version.ref = "material-icons-extended" }
-ui-tooling-preview-android = { group = "androidx.compose.ui", name = "ui-tooling-preview-android", version.ref = "ui-tooling-preview-android" }
-libsu = { group = "com.github.topjohnwu.libsu", name = "core", version.ref = "libsu" }
-documentfile = { group = "androidx.documentfile", name = "documentfile", version.ref = "documentfile" }
+material3 = { group = "androidx.compose.material3", name = "material3", version = "1.4.0-alpha11" }  # Fix https://issuetracker.google.com/issues/353304855
+material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended", version = "1.7.8" }
+libsu = { group = "com.github.topjohnwu.libsu", name = "core", version = "6.0.0" }
+documentfile = { group = "androidx.documentfile", name = "documentfile", version = "1.0.1" }
 #junit = { group = "junit", name = "junit", version.ref = "junit" }
 #ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 #espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
 
 [plugins]
-android-application = { id = "com.android.application", version.ref = "agp" }
-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
-compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+android-application = { id = "com.android.application", version = "8.9.1" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version = "2.1.20" }
+compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version = "2.1.20" }

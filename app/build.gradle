@@ -84,10 +84,10 @@ dependencies {
     implementation libs.core.ktx
     implementation libs.activity
     implementation libs.viewmodel
+    implementation libs.compose.foundation
     implementation libs.preference
     implementation libs.material3
     implementation libs.material.icons.extended
-    implementation libs.ui.tooling.preview.android
     implementation libs.libsu
     implementation libs.documentfile
 
