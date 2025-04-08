@@ -16,8 +16,10 @@ object WorldPreference {
     if (!::pref.isInitialized)
       pref =
         XSharedPreferences(BuildConfig.APPLICATION_ID).also {
-          if (!it.file.canRead())
+          if (!it.file.canRead()) {
             log("Pref can not be read. Plz open global icon pack at least once.")
+            log(it.file.path)
+          }
         }
     return pref
   }

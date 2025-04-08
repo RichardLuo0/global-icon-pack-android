@@ -25,9 +25,7 @@ private fun initIP() {
     runCatching {
         val pref = WorldPreference.getPrefInMod()
         val pack =
-          pref.get(Pref.ICON_PACK)?.takeIf { it.isNotEmpty() }
-            ?: throw Exception("No icon pack set")
-
+          pref.get(Pref.ICON_PACK).takeIf { it.isNotEmpty() } ?: throw Exception("No icon pack set")
         val res = pm.getResourcesForApplication(pack)
         val config = IconPackConfig(pref)
         ip =

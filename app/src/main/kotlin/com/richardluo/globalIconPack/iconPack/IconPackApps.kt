@@ -49,7 +49,6 @@ object IconPackApps {
       ?: callbackFlow<Map<String, IconPackApp>> {
           val packageChangeReceiver =
             object : BroadcastReceiver() {
-
               override fun onReceive(context: Context, intent: Intent?) {
                 GlobalScope.launch { trySend(getIconAppMap(context)) }
               }

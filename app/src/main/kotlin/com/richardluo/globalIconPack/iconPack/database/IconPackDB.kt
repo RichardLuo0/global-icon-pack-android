@@ -68,7 +68,7 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
       // Drop expired tables
       val packTables = packs.map { pt(it) }
       foreachPackTable { if (!packTables.contains(it)) db.execSQL("DROP TABLE '$it'") }
-      log("database: $pack updated")
+      log("Database: $pack updated")
       iconsUpdateFlow.tryEmit()
     }
   }

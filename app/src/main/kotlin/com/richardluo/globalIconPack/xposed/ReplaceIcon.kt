@@ -37,7 +37,7 @@ class ReplaceIcon : Hook {
   }
 
   override fun onHookApp(lpp: LoadPackageParam) {
-    // Resource id always starts with 0x7f, use it to indict that this is an icon
+    // Resource id always starts with 0x7f, use it to indicate that this is an icon
     // Assume the icon res id is only used in getDrawable()
     val isInReplaceIconResId = ThreadLocal.withInitial { false }
     val replaceIconResId =
@@ -46,16 +46,18 @@ class ReplaceIcon : Hook {
           // Avoid recursive call
           if (isInReplaceIconResId.get() == true) return
           isInReplaceIconResId.set(true)
-
-          val info = param.thisObject as PackageItemInfo
-          if (info.packageName != null)
-            info.icon =
-              getIP()?.getId(getComponentName(info))?.let { withHighByteSet(it, IN_IP) }
-                ?: if (isHighTwoByte(info.icon, ANDROID_DEFAULT))
-                  withHighByteSet(info.icon, NOT_IN_IP)
-                else info.icon
-
+          afterHookedMethodSafe(param)
           isInReplaceIconResId.set(false)
+        }
+
+        fun afterHookedMethodSafe(param: MethodHookParam) {
+          val info = param.thisObject as PackageItemInfo
+          if (info.packageName == null) return
+          info.icon =
+            getIP()?.getId(getComponentName(info))?.let { withHighByteSet(it, IN_IP) }
+              ?: if (isHighTwoByte(info.icon, ANDROID_DEFAULT))
+                withHighByteSet(info.icon, NOT_IN_IP)
+              else info.icon
         }
       }
     ReflectHelper.hookAllConstructors(ApplicationInfo::class.java, replaceIconResId)
