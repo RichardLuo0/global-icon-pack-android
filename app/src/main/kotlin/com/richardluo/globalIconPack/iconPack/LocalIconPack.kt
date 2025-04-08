@@ -27,23 +27,25 @@ class LocalIconPack(
   private val iconPackAsFallback = config.iconPackAsFallback
   private val iconFallback: IconFallback?
 
-  private val indexMap = mutableMapOf<ComponentName, Int>()
-  private val iconEntryList = mutableListOf<IconEntry>()
+  private val indexMap: Map<ComponentName, Int>
+  private val iconEntryList: List<IconEntry>
 
   private val idCache = mutableMapOf<String, Int>()
 
   init {
-    loadIconPack(resources, pack).let { info ->
-      iconFallback =
-        if (config.iconFallback)
-          IconFallback(FallbackSettings(info), ::getIcon, config.scale, config.scaleOnlyForeground)
-            .orNullIfEmpty()
-        else null
-      info.iconEntryMap.forEach { (cn, entry) ->
-        iconEntryList.add(entry)
-        indexMap[cn] = iconEntryList.size - 1
+    val info = loadIconPack(resources, pack)
+    iconFallback =
+      if (config.iconFallback)
+        IconFallback(FallbackSettings(info), ::getIcon, config.scale, config.scaleOnlyForeground)
+          .orNullIfEmpty()
+      else null
+    indexMap = mutableMapOf<ComponentName, Int>()
+    var i = 0
+    iconEntryList =
+      info.iconEntryMap.map { (cn, entry) ->
+        indexMap[cn] = i++
+        entry
       }
-    }
   }
 
   override fun getId(cn: ComponentName) =
