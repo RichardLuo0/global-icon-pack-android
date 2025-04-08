@@ -12,6 +12,7 @@ import com.richardluo.globalIconPack.utils.getBlob
 import com.richardluo.globalIconPack.utils.getOrPutNullable
 import com.richardluo.globalIconPack.utils.getString
 import com.richardluo.globalIconPack.utils.useFirstRow
+import java.util.Collections
 
 class IconEntryFromOtherPack(val entry: IconEntry, val pack: String) : IconEntry by entry
 
@@ -24,7 +25,7 @@ class RemoteIconPack(
   private val iconFallback: IconFallback?
 
   private val indexMap = mutableMapOf<ComponentName, Int?>()
-  private val iconEntryList = mutableListOf<IconEntry>()
+  private val iconEntryList = Collections.synchronizedList(mutableListOf<IconEntry>())
 
   private val contentResolver = AndroidAppHelper.currentApplication().contentResolver
   private val idCache = mutableMapOf<String, Int>()
@@ -48,23 +49,25 @@ class RemoteIconPack(
   }
 
   override fun getId(cn: ComponentName): Int? =
-    indexMap.getOrPutNullable(cn) {
-      contentResolver
-        .query(
-          IconPackProvider.ICONS,
-          null,
-          null,
-          arrayOf(pack, cn.packageName, cn.className, iconPackAsFallback.toString()),
-          null,
-        )
-        ?.useFirstRow {
-          val entry =
-            if (it.getColumnIndex("type") > 0) IconEntryWithId.fromCursor(it)
-            else IconEntry.from(it.getBlob("entry"))
-          val pack = it.getString("pack")
-          iconEntryList.add(if (pack.isEmpty()) entry else IconEntryFromOtherPack(entry, pack))
-          iconEntryList.size - 1
-        }
+    synchronized(indexMap) {
+      indexMap.getOrPutNullable(cn) {
+        contentResolver
+          .query(
+            IconPackProvider.ICONS,
+            null,
+            null,
+            arrayOf(pack, cn.packageName, cn.className, iconPackAsFallback.toString()),
+            null,
+          )
+          ?.useFirstRow {
+            val entry =
+              if (it.getColumnIndex("type") > 0) IconEntryWithId.fromCursor(it)
+              else IconEntry.from(it.getBlob("entry"))
+            val pack = it.getString("pack")
+            iconEntryList.add(if (pack.isEmpty()) entry else IconEntryFromOtherPack(entry, pack))
+            iconEntryList.size - 1
+          }
+      }
     }
 
   override fun getIconEntry(id: Int): IconEntry? = iconEntryList.getOrNull(id)
