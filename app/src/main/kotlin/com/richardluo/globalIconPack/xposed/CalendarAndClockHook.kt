@@ -56,7 +56,7 @@ class CalendarAndClockHook : Hook {
         }
 
         val density =
-          param.args.getOrNull(1) as Int?
+          param.args.getOrNull(1) as? Int
             ?: AndroidAppHelper.currentApplication().resources.configuration.densityDpi
         when (entry.type) {
           IconEntry.Type.Calendar -> calendars.add(packageName)
