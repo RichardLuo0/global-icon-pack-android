@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
+    <string name="appName">Global Icon Pack</string>
+    <string name="general">Allgemein</string>
+    <string name="mode">Modus</string>
+    <string name="modeProvider">Anbietermodus: Den gehookten Apps die Daten über diese App bereitstellen.</string>
+    <string name="modeLocal">Lokaler Modus: Die gehookten Apps laden das Symbolpaket bei jedem Start.</string>
+    <string name="iconPack">Symbolpaket</string>
+    <string name="iconPackSummary">Der Paketname des Symbolpakets.</string>
+    <string name="iconPackAsFallback">Rückfall-Symbolpaket</string>
+    <string name="iconFallback">Rückfallsymbole generieren</string>
+    <string name="iconFallbackSummary">Hintergrund, Ausschnitt und Skalierung des Symbolpakets auf Symbole von nicht in Symbolpaket enthaltenen Apps anwenden.</string>
+    <string name="overrideIconFallback">Rückfall-Einstellungen überschreiben</string>
+    <string name="overrideIconFallbackSummary">Andere Werte für Rückfall-Einstellungen verwenden.</string>
+    <string name="iconPackScale">Skalierung</string>
+    <string name="noForceShape">Keine Form erzwingen</string>
+    <string name="noForceShapeSummary">Entfernt den weißen Hintergrund hinter ungewöhnlich geformten Symbolen.</string>
+    <string name="forceLoadClockAndCalendar">Laden des Uhr- und Kalendersymbols erzwingen</string>
+    <string name="moreOptions">Weitere Optionen</string>
+    <string name="restartSystemUI">SystemUI neustarten</string>
+    <string name="restartPixelLauncher">DB &amp; leeren und Pixel Launcher neustarten</string>
+    <string name="restartOthers">Andere neustarten</string>
+    <string name="openCrowdin">Hilf bei der Übersetzung mit</string>
+    <string name="openGithub">Github</string>
+    <string name="restartedSuccessfully">Neustart erfolgreich</string>
+</resources>
