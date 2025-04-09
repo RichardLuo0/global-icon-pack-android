@@ -54,7 +54,7 @@ class IconCache(private val context: Context, factor: Double = 1.0 / 8) {
   ) =
     bitmapCache.getOrPut("${basePack.pack}/fallback/${info.componentName}") {
       getBaseIcon(info)?.let {
-        IconPack.genIconFrom(basePack.resources, it, iconFallback, config)
+        IconPack.genIconFrom(basePack.res, it, iconFallback, config)
           .toSafeBitmap(300, 300)
           .asImageBitmap()
       } ?: emptyImageBitmap
@@ -70,12 +70,12 @@ class IconCache(private val context: Context, factor: Double = 1.0 / 8) {
   private suspend fun getBaseIcon(info: IconInfo) =
     withContext(Dispatchers.Default) {
       when (info) {
-        is AppIconInfo -> context.packageManager.getApplicationIcon(info.componentName.packageName)
+        is AppIconInfo -> context.packageManager.getApplicationIcon(info.info)
         is ShortcutIconInfo ->
           context
             .getSystemService(Context.LAUNCHER_APPS_SERVICE)
             .asType<LauncherApps>()
-            .getShortcutIconDrawable(info.shortcut, 0)
+            ?.getShortcutIconDrawable(info.info, 0)
         else -> null
       }
     }

@@ -16,16 +16,23 @@ abstract class IconInfo(val componentName: ComponentName, val label: String) {
   override fun hashCode() = componentName.hashCode()
 }
 
-class AppIconInfo(componentName: ComponentName, label: String) : IconInfo(componentName, label) {
-  constructor(info: LauncherActivityInfo) : this(info.componentName, info.label.toString())
+class AppIconInfo(componentName: ComponentName, label: String, val info: ApplicationInfo) :
+  IconInfo(componentName, label) {
+  constructor(
+    info: LauncherActivityInfo
+  ) : this(info.componentName, info.label.toString(), info.applicationInfo)
 
   constructor(
     context: Context,
     info: ApplicationInfo,
-  ) : this(getComponentName(info.packageName), info.loadLabel(context.packageManager).toString())
+  ) : this(
+    getComponentName(info.packageName),
+    info.loadLabel(context.packageManager).toString(),
+    info,
+  )
 }
 
-class ShortcutIconInfo(val shortcut: ShortcutInfo) :
-  IconInfo(getComponentName(shortcut), shortcut.getLabel()?.toString() ?: shortcut.id)
+class ShortcutIconInfo(val info: ShortcutInfo) :
+  IconInfo(getComponentName(info), info.getLabel()?.toString() ?: info.id)
 
 private fun ShortcutInfo.getLabel() = shortLabel?.ifEmpty { longLabel }
