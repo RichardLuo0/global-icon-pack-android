@@ -313,6 +313,17 @@ object MainPreference {
       defaultValue = Pref.SCALE_ONLY_FOREGROUND.second,
       title = { OneLineText(stringResource(R.string.scaleOnlyForeground)) },
     )
+    mySliderPreference(
+      icon = {},
+      key = Pref.NON_ADAPTIVE_SCALE.first,
+      enabled = { it.get(Pref.ICON_FALLBACK) },
+      defaultValue = Pref.NON_ADAPTIVE_SCALE.second,
+      valueRange = 0f..1.5f,
+      valueSteps = 29,
+      title = { OneLineText(stringResource(R.string.nonAdaptiveScale)) },
+      summary = { OneLineText("%.2f".format(it)) },
+      valueToText = { "%.2f".format(it) },
+    )
     mySwitchPreference(
       icon = {},
       key = Pref.OVERRIDE_ICON_FALLBACK.first,

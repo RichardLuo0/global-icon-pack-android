@@ -17,6 +17,7 @@ import com.richardluo.globalIconPack.iconPack.database.FallbackSettings
 import com.richardluo.globalIconPack.iconPack.database.IconEntry
 import com.richardluo.globalIconPack.iconPack.database.IconPackDB
 import com.richardluo.globalIconPack.iconPack.database.NormalIconEntry
+import com.richardluo.globalIconPack.iconPack.defaultIconPackConfig
 import com.richardluo.globalIconPack.ui.model.IconEntryWithPack
 import com.richardluo.globalIconPack.ui.model.IconInfo
 import com.richardluo.globalIconPack.ui.model.OriginalIcon
@@ -57,7 +58,7 @@ class IconVariantVM(context: Application) : ContextVM(context), IFilterApps by F
     iconPackDB
       .getFallbackSettings(pack)
       .useFirstRow { FallbackSettings.from(it.getBlob("fallback")) }
-      ?.let { IconFallback(it, iconPack::getIcon, null, Pref.SCALE_ONLY_FOREGROUND.second) }
+      ?.let { IconFallback(it, iconPack::getIcon, defaultIconPackConfig) }
       ?.orNullIfEmpty()
   private val iconPackConfig = IconPackConfig(WorldPreference.getPrefInApp(context))
 

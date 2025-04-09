@@ -6,7 +6,6 @@ import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.Bitmap.CompressFormat
 import android.graphics.drawable.Drawable
-import com.richardluo.globalIconPack.Pref
 import com.richardluo.globalIconPack.iconPack.IconEntryWithId
 import com.richardluo.globalIconPack.iconPack.IconFallback
 import com.richardluo.globalIconPack.iconPack.IconPackConfig
@@ -14,6 +13,7 @@ import com.richardluo.globalIconPack.iconPack.database.ClockIconEntry
 import com.richardluo.globalIconPack.iconPack.database.FallbackSettings
 import com.richardluo.globalIconPack.iconPack.database.IconEntry
 import com.richardluo.globalIconPack.iconPack.database.NormalIconEntry
+import com.richardluo.globalIconPack.iconPack.defaultIconPackConfig
 import com.richardluo.globalIconPack.iconPack.getComponentName
 import com.richardluo.globalIconPack.iconPack.loadIconPack
 import com.richardluo.globalIconPack.utils.AXMLEditor
@@ -28,8 +28,7 @@ import org.xmlpull.v1.XmlPullParser
 class IconPack(val pack: String, val res: Resources) {
   val info by lazy { loadIconPack(res, pack) }
   val iconFallback by lazy {
-    IconFallback(FallbackSettings(info), ::getIcon, null, Pref.SCALE_ONLY_FOREGROUND.second)
-      .orNullIfEmpty()
+    IconFallback(FallbackSettings(info), ::getIcon, defaultIconPackConfig).orNullIfEmpty()
   }
   val iconEntryMap by lazy { info.iconEntryMap }
 
@@ -159,6 +158,7 @@ class IconPack(val pack: String, val res: Resources) {
             this?.iconMasks?.randomOrNull(),
             config.scale ?: (this?.iconScale ?: return baseIcon),
             config.scaleOnlyForeground,
+            config.nonAdaptiveScale,
           )
         }
       } else baseIcon

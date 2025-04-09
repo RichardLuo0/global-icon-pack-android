@@ -19,18 +19,19 @@ class IconFallback(
   val iconMasks: List<Bitmap>,
   val iconScale: Float = 1f,
   val scaleOnlyForeground: Boolean,
+  val nonAdaptiveScale: Float,
 ) {
   constructor(
     fs: FallbackSettings,
     getIcon: (String) -> Drawable?,
-    scale: Float?,
-    scaleOnlyForeground: Boolean,
+    config: IconPackConfig,
   ) : this(
     fs.iconBacks.mapNotNull { getIcon(it)?.toBitmap() },
     fs.iconUpons.mapNotNull { getIcon(it)?.toBitmap() },
     fs.iconMasks.mapNotNull { getIcon(it)?.toBitmap() },
-    scale ?: fs.iconScale,
-    scaleOnlyForeground,
+    config.scale ?: fs.iconScale,
+    config.scaleOnlyForeground,
+    config.nonAdaptiveScale,
   )
 
   fun isEmpty() =
@@ -68,6 +69,7 @@ abstract class IconPack(val pack: String, val res: Resources) {
         iconMasks.randomOrNull(),
         iconScale,
         scaleOnlyForeground,
+        nonAdaptiveScale,
         staticIcon,
       )
     } ?: baseIcon

@@ -33,8 +33,7 @@ class LocalIconPack(pack: String, res: Resources, config: IconPackConfig = defau
     val info = loadIconPack(res, pack)
     iconFallback =
       if (config.iconFallback)
-        IconFallback(FallbackSettings(info), ::getIcon, config.scale, config.scaleOnlyForeground)
-          .orNullIfEmpty()
+        IconFallback(FallbackSettings(info), ::getIcon, config).orNullIfEmpty()
       else null
     indexMap = mutableMapOf<ComponentName, Int>()
     var i = 0

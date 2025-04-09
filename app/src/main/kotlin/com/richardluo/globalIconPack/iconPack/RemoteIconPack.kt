@@ -36,12 +36,7 @@ class RemoteIconPack(pack: String, res: Resources, config: IconPackConfig = defa
         contentResolver
           .query(IconPackProvider.FALLBACKS, null, null, arrayOf(pack), null)
           ?.useFirstRow {
-            IconFallback(
-                FallbackSettings.from(it.getBlob("fallback")),
-                ::getIcon,
-                config.scale,
-                config.scaleOnlyForeground,
-              )
+            IconFallback(FallbackSettings.from(it.getBlob("fallback")), ::getIcon, config)
               .orNullIfEmpty()
           }
       else null
