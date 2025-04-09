@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
     <string name="appName">全局图标包</string>
     <string name="plzEnableModuleFirst">请先确认Xposed模块已启用。</string>
     <string name="iconPackApplied">图标包已应用。请手动点击“重启XXX”。</string>
@@ -20,6 +20,7 @@
     <string name="iconFallback">生成回退图标</string>
     <string name="iconFallbackSummary">从图标包提取背景、遮罩和缩放应用到图标包中所没有的应用。</string>
     <string name="scaleOnlyForeground">仅缩放自适应图标的前景</string>
+    <string name="nonAdaptiveScale">缩放非自适应图标</string>
     <string name="overrideIconFallback">覆盖回退选项</string>
     <string name="overrideIconFallbackSummary">为回退选项使用新值。</string>
     <string name="iconPackScale">缩放</string>
@@ -69,4 +70,7 @@
     <string name="mergerWarning">此app会收集并且生成构建新图标包所需的文件。\n未经原创者许可，您不得分发所生成的内容。\n你已被警告！</string>
     <string name="requiresEmptyFolder">需要一个空文件夹！</string>
     <string name="mergerInstruction">请按照以下步骤操作：\n1. 安装Termux并授予存储权限。\n2. 运行命令`cd &lt;the output folder&gt; &amp;&amp; bash create_icon_pack.sh`。</string>
+    <string name="asNormalIcon">作为普通图标</string>
+    <string name="asCalendarIcon">作为日历图标</string>
+    <string name="notCalendarIcon">不是有效的日历图标！</string>
 </resources>
