@@ -26,13 +26,14 @@ This module is designed to extend the icon packs throughout the entire system.
 
 ## Installation
 1. Install the apk. 
-2. Select the recommend apps in lsposed (Other launchers/apps may also work, depending on the api they use)
+2. Select apps in lsposed. It should work for most apps/launchers , depending on the api they use.
 3. Open Global Icon Pack, choose an icon pack.
 4. Open the three dot menu, click each of `Restart xxx`.
 
 * Recent screen will use your default launcher unless you use quickswitch. So you will need to select pixel launcher for that to work.
 * Pixel launcher saves its icon database in `/data/data/com.google.android.apps.nexuslauncher/databases/app_icons.db`.
 * In icon variant, the option `Modified` indicates that you have made changes to the icon variants. If enabled, when the icon pack updates, it will only add new icons instead of replacing all icons. Note that this could cause issues if any icon entry is missing in the new version!
+* For icon pack developers, you can create a shortcut record by appending `@` to the end of package name, and shortcut id as classname.
 
 ## Known Issues
 * If the launcher is slow to boot or crashes, switch to 'local' mode.
