@@ -10,5 +10,8 @@
         <item>com.android.intentresolver</item>
         <!--permission controller-->
         <item>com.android.permissioncontroller</item>
+        <!--open with menu-->
+        <!--should be android but xposed api messed up-->
+        <item>system</item>
     </string-array>
 </resources>
