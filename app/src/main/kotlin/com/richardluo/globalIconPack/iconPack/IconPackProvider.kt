@@ -9,6 +9,7 @@ import android.database.Cursor
 import android.database.MatrixCursor
 import android.graphics.drawable.Drawable
 import android.net.Uri
+import android.os.StrictMode
 import androidx.core.net.toUri
 import com.richardluo.globalIconPack.BuildConfig
 import com.richardluo.globalIconPack.iconPack.database.IconEntry
@@ -87,8 +88,9 @@ class IconPackProvider : ContentProvider() {
     selection: String?,
     selectionArgs: Array<out String>?,
     sortOrder: String?,
-  ) =
-    runCatching {
+  ): Cursor? {
+    val oldPolicy = StrictMode.allowThreadDiskReads()
+    return runCatching {
         when (uri) {
           FALLBACKS ->
             if (selectionArgs != null && selectionArgs.isNotEmpty())
@@ -113,6 +115,8 @@ class IconPackProvider : ContentProvider() {
         }
       }
       .getOrNull { log(it) }
+      .also { StrictMode.setThreadPolicy(oldPolicy) }
+  }
 
   private val idCacheMap = mutableMapOf<String, Int>()
 
