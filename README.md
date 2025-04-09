@@ -17,6 +17,7 @@ This module is designed to extend the icon packs throughout the entire system.
     <img src="metadata/en-US/images/phoneScreenshots/2.png" width="200" />
     <img src="metadata/en-US/images/phoneScreenshots/3.png" width="200" />
     <img src="metadata/en-US/images/phoneScreenshots/4.png" width="200" />
+    <img src="metadata/en-US/images/phoneScreenshots/5.png" width="200" />
 </div>
 
 ## Requirements
