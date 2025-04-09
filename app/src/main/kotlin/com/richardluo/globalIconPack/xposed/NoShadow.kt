@@ -11,6 +11,12 @@ import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 
 class NoShadow : Hook {
+  companion object {
+    const val MODE_DEFAULT = 0
+    const val MODE_WITH_SHADOW = 2
+    const val MODE_HARDWARE = 3
+    const val MODE_HARDWARE_WITH_SHADOW = 4
+  }
 
   override fun onHookPixelLauncher(lpp: LoadPackageParam) = removeIconShadow(lpp)
 
@@ -29,7 +35,6 @@ class NoShadow : Hook {
 
   override fun onHookSettings(lpp: LoadPackageParam) = removeIconShadow(lpp)
 
-  @Suppress("LocalVariableName")
   private fun removeIconShadow(lpp: LoadPackageParam) {
     ReflectHelper.hookAllMethodsOrLog(
       ReflectHelper.findClass("android.util.LauncherIcons"),
@@ -38,11 +43,6 @@ class NoShadow : Hook {
         override fun replaceHookedMethod(param: MethodHookParam) = param.args[0]
       },
     )
-
-    val MODE_DEFAULT = 0
-    val MODE_WITH_SHADOW = 2
-    val MODE_HARDWARE = 3
-    val MODE_HARDWARE_WITH_SHADOW = 4
     ReflectHelper.hookAllMethodsOrLog(
       BaseIconFactory.getClazz(lpp),
       "drawIconBitmap",
