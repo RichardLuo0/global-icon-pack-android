@@ -85,11 +85,18 @@ class IconChooserVM(context: Application) : ContextVM(context) {
   class NotCalendarEntryException : Exception("Not a calendar entry")
 
   fun asCalendarEntry(icon: VariantIcon): VariantPackIcon {
+    val iconPack = iconPack ?: throw NotCalendarEntryException()
     icon as? VariantPackIcon ?: throw NotCalendarEntryException()
     val name = icon.entry.name
-    val calendarPrefix = name.removeSuffix(name.takeLastWhile { it.isDigit() })
+
     // Detect if it is in icon pack, 15 is just a random number
-    iconPack?.getIcon("${calendarPrefix}15") ?: throw NotCalendarEntryException()
-    return VariantPackIcon(icon.pack, CalendarIconEntry(calendarPrefix))
+    if (iconPack.getIcon("${name}_15") != null)
+      return VariantPackIcon(icon.pack, CalendarIconEntry("${name}_"))
+
+    val calendarPrefix = name.removeSuffix(name.takeLastWhile { it.isDigit() })
+    if (iconPack.getIcon("${calendarPrefix}15") != null)
+      return VariantPackIcon(icon.pack, CalendarIconEntry(calendarPrefix))
+
+    throw NotCalendarEntryException()
   }
 }
