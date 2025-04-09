@@ -20,7 +20,7 @@ class NoShadow : Hook {
       ReflectHelper.findClass("com.android.wm.shell.bubbles.BadgedImageView", lpp),
       object : XC_MethodHook() {
         override fun afterHookedMethod(param: MethodHookParam) {
-          param.thisObject.asType<View>().outlineProvider = null
+          param.thisObject.asType<View>()?.outlineProvider = null
         }
       },
     )
@@ -48,7 +48,7 @@ class NoShadow : Hook {
       "drawIconBitmap",
       object : XC_MethodHook() {
         override fun beforeHookedMethod(param: MethodHookParam) {
-          val bitmapGenerationMode = param.args.rGet(-2) as Int
+          val bitmapGenerationMode = param.args.rGet(-2) as? Int ?: return
           param.args.rSet(
             -2,
             when (bitmapGenerationMode) {

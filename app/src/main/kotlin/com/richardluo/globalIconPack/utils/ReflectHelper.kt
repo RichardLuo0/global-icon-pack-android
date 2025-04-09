@@ -100,7 +100,7 @@ abstract class MethodReplacement : XC_MethodHook() {
   override fun beforeHookedMethod(param: MethodHookParam) {
     runCatching { param.result = replaceHookedMethod(param) }
       .exceptionOrNull()
-      ?.let { param.throwable = it }
+      ?.also { param.throwable = it }
   }
 
   abstract fun replaceHookedMethod(param: MethodHookParam): Any?

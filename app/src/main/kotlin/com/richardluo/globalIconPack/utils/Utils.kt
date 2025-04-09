@@ -58,13 +58,14 @@ infix fun String.rEqual(other: String): Boolean {
 
 infix fun String.rNEqual(other: String) = !rEqual(other)
 
-fun <T> Array<T>.rGet(i: Int) = this[if (i >= 0) i else size + i]
+fun <T> Array<T>.rGet(i: Int) = getOrNull(if (i >= 0) i else size + i)
 
 fun <T> Array<T>.rSet(i: Int, obj: T) {
-  this[if (i >= 0) i else size + i] = obj
+  val index = if (i >= 0) i else size + i
+  if (index in indices) this[index] = obj
 }
 
-@Suppress("UNCHECKED_CAST") fun <T> Any?.asType() = this as T
+@Suppress("UNCHECKED_CAST") fun <T> Any?.asType() = this as? T
 
 inline fun <T> Result<T>.getOrNull(block: (Throwable) -> Unit) = getOrElse {
   block(it)

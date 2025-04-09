@@ -13,6 +13,7 @@ import android.os.StrictMode
 import androidx.core.net.toUri
 import com.richardluo.globalIconPack.BuildConfig
 import com.richardluo.globalIconPack.iconPack.database.IconEntry
+import com.richardluo.globalIconPack.iconPack.database.IconEntry.Type
 import com.richardluo.globalIconPack.iconPack.database.IconPackDB
 import com.richardluo.globalIconPack.iconPack.database.NormalIconEntry
 import com.richardluo.globalIconPack.utils.getBlob
@@ -24,10 +25,6 @@ import java.io.ByteArrayInputStream
 import java.io.DataInputStream
 
 class IconEntryWithId(val entry: IconEntry, private val id: Int) : IconEntry by entry {
-  private enum class Type {
-    Normal,
-    Clock,
-  }
 
   fun getIconWithId(getIconFromId: (Int) -> Drawable?) =
     if (id == 0) null else getIcon { getIconFromId(id) }
@@ -39,13 +36,13 @@ class IconEntryWithId(val entry: IconEntry, private val id: Int) : IconEntry by 
       return MatrixCursor(arrayOf("pack", "type", "id", "args")).apply {
         DataInputStream(ByteArrayInputStream(data)).use {
           when (it.readByte()) {
-            IconEntry.Type.Normal.ordinal.toByte() -> {
+            Type.Normal.ordinal.toByte() -> {
               val name = it.readUTF()
               val id = getDrawableId(pack, name).takeIf { it != 0 } ?: return null
               addRow(arrayOf(pack, Type.Normal.ordinal, id, name))
               cur.close()
             }
-            IconEntry.Type.Clock.ordinal.toByte() -> {
+            Type.Clock.ordinal.toByte() -> {
               val id = getDrawableId(pack, it.readUTF()).takeIf { it != 0 } ?: return null
               addRow(arrayOf(pack, Type.Clock.ordinal, id, data))
               cur.close()
@@ -56,15 +53,16 @@ class IconEntryWithId(val entry: IconEntry, private val id: Int) : IconEntry by 
       }
     }
 
-    fun fromCursor(c: Cursor) =
-      IconEntryWithId(
-        when (c.getInt("type")) {
+    fun fromCursor(c: Cursor): IconEntryWithId? {
+      return IconEntryWithId(
+        when (c.getColumnIndex("type").takeIf { it >= 0 }?.let { c.getInt(it) }) {
           Type.Normal.ordinal -> NormalIconEntry(c.getString("args"))
           Type.Clock.ordinal -> IconEntry.from(c.getBlob("args"))
-          else -> throw Exception("Unknown icon entry with id")
+          else -> return null
         },
         c.getInt("id"),
       )
+    }
   }
 }
 

@@ -90,7 +90,7 @@ class NoForceShape : Hook {
         override fun afterHookedMethod(param: MethodHookParam) {
           param.result.asType<Drawable?>()?.let { icon ->
             if (adaptiveIcon.isAssignableFrom(icon::class.java))
-              icon.asType<LayerDrawable>().getDrawable(1)?.let { param.result = it }
+              icon.asType<LayerDrawable>()?.getDrawable(1)?.let { param.result = it }
           }
         }
       }

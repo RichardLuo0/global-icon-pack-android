@@ -13,10 +13,8 @@ import com.richardluo.globalIconPack.iconPack.getComponentName
 import com.richardluo.globalIconPack.iconPack.getIP
 import com.richardluo.globalIconPack.reflect.ClockDrawableWrapper
 import com.richardluo.globalIconPack.reflect.Resources.getDrawableForDensityM
-import com.richardluo.globalIconPack.utils.MethodReplacement
 import com.richardluo.globalIconPack.utils.ReflectHelper
 import com.richardluo.globalIconPack.utils.WorldPreference
-import com.richardluo.globalIconPack.utils.asType
 import com.richardluo.globalIconPack.utils.callOriginalMethod
 import com.richardluo.globalIconPack.utils.isHighTwoByte
 import com.richardluo.globalIconPack.utils.withHighByteSet
@@ -52,7 +50,7 @@ class ReplaceIcon : Hook {
 
         fun afterHookedMethodSafe(param: MethodHookParam) {
           val info = param.thisObject as PackageItemInfo
-          if (info.packageName == null) return
+          info.packageName ?: return
           info.icon =
             getIP()?.getId(getComponentName(info))?.let { withHighByteSet(it, IN_IP) }
               ?: if (isHighTwoByte(info.icon, ANDROID_DEFAULT))
@@ -81,19 +79,20 @@ class ReplaceIcon : Hook {
 
     ReflectHelper.hookMethod(
       getDrawableForDensityM ?: return,
-      object : MethodReplacement() {
-        override fun replaceHookedMethod(param: MethodHookParam): Drawable? {
-          val resId = param.args[0] as Int
-          val density = param.args[1] as Int
-          return when {
-            isHighTwoByte(resId, IN_IP) ->
-              getIP()?.getIcon(withHighByteSet(resId, IP_DEFAULT), density)
-            isHighTwoByte(resId, NOT_IN_IP) -> {
-              param.args[0] = withHighByteSet(resId, ANDROID_DEFAULT)
-              callOriginalMethod<Drawable?>(param)?.let { getIP()?.genIconFrom(it) ?: it }
+      object : XC_MethodHook() {
+        override fun beforeHookedMethod(param: MethodHookParam) {
+          val resId = param.args[0] as? Int ?: return
+          val density = param.args[1] as? Int ?: return
+          param.result =
+            when {
+              isHighTwoByte(resId, IN_IP) ->
+                getIP()?.getIcon(withHighByteSet(resId, IP_DEFAULT), density)
+              isHighTwoByte(resId, NOT_IN_IP) -> {
+                param.args[0] = withHighByteSet(resId, ANDROID_DEFAULT)
+                callOriginalMethod<Drawable?>(param)?.let { getIP()?.genIconFrom(it) ?: it }
+              }
+              else -> return
             }
-            else -> callOriginalMethod(param)
-          }
         }
       },
     )
@@ -103,13 +102,14 @@ class ReplaceIcon : Hook {
       ReflectHelper.hookAllMethodsOrLog(
         LauncherApps::class.java,
         "getShortcutIconDrawable",
-        object : MethodReplacement() {
-          override fun replaceHookedMethod(param: MethodHookParam): Drawable? {
-            val shortcut = param.args[0].asType<ShortcutInfo>()
-            val density = param.args[1].asType<Int>()
-            val ip = getIP() ?: return callOriginalMethod(param)
-            return ip.getIconEntry(getComponentName(shortcut))?.let { ip.getIcon(it, density) }
-              ?: callOriginalMethod<Drawable?>(param)?.let { ip.genIconFrom(it) }
+        object : XC_MethodHook() {
+          override fun beforeHookedMethod(param: MethodHookParam) {
+            val shortcut = param.args[0] as? ShortcutInfo ?: return
+            val density = param.args[1] as? Int ?: return
+            val ip = getIP() ?: return
+            param.result =
+              ip.getIconEntry(getComponentName(shortcut))?.let { ip.getIcon(it, density) }
+                ?: callOriginalMethod<Drawable?>(param)?.let { ip.genIconFrom(it) }
           }
         },
       )

@@ -23,7 +23,7 @@ object BypassShortcutPermission {
       "canSeeAnyPinnedShortcut",
       object : XC_MethodHook() {
         override fun beforeHookedMethod(param: MethodHookParam) {
-          if (BuildConfig.APPLICATION_ID == param.args[0]) param.result = true
+          if (BuildConfig.APPLICATION_ID == param.args.getOrNull(0)) param.result = true
         }
       },
     )

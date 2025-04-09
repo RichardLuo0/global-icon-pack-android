@@ -39,7 +39,7 @@ private val appsCache =
     val launcherApps =
       context
         .getSystemService(Context.LAUNCHER_APPS_SERVICE)
-        .asType<LauncherApps>()
+        .asType<LauncherApps>()!!
         .getActivityList(null, Process.myUserHandle())
         .map { info ->
           add(info.applicationInfo.flags, AppIconInfo(info))
@@ -58,7 +58,7 @@ private val shortcutsCache =
     val shortcuts =
       context
         .getSystemService(Context.LAUNCHER_APPS_SERVICE)
-        .asType<LauncherApps>()
+        .asType<LauncherApps>()!!
         .getShortcuts(
           ShortcutQuery()
             .setQueryFlags(
