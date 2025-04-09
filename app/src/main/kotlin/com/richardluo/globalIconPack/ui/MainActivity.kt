@@ -116,19 +116,18 @@ class MainActivity : ComponentActivity() {
 
     val prefFlow = prefFlow
     setContent {
-      if (prefFlow == null) {
-        WarnDialog(
-          openState = remember { mutableStateOf(true) },
-          title = { OneLineText(getString(R.string.warning)) },
-          content = { Text(getString(R.string.plzEnableModuleFirst)) },
-          onCancel = { finish() },
-        ) {
-          finish()
-        }
-      } else
-        SampleTheme {
-          ProvidePreferenceLocals(flow = prefFlow, myPreferenceTheme()) { SampleScreen() }
-        }
+      SampleTheme {
+        if (prefFlow == null) {
+          WarnDialog(
+            openState = remember { mutableStateOf(true) },
+            title = { OneLineText(getString(R.string.warning)) },
+            content = { Text(getString(R.string.plzEnableModuleFirst)) },
+            onCancel = { finish() },
+          ) {
+            finish()
+          }
+        } else ProvidePreferenceLocals(flow = prefFlow, myPreferenceTheme()) { SampleScreen() }
+      }
     }
   }
 
