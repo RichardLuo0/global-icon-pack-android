@@ -2,7 +2,7 @@
 <shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
     <shortcut
         android:enabled="true"
-        android:icon="@mipmap/merge_iconpack"
+        android:icon="@mipmap/ic_merger"
         android:shortcutId="mergeIconPack"
         android:shortcutLongLabel="@string/mergeIconPackSummary"
         android:shortcutShortLabel="@string/mergeIconPack">
@@ -13,7 +13,7 @@
     </shortcut>
     <shortcut
         android:enabled="true"
-        android:icon="@mipmap/icon_variant"
+        android:icon="@mipmap/ic_variant"
         android:shortcutId="iconVariant"
         android:shortcutLongLabel="@string/iconVariantSummary"
         android:shortcutShortLabel="@string/iconVariant">
