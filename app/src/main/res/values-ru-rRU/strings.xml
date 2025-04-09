@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
     <string name="appName">Global Icon Pack</string>
     <string name="plzEnableModuleFirst">Пожалуйста, сначала убедитесь, что модуль Xposed включен.</string>
+    <string name="iconPackApplied">Набор иконок был применен. Пожалуйста, нажмите «Перезапустить XXX» вручную.</string>
+    <string name="general">Основные</string>
     <string name="mode">Режим</string>
     <string name="modeProvider">Режим поставщика: это приложение предоставляет данные подключенным приложениям.</string>
     <string name="modeLocal">Локальный режим: Подключенные приложения перезагружают пакет значков при каждом запуске.</string>
@@ -12,9 +14,15 @@
     <string name="shortcut">Генерация значков для ярлыков</string>
     <string name="mergeIconPack">Объединить набор значков</string>
     <string name="mergeIconPackSummary">Создать новый набор иконок из различных наборов.</string>
+    <string name="iconPackSettings">Набор иконок</string>
     <string name="iconVariant">Варианты иконок</string>
+    <string name="iconVariantSummary">Выбирайте различные варианты из набора иконок.</string>
+    <string name="iconFallback">Создание резервных иконок</string>
+    <string name="iconFallbackSummary">Применяйте фон, маску и масштаб из набора иконок к приложениям без отдельных иконок.</string>
     <string name="iconPackScale">Масштаб</string>
+    <string name="pixelSettings">Pixel</string>
     <string name="pixelLauncherPackage">Имя пакета лаунчера</string>
+    <string name="pixelLauncherPackageSummary">Используется для идентификации лаунчера на базе лаунчер 3, но перечисленные ниже функции не гарантируются.</string>
     <string name="noShadow">Удалите тень снизу</string>
     <string name="noShadowSummary">Удалить тень, созданную для маски системной иконки.</string>
     <string name="forceLoadClockAndCalendar">Принудительная загрузка иконок часов и календаря</string>
@@ -29,6 +37,7 @@
     <string name="warning">Внимание</string>
     <string name="notice">Уведомление</string>
     <string name="search">Поиск</string>
+    <string name="options">Опции</string>
     <string name="restoreDefault">Восстановить значение по умолчанию</string>
     <string name="restoreDefaultWarning">Вы уверены, что хотите восстановить иконки по умолчанию?</string>
     <string name="suggestedIcons">Предлагаемые иконки</string>
@@ -38,6 +47,10 @@
     <string name="shortcuts">Ярлыки</string>
     <string name="requiresHookSystem">Вы должны подключить system framework, чтобы получить ярлыки.</string>
     <string name="modified">Модифицированные</string>
+    <string name="exportIconPack">Экспортировать</string>
+    <string name="exportedIconPack">Набор иконок успешно экспортирован.</string>
+    <string name="importIconPack">Импортировать</string>
+    <string name="importedIconPack">Набор иконок успешно импортирован.</string>
     <string name="chooseBasePack">Выберите базовый набор иконок</string>
     <string name="chooseIconToReplace">Выберите иконки для замены</string>
     <string name="chooseNewIcon">Выберите новую иконку</string>
