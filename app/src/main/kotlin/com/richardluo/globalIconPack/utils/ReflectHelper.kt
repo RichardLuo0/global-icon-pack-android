@@ -25,7 +25,7 @@ object ReflectHelper {
     vararg parameterTypes: Class<*>?,
   ): Method? {
     return (runCatching { clazz.getDeclaredMethod(methodName, *parameterTypes) }.getOrNull()
-        ?: run { clazz.declaredMethods.firstOrNull { it.match(methodName, parameterTypes) } })
+        ?: clazz.declaredMethods.firstOrNull { it.match(methodName, parameterTypes) })
       ?.apply { isAccessible = true }
       ?: run {
         log("No method $methodName is found on class ${clazz.name}")

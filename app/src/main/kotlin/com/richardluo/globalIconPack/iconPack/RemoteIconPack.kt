@@ -8,6 +8,8 @@ import android.graphics.drawable.Drawable
 import com.richardluo.globalIconPack.iconPack.database.FallbackSettings
 import com.richardluo.globalIconPack.iconPack.database.IconEntry
 import com.richardluo.globalIconPack.reflect.Resources.getDrawableForDensity
+import com.richardluo.globalIconPack.utils.ReflectHelper
+import com.richardluo.globalIconPack.utils.call
 import com.richardluo.globalIconPack.utils.getBlob
 import com.richardluo.globalIconPack.utils.getOrPutNullable
 import com.richardluo.globalIconPack.utils.getString
@@ -16,11 +18,8 @@ import java.util.Collections
 
 class IconEntryFromOtherPack(val entry: IconEntry, val pack: String) : IconEntry by entry
 
-class RemoteIconPack(
-  pack: String,
-  resources: Resources,
-  config: IconPackConfig = defaultIconPackConfig,
-) : IconPack(pack, resources) {
+class RemoteIconPack(pack: String, res: Resources, config: IconPackConfig = defaultIconPackConfig) :
+  IconPack(pack, res) {
   private val iconPackAsFallback = config.iconPackAsFallback
   private val iconFallback: IconFallback?
 
@@ -60,9 +59,7 @@ class RemoteIconPack(
             null,
           )
           ?.useFirstRow {
-            val entry =
-              if (it.getColumnIndex("type") > 0) IconEntryWithId.fromCursor(it)
-              else IconEntry.from(it.getBlob("entry"))
+            val entry = IconEntryWithId.fromCursor(it) ?: IconEntry.from(it.getBlob("entry"))
             val pack = it.getString("pack")
             iconEntryList.add(if (pack.isEmpty()) entry else IconEntryFromOtherPack(entry, pack))
             iconEntryList.size - 1
@@ -74,7 +71,8 @@ class RemoteIconPack(
 
   private inner class PackResources(inputPack: String = "") {
     val pack: String = inputPack.ifEmpty { this@RemoteIconPack.pack }
-    val res: Resources = if (inputPack.isEmpty()) resources else getResources(inputPack)
+    val res: Resources =
+      if (inputPack.isEmpty()) this@RemoteIconPack.res else getResources(inputPack)
   }
 
   override fun getIconNotAdaptive(entry: IconEntry, iconDpi: Int) =
@@ -104,4 +102,25 @@ class RemoteIconPack(
     }
 
   override fun genIconFrom(baseIcon: Drawable) = genIconFrom(baseIcon, iconFallback)
+}
+
+private var waitingForBootCompleted = true
+
+private val getSystemProperty by lazy {
+  ReflectHelper.findMethodFirstMatch("android.os.SystemProperties", null, "get", String::class.java)
+}
+
+fun createRemoteIconPack(
+  pack: String,
+  res: Resources,
+  config: IconPackConfig = defaultIconPackConfig,
+): RemoteIconPack? {
+  return if (
+    waitingForBootCompleted && getSystemProperty?.call<String?>(null, "sys.boot_completed") != "1"
+  )
+    null
+  else {
+    waitingForBootCompleted = false
+    RemoteIconPack(pack, res, config)
+  }
 }

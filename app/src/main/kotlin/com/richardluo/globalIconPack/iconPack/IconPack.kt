@@ -39,7 +39,7 @@ class IconFallback(
   fun orNullIfEmpty() = if (isEmpty()) null else this
 }
 
-abstract class IconPack(val pack: String, val resources: Resources) {
+abstract class IconPack(val pack: String, val res: Resources) {
 
   abstract fun getId(cn: ComponentName): Int?
 
@@ -61,7 +61,7 @@ abstract class IconPack(val pack: String, val resources: Resources) {
   protected fun genIconFrom(baseIcon: Drawable, iconFallback: IconFallback?) =
     iconFallback?.run {
       IconHelper.processIcon(
-        resources,
+        res,
         baseIcon,
         iconBacks.randomOrNull(),
         iconUpons.randomOrNull(),

@@ -25,8 +25,8 @@ import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import org.xmlpull.v1.XmlPullParser
 
-class IconPack(val pack: String, val resources: Resources) {
-  val info by lazy { loadIconPack(resources, pack) }
+class IconPack(val pack: String, val res: Resources) {
+  val info by lazy { loadIconPack(res, pack) }
   val iconFallback by lazy {
     IconFallback(FallbackSettings(info), ::getIcon, null, Pref.SCALE_ONLY_FOREGROUND.second)
       .orNullIfEmpty()
@@ -55,30 +55,25 @@ class IconPack(val pack: String, val resources: Resources) {
 
   fun getIcon(entry: IconEntry, iconDpi: Int) =
     when (entry) {
-      is IconEntryWithId ->
-        entry.getIconWithId { resources.getDrawableForDensity(it, iconDpi, null) }
+      is IconEntryWithId -> entry.getIconWithId { res.getDrawableForDensity(it, iconDpi, null) }
       else -> entry.getIcon { getIcon(it, iconDpi) }
     }?.let { IconHelper.makeAdaptive(it) }
 
   fun getIcon(name: String, iconDpi: Int = 0) =
-    getDrawableId(name)
-      .takeIf { it != 0 }
-      ?.let { resources.getDrawableForDensity(it, iconDpi, null) }
+    getDrawableId(name).takeIf { it != 0 }?.let { res.getDrawableForDensity(it, iconDpi, null) }
 
   @SuppressLint("DiscouragedApi")
   private fun getDrawableId(name: String) =
-    idCache.getOrPut(name) { resources.getIdentifier(name, "drawable", pack) }
+    idCache.getOrPut(name) { res.getIdentifier(name, "drawable", pack) }
 
   fun genIconFrom(baseIcon: Drawable, config: IconPackConfig) =
-    genIconFrom(resources, baseIcon, iconFallback, config)
+    genIconFrom(res, baseIcon, iconFallback, config)
 
   val drawables: Set<String> by lazy {
     @SuppressLint("DiscouragedApi")
     val parser =
-      resources
-        .getIdentifier("drawable", "xml", pack)
-        .takeIf { 0 != it }
-        ?.let { resources.getXml(it) } ?: return@lazy setOf()
+      res.getIdentifier("drawable", "xml", pack).takeIf { 0 != it }?.let { res.getXml(it) }
+        ?: return@lazy setOf()
     mutableSetOf<String>().apply {
       while (parser.next() != XmlPullParser.END_DOCUMENT) {
         if (parser.eventType != XmlPullParser.START_TAG) continue
@@ -101,17 +96,17 @@ class IconPack(val pack: String, val resources: Resources) {
     }
 
   private fun addAllFiles(resId: Int, name: String, apkBuilder: ApkBuilder): Int {
-    val stream = resources.openRawResource(resId)
+    val stream = res.openRawResource(resId)
     return if (AXMLEditor.isAXML(stream)) {
       val editor = AXMLEditor(stream)
       var i = 0
       editor.replaceResourceId { id ->
         if (!isHighTwoByte(id, 0x7f000000)) return@replaceResourceId null
-        when (resources.getResourceTypeName(id)) {
+        when (res.getResourceTypeName(id)) {
           "drawable",
           "mipmap" -> addAllFiles(id, "${name}_${i++}", apkBuilder)
-          "color" -> apkBuilder.addColor(resources.getColor(id, null))
-          "dimen" -> apkBuilder.addDimen(resources.getDimension(id))
+          "color" -> apkBuilder.addColor(res.getColor(id, null))
+          "dimen" -> apkBuilder.addDimen(res.getDimension(id))
           else -> null
         }
       }

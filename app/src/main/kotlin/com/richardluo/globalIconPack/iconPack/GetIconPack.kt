@@ -21,20 +21,18 @@ fun getIP(): IconPack? {
 }
 
 private fun initIP() {
-  AndroidAppHelper.currentApplication()?.packageManager?.let { pm ->
-    runCatching {
-        val pref = WorldPreference.getPrefInMod()
-        val pack =
-          pref.get(Pref.ICON_PACK).takeIf { it.isNotEmpty() } ?: throw Exception("No icon pack set")
-        val res = pm.getResourcesForApplication(pack)
-        val config = IconPackConfig(pref)
-        ip =
-          when (pref.get(Pref.MODE)) {
-            MODE_PROVIDER -> RemoteIconPack(pack, res, config)
-            else -> LocalIconPack(pack, res, config)
-          }
-      }
-      .exceptionOrNull()
-      ?.let { log(it) }
-  }
+  val pm = AndroidAppHelper.currentApplication()?.packageManager ?: return
+  runCatching {
+      val pref = WorldPreference.getPrefInMod()
+      val pack =
+        pref.get(Pref.ICON_PACK).takeIf { it.isNotEmpty() } ?: throw Exception("No icon pack set")
+      val res = pm.getResourcesForApplication(pack)
+      val config = IconPackConfig(pref)
+      ip =
+        when (pref.get(Pref.MODE)) {
+          MODE_PROVIDER -> createRemoteIconPack(pack, res, config)
+          else -> LocalIconPack(pack, res, config)
+        }
+    }
+    .onFailure { log(it) }
 }

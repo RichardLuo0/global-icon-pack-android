@@ -51,8 +51,9 @@ class ReplaceIcon : Hook {
         fun afterHookedMethodSafe(param: MethodHookParam) {
           val info = param.thisObject as PackageItemInfo
           info.packageName ?: return
+          val ip = getIP() ?: return
           info.icon =
-            getIP()?.getId(getComponentName(info))?.let { withHighByteSet(it, IN_IP) }
+            ip.getId(getComponentName(info))?.let { withHighByteSet(it, IN_IP) }
               ?: if (isHighTwoByte(info.icon, ANDROID_DEFAULT))
                 withHighByteSet(info.icon, NOT_IN_IP)
               else info.icon

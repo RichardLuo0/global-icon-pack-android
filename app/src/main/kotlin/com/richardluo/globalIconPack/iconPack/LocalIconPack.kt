@@ -19,11 +19,8 @@ import com.richardluo.globalIconPack.utils.log
 import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserFactory
 
-class LocalIconPack(
-  pack: String,
-  resources: Resources,
-  config: IconPackConfig = defaultIconPackConfig,
-) : IconPack(pack, resources) {
+class LocalIconPack(pack: String, res: Resources, config: IconPackConfig = defaultIconPackConfig) :
+  IconPack(pack, res) {
   private val iconPackAsFallback = config.iconPackAsFallback
   private val iconFallback: IconFallback?
 
@@ -33,7 +30,7 @@ class LocalIconPack(
   private val idCache = mutableMapOf<String, Int>()
 
   init {
-    val info = loadIconPack(resources, pack)
+    val info = loadIconPack(res, pack)
     iconFallback =
       if (config.iconFallback)
         IconFallback(FallbackSettings(info), ::getIcon, config.scale, config.scaleOnlyForeground)
@@ -57,13 +54,11 @@ class LocalIconPack(
     entry.getIcon { getIcon(it, iconDpi) }
 
   override fun getIcon(name: String, iconDpi: Int) =
-    getDrawableId(name)
-      .takeIf { it != 0 }
-      ?.let { getDrawableForDensity(resources, it, iconDpi, null) }
+    getDrawableId(name).takeIf { it != 0 }?.let { getDrawableForDensity(res, it, iconDpi, null) }
 
   @SuppressLint("DiscouragedApi")
   private fun getDrawableId(name: String) =
-    idCache.getOrPut(name) { resources.getIdentifier(name, "drawable", pack) }
+    idCache.getOrPut(name) { res.getIdentifier(name, "drawable", pack) }
 
   override fun genIconFrom(baseIcon: Drawable) = genIconFrom(baseIcon, iconFallback)
 }

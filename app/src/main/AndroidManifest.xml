@@ -86,6 +86,7 @@
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_SUBTYPE"
                 android:value="To keep icon pack provider alive" />
         </service>
+
         <!-- Start service on boot in provider mode -->
         <receiver
             android:name=".iconPack.BootReceiver"
