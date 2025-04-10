@@ -134,7 +134,7 @@ class IconVariantActivity : ComponentActivity() {
                   },
                   text = { Text(stringResource(R.string.exportIconPack)) },
                   onClick = {
-                    exportLauncher.launch("${viewModel.iconPack}.xml")
+                    exportLauncher.launch("${viewModel.iconPack.pack}.xml")
                     expand = false
                   },
                 )
