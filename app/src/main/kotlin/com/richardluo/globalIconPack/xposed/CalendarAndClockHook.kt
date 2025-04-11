@@ -95,15 +95,20 @@ class CalendarAndClockHook : Hook {
     val iconChangeReceiver =
       ReflectHelper.findClass("com.android.launcher3.icons.IconProvider\$IconChangeReceiver", lpp)
         ?: return
-    val mCallbackField = ReflectHelper.findField(iconChangeReceiver, "mCallback")
+    val mCallbackF = ReflectHelper.findField(iconChangeReceiver, "mCallback") ?: return
+
+    val onAppIconChangedM =
+      ReflectHelper.findClass("com.android.launcher3.icons.IconProvider\$IconChangeListener", lpp)
+        ?.let { ReflectHelper.findMethodFirstMatch(it, "onAppIconChanged") } ?: return
+
     ReflectHelper.hookAllMethodsOrLog(
       iconChangeReceiver,
       "onReceive",
       object : XC_MethodHook() {
         override fun beforeHookedMethod(param: MethodHookParam) {
-          val context = param.args[0] as Context
-          val intent = param.args[1] as Intent
-          val mCallback = mCallbackField?.get(param.thisObject) ?: return
+          val context = param.args[0] as? Context ?: return
+          val intent = param.args[1] as? Intent ?: return
+          val mCallback = mCallbackF.get(param.thisObject) ?: return
           when (intent.action) {
             ACTION_TIMEZONE_CHANGED -> {
               changeClockIcon(mCallback)
@@ -120,16 +125,16 @@ class CalendarAndClockHook : Hook {
         }
 
         fun changeClockIcon(mCallback: Any) {
-          for (clock in clocks) {
-            ReflectHelper.callMethod(mCallback, "onAppIconChanged", clock, Process.myUserHandle())
-          }
+          for (clock in clocks) onAppIconChangedM.call<Unit>(
+            mCallback,
+            clock,
+            Process.myUserHandle(),
+          )
         }
 
         fun changeCalendarIcon(context: Context, mCallback: Any) {
           for (user in context.getSystemService(UserManager::class.java).getUserProfiles()) {
-            for (calendar in calendars) {
-              ReflectHelper.callMethod(mCallback, "onAppIconChanged", calendar, user)
-            }
+            for (calendar in calendars) onAppIconChangedM.call<Unit>(mCallback, calendar, user)
           }
         }
       },
