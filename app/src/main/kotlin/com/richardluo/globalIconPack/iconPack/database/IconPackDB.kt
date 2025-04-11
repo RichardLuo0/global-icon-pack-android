@@ -3,17 +3,18 @@ package com.richardluo.globalIconPack.iconPack.database
 import android.content.ComponentName
 import android.content.ContentValues
 import android.content.Context
+import android.database.Cursor
+import android.database.MergeCursor
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import android.widget.Toast
+import androidx.compose.ui.util.fastJoinToString
 import com.richardluo.globalIconPack.iconPack.IconPackApps
 import com.richardluo.globalIconPack.ui.model.IconPack
 import com.richardluo.globalIconPack.utils.flowTrigger
-import com.richardluo.globalIconPack.utils.getInt
-import com.richardluo.globalIconPack.utils.getLong
+import com.richardluo.globalIconPack.utils.ifNotEmpty
 import com.richardluo.globalIconPack.utils.log
 import com.richardluo.globalIconPack.utils.tryEmit
-import com.richardluo.globalIconPack.utils.useFirstRow
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -129,23 +130,30 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
       .query("iconPack", arrayOf("modified"), "pack=?", arrayOf(pack), null, null, null, "1")
       .useFirstRow { it.getInt("modified") != 0 } == true
 
-  private fun getIconExact(pack: String, cn: ComponentName) =
-    readableDatabase.rawQuery(
+  private fun getIconExact(pack: String, cnList: List<ComponentName>) =
+    readableDatabase.rawQueryList(
       "SELECT entry, pack FROM '${pt(pack)}' WHERE packageName=? AND className=? LIMIT 1",
-      arrayOf(cn.packageName, cn.className),
-    )
+      cnList,
+    ) {
+      add(it.packageName)
+      add(it.className)
+    }
 
-  private fun getIconFallback(pack: String, cn: ComponentName) =
-    readableDatabase.rawQuery(
+  private fun getIconFallback(pack: String, cnList: List<ComponentName>) =
+    readableDatabase.rawQueryList(
       "SELECT entry, pack FROM '${pt(pack)}' " +
-        "WHERE (packageName=?1 AND className=?2) " +
-        "OR (packageName=?1 AND className='') " +
+        "WHERE (packageName=? AND className=?) " +
+        "OR (packageName=? AND className='') " +
         "ORDER BY className DESC LIMIT 1",
-      arrayOf(cn.packageName, cn.className),
-    )
+      cnList,
+    ) {
+      add(it.packageName)
+      add(it.className)
+      add(it.packageName)
+    }
 
-  fun getIcon(pack: String, cn: ComponentName, fallback: Boolean = false) =
-    if (fallback) getIconFallback(pack, cn) else getIconExact(pack, cn)
+  fun getIcon(pack: String, cnList: List<ComponentName>, fallback: Boolean = false) =
+    if (fallback) getIconFallback(pack, cnList) else getIconExact(pack, cnList)
 
   private fun insertIcons(
     db: SQLiteDatabase,
@@ -270,3 +278,55 @@ inline fun SQLiteDatabase.transaction(block: SQLiteDatabase.() -> Unit) =
   } finally {
     endTransaction()
   }
+
+private fun <T> SQLiteDatabase.rawQueryList(
+  singleSql: String,
+  argList: List<T>,
+  indexColumn: String = "index",
+  expandArg: MutableList<String>.(T) -> Unit,
+): Cursor {
+  var i = 0
+  val cursors =
+    argList.chunked(500).map {
+      val sql =
+        it.fastJoinToString(" UNION ALL ") {
+          "SELECT${indexColumn.ifNotEmpty { " ${i++} AS '$it'," }} * FROM ($singleSql)"
+        }
+      rawQuery(sql, buildList { for (item in it) expandArg(item) }.toTypedArray())
+    }
+  return MergeCursor(cursors.toTypedArray())
+}
+
+fun Cursor.getBlob(name: String) = this.getBlob(getColumnIndexOrThrow(name))
+
+fun Cursor.getLong(name: String) = this.getLong(getColumnIndexOrThrow(name))
+
+fun Cursor.getString(name: String) = this.getString(getColumnIndexOrThrow(name))
+
+fun Cursor.getInt(name: String) = this.getInt(getColumnIndexOrThrow(name))
+
+inline fun <T> Cursor.useFirstRow(block: (Cursor) -> T) =
+  this.takeIf { it.moveToFirst() }?.use(block)
+
+inline fun Cursor.useEachRow(block: (Cursor) -> Unit) = use {
+  if (moveToFirst())
+    do {
+      block(this)
+    } while (moveToNext())
+}
+
+inline fun <T> Cursor.useMap(block: (Cursor) -> T): List<T> = use {
+  buildList {
+    if (moveToFirst()) {
+      do {
+        add(block(this@useMap))
+      } while (moveToNext())
+    }
+  }
+}
+
+inline fun <reified T> Cursor.useMapToArray(
+  size: Int,
+  indexColumn: String = "index",
+  block: (Cursor) -> T,
+) = arrayOfNulls<T?>(size).apply { useEachRow { set(it.getInt(indexColumn), block(it)) } }

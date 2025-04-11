@@ -1,10 +1,12 @@
 package com.richardluo.globalIconPack.utils
 
 import de.robv.android.xposed.XC_MethodHook
+import de.robv.android.xposed.XC_MethodHook.MethodHookParam
 import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedHelpers
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 import java.lang.reflect.Field
+import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 
 // Not cached
@@ -80,18 +82,6 @@ object ReflectHelper {
   fun hookMethod(method: Method, hook: XC_MethodHook) =
     runCatching { XposedBridge.hookMethod(method, hook) }.getOrNull { log(it) }
 
-  // This should be cached, thus call xposed helper version
-  fun <T> callMethod(thisObj: Any, methodName: String, vararg args: Any): T? {
-    return runCatching {
-        XposedHelpers.findMethodBestMatch(thisObj.javaClass, methodName, *args)
-          .call<T>(thisObj, *args)
-      }
-      .getOrNull { log(it) }
-  }
-
-  fun callMethod(thisObj: Any, methodName: String, vararg args: Any) =
-    callMethod<Unit>(thisObj, methodName, *args)
-
   fun findField(clazz: Class<*>, name: String): Field? =
     runCatching { clazz.getDeclaredField(name).apply { isAccessible = true } }.getOrNull { log(it) }
 }
@@ -105,3 +95,16 @@ abstract class MethodReplacement : XC_MethodHook() {
 
   abstract fun replaceHookedMethod(param: MethodHookParam): Any?
 }
+
+@Suppress("UNCHECKED_CAST")
+fun <R> MethodHookParam.callOriginalMethod() =
+  runCatching { XposedBridge.invokeOriginalMethod(method, thisObject, args) as? R }
+    .getOrElse { throw if (it is InvocationTargetException) it.cause ?: it else it }
+
+@Suppress("UNCHECKED_CAST") fun <T> Field.getAs(thisObj: Any? = null) = get(thisObj) as? T
+
+@Suppress("UNCHECKED_CAST")
+fun <T> Method.call(thisObj: Any?, vararg param: Any?) = invoke(thisObj, *param) as? T
+
+fun <T> Any.getValue(name: String, clazz: Class<*> = javaClass) =
+  ReflectHelper.findField(clazz, name)?.getAs<T>(this)

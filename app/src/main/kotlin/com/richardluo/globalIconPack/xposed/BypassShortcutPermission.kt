@@ -7,7 +7,7 @@ import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 
 object BypassShortcutPermission {
-  fun onHookAndroid(lpp: LoadPackageParam) {
+  fun onHookSystem(lpp: LoadPackageParam) {
     ReflectHelper.hookAllMethodsOrLog(
       ReflectHelper.findClass("com.android.server.pm.LauncherAppsService\$LauncherAppsImpl", lpp)
         ?: return,

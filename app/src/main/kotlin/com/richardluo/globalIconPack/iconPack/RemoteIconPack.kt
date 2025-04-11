@@ -7,16 +7,14 @@ import android.content.res.Resources
 import android.graphics.drawable.Drawable
 import com.richardluo.globalIconPack.iconPack.database.FallbackSettings
 import com.richardluo.globalIconPack.iconPack.database.IconEntry
+import com.richardluo.globalIconPack.iconPack.database.getBlob
+import com.richardluo.globalIconPack.iconPack.database.useFirstRow
 import com.richardluo.globalIconPack.reflect.Resources.getDrawableForDensity
 import com.richardluo.globalIconPack.utils.ReflectHelper
 import com.richardluo.globalIconPack.utils.call
-import com.richardluo.globalIconPack.utils.getBlob
 import com.richardluo.globalIconPack.utils.getOrPutNullable
-import com.richardluo.globalIconPack.utils.getString
-import com.richardluo.globalIconPack.utils.useFirstRow
+import com.richardluo.globalIconPack.utils.log
 import java.util.Collections
-
-class IconEntryFromOtherPack(val entry: IconEntry, val pack: String) : IconEntry by entry
 
 class RemoteIconPack(pack: String, res: Resources, config: IconPackConfig = defaultIconPackConfig) :
   IconPack(pack, res) {
@@ -34,7 +32,7 @@ class RemoteIconPack(pack: String, res: Resources, config: IconPackConfig = defa
     iconFallback =
       if (config.iconFallback)
         contentResolver
-          .query(IconPackProvider.FALLBACKS, null, null, arrayOf(pack), null)
+          .query(IconPackProvider.FALLBACK, null, null, arrayOf(pack), null)
           ?.useFirstRow {
             IconFallback(FallbackSettings.from(it.getBlob("fallback")), ::getIcon, config)
               .orNullIfEmpty()
@@ -42,23 +40,54 @@ class RemoteIconPack(pack: String, res: Resources, config: IconPackConfig = defa
       else null
   }
 
-  override fun getId(cn: ComponentName): Int? =
+  override fun getId(cn: ComponentName) =
     synchronized(indexMap) {
       indexMap.getOrPutNullable(cn) {
         contentResolver
           .query(
-            IconPackProvider.ICONS,
+            IconPackProvider.ICON,
             null,
             null,
-            arrayOf(pack, cn.packageName, cn.className, iconPackAsFallback.toString()),
+            arrayOf(pack, iconPackAsFallback.toString(), cn.flattenToString()),
             null,
           )
-          ?.useFirstRow {
-            val entry = IconEntryWithId.fromCursor(it) ?: IconEntry.from(it.getBlob("entry"))
-            val pack = it.getString("pack")
-            iconEntryList.add(if (pack.isEmpty()) entry else IconEntryFromOtherPack(entry, pack))
+          ?.let { IconsCursorWrapper.useUnwrap(it, 1).getOrNull(0) }
+          ?.let {
+            iconEntryList.add(it)
             iconEntryList.size - 1
           }
+      }
+    }
+
+  override fun getId(cnList: List<ComponentName>): Array<Int?> =
+    synchronized(indexMap) {
+      val (hits, misses) = cnList.indices.partition { indexMap.contains(cnList[it]) }
+      arrayOfNulls<Int?>(cnList.size).apply {
+        hits.forEach { this[it] = indexMap[cnList[it]] }
+        if (misses.isNotEmpty())
+          contentResolver
+            .query(
+              IconPackProvider.ICON,
+              null,
+              null,
+              arrayOf(
+                pack,
+                iconPackAsFallback.toString(),
+                *misses.map { cnList[it].flattenToString() }.toTypedArray(),
+              ),
+              null,
+            )
+            ?.let { IconsCursorWrapper.useUnwrap(it, misses.size) }
+            ?.forEachIndexed { i, entry ->
+              val index = misses[i]
+              val id =
+                if (entry != null) {
+                  iconEntryList.add(entry)
+                  iconEntryList.size - 1
+                } else null
+              indexMap[cnList[index]] = id
+              this[index] = id
+            }
       }
     }
 

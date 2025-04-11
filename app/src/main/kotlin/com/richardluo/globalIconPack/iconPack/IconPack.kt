@@ -44,6 +44,8 @@ abstract class IconPack(val pack: String, val res: Resources) {
 
   abstract fun getId(cn: ComponentName): Int?
 
+  abstract fun getId(cnList: List<ComponentName>): Array<Int?>
+
   abstract fun getIconEntry(id: Int): IconEntry?
 
   fun getIconEntry(cn: ComponentName) = getId(cn)?.let { getIconEntry(it) }

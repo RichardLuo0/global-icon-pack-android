@@ -16,6 +16,7 @@ import com.richardluo.globalIconPack.reflect.Resources.getDrawableForDensity
 import com.richardluo.globalIconPack.utils.get
 import com.richardluo.globalIconPack.utils.getOrNull
 import com.richardluo.globalIconPack.utils.log
+import com.richardluo.globalIconPack.utils.unflattenFromString
 import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserFactory
 
@@ -46,6 +47,8 @@ class LocalIconPack(pack: String, res: Resources, config: IconPackConfig = defau
 
   override fun getId(cn: ComponentName) =
     indexMap[cn] ?: if (iconPackAsFallback) indexMap[getComponentName(cn.packageName)] else null
+
+  override fun getId(cnList: List<ComponentName>) = cnList.map { getId(it) }.toTypedArray()
 
   override fun getIconEntry(id: Int): IconEntry? = iconEntryList.getOrNull(id)
 
@@ -163,17 +166,3 @@ private fun getAppFilter(res: Resources, pack: String) =
         }
     }
     .getOrNull { log(it) }
-
-// Fix when classname is empty
-fun unflattenFromString(str: String): ComponentName? {
-  val sep = str.indexOf('/')
-  if (sep < 0) {
-    return null
-  }
-  val pkg = str.substring(0, sep)
-  var cls = str.substring(sep + 1)
-  if (cls.isNotEmpty() && cls[0] == '.') {
-    cls = pkg + cls
-  }
-  return ComponentName(pkg, cls)
-}

@@ -1,7 +1,6 @@
 package com.richardluo.globalIconPack.iconPack
 
 import android.annotation.SuppressLint
-import android.content.ComponentName
 import android.content.ContentProvider
 import android.content.ContentValues
 import android.content.res.Resources
@@ -12,15 +11,20 @@ import android.net.Uri
 import android.os.StrictMode
 import androidx.core.net.toUri
 import com.richardluo.globalIconPack.BuildConfig
+import com.richardluo.globalIconPack.iconPack.database.CalendarIconEntry
 import com.richardluo.globalIconPack.iconPack.database.IconEntry
 import com.richardluo.globalIconPack.iconPack.database.IconEntry.Type
 import com.richardluo.globalIconPack.iconPack.database.IconPackDB
 import com.richardluo.globalIconPack.iconPack.database.NormalIconEntry
-import com.richardluo.globalIconPack.utils.getBlob
-import com.richardluo.globalIconPack.utils.getInt
+import com.richardluo.globalIconPack.iconPack.database.getBlob
+import com.richardluo.globalIconPack.iconPack.database.getInt
+import com.richardluo.globalIconPack.iconPack.database.getString
+import com.richardluo.globalIconPack.iconPack.database.useEachRow
+import com.richardluo.globalIconPack.iconPack.database.useMapToArray
+import com.richardluo.globalIconPack.utils.getInstance
 import com.richardluo.globalIconPack.utils.getOrNull
-import com.richardluo.globalIconPack.utils.getString
 import com.richardluo.globalIconPack.utils.log
+import com.richardluo.globalIconPack.utils.unflattenFromString
 import java.io.ByteArrayInputStream
 import java.io.DataInputStream
 
@@ -28,55 +32,60 @@ class IconEntryWithId(val entry: IconEntry, private val id: Int) : IconEntry by 
 
   fun getIconWithId(getIconFromId: (Int) -> Drawable?) =
     if (id == 0) null else getIcon { getIconFromId(id) }
+}
 
-  companion object {
-    fun toCursor(cur: Cursor, getDrawableId: (pack: String, name: String) -> Int): Cursor? {
-      val data = cur.getBlob("entry")
-      val pack = cur.getString("pack")
-      return MatrixCursor(arrayOf("pack", "type", "id", "args")).apply {
-        DataInputStream(ByteArrayInputStream(data)).use {
+class IconEntryFromOtherPack(val entry: IconEntry, val pack: String) : IconEntry by entry
+
+object IconsCursorWrapper {
+  fun useWrap(c: Cursor, getDrawableId: (pack: String, name: String) -> Int): Cursor =
+    MatrixCursor(arrayOf("index", "pack", "type", "id", "args")).apply {
+      c.useEachRow {
+        val index = c.getInt("index")
+        val entry = it.getBlob("entry")
+        val pack = it.getString("pack")
+        DataInputStream(ByteArrayInputStream(entry)).use {
           when (it.readByte()) {
             Type.Normal.ordinal.toByte() -> {
               val name = it.readUTF()
-              val id = getDrawableId(pack, name).takeIf { it != 0 } ?: return null
-              addRow(arrayOf(pack, Type.Normal.ordinal, id, name))
-              cur.close()
+              val id = getDrawableId(pack, name).takeIf { it != 0 } ?: return@useEachRow
+              addRow(arrayOf(index, pack, Type.Normal.ordinal, id, name))
             }
             Type.Clock.ordinal.toByte() -> {
-              val id = getDrawableId(pack, it.readUTF()).takeIf { it != 0 } ?: return null
-              addRow(arrayOf(pack, Type.Clock.ordinal, id, data))
-              cur.close()
+              val id = getDrawableId(pack, it.readUTF()).takeIf { it != 0 } ?: return@useEachRow
+              addRow(arrayOf(index, pack, Type.Clock.ordinal, id, entry))
             }
-            else -> return cur
+            else -> addRow(arrayOf(index, pack, -1, 0, entry))
           }
         }
       }
     }
 
-    fun fromCursor(c: Cursor): IconEntryWithId? {
-      return IconEntryWithId(
-        when (c.getColumnIndex("type").takeIf { it >= 0 }?.let { c.getInt(it) }) {
-          Type.Normal.ordinal -> NormalIconEntry(c.getString("args"))
-          Type.Clock.ordinal -> IconEntry.from(c.getBlob("args"))
-          else -> return null
-        },
-        c.getInt("id"),
-      )
+  fun useUnwrap(c: Cursor, size: Int) =
+    c.useMapToArray(size) {
+      val entry =
+        when (c.getInt("type")) {
+          Type.Normal.ordinal ->
+            IconEntryWithId(NormalIconEntry(c.getString("args")), c.getInt("id"))
+          Type.Clock.ordinal ->
+            IconEntryWithId(CalendarIconEntry.from(c.getBlob("args")), c.getInt("id"))
+          else -> IconEntry.from(c.getBlob("args"))
+        }
+      val pack = it.getString("pack")
+      if (pack.isEmpty()) entry else IconEntryFromOtherPack(entry, pack)
     }
-  }
 }
 
 class IconPackProvider : ContentProvider() {
   companion object {
     const val AUTHORITIES = "${BuildConfig.APPLICATION_ID}.IconPackProvider"
-    val ICONS = "content://$AUTHORITIES/ICONS".toUri()
-    val FALLBACKS = "content://$AUTHORITIES/FALLBACKS".toUri()
+    val ICON = "content://$AUTHORITIES/ICON".toUri()
+    val FALLBACK = "content://$AUTHORITIES/FALLBACK".toUri()
   }
 
   private lateinit var iconPackDB: IconPackDB
 
   override fun onCreate(): Boolean {
-    iconPackDB = IconPackDB(context!!)
+    iconPackDB = getInstance { IconPackDB(context!!) }.value
     return true
   }
 
@@ -88,27 +97,24 @@ class IconPackProvider : ContentProvider() {
     sortOrder: String?,
   ): Cursor? {
     val oldPolicy = StrictMode.allowThreadDiskReads()
+    selectionArgs ?: return null
     return runCatching {
         when (uri) {
-          FALLBACKS ->
-            if (selectionArgs != null && selectionArgs.isNotEmpty())
-              iconPackDB.getFallbackSettings(selectionArgs[0])
+          FALLBACK ->
+            if (selectionArgs.isNotEmpty()) iconPackDB.getFallbackSettings(selectionArgs[0])
             else null
-          ICONS ->
-            if (selectionArgs != null && selectionArgs.size >= 4)
-              iconPackDB
-                .getIcon(
+          ICON ->
+            if (selectionArgs.size >= 3) {
+              IconsCursorWrapper.useWrap(
+                iconPackDB.getIcon(
                   selectionArgs[0],
-                  ComponentName(selectionArgs[1], selectionArgs[2]),
-                  selectionArgs[3].toBoolean(),
+                  selectionArgs.drop(2).mapNotNull { unflattenFromString(it) },
+                  selectionArgs[1].toBoolean(),
                 )
-                .takeIf { it.moveToFirst() }
-                ?.let {
-                  IconEntryWithId.toCursor(it) { pack, name ->
-                    getDrawableId(pack.ifEmpty { selectionArgs[0] }, name)
-                  }
-                }
-            else null
+              ) { pack, name ->
+                getDrawableId(pack.ifEmpty { selectionArgs[0] }, name)
+              }
+            } else null
           else -> null
         }
       }

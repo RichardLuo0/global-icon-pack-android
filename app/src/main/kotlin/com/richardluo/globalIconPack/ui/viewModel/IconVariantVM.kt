@@ -17,6 +17,10 @@ import com.richardluo.globalIconPack.iconPack.database.FallbackSettings
 import com.richardluo.globalIconPack.iconPack.database.IconEntry
 import com.richardluo.globalIconPack.iconPack.database.IconPackDB
 import com.richardluo.globalIconPack.iconPack.database.NormalIconEntry
+import com.richardluo.globalIconPack.iconPack.database.getBlob
+import com.richardluo.globalIconPack.iconPack.database.getString
+import com.richardluo.globalIconPack.iconPack.database.useFirstRow
+import com.richardluo.globalIconPack.iconPack.database.useMapToArray
 import com.richardluo.globalIconPack.iconPack.defaultIconPackConfig
 import com.richardluo.globalIconPack.ui.model.IconEntryWithPack
 import com.richardluo.globalIconPack.ui.model.IconInfo
@@ -26,12 +30,9 @@ import com.richardluo.globalIconPack.ui.model.VariantPackIcon
 import com.richardluo.globalIconPack.utils.ContextVM
 import com.richardluo.globalIconPack.utils.WorldPreference
 import com.richardluo.globalIconPack.utils.get
-import com.richardluo.globalIconPack.utils.getBlob
 import com.richardluo.globalIconPack.utils.getInstance
-import com.richardluo.globalIconPack.utils.getString
 import com.richardluo.globalIconPack.utils.ifNotEmpty
 import com.richardluo.globalIconPack.utils.runCatchingToast
-import com.richardluo.globalIconPack.utils.useFirstRow
 import java.io.OutputStreamWriter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
@@ -66,7 +67,8 @@ class IconVariantVM(context: Application) : ContextVM(context), IFilterApps by F
 
   val filteredIcons =
     combineTransform(filteredApps, iconPackDB.iconsUpdateFlow) { apps, _ ->
-        if (apps == null) emit(null) else emit(apps.map { it to getIconEntry(it.componentName) })
+        if (apps == null) emit(null)
+        else emit(apps.zip(getIconEntry(apps.map { it.componentName })))
       }
       .flowOn(Dispatchers.IO)
       .stateIn(viewModelScope, SharingStarted.Eagerly, null)
@@ -77,8 +79,8 @@ class IconVariantVM(context: Application) : ContextVM(context), IFilterApps by F
       .flowOn(Dispatchers.IO)
       .stateIn(viewModelScope, SharingStarted.Lazily, false)
 
-  private fun getIconEntry(cn: ComponentName) =
-    iconPackDB.getIcon(pack, cn, iconPackConfig.iconPackAsFallback).useFirstRow {
+  private fun getIconEntry(cnList: List<ComponentName>) =
+    iconPackDB.getIcon(pack, cnList, iconPackConfig.iconPackAsFallback).useMapToArray(cnList.size) {
       val entry = IconEntry.from(it.getBlob("entry"))
       val pack = it.getString("pack").ifEmpty { pack }
       val iconPack = iconPackCache.get(pack)
@@ -116,23 +118,23 @@ class IconVariantVM(context: Application) : ContextVM(context), IFilterApps by F
     viewModelScope.launch(Dispatchers.Default) {
       runCatchingToast(context) {
         val xml = StringBuilder("<?xml version=\"1.0\" encoding=\"UTF-8\"?><resources>\n")
-        getAllApps().forEach {
-          getIconEntry(it.componentName)?.let { entry ->
-            val cn = it.componentName.flattenToString()
-            val name = entry.entry.name
-            val pack = if (entry.pack.pack == pack) "" else entry.pack.pack
-            when (entry.entry.type) {
-              IconEntry.Type.Normal ->
-                xml.append(
-                  "<item component=\"$cn\" drawable=\"$name\"${pack.ifNotEmpty { " pack=\"$it\"" }}/>\n"
-                )
-              IconEntry.Type.Calendar ->
-                xml.append(
-                  "<calendar component=\"$cn\" prefix=\"$name\"${pack.ifNotEmpty { " pack=\"$it\"" }}/>\n"
-                )
-              // Can not handle entries of other type
-              else -> {}
-            }
+        val apps = getAllApps()
+        apps.zip(getIconEntry(apps.map { it.componentName })).forEach { (info, entry) ->
+          entry ?: return@forEach
+          val cn = info.componentName.flattenToString()
+          val name = entry.entry.name
+          val pack = if (entry.pack.pack == pack) "" else entry.pack.pack
+          when (entry.entry.type) {
+            IconEntry.Type.Normal ->
+              xml.append(
+                "<item component=\"$cn\" drawable=\"$name\"${pack.ifNotEmpty { " pack=\"$it\"" }}/>\n"
+              )
+            IconEntry.Type.Calendar ->
+              xml.append(
+                "<calendar component=\"$cn\" prefix=\"$name\"${pack.ifNotEmpty { " pack=\"$it\"" }}/>\n"
+              )
+            // Can not handle entries of other type
+            else -> {}
           }
         }
         OutputStreamWriter(context.contentResolver.openOutputStream(uri, "wt")).use {

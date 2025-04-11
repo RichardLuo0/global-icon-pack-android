@@ -42,8 +42,8 @@ object ClockDrawableWrapper {
         bundle,
         object : IntFunction<Drawable> {
           override fun apply(dummy: Int): Drawable =
-            if (drawable is AdaptiveIconDrawable) drawable
-            else AdaptiveIconDrawable(Color.WHITE.toDrawable(), drawable)
+            drawable as? AdaptiveIconDrawable
+              ?: AdaptiveIconDrawable(Color.WHITE.toDrawable(), drawable)
         },
       )
     }

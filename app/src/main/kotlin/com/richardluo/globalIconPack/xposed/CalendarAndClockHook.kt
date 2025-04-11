@@ -18,6 +18,7 @@ import com.richardluo.globalIconPack.iconPack.getIP
 import com.richardluo.globalIconPack.utils.MethodReplacement
 import com.richardluo.globalIconPack.utils.ReflectHelper
 import com.richardluo.globalIconPack.utils.asType
+import com.richardluo.globalIconPack.utils.call
 import com.richardluo.globalIconPack.utils.callOriginalMethod
 import com.richardluo.globalIconPack.utils.getAs
 import de.robv.android.xposed.XC_MethodHook
@@ -37,8 +38,8 @@ class CalendarAndClockHook : Hook {
     // Collect calendar and clock packages
     class CollectCC(val getActivityInfo: (MethodHookParam) -> ActivityInfo?) : MethodReplacement() {
       override fun replaceHookedMethod(param: MethodHookParam): Drawable? {
-        val ip = getIP() ?: return callOriginalMethod(param)
-        val ai = getActivityInfo(param) ?: return callOriginalMethod(param)
+        val ip = getIP() ?: return param.callOriginalMethod()
+        val ai = getActivityInfo(param) ?: return param.callOriginalMethod()
         val packageName = ai.packageName
         val entry = ip.getIconEntry(getComponentName(ai))
 
@@ -49,7 +50,7 @@ class CalendarAndClockHook : Hook {
               calendars.add(packageName)
             mClock?.getAs<ComponentName>(param.thisObject)?.packageName -> clocks.add(packageName)
           }
-          return callOriginalMethod<Drawable?>(param)?.let { ip.genIconFrom(it) }
+          return param.callOriginalMethod<Drawable?>()?.let { ip.genIconFrom(it) }
         }
 
         val density =
