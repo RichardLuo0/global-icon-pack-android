@@ -76,14 +76,15 @@ object ReflectHelper {
 
   fun hookAllConstructors(clazz: Class<*>?, hook: XC_MethodHook) =
     clazz
-      ?.run { XposedBridge.hookAllConstructors(this, hook) }
+      ?.let { XposedBridge.hookAllConstructors(it, hook) }
       .also { if (it.isNullOrEmpty()) log("No constructors are found on class ${clazz?.name}") }
 
   fun hookMethod(method: Method, hook: XC_MethodHook) =
     runCatching { XposedBridge.hookMethod(method, hook) }.getOrNull { log(it) }
 
-  fun findField(clazz: Class<*>, name: String): Field? =
-    runCatching { clazz.getDeclaredField(name).apply { isAccessible = true } }.getOrNull { log(it) }
+  fun findField(clazz: Class<*>?, name: String) =
+    runCatching { clazz?.run { getDeclaredField(name).apply { isAccessible = true } } }
+      .getOrNull { log(it) }
 }
 
 abstract class MethodReplacement : XC_MethodHook() {

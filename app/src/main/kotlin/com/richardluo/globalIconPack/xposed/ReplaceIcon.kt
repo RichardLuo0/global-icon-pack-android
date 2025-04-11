@@ -9,6 +9,7 @@ import android.content.pm.ShortcutInfo
 import android.graphics.drawable.Drawable
 import com.richardluo.globalIconPack.Pref
 import com.richardluo.globalIconPack.get
+import com.richardluo.globalIconPack.iconPack.IconPack
 import com.richardluo.globalIconPack.iconPack.getComponentName
 import com.richardluo.globalIconPack.iconPack.getIP
 import com.richardluo.globalIconPack.reflect.ClockDrawableWrapper
@@ -20,6 +21,9 @@ import com.richardluo.globalIconPack.utils.callOriginalMethod
 import com.richardluo.globalIconPack.utils.getAs
 import com.richardluo.globalIconPack.utils.isHighTwoByte
 import com.richardluo.globalIconPack.utils.withHighByteSet
+import com.richardluo.globalIconPack.xposed.ReplaceIcon.Companion.ANDROID_DEFAULT
+import com.richardluo.globalIconPack.xposed.ReplaceIcon.Companion.IN_IP
+import com.richardluo.globalIconPack.xposed.ReplaceIcon.Companion.NOT_IN_IP
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 import kotlin.to
@@ -35,6 +39,47 @@ class ReplaceIcon : Hook {
   override fun onHookPixelLauncher(lpp: LoadPackageParam) {
     // Find needed class for clock
     ClockDrawableWrapper.initWithPixelLauncher(lpp)
+  }
+
+  private val replacerMap = run {
+    val iconResourceIdF = ReflectHelper.findField(ResolveInfo::class.java, "iconResourceId")
+    val launcherActivityInfo =
+      ReflectHelper.findClass("android.content.pm.LauncherActivityInfoInternal")
+    val mActivityInfoF = ReflectHelper.findField(launcherActivityInfo, "mActivityInfo")
+
+    val defaultReplacer: Replacer = { list, ip ->
+      replaceItemInfo(list.mapNotNull { it.asType<PackageItemInfo>() }, ip)
+    }
+    val activityInfoReplacer: Replacer = { list, ip ->
+      defaultReplacer(list, ip)
+      replaceItemInfo(list.mapNotNull { it.asType<ActivityInfo>()?.applicationInfo }, ip)
+    }
+
+    listOfNotNull<Pair<Class<*>, Replacer>>(
+        ApplicationInfo::class.java to defaultReplacer,
+        ActivityInfo::class.java to activityInfoReplacer,
+        ResolveInfo::class.java to
+          { list, ip ->
+            val riList = list.mapNotNull { it.asType<ResolveInfo>() }
+            activityInfoReplacer(riList.mapNotNull { it.activityInfo }, ip)
+            riList.forEach { ri ->
+              val icon = ri.activityInfo?.icon?.takeIf { it != 0 } ?: return@forEach
+              ri.icon = icon
+              iconResourceIdF?.set(ri, icon)
+            }
+          },
+        launcherActivityInfo?.let {
+          it to
+            Replacer@{ list, ip ->
+              mActivityInfoF ?: return@Replacer
+              activityInfoReplacer(
+                list.mapNotNull { it?.let { mActivityInfoF.getAs<ActivityInfo>(it) } },
+                ip,
+              )
+            }
+        },
+      )
+      .toMap()
   }
 
   override fun onHookApp(lpp: LoadPackageParam) {
@@ -60,16 +105,6 @@ class ReplaceIcon : Hook {
     ReflectHelper.hookAllConstructors(ApplicationInfo::class.java, replaceIconResId)
     ReflectHelper.hookAllConstructors(ActivityInfo::class.java, replaceIconResId)
 
-    val launcherActivityInfo =
-      ReflectHelper.findClass("android.content.pm.LauncherActivityInfoInternal") ?: return
-    val mActivityInfoF = ReflectHelper.findField(launcherActivityInfo, "mActivityInfo") ?: return
-    val transformerMap =
-      mapOf<Class<*>, (Any?) -> PackageItemInfo?>(
-        ApplicationInfo::class.java to { it as? PackageItemInfo },
-        ActivityInfo::class.java to { it as? PackageItemInfo },
-        ResolveInfo::class.java to { it.asType<ResolveInfo>()?.activityInfo },
-        launcherActivityInfo to { it?.let { mActivityInfoF.getAs<ActivityInfo>(it) } },
-      )
     val baseParceledListSlice =
       ReflectHelper.findClass("android.content.pm.BaseParceledListSlice") ?: return
     val mListF = ReflectHelper.findField(baseParceledListSlice, "mList") ?: return
@@ -89,10 +124,8 @@ class ReplaceIcon : Hook {
           param.result = null
           val list = mListF.getAs<List<Any?>?>(param.thisObject) ?: return
           val clazz = list.getOrNull(0)?.javaClass ?: return
-          val notNull = list.mapNotNull(transformerMap[clazz] ?: return)
-          ip.getId(notNull.map { getComponentName(it) }).forEachIndexed { i, it ->
-            replaceIconResIdInInfo(notNull[i], it)
-          }
+          val replacer = replacerMap[clazz] ?: return
+          replacer(list, ip)
         }
       },
     )
@@ -134,11 +167,19 @@ class ReplaceIcon : Hook {
         },
       )
   }
+}
 
-  private fun replaceIconResIdInInfo(info: PackageItemInfo, id: Int?) {
-    info.icon =
-      id?.let { withHighByteSet(it, IN_IP) }
-        ?: if (isHighTwoByte(info.icon, ANDROID_DEFAULT)) withHighByteSet(info.icon, NOT_IN_IP)
-        else info.icon
+private fun replaceIconResIdInInfo(info: PackageItemInfo, id: Int?) {
+  info.icon =
+    id?.let { withHighByteSet(it, IN_IP) }
+      ?: if (isHighTwoByte(info.icon, ANDROID_DEFAULT)) withHighByteSet(info.icon, NOT_IN_IP)
+      else info.icon
+}
+
+fun replaceItemInfo(list: List<PackageItemInfo>, ip: IconPack) {
+  ip.getId(list.map { getComponentName(it) }).forEachIndexed { i, it ->
+    replaceIconResIdInInfo(list[i], it)
   }
 }
+
+typealias Replacer = (list: List<Any?>, ip: IconPack) -> Unit
