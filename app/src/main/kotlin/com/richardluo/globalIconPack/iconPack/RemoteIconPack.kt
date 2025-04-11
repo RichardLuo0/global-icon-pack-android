@@ -13,7 +13,6 @@ import com.richardluo.globalIconPack.reflect.Resources.getDrawableForDensity
 import com.richardluo.globalIconPack.utils.ReflectHelper
 import com.richardluo.globalIconPack.utils.call
 import com.richardluo.globalIconPack.utils.getOrPutNullable
-import com.richardluo.globalIconPack.utils.log
 import java.util.Collections
 
 class RemoteIconPack(pack: String, res: Resources, config: IconPackConfig = defaultIconPackConfig) :
@@ -87,7 +86,7 @@ class RemoteIconPack(pack: String, res: Resources, config: IconPackConfig = defa
                 } else null
               indexMap[cnList[index]] = id
               this[index] = id
-            }
+            } ?: run { misses.forEach { this[it] = null } }
       }
     }
 
