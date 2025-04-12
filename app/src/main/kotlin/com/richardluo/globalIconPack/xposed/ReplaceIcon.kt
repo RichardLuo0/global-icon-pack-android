@@ -1,12 +1,17 @@
 package com.richardluo.globalIconPack.xposed
 
+import android.app.ActivityManager.RecentTaskInfo
+import android.app.ActivityManager.RunningTaskInfo
+import android.app.TaskInfo
 import android.content.pm.ActivityInfo
 import android.content.pm.ApplicationInfo
 import android.content.pm.LauncherApps
+import android.content.pm.PackageInfo
 import android.content.pm.PackageItemInfo
 import android.content.pm.ResolveInfo
 import android.content.pm.ShortcutInfo
 import android.graphics.drawable.Drawable
+import android.os.Parcel
 import com.richardluo.globalIconPack.Pref
 import com.richardluo.globalIconPack.get
 import com.richardluo.globalIconPack.iconPack.IconPack
@@ -26,7 +31,8 @@ import com.richardluo.globalIconPack.xposed.ReplaceIcon.Companion.IN_IP
 import com.richardluo.globalIconPack.xposed.ReplaceIcon.Companion.NOT_IN_IP
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
-import kotlin.to
+
+typealias ListReplacer = (list: List<Any?>, ip: IconPack) -> Unit
 
 class ReplaceIcon : Hook {
   companion object {
@@ -41,56 +47,97 @@ class ReplaceIcon : Hook {
     ClockDrawableWrapper.initWithPixelLauncher(lpp)
   }
 
-  private val replacerMap = run {
+  private val listReplacerMap = run {
     val iconResourceIdF = ReflectHelper.findField(ResolveInfo::class.java, "iconResourceId")
-    val launcherActivityInfo =
-      ReflectHelper.findClass("android.content.pm.LauncherActivityInfoInternal")
-    val mActivityInfoF = ReflectHelper.findField(launcherActivityInfo, "mActivityInfo")
 
-    val defaultReplacer: Replacer = { list, ip ->
+    val defaultReplacer: ListReplacer = { list, ip ->
       replaceItemInfo(list.mapNotNull { it.asType<PackageItemInfo>() }, ip)
     }
-    val activityInfoReplacer: Replacer = { list, ip ->
+    val activityInfoReplacer: ListReplacer = { list, ip ->
       defaultReplacer(list, ip)
       replaceItemInfo(list.mapNotNull { it.asType<ActivityInfo>()?.applicationInfo }, ip)
     }
 
-    listOfNotNull<Pair<Class<*>, Replacer>>(
-        ApplicationInfo::class.java to defaultReplacer,
-        ActivityInfo::class.java to activityInfoReplacer,
-        ResolveInfo::class.java to
-          { list, ip ->
-            val riList = list.mapNotNull { it.asType<ResolveInfo>() }
-            activityInfoReplacer(riList.mapNotNull { it.activityInfo }, ip)
-            riList.forEach { ri ->
-              val icon = ri.activityInfo?.icon?.takeIf { it != 0 } ?: return@forEach
-              ri.icon = icon
-              iconResourceIdF?.set(ri, icon)
-            }
-          },
-        run {
-          launcherActivityInfo ?: return@run null
-          mActivityInfoF ?: return@run null
-          launcherActivityInfo to
-            Replacer@{ list, ip ->
-              activityInfoReplacer(
-                list.mapNotNull { it?.let { mActivityInfoF.getAs<ActivityInfo>(it) } },
-                ip,
-              )
-            }
-        },
-      )
-      .toMap()
+    buildMap<Class<*>, ListReplacer> {
+      set(ApplicationInfo::class.java, defaultReplacer)
+      set(ActivityInfo::class.java, activityInfoReplacer)
+      set(ResolveInfo::class.java) { list, ip ->
+        val riList = list.mapNotNull { it.asType<ResolveInfo>() }
+        activityInfoReplacer(riList.mapNotNull { it.activityInfo }, ip)
+        riList.forEach { ri ->
+          val icon = ri.activityInfo?.icon?.takeIf { it != 0 } ?: return@forEach
+          ri.icon = icon
+          iconResourceIdF?.set(ri, icon)
+        }
+      }
+      set(PackageInfo::class.java) { list, ip ->
+        val piList = list.mapNotNull { it.asType<PackageInfo>() }
+        defaultReplacer(piList.mapNotNull { it.applicationInfo }, ip)
+        piList.forEach { pi -> pi.activities?.let { activityInfoReplacer(it.toList(), ip) } }
+      }
+      run {
+        val topActivityInfoF =
+          ReflectHelper.findField(TaskInfo::class.java, "topActivityInfo") ?: return@run
+        val taskInfoReplacer: ListReplacer = { list, ip ->
+          defaultReplacer(
+            list.mapNotNull { it?.let { topActivityInfoF.getAs<ActivityInfo>(it) } },
+            ip,
+          )
+        }
+        set(RunningTaskInfo::class.java, taskInfoReplacer)
+        set(RecentTaskInfo::class.java, taskInfoReplacer)
+      }
+      run {
+        val launcherActivityInfo =
+          ReflectHelper.findClass("android.content.pm.LauncherActivityInfoInternal") ?: return@run
+        val mActivityInfoF =
+          ReflectHelper.findField(launcherActivityInfo, "mActivityInfo") ?: return@run
+        set(launcherActivityInfo) { list, ip ->
+          activityInfoReplacer(
+            list.mapNotNull { it?.let { mActivityInfoF.getAs<ActivityInfo>(it) } },
+            ip,
+          )
+        }
+      }
+      run {
+        val launchActivityItem =
+          ReflectHelper.findClass("android.app.servertransaction.LaunchActivityItem") ?: return@run
+        val mInfoF = ReflectHelper.findField(launchActivityItem, "mInfo") ?: return@run
+        set(launchActivityItem) { list, ip ->
+          activityInfoReplacer(list.mapNotNull { it?.let { mInfoF.getAs<ActivityInfo>(it) } }, ip)
+        }
+      }
+    }
+  }
+
+  private val blockReplaceIconResId = ThreadLocal.withInitial { false }
+
+  private abstract inner class ReplaceInList : XC_MethodHook() {
+    override fun beforeHookedMethod(param: MethodHookParam) {
+      val oldBlock = blockReplaceIconResId.get()
+      blockReplaceIconResId.set(true)
+      replaceIconResId(param)
+      blockReplaceIconResId.set(oldBlock)
+    }
+
+    fun replaceIconResId(param: MethodHookParam) {
+      val ip = getIP() ?: return
+      param.result = param.callOriginalMethod<Unit>()
+      val list = getList(param) ?: return
+      val clazz = list.getOrNull(0)?.javaClass ?: return
+      val replacer = listReplacerMap[clazz] ?: return
+      replacer(list, ip)
+    }
+
+    abstract fun getList(param: MethodHookParam): List<Any?>?
   }
 
   override fun onHookApp(lpp: LoadPackageParam) {
     // Resource id always starts with 0x7f, use it to indicate that this is an icon
     // Assume the icon res id is only used in getDrawable()
-    val blockReplaceIconResId = ThreadLocal.withInitial { false }
     val replaceIconResId =
       object : XC_MethodHook() {
         override fun afterHookedMethod(param: MethodHookParam) {
-          // Avoid recursive call
           if (blockReplaceIconResId.get() == true) return
           blockReplaceIconResId.set(true)
           afterHookedMethodSafe(param)
@@ -98,37 +145,44 @@ class ReplaceIcon : Hook {
         }
 
         fun afterHookedMethodSafe(param: MethodHookParam) {
-          val info = param.thisObject as PackageItemInfo
+          val info = param.result as? PackageItemInfo ?: return
           info.packageName ?: return
           val ip = getIP() ?: return
           replaceIconResIdInInfo(info, ip.getId(getComponentName(info)))
         }
       }
-    ReflectHelper.hookAllConstructors(ApplicationInfo::class.java, replaceIconResId)
-    ReflectHelper.hookAllConstructors(ActivityInfo::class.java, replaceIconResId)
+    ReflectHelper.hookAllMethodsOrLog(
+      ApplicationInfo.CREATOR.javaClass,
+      "createFromParcel",
+      replaceIconResId,
+    )
+    ReflectHelper.hookAllMethodsOrLog(
+      ActivityInfo.CREATOR.javaClass,
+      "createFromParcel",
+      replaceIconResId,
+    )
 
+    ReflectHelper.hookAllMethodsOrLog(
+      Parcel::class.java,
+      "readTypedList",
+      object : ReplaceInList() {
+        override fun getList(param: MethodHookParam) = param.args[0].asType<List<Any?>>()
+      },
+    )
+    ReflectHelper.hookAllMethodsOrLog(
+      Parcel::class.java,
+      "createTypedArray",
+      object : ReplaceInList() {
+        override fun getList(param: MethodHookParam) = param.result.asType<Array<Any?>>()?.toList()
+      },
+    )
     val baseParceledListSlice =
       ReflectHelper.findClass("android.content.pm.BaseParceledListSlice") ?: return
     val mListF = ReflectHelper.findField(baseParceledListSlice, "mList") ?: return
     ReflectHelper.hookAllConstructors(
       baseParceledListSlice,
-      object : XC_MethodHook() {
-        override fun beforeHookedMethod(param: MethodHookParam) {
-          val oldBlock = blockReplaceIconResId.get()
-          blockReplaceIconResId.set(true)
-          replaceIconResId(param)
-          blockReplaceIconResId.set(oldBlock)
-        }
-
-        fun replaceIconResId(param: MethodHookParam) {
-          val ip = getIP() ?: return
-          param.callOriginalMethod<Unit>()
-          param.result = null
-          val list = mListF.getAs<List<Any?>?>(param.thisObject) ?: return
-          val clazz = list.getOrNull(0)?.javaClass ?: return
-          val replacer = replacerMap[clazz] ?: return
-          replacer(list, ip)
-        }
+      object : ReplaceInList() {
+        override fun getList(param: MethodHookParam) = mListF.getAs<List<Any?>?>(param.thisObject)
       },
     )
 
@@ -183,5 +237,3 @@ fun replaceItemInfo(list: List<PackageItemInfo>, ip: IconPack) {
     replaceIconResIdInInfo(list[i], it)
   }
 }
-
-typealias Replacer = (list: List<Any?>, ip: IconPack) -> Unit
