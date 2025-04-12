@@ -94,31 +94,30 @@ class RemoteIconPack(pack: String, res: Resources, config: IconPackConfig = defa
 
   override fun getIconEntry(id: Int): IconEntry? = iconEntryList.getOrNull(id)
 
-  private inner class PackResources(inputPack: String = "") {
-    val pack: String = inputPack.ifEmpty { this@RemoteIconPack.pack }
-    val res: Resources =
-      if (inputPack.isEmpty()) this@RemoteIconPack.res else getResources(inputPack)
-  }
+  private inner class PackRes(val pack: String, val res: Resources)
+
+  private fun createPackRes(pack: String = "") =
+    PackRes(pack.ifEmpty { this.pack }, if (pack.isEmpty()) this.res else getResources(pack))
 
   override fun getIconNotAdaptive(entry: IconEntry, iconDpi: Int) =
     if (entry is IconEntryFromOtherPack)
-      entry.getIcon { getIcon(PackResources(entry.pack), entry.entry, iconDpi) }
-    else getIcon(PackResources(), entry, iconDpi)
+      entry.getIcon { getIcon(createPackRes(entry.pack), entry.entry, iconDpi) }
+    else getIcon(createPackRes(), entry, iconDpi)
 
-  override fun getIcon(name: String, iconDpi: Int) = getIcon(PackResources(), name, iconDpi)
+  override fun getIcon(name: String, iconDpi: Int) = getIcon(createPackRes(), name, iconDpi)
 
-  private fun getIcon(pr: PackResources, entry: IconEntry, iconDpi: Int) =
+  private fun getIcon(pr: PackRes, entry: IconEntry, iconDpi: Int) =
     if (entry is IconEntryWithId) entry.getIconWithId { getIconWithDrawableId(pr, it, iconDpi) }
     else entry.getIcon { getIcon(pr, it, iconDpi) }
 
-  private fun getIcon(pr: PackResources, name: String, iconDpi: Int = 0) =
+  private fun getIcon(pr: PackRes, name: String, iconDpi: Int = 0) =
     getDrawableId(pr, name).takeIf { it != 0 }?.let { getIconWithDrawableId(pr, it, iconDpi) }
 
-  private fun getIconWithDrawableId(pr: PackResources, id: Int, iconDpi: Int = 0) =
+  private fun getIconWithDrawableId(pr: PackRes, id: Int, iconDpi: Int = 0) =
     getDrawableForDensity(pr.res, id, iconDpi, null)
 
   @SuppressLint("DiscouragedApi")
-  private fun getDrawableId(pr: PackResources, name: String) =
+  private fun getDrawableId(pr: PackRes, name: String) =
     idCache.getOrPut("${pr.pack}/$name") { pr.res.getIdentifier(name, "drawable", pr.pack) }
 
   private fun getResources(pack: String) =
