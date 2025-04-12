@@ -13,6 +13,11 @@ fi
 
 # Download android sdk 34. 35 doesn't work because https://github.com/termux/termux-packages/issues/22667
 if [ ! -e "$androidJar" ]; then
+  read -r -p "Download android sdk to $androidJar? (around 50MB) (y/n): " answer
+  if [[ "$answer" != "y" && "$answer" != "Y" ]]; then
+      exit 1
+  fi
+
   echo -e "\033[34mDownloading android sdk...\033[0m"
   currentDir=$(pwd)
   cd "$dir" || exit 1
@@ -38,4 +43,4 @@ aapt add app.apk.unaligned classes.dex
 zipalign -f -v -p 4 app.apk.unaligned app.apk
 apksigner sign --ks dummy.jks --ks-pass pass:123456 app.apk
 echo -e "\033[32mandroid.jar is saved in $androidJar. You can delete it if you want.\033[32m"
-echo -e "\033[32mNew icon pack has been generated and saved to $(pwd)/app.apk. Please install it manually.\033[0m"
+echo -e "\033[32mAn icon pack has been generated and saved to $(pwd)/app.apk. Please install it manually.\033[0m"
