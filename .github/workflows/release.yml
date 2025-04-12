@@ -93,5 +93,14 @@ jobs:
           tag: ${{ steps.save_version.outputs.VERSION_NAME }}
           artifacts: "app/build/outputs/apk/release/app-release.apk"
           body: ${{ steps.build_changelog.outputs.changelog }}
-          draft: true
+          prerelease: true
           token: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: ncipollo/release-action@v1
+        with:
+          repo: Xposed-Modules-Repo/com.richardluo.globalIconPack
+          tag: ${{ steps.save_version.outputs.VERSION_NAME }}
+          artifacts: "app/build/outputs/apk/release/app-release.apk"
+          body: ${{ steps.build_changelog.outputs.changelog }}
+          prerelease: true
+          token: ${{ secrets.LSPOSED_RELEASE_TOKEN }}
