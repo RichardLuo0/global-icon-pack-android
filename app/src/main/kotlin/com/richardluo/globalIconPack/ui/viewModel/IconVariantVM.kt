@@ -16,6 +16,7 @@ import com.richardluo.globalIconPack.iconPack.database.CalendarIconEntry
 import com.richardluo.globalIconPack.iconPack.database.FallbackSettings
 import com.richardluo.globalIconPack.iconPack.database.IconEntry
 import com.richardluo.globalIconPack.iconPack.database.IconPackDB
+import com.richardluo.globalIconPack.iconPack.database.IconPackDB.GetIconColumn
 import com.richardluo.globalIconPack.iconPack.database.NormalIconEntry
 import com.richardluo.globalIconPack.iconPack.database.getBlob
 import com.richardluo.globalIconPack.iconPack.database.getString
@@ -58,7 +59,7 @@ class IconVariantVM(context: Application) : ContextVM(context), IFilterApps by F
   private val iconFallback =
     iconPackDB
       .getFallbackSettings(pack)
-      .useFirstRow { FallbackSettings.from(it.getBlob("fallback")) }
+      .useFirstRow { FallbackSettings.from(it.getBlob(0)) }
       ?.let { IconFallback(it, iconPack::getIcon, defaultIconPackConfig) }
       ?.orNullIfEmpty()
   private val iconPackConfig = IconPackConfig(WorldPreference.getPrefInApp(context))
@@ -81,9 +82,10 @@ class IconVariantVM(context: Application) : ContextVM(context), IFilterApps by F
 
   private fun getIconEntry(cnList: List<ComponentName>) =
     iconPackDB.getIcon(pack, cnList, iconPackConfig.iconPackAsFallback).useMapToArray(cnList.size) {
-      val entry = IconEntry.from(it.getBlob("entry"))
-      val pack = it.getString("pack").ifEmpty { pack }
-      val iconPack = iconPackCache.get(pack)
+      val entry = IconEntry.from(it.getBlob(GetIconColumn.Entry))
+      val iconPack =
+        it.getString(GetIconColumn.Pack).takeIf { it.isNotEmpty() }?.let { iconPackCache.get(it) }
+          ?: iconPack
       iconPack.makeValidEntry(entry)?.let { entry -> IconEntryWithPack(entry, iconPack) }
     }
 

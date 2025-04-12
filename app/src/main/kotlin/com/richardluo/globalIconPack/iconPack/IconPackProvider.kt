@@ -9,13 +9,16 @@ import android.database.MatrixCursor
 import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.StrictMode
+import androidx.core.database.getIntOrNull
 import androidx.core.net.toUri
 import com.richardluo.globalIconPack.BuildConfig
 import com.richardluo.globalIconPack.iconPack.database.CalendarIconEntry
 import com.richardluo.globalIconPack.iconPack.database.IconEntry
 import com.richardluo.globalIconPack.iconPack.database.IconEntry.Type
 import com.richardluo.globalIconPack.iconPack.database.IconPackDB
+import com.richardluo.globalIconPack.iconPack.database.IconPackDB.GetIconColumn
 import com.richardluo.globalIconPack.iconPack.database.NormalIconEntry
+import com.richardluo.globalIconPack.iconPack.database.getAsColumnArray
 import com.richardluo.globalIconPack.iconPack.database.getBlob
 import com.richardluo.globalIconPack.iconPack.database.getInt
 import com.richardluo.globalIconPack.iconPack.database.getString
@@ -37,41 +40,56 @@ class IconEntryWithId(val entry: IconEntry, private val id: Int) : IconEntry by 
 class IconEntryFromOtherPack(val entry: IconEntry, val pack: String) : IconEntry by entry
 
 object IconsCursorWrapper {
+  private enum class Column {
+    Index,
+    Pack,
+    Fallback,
+    Type,
+    Id,
+    Args,
+  }
+
   fun useWrap(c: Cursor, getDrawableId: (pack: String, name: String) -> Int): Cursor =
-    MatrixCursor(arrayOf("index", "pack", "type", "id", "args")).apply {
-      c.useEachRow {
-        val index = c.getInt("index")
-        val entry = it.getBlob("entry")
-        val pack = it.getString("pack")
+    MatrixCursor(getAsColumnArray<Column>()).apply {
+      c.useEachRow { c ->
+        val index = c.getInt(GetIconColumn.Index)
+        val entry = c.getBlob(GetIconColumn.Entry)
+        val pack = c.getString(GetIconColumn.Pack)
+        val fallback = c.getIntOrNull(GetIconColumn.Fallback.ordinal) == 1
         DataInputStream(ByteArrayInputStream(entry)).use {
           when (it.readByte()) {
             Type.Normal.ordinal.toByte() -> {
               val name = it.readUTF()
               val id = getDrawableId(pack, name).takeIf { it != 0 } ?: return@useEachRow
-              addRow(arrayOf(index, pack, Type.Normal.ordinal, id, name))
+              addRow(arrayOf(index, pack, fallback, Type.Normal.ordinal, id, name))
             }
             Type.Clock.ordinal.toByte() -> {
               val id = getDrawableId(pack, it.readUTF()).takeIf { it != 0 } ?: return@useEachRow
-              addRow(arrayOf(index, pack, Type.Clock.ordinal, id, entry))
+              addRow(arrayOf(index, pack, fallback, Type.Clock.ordinal, id, entry))
             }
-            else -> addRow(arrayOf(index, pack, -1, 0, entry))
+            else -> addRow(arrayOf(index, pack, fallback, -1, 0, entry))
           }
         }
       }
     }
 
+  class EntryInfo(val entry: IconEntry, val fallback: Boolean)
+
   fun useUnwrap(c: Cursor, size: Int) =
-    c.useMapToArray(size) {
+    c.useMapToArray(size, Column.Index) { c ->
       val entry =
-        when (c.getInt("type")) {
+        when (c.getInt(Column.Type)) {
           Type.Normal.ordinal ->
-            IconEntryWithId(NormalIconEntry(c.getString("args")), c.getInt("id"))
+            IconEntryWithId(NormalIconEntry(c.getString(Column.Args)), c.getInt(Column.Id))
           Type.Clock.ordinal ->
-            IconEntryWithId(CalendarIconEntry.from(c.getBlob("args")), c.getInt("id"))
-          else -> IconEntry.from(c.getBlob("args"))
+            IconEntryWithId(CalendarIconEntry.from(c.getBlob(Column.Args)), c.getInt(Column.Id))
+          else -> IconEntry.from(c.getBlob(Column.Args.ordinal))
         }
-      val pack = it.getString("pack")
-      if (pack.isEmpty()) entry else IconEntryFromOtherPack(entry, pack)
+      val pack = c.getString(Column.Pack)
+      EntryInfo(
+        if (pack.isEmpty()) entry else IconEntryFromOtherPack(entry, pack),
+        c.getInt(Column.Fallback) != 0,
+      )
     }
 }
 

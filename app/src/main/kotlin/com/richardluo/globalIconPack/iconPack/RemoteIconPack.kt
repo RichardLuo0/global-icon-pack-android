@@ -7,7 +7,6 @@ import android.content.res.Resources
 import android.graphics.drawable.Drawable
 import com.richardluo.globalIconPack.iconPack.database.FallbackSettings
 import com.richardluo.globalIconPack.iconPack.database.IconEntry
-import com.richardluo.globalIconPack.iconPack.database.getBlob
 import com.richardluo.globalIconPack.iconPack.database.useFirstRow
 import com.richardluo.globalIconPack.reflect.Resources.getDrawableForDensity
 import com.richardluo.globalIconPack.utils.ReflectHelper
@@ -33,8 +32,7 @@ class RemoteIconPack(pack: String, res: Resources, config: IconPackConfig = defa
         contentResolver
           .query(IconPackProvider.FALLBACK, null, null, arrayOf(pack), null)
           ?.useFirstRow {
-            IconFallback(FallbackSettings.from(it.getBlob("fallback")), ::getIcon, config)
-              .orNullIfEmpty()
+            IconFallback(FallbackSettings.from(it.getBlob(0)), ::getIcon, config).orNullIfEmpty()
           }
       else null
   }
@@ -51,9 +49,11 @@ class RemoteIconPack(pack: String, res: Resources, config: IconPackConfig = defa
             null,
           )
           ?.let { IconsCursorWrapper.useUnwrap(it, 1).getOrNull(0) }
-          ?.let {
-            iconEntryList.add(it)
-            iconEntryList.size - 1
+          ?.let { info ->
+            iconEntryList.add(info.entry)
+            (iconEntryList.size - 1).also {
+              if (info.fallback) indexMap[getComponentName(cn.packageName)] = it
+            }
           }
       }
     }
@@ -77,12 +77,14 @@ class RemoteIconPack(pack: String, res: Resources, config: IconPackConfig = defa
               null,
             )
             ?.let { IconsCursorWrapper.useUnwrap(it, misses.size) }
-            ?.forEachIndexed { i, entry ->
+            ?.forEachIndexed { i, info ->
               val index = misses[i]
               val id =
-                if (entry != null) {
-                  iconEntryList.add(entry)
-                  iconEntryList.size - 1
+                if (info != null) {
+                  iconEntryList.add(info.entry)
+                  (iconEntryList.size - 1).also {
+                    if (info.fallback) indexMap[getComponentName(cnList[index].packageName)] = it
+                  }
                 } else null
               indexMap[cnList[index]] = id
               this[index] = id

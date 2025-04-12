@@ -15,6 +15,7 @@ import com.richardluo.globalIconPack.utils.flowTrigger
 import com.richardluo.globalIconPack.utils.ifNotEmpty
 import com.richardluo.globalIconPack.utils.log
 import com.richardluo.globalIconPack.utils.tryEmit
+import kotlin.jvm.java
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -44,8 +45,8 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
       val modified =
         rawQuery("select DISTINCT updateAt, modified from iconPack where pack=?", arrayOf(pack))
           .useFirstRow {
-            if (lastUpdateTime < it.getLong("updateAt")) return
-            it.getInt("modified") != 0
+            if (lastUpdateTime < it.getLong(0)) return
+            it.getInt(1) != 0
           } == true
       // Create tables
       execSQL(
@@ -128,7 +129,14 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
   fun isPackModified(pack: String) =
     readableDatabase
       .query("iconPack", arrayOf("modified"), "pack=?", arrayOf(pack), null, null, null, "1")
-      .useFirstRow { it.getInt("modified") != 0 } == true
+      .useFirstRow { it.getInt(0) != 0 } == true
+
+  enum class GetIconColumn {
+    Index,
+    Entry,
+    Pack,
+    Fallback,
+  }
 
   private fun getIconExact(pack: String, cnList: List<ComponentName>) =
     readableDatabase.rawQueryList(
@@ -141,10 +149,11 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
 
   private fun getIconFallback(pack: String, cnList: List<ComponentName>) =
     readableDatabase.rawQueryList(
-      "SELECT entry, pack FROM '${pt(pack)}' " +
-        "WHERE (packageName=? AND className=?) " +
-        "OR (packageName=? AND className='') " +
-        "ORDER BY className DESC LIMIT 1",
+      "SELECT * FROM ( " +
+        "SELECT entry, pack, 0 AS fallback FROM '${pt(pack)}' WHERE packageName=? AND className=? " +
+        "UNION ALL " +
+        "SELECT entry, pack, 1 AS fallback FROM '${pt(pack)}' WHERE packageName=? AND className='' " +
+        ") LIMIT 1",
       cnList,
     ) {
       add(it.packageName)
@@ -297,16 +306,18 @@ private fun <T> SQLiteDatabase.rawQueryList(
   return MergeCursor(cursors.toTypedArray())
 }
 
-fun Cursor.getBlob(name: String) = this.getBlob(getColumnIndexOrThrow(name))
+inline fun <reified T : Enum<T>> getAsColumnArray() =
+  T::class.java.enumConstants!!.let { entries -> Array(entries.size) { entries[it].name } }
 
-fun Cursor.getLong(name: String) = this.getLong(getColumnIndexOrThrow(name))
+fun Cursor.getBlob(enum: Enum<*>): ByteArray = getBlob(enum.ordinal)
 
-fun Cursor.getString(name: String) = this.getString(getColumnIndexOrThrow(name))
+fun Cursor.getLong(enum: Enum<*>): Long = getLong(enum.ordinal)
 
-fun Cursor.getInt(name: String) = this.getInt(getColumnIndexOrThrow(name))
+fun Cursor.getString(enum: Enum<*>): String = getString(enum.ordinal)
 
-inline fun <T> Cursor.useFirstRow(block: (Cursor) -> T) =
-  this.takeIf { it.moveToFirst() }?.use(block)
+fun Cursor.getInt(enum: Enum<*>): Int = getInt(enum.ordinal)
+
+inline fun <T> Cursor.useFirstRow(block: (Cursor) -> T) = takeIf { it.moveToFirst() }?.use(block)
 
 inline fun Cursor.useEachRow(block: (Cursor) -> Unit) = use {
   if (moveToFirst())
@@ -325,8 +336,8 @@ inline fun <T> Cursor.useMap(block: (Cursor) -> T): List<T> = use {
   }
 }
 
-inline fun <reified T> Cursor.useMapToArray(
-  size: Int,
-  indexColumn: String = "index",
-  block: (Cursor) -> T,
-) = arrayOfNulls<T?>(size).apply { useEachRow { set(it.getInt(indexColumn), block(it)) } }
+inline fun <reified T> Cursor.useMapToArray(size: Int, indexColumn: Int = 0, block: (Cursor) -> T) =
+  arrayOfNulls<T?>(size).apply { useEachRow { set(it.getInt(indexColumn), block(it)) } }
+
+inline fun <reified T> Cursor.useMapToArray(size: Int, indexEnum: Enum<*>, block: (Cursor) -> T) =
+  useMapToArray(size, indexEnum.ordinal, block)
