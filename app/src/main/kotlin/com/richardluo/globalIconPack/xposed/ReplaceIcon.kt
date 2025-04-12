@@ -68,10 +68,11 @@ class ReplaceIcon : Hook {
               iconResourceIdF?.set(ri, icon)
             }
           },
-        launcherActivityInfo?.let {
-          it to
+        run {
+          launcherActivityInfo ?: return@run null
+          mActivityInfoF ?: return@run null
+          launcherActivityInfo to
             Replacer@{ list, ip ->
-              mActivityInfoF ?: return@Replacer
               activityInfoReplacer(
                 list.mapNotNull { it?.let { mActivityInfoF.getAs<ActivityInfo>(it) } },
                 ip,
@@ -98,6 +99,7 @@ class ReplaceIcon : Hook {
 
         fun afterHookedMethodSafe(param: MethodHookParam) {
           val info = param.thisObject as PackageItemInfo
+          info.packageName ?: return
           val ip = getIP() ?: return
           replaceIconResIdInInfo(info, ip.getId(getComponentName(info)))
         }
