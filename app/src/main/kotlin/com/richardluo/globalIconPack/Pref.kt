@@ -8,7 +8,7 @@ const val MODE_PROVIDER = "provider"
 const val MODE_LOCAL = "local"
 
 object Pref {
-  val MODE = "mode" to MODE_SHARE
+  val MODE = "mode" to MODE_LOCAL
   val ICON_PACK = "iconPack" to ""
   val ICON_PACK_AS_FALLBACK = "iconPackAsFallback" to false
   val SHORTCUT = "shortcut" to true

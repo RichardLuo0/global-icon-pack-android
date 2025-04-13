@@ -86,9 +86,9 @@ class MainVM(context: Application) : ContextVM(context) {
                           "if [ -f $oldDB ]; then rm $oldDB; fi",
                         )
                         .exec()
-                    if (!result.isSuccess) throw Exception("Migration failed!")
+                    if (!result.isSuccess) throw Exception("Shared database creation failed!")
+                    appPref.edit { putString(AppPref.PATH.first, shareDB) }
                   }
-                  appPref.edit { putString(AppPref.PATH.first, shareDB) }
                   updateDB(pack)
                 } catch (t: Throwable) {
                   log(t)
