@@ -5,6 +5,7 @@ import android.content.ContentValues
 import android.content.Context
 import android.content.ContextWrapper
 import android.database.Cursor
+import android.database.MatrixCursor
 import android.database.MergeCursor
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
@@ -305,6 +306,7 @@ private fun <T> SQLiteDatabase.rawQueryList(
   indexColumn: String = "index",
   expandArg: MutableList<String>.(T) -> Unit,
 ): Cursor {
+  if (argList.isEmpty()) return MatrixCursor(arrayOf())
   var i = 0
   val cursors =
     argList.chunked(500).map {
