@@ -5,8 +5,9 @@
     <string name="iconPackApplied">Набор иконок был применен. Пожалуйста, нажмите «Перезапустить XXX» вручную.</string>
     <string name="general">Основные</string>
     <string name="mode">Режим</string>
-    <string name="modeProvider">Режим поставщика: это приложение предоставляет данные подключенным приложениям.</string>
-    <string name="modeLocal">Локальный режим: Подключенные приложения перезагружают пакет значков при каждом запуске.</string>
+    <string name="providerMode">Режим поставщика</string>
+    <string name="localMode">Локальный режим</string>
+    <string name="localModeSummary">Подключенные приложения перезагружают пакет значков при каждом запуске.</string>
     <string name="iconPack">Набор иконок</string>
     <string name="iconPackSummary">Название пакета, который будет использоваться в качестве пакета значков.</string>
     <string name="iconPackAsFallback">Набор иконок в качестве запасного варианта</string>
