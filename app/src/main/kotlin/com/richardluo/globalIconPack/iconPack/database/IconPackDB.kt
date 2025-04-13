@@ -153,7 +153,7 @@ class IconPackDB(private val context: Context, path: String = "iconPack.db") :
         "SELECT entry, pack, 0 AS fallback FROM '${pt(pack)}' WHERE packageName=? AND className=? " +
         "UNION ALL " +
         "SELECT entry, pack, 1 AS fallback FROM '${pt(pack)}' WHERE packageName=? AND className='' " +
-        ") LIMIT 1",
+        ") ORDER BY fallback LIMIT 1",
       cnList,
     ) {
       add(it.packageName)
