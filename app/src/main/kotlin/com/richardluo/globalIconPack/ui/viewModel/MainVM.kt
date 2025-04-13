@@ -37,6 +37,7 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.withContext
 
 class MainVM(context: Application) : ContextVM(context) {
   private var iconPackDBLazy = get { IconPackDB(context) }
@@ -87,11 +88,12 @@ class MainVM(context: Application) : ContextVM(context) {
                       putString(DBPref.PATH.first, shareDB)
                     }
                   }
-                  iconPackCache.delete(pack)
-                  iconPackDBLazy.value.onIconPackChange(iconPackCache.get(pack))
+                  updateDB(pack)
                 } catch (t: Throwable) {
                   log(t)
-                  Toast.makeText(context, R.string.errorOnShareMode, Toast.LENGTH_LONG).show()
+                  withContext(Dispatchers.Main) {
+                    Toast.makeText(context, R.string.errorOnShareMode, Toast.LENGTH_LONG).show()
+                  }
                   prefFlow.update {
                     it.toMutablePreferences().apply { this[Pref.MODE.first] = MODE_PROVIDER }
                   }
@@ -100,11 +102,7 @@ class MainVM(context: Application) : ContextVM(context) {
               MODE_PROVIDER -> {
                 KeepAliveService.startForeground(context)
                 startOnBoot(true)
-                runCatchingToast(context) {
-                  // Reload pack from icon pack
-                  iconPackCache.delete(pack)
-                  iconPackDBLazy.value.onIconPackChange(iconPackCache.get(pack))
-                }
+                updateDB(pack)
               }
               else -> {
                 KeepAliveService.stopForeground(context)
@@ -124,5 +122,13 @@ class MainVM(context: Application) : ContextVM(context) {
       else PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
       PackageManager.DONT_KILL_APP,
     )
+  }
+
+  private suspend fun updateDB(pack: String) {
+    runCatchingToast(context) {
+      if (pack.isEmpty()) return
+      iconPackCache.delete(pack)
+      iconPackDBLazy.value.onIconPackChange(iconPackCache.get(pack))
+    }
   }
 }
