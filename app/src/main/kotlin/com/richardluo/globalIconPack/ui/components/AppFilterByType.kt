@@ -9,7 +9,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
 import com.richardluo.globalIconPack.R
-import com.richardluo.globalIconPack.ui.viewModel.IFilterApps.Type
+import com.richardluo.globalIconPack.ui.viewModel.IAppsFilter.Type
 
 @Composable
 fun AppFilterByType(enabledState: MutableState<Boolean>, typeState: MutableState<Type>) {

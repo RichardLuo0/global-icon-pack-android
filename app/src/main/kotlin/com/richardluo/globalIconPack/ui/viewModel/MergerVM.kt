@@ -23,12 +23,13 @@ import com.richardluo.globalIconPack.utils.ContextVM
 import com.richardluo.globalIconPack.utils.IconPackCreator
 import com.richardluo.globalIconPack.utils.InstanceManager.get
 import com.richardluo.globalIconPack.utils.MapPreferences
-import com.richardluo.globalIconPack.utils.getOrPutNullable
+import com.richardluo.globalIconPack.utils.debounceInput
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combineTransform
+import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
@@ -41,7 +42,7 @@ import kotlinx.coroutines.withContext
 import me.zhanghai.compose.preference.Preferences
 
 @OptIn(FlowPreview::class)
-class MergerVM(context: Application) : ContextVM(context), IFilterApps by FilterApps(context) {
+class MergerVM(context: Application) : ContextVM(context), IAppsFilter by AppsFilter(context) {
   private val iconPackCache by get { IconPackCache(context) }
   private val iconCache by get { IconCache(context) }
   private val fallbackIconCache = IconCache(context, 1.0 / 16)
@@ -54,11 +55,11 @@ class MergerVM(context: Application) : ContextVM(context), IFilterApps by Filter
     set(value) {
       if (value == null || baseIconPack?.pack == value) return
       baseIconPack = iconPackCache.get(value)
-      cachedIcons.clear()
       changedIcons.clear()
     }
 
   val expandSearchBar = mutableStateOf(false)
+  val searchText = mutableStateOf("")
 
   var iconCacheToken by mutableLongStateOf(System.currentTimeMillis())
   val optionsFlow = MutableStateFlow<Preferences>(MapPreferences())
@@ -75,28 +76,36 @@ class MergerVM(context: Application) : ContextVM(context), IFilterApps by Filter
       .stateIn(viewModelScope, SharingStarted.Eagerly, defaultIconPackConfig)
 
   private val changedIcons = mutableStateMapOf<IconInfo, IconEntryWithPack?>()
-  private val cachedIcons = mutableMapOf<IconInfo, IconEntryWithPack?>()
 
   private fun getIconEntry(iconPack: IconPack, info: IconInfo) =
     if (changedIcons.containsKey(info)) changedIcons[info]
     else
-      cachedIcons.getOrPutNullable(info) {
-        iconPack.getIconEntry(info.componentName, iconPackConfigFlow.value)?.let {
-          IconEntryWithPack(it, iconPack)
-        }
+      iconPack.getIconEntry(info.componentName, iconPackConfigFlow.value)?.let {
+        IconEntryWithPack(it, iconPack)
       }
 
-  val filteredIcons =
+  private val iconsByType =
     combineTransform(
         snapshotFlow { baseIconPack },
-        filteredApps,
+        appsByType,
         snapshotFlow { changedIcons.toMap() },
       ) { iconPack, apps, _ ->
         iconPack ?: return@combineTransform emit(listOf())
-        apps ?: return@combineTransform emit(null)
-        if (cachedIcons.isEmpty()) emit(null)
         emit(apps.map { info -> info to getIconEntry(iconPack, info) })
       }
+      .flowOn(Dispatchers.Default)
+      .stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
+  val filteredIcons =
+    combineTransform(iconsByType, snapshotFlow { searchText.value }.debounceInput()) { apps, text ->
+        emit(null)
+        apps ?: return@combineTransform
+        emit(
+          if (text.isEmpty()) apps
+          else apps.filter { (info) -> info.label.contains(text, ignoreCase = true) }
+        )
+      }
+      .conflate()
       .flowOn(Dispatchers.Default)
       .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 

@@ -6,6 +6,7 @@ import android.net.Uri
 import android.util.Xml
 import android.widget.Toast
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.viewModelScope
 import com.richardluo.globalIconPack.Pref
 import com.richardluo.globalIconPack.R
@@ -31,13 +32,16 @@ import com.richardluo.globalIconPack.ui.model.VariantPackIcon
 import com.richardluo.globalIconPack.utils.ContextVM
 import com.richardluo.globalIconPack.utils.InstanceManager.get
 import com.richardluo.globalIconPack.utils.WorldPreference
+import com.richardluo.globalIconPack.utils.debounceInput
 import com.richardluo.globalIconPack.utils.get
 import com.richardluo.globalIconPack.utils.ifNotEmpty
 import com.richardluo.globalIconPack.utils.runCatchingToast
 import java.io.OutputStreamWriter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.combineTransform
+import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -46,7 +50,7 @@ import kotlinx.coroutines.withContext
 import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserFactory
 
-class IconVariantVM(context: Application) : ContextVM(context), IFilterApps by FilterApps(context) {
+class IconVariantVM(context: Application) : ContextVM(context), IAppsFilter by AppsFilter(context) {
   private val iconPackCache by get { IconPackCache(context) }
   private val iconCache by get { IconCache(context) }
   private val fallbackIconCache = IconCache(context, 1.0 / 16)
@@ -65,13 +69,26 @@ class IconVariantVM(context: Application) : ContextVM(context), IFilterApps by F
   private val iconPackConfig = IconPackConfig(WorldPreference.getPrefInApp(context))
 
   val expandSearchBar = mutableStateOf(false)
+  val searchText = mutableStateOf("")
 
-  val filteredIcons =
-    combineTransform(filteredApps, iconPackDB.iconsUpdateFlow) { apps, _ ->
-        if (apps == null) emit(null)
-        else emit(apps.zip(getIconEntry(apps.map { it.componentName })))
+  private val iconsByType =
+    combine(appsByType, iconPackDB.iconsUpdateFlow) { apps, _ ->
+        apps.zip(getIconEntry(apps.map { it.componentName }))
       }
       .flowOn(Dispatchers.IO)
+      .stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
+  val filteredIcons =
+    combineTransform(iconsByType, snapshotFlow { searchText.value }.debounceInput()) { apps, text ->
+        emit(null)
+        apps ?: return@combineTransform
+        emit(
+          if (text.isEmpty()) apps
+          else apps.filter { (info) -> info.label.contains(text, ignoreCase = true) }
+        )
+      }
+      .conflate()
+      .flowOn(Dispatchers.Default)
       .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
   val modified =
@@ -83,9 +100,8 @@ class IconVariantVM(context: Application) : ContextVM(context), IFilterApps by F
   private fun getIconEntry(cnList: List<ComponentName>) =
     iconPackDB.getIcon(pack, cnList, iconPackConfig.iconPackAsFallback).useMapToArray(cnList.size) {
       val entry = IconEntry.from(it.getBlob(GetIconColumn.Entry))
-      val iconPack =
-        it.getString(GetIconColumn.Pack).takeIf { it.isNotEmpty() }?.let { iconPackCache.get(it) }
-          ?: iconPack
+      val pack = it.getString(GetIconColumn.Pack)
+      val iconPack = if (pack.isNotEmpty()) iconPackCache.get(pack) else iconPack
       iconPack.makeValidEntry(entry)?.let { entry -> IconEntryWithPack(entry, iconPack) }
     }
 

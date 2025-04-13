@@ -13,15 +13,12 @@ import com.richardluo.globalIconPack.R
 import com.richardluo.globalIconPack.ui.model.AppIconInfo
 import com.richardluo.globalIconPack.ui.model.IconInfo
 import com.richardluo.globalIconPack.ui.model.ShortcutIconInfo
-import com.richardluo.globalIconPack.ui.viewModel.IFilterApps.Type
+import com.richardluo.globalIconPack.ui.viewModel.IAppsFilter.Type
 import com.richardluo.globalIconPack.utils.Weak
 import com.richardluo.globalIconPack.utils.asType
-import com.richardluo.globalIconPack.utils.debounceInput
 import com.richardluo.globalIconPack.utils.log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.combineTransform
-import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
@@ -71,22 +68,20 @@ private val shortcutsCache =
     shortcuts.map { info -> ShortcutIconInfo(info) }.distinct().sortedBy { it.componentName }
   }
 
-interface IFilterApps {
+interface IAppsFilter {
   enum class Type {
     User,
     System,
     Shortcut,
   }
 
-  val searchText: MutableState<String>
   val filterType: MutableState<Type>
-  val filteredApps: Flow<List<IconInfo>?>
+  val appsByType: Flow<List<IconInfo>>
 
   suspend fun getAllApps(): List<IconInfo>
 }
 
-class FilterApps(context: Context) : IFilterApps {
-  override val searchText = mutableStateOf("")
+class AppsFilter(context: Context) : IAppsFilter {
   override val filterType = mutableStateOf(Type.User)
 
   private val apps by lazy { appsCache.get(context) }
@@ -100,7 +95,7 @@ class FilterApps(context: Context) : IFilterApps {
       }
     }
 
-  private val currentApps =
+  override val appsByType =
     snapshotFlow { filterType.value }
       .map { type ->
         when (type) {
@@ -118,15 +113,4 @@ class FilterApps(context: Context) : IFilterApps {
         }
       }
       .flowOn(Dispatchers.IO)
-
-  override val filteredApps =
-    combineTransform(currentApps, snapshotFlow { searchText.value }.debounceInput()) { apps, text ->
-        emit(null)
-        emit(
-          if (text.isEmpty()) apps
-          else apps.filter { info -> info.label.contains(text, ignoreCase = true) }
-        )
-      }
-      .conflate()
-      .flowOn(Dispatchers.Default)
 }
