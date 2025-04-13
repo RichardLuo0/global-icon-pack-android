@@ -3,8 +3,9 @@
     <string name="appName">Global Icon Pack</string>
     <string name="general">Allgemein</string>
     <string name="mode">Modus</string>
-    <string name="modeProvider">Anbietermodus: Den gehookten Apps die Daten über diese App bereitstellen.</string>
-    <string name="modeLocal">Lokaler Modus: Die gehookten Apps laden das Symbolpaket bei jedem Start.</string>
+    <string name="providerMode">Anbietermodus</string>
+    <string name="localMode">Lokaler Modus</string>
+    <string name="localModeSummary">Die gehookten Apps laden das Symbolpaket bei jedem Start.</string>
     <string name="iconPack">Symbolpaket</string>
     <string name="iconPackSummary">Der Paketname des Symbolpakets.</string>
     <string name="iconPackAsFallback">Rückfall-Symbolpaket</string>

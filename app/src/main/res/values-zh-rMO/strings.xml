@@ -5,8 +5,9 @@
     <string name="iconPackApplied">圖示包已應用。請手動點選「重啟 XXX」。</string>
     <string name="general">總體</string>
     <string name="mode">模式</string>
-    <string name="modeProvider">提供器模式：此應用向其他被 Hook 的應用提供資料。</string>
-    <string name="modeLocal">本地模式：被 Hook 的應用在每次啟動時過載圖示包。</string>
+    <string name="providerMode">提供器模式</string>
+    <string name="localMode">本地模式</string>
+    <string name="localModeSummary">被 Hook 的應用在每次啟動時過載圖示包。</string>
     <string name="iconPack">圖示包</string>
     <string name="iconPackSummary">圖示包的包名。</string>
     <string name="iconPackAsFallback">使用圖示包作為回退選項</string>
