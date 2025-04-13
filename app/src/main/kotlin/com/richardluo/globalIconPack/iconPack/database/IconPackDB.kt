@@ -11,7 +11,7 @@ import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import android.widget.Toast
 import androidx.compose.ui.util.fastJoinToString
-import com.richardluo.globalIconPack.DBPref
+import com.richardluo.globalIconPack.AppPref
 import com.richardluo.globalIconPack.get
 import com.richardluo.globalIconPack.iconPack.IconPackApps
 import com.richardluo.globalIconPack.ui.model.IconPack
@@ -32,7 +32,7 @@ class DBContext(context: Context) : ContextWrapper(context) {
 
 class IconPackDB(
   private val context: Context,
-  path: String = context.getSharedPreferences("db", Context.MODE_PRIVATE).get(DBPref.PATH),
+  path: String = context.getSharedPreferences("app", Context.MODE_PRIVATE).get(AppPref.PATH),
 ) : SQLiteOpenHelper(DBContext(context.createDeviceProtectedStorageContext()), path, null, 7) {
   val iconsUpdateFlow = flowTrigger()
   val modifiedUpdateFlow = flowTrigger()

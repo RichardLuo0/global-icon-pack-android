@@ -3,6 +3,7 @@ package com.richardluo.globalIconPack.ui.viewModel
 import android.app.Application
 import android.content.ComponentName
 import android.content.Context
+import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.widget.Toast
 import androidx.compose.runtime.getValue
@@ -10,7 +11,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
 import androidx.core.content.edit
 import androidx.lifecycle.viewModelScope
-import com.richardluo.globalIconPack.DBPref
+import com.richardluo.globalIconPack.AppPref
 import com.richardluo.globalIconPack.MODE_PROVIDER
 import com.richardluo.globalIconPack.MODE_SHARE
 import com.richardluo.globalIconPack.Pref
@@ -43,6 +44,7 @@ class MainVM(context: Application) : ContextVM(context) {
   private var iconPackDBLazy = get { IconPackDB(context) }
   // Hold a strong reference to icon pack cache so it never gets recycled before MainVM is destroyed
   private val iconPackCache = get { IconPackCache(context) }.value
+  val appPref: SharedPreferences = context.getSharedPreferences("app", Context.MODE_PRIVATE)
 
   var waiting by mutableIntStateOf(0)
     private set
@@ -73,10 +75,11 @@ class MainVM(context: Application) : ContextVM(context) {
                     val oldDB =
                       context
                         .createDeviceProtectedStorageContext()
-                        .getDatabasePath(DBPref.PATH.second)
+                        .getDatabasePath(AppPref.PATH.second)
                         .path
                     val result =
                       Shell.cmd(
+                          "set -e",
                           "mkdir ${shareDBFile.parent}",
                           "if [ -f $oldDB ]; then cp $oldDB $shareDB; fi",
                           "chmod 0666 $shareDB && chcon u:object_r:magisk_file:s0 $shareDB",
@@ -84,10 +87,8 @@ class MainVM(context: Application) : ContextVM(context) {
                         )
                         .exec()
                     if (!result.isSuccess) throw Exception("Migration failed!")
-                    context.getSharedPreferences("db", Context.MODE_PRIVATE).edit {
-                      putString(DBPref.PATH.first, shareDB)
-                    }
                   }
+                  appPref.edit { putString(AppPref.PATH.first, shareDB) }
                   updateDB(pack)
                 } catch (t: Throwable) {
                   log(t)
@@ -95,7 +96,7 @@ class MainVM(context: Application) : ContextVM(context) {
                     Toast.makeText(context, R.string.errorOnShareMode, Toast.LENGTH_LONG).show()
                   }
                   prefFlow.update {
-                    it.toMutablePreferences().apply { this[Pref.MODE.first] = MODE_PROVIDER }
+                    it.toMutablePreferences().apply { set(Pref.MODE.first, MODE_PROVIDER) }
                   }
                 }
               }

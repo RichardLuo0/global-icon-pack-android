@@ -26,10 +26,18 @@ fun <T> LazyDialog(
   openState: MutableState<Boolean>,
   title: @Composable () -> Unit,
   value: T?,
+  dismissible: Boolean = true,
   content: @Composable (T) -> Unit,
 ) {
   if (!openState.value) return
-  BasicAlertDialog(onDismissRequest = { openState.value = false }) {
+  BasicAlertDialog(
+    onDismissRequest =
+      if (dismissible)
+        fun() {
+          openState.value = false
+        }
+      else fun() {}
+  ) {
     Surface(
       modifier = Modifier.fillMaxWidth(),
       shape = AlertDialogDefaults.shape,
@@ -64,9 +72,10 @@ fun <T> LazyListDialog(
   value: List<T>?,
   key: ((item: T) -> Any)? = null,
   nothing: @Composable () -> Unit = {},
+  dismissible: Boolean = true,
   itemContent: @Composable (item: T, dismiss: () -> Unit) -> Unit,
 ) =
-  LazyDialog(openState, title, value) { list ->
+  LazyDialog(openState, title, value, dismissible) { list ->
     if (list.isEmpty()) nothing()
     else
       LazyColumn(modifier = Modifier.fillMaxWidth().padding(top = 16.dp)) {
@@ -80,9 +89,10 @@ fun <T> LazyGridDialog(
   title: @Composable () -> Unit,
   value: List<T>,
   nothing: @Composable () -> Unit = {},
+  dismissible: Boolean = true,
   itemContent: @Composable (item: T, dismiss: () -> Unit) -> Unit,
 ) =
-  LazyDialog(openState, title, value) { list ->
+  LazyDialog(openState, title, value, dismissible) { list ->
     if (list.isEmpty()) nothing()
     else
       LazyVerticalGrid(

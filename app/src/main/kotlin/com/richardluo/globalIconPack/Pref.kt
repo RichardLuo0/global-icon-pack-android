@@ -8,7 +8,7 @@ const val MODE_PROVIDER = "provider"
 const val MODE_LOCAL = "local"
 
 object Pref {
-  val MODE = "mode" to MODE_PROVIDER
+  val MODE = "mode" to MODE_SHARE
   val ICON_PACK = "iconPack" to ""
   val ICON_PACK_AS_FALLBACK = "iconPackAsFallback" to false
   val SHORTCUT = "shortcut" to true
@@ -25,7 +25,8 @@ object Pref {
   val FORCE_LOAD_CLOCK_AND_CALENDAR = "forceLoadClockAndCalendar" to true
 }
 
-object DBPref {
+object AppPref {
+  val NEED_SETUP = "needSetup" to true
   val PATH = "PATH" to "iconPack.db"
 }
 

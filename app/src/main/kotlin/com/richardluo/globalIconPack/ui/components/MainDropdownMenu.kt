@@ -55,7 +55,7 @@ fun MainDropdownMenu(snackbarState: SnackbarHostState) {
 
   fun runCommand(vararg cmd: String): () -> Unit {
     return {
-      Shell.cmd(*cmd).submit(onShellResult)
+      Shell.cmd("set -e", *cmd).submit(onShellResult)
       expanded = false
     }
   }

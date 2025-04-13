@@ -11,12 +11,16 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.text.KeyboardActions
@@ -43,22 +47,28 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.Typography
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import androidx.core.content.edit
 import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.lifecycleScope
+import com.richardluo.globalIconPack.AppPref
 import com.richardluo.globalIconPack.BuildConfig
 import com.richardluo.globalIconPack.MODE_LOCAL
 import com.richardluo.globalIconPack.MODE_PROVIDER
@@ -69,6 +79,7 @@ import com.richardluo.globalIconPack.get
 import com.richardluo.globalIconPack.iconPack.IconPackApps
 import com.richardluo.globalIconPack.ui.components.IconButtonWithTooltip
 import com.richardluo.globalIconPack.ui.components.IconPackItem
+import com.richardluo.globalIconPack.ui.components.LazyListDialog
 import com.richardluo.globalIconPack.ui.components.LoadingDialog
 import com.richardluo.globalIconPack.ui.components.MainDropdownMenu
 import com.richardluo.globalIconPack.ui.components.OneLineText
@@ -111,19 +122,23 @@ class MainActivity : ComponentActivity() {
     // If onNewIntent() is not getting called
     applyIconPackIfNeeded(intent)
 
-    val prefFlow = viewModel.prefFlow
     setContent {
+      val needSetup = rememberSaveable { mutableStateOf(viewModel.appPref.get(AppPref.NEED_SETUP)) }
       SampleTheme {
-        if (prefFlow == null) {
-          WarnDialog(
-            openState = remember { mutableStateOf(true) },
-            title = { OneLineText(getString(R.string.warning)) },
-            content = { Text(getString(R.string.plzEnableModuleFirst)) },
-            onCancel = { finish() },
-          ) {
-            finish()
-          }
-        } else ProvidePreferenceLocals(flow = prefFlow, myPreferenceTheme()) { SampleScreen() }
+        if (needSetup.value) SetUpDialog(needSetup)
+        else {
+          val prefFlow = viewModel.prefFlow
+          if (prefFlow == null)
+            WarnDialog(
+              openState = remember { mutableStateOf(true) },
+              title = { OneLineText(getString(R.string.warning)) },
+              content = { Text(getString(R.string.plzEnableModuleFirst)) },
+              onCancel = { finish() },
+            ) {
+              finish()
+            }
+          else ProvidePreferenceLocals(flow = prefFlow, myPreferenceTheme()) { SampleScreen() }
+        }
       }
     }
   }
@@ -138,10 +153,43 @@ class MainActivity : ComponentActivity() {
     if (prefFlow != null && intent.action == "${BuildConfig.APPLICATION_ID}.APPLY_ICON_PACK") {
       prefFlow.update {
         it.toMutablePreferences().apply {
-          this[Pref.ICON_PACK.first] = intent.getStringExtra("packageName")
+          set(Pref.ICON_PACK.first, intent.getStringExtra("packageName"))
         }
       }
       Toast.makeText(this, R.string.iconPackApplied, Toast.LENGTH_LONG).show()
+    }
+  }
+
+  @Composable
+  private fun SetUpDialog(needSetup: MutableState<Boolean>) {
+    LazyListDialog(
+      needSetup,
+      title = { OneLineText(stringResource(R.string.chooseMode)) },
+      value = listOf(MODE_SHARE, MODE_PROVIDER, MODE_LOCAL),
+      dismissible = false,
+    ) { mode, dismiss ->
+      Row(
+        modifier =
+          Modifier.fillMaxWidth()
+            .clickable {
+              viewModel.prefFlow?.update {
+                it.toMutablePreferences().apply { set(Pref.MODE.first, mode) }
+              }
+              viewModel.appPref.edit { putBoolean(AppPref.NEED_SETUP.first, false) }
+              dismiss()
+            }
+            .padding(horizontal = 16.dp, vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+      ) {
+        MainPreference.ModeToIcon(mode)
+        Spacer(modifier = Modifier.width(12.dp))
+        Text(
+          text =
+            MainPreference.modeToAnnotatedString(this@MainActivity, mode, MaterialTheme.typography),
+          color = MaterialTheme.colorScheme.onSurface,
+          style = MaterialTheme.typography.bodyMedium,
+        )
+      }
     }
   }
 
@@ -212,9 +260,10 @@ class MainActivity : ComponentActivity() {
           .launchIn(lifecycleScope)
       }
 
+      val typography = MaterialTheme.typography
       LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = contentPadding) {
         MainPreference.run {
-          general(context)
+          general(context, typography)
           iconPack(context)
           pixel()
         }
@@ -224,27 +273,19 @@ class MainActivity : ComponentActivity() {
 }
 
 object MainPreference {
-  fun LazyListScope.general(context: Context) {
+  fun LazyListScope.general(context: Context, typography: Typography) {
     preferenceCategory(
       key = "generalCat",
       title = { OneLineText(stringResource(R.string.general)) },
     )
     listPreference(
-      icon = {
-        AnimatedContent(it) {
-          when (it) {
-            MODE_SHARE -> Icon(Icons.Outlined.Share, it)
-            MODE_PROVIDER -> Icon(Icons.Outlined.SettingsRemote, it)
-            MODE_LOCAL -> Icon(Icons.Outlined.Memory, it)
-          }
-        }
-      },
+      icon = { AnimatedContent(it) { ModeToIcon(it) } },
       key = Pref.MODE.first,
       defaultValue = Pref.MODE.second,
       values = listOf(MODE_SHARE, MODE_PROVIDER, MODE_LOCAL),
-      valueToText = { AnnotatedString(modeToDesc(context, it)) },
-      title = { OneLineText(stringResource(R.string.mode)) },
-      summary = { TwoLineText(modeToDesc(context, it)) },
+      valueToText = { modeToAnnotatedString(context, it, typography) },
+      title = { OneLineText(modeToTitle(context, it)) },
+      summary = { TwoLineText(modeToSummary(context, it)) },
     )
     mapListPreference(
       icon = { Icon(Icons.Outlined.Backpack, Pref.ICON_PACK.first) },
@@ -391,11 +432,34 @@ object MainPreference {
     )
   }
 
-  private fun modeToDesc(context: Context, mode: String) =
+  fun modeToAnnotatedString(context: Context, mode: String, typography: Typography) =
+    buildAnnotatedString {
+      withStyle(typography.titleMedium.toSpanStyle()) { append(modeToTitle(context, mode) + "\n") }
+      withStyle(typography.bodyMedium.toSpanStyle()) { append(modeToSummary(context, mode)) }
+    }
+
+  @Composable
+  fun ModeToIcon(mode: String) =
     when (mode) {
-      MODE_SHARE -> context.getString(R.string.modeShare)
-      MODE_PROVIDER -> context.getString(R.string.modeProvider)
-      MODE_LOCAL -> context.getString(R.string.modeLocal)
+      MODE_SHARE -> Icon(Icons.Outlined.Share, mode)
+      MODE_PROVIDER -> Icon(Icons.Outlined.SettingsRemote, mode)
+      MODE_LOCAL -> Icon(Icons.Outlined.Memory, mode)
+      else -> {}
+    }
+
+  fun modeToTitle(context: Context, mode: String) =
+    when (mode) {
+      MODE_SHARE -> context.getString(R.string.shareMode)
+      MODE_PROVIDER -> context.getString(R.string.providerMode)
+      MODE_LOCAL -> context.getString(R.string.localMode)
+      else -> mode
+    }
+
+  fun modeToSummary(context: Context, mode: String) =
+    when (mode) {
+      MODE_SHARE -> context.getString(R.string.shareModeSummary)
+      MODE_PROVIDER -> context.getString(R.string.providerModeSummary)
+      MODE_LOCAL -> context.getString(R.string.localModeSummary)
       else -> mode
     }
 }

@@ -3,12 +3,17 @@
 
     <string name="plzEnableModuleFirst">Please ensure the Xposed module has been enabled first.</string>
     <string name="iconPackApplied">Icon pack has been applied. Please click "Restart XXX" manually.</string>
+    <string name="chooseMode">Choose a mode</string>
+    <string name="errorOnShareMode">Error occurs when enabling share mode, fallback to provider mode.</string>
 
     <string name="general">General</string>
     <string name="mode">Mode</string>
-    <string name="modeShare">Share mode: Load from a shared DB at /data/misc/com.richardluo.globalIconPack. SELinux may block access on some systems.</string>
-    <string name="modeProvider">Provider mode: This app supplies data to hooked apps.</string>
-    <string name="modeLocal">Local mode: Hooked apps reload icon pack on each launch.</string>
+    <string name="shareMode">Share mode</string>
+    <string name="shareModeSummary">Load from a shared DB at /data/misc/com.\u200Brichardluo.\u200BglobalIconPack. SELinux may block access on some systems.</string>
+    <string name="providerMode">Provider mode</string>
+    <string name="providerModeSummary">This app supplies data to hooked apps and needs to run in the background.</string>
+    <string name="localMode">Local mode</string>
+    <string name="localModeSummary">Hooked apps reload icon pack on each launch.</string>
     <string name="iconPack">Icon pack</string>
     <string name="iconPackSummary">The package name to be used as icon pack.</string>
     <string name="iconPackAsFallback">Icon pack as fallback</string>
@@ -16,8 +21,6 @@
     <string name="shortcut">Generate icons for shortcuts</string>
     <string name="mergeIconPack">Merge icon pack</string>
     <string name="mergeIconPackSummary">Generate a new icon pack from various icon packs.</string>
-
-    <string name="errorOnShareMode">Error occurs when enabling share mode, fallback to provider mode.</string>
 
     <string name="iconPackSettings">Icon pack</string>
     <string name="iconVariant">Icon variant</string>
