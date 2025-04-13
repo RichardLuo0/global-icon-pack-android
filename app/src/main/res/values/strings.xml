@@ -6,6 +6,7 @@
 
     <string name="general">General</string>
     <string name="mode">Mode</string>
+    <string name="modeShare">Share mode: Load from a shared DB at /data/misc/com.richardluo.globalIconPack. SELinux may block access on some systems.</string>
     <string name="modeProvider">Provider mode: This app supplies data to hooked apps.</string>
     <string name="modeLocal">Local mode: Hooked apps reload icon pack on each launch.</string>
     <string name="iconPack">Icon pack</string>
@@ -15,6 +16,8 @@
     <string name="shortcut">Generate icons for shortcuts</string>
     <string name="mergeIconPack">Merge icon pack</string>
     <string name="mergeIconPackSummary">Generate a new icon pack from various icon packs.</string>
+
+    <string name="errorOnShareMode">Error occurs when enabling share mode, fallback to provider mode.</string>
 
     <string name="iconPackSettings">Icon pack</string>
     <string name="iconVariant">Icon variant</string>

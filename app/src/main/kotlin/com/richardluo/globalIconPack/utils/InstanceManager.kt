@@ -3,17 +3,25 @@ package com.richardluo.globalIconPack.utils
 import java.lang.ref.SoftReference
 import java.util.WeakHashMap
 
-private val cache = WeakHashMap<Class<*>, SoftReference<Any>>()
+object InstanceManager {
+  private val cache = WeakHashMap<Class<*>, SoftReference<Any>>()
 
-@Suppress("UNCHECKED_CAST")
-fun <T> getInstance(clazz: Class<T>, create: () -> T) = lazy {
-  cache[clazz]?.get() as T? ?: create().also { cache.put(clazz, SoftReference(it)) }
+  @Suppress("UNCHECKED_CAST")
+  fun <T> get(clazz: Class<T>, create: () -> T) = lazy {
+    cache[clazz]?.get() as T? ?: create().also { cache[clazz] = SoftReference(it) }
+  }
+
+  inline fun <reified T> get() = get(T::class.java) { T::class.java.getConstructor().newInstance() }
+
+  inline fun <reified T> get(noinline create: () -> T) = get(T::class.java, create)
+
+  fun <T> update(clazz: Class<T>, create: () -> T): Lazy<T> {
+    cache.remove(clazz)
+    return get(clazz, create)
+  }
+
+  inline fun <reified T> update(noinline create: () -> T) = update(T::class.java, create)
 }
-
-inline fun <reified T> getInstance() =
-  getInstance(T::class.java) { T::class.java.getConstructor().newInstance() }
-
-inline fun <reified T> getInstance(noinline create: () -> T) = getInstance(T::class.java, create)
 
 class Weak<T, ARG>(private val create: (args: ARG) -> T) {
   private var ref: SoftReference<T>? = null

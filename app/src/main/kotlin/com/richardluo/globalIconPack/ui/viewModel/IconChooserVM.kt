@@ -14,8 +14,8 @@ import com.richardluo.globalIconPack.ui.model.OriginalIcon
 import com.richardluo.globalIconPack.ui.model.VariantIcon
 import com.richardluo.globalIconPack.ui.model.VariantPackIcon
 import com.richardluo.globalIconPack.utils.ContextVM
+import com.richardluo.globalIconPack.utils.InstanceManager.get
 import com.richardluo.globalIconPack.utils.debounceInput
-import com.richardluo.globalIconPack.utils.getInstance
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combineTransform
@@ -25,8 +25,8 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.transform
 
 class IconChooserVM(context: Application) : ContextVM(context) {
-  private val iconPackCache by getInstance { IconPackCache(context) }
-  private val iconCache by getInstance { IconCache(context) }
+  private val iconPackCache by get { IconPackCache(context) }
+  private val iconCache by get { IconCache(context) }
 
   var variantSheet by mutableStateOf(false)
   var iconPack by mutableStateOf<IconPack?>(null)

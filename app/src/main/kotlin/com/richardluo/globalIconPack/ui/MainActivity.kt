@@ -31,6 +31,7 @@ import androidx.compose.material.icons.outlined.PhotoSizeSelectSmall
 import androidx.compose.material.icons.outlined.Restore
 import androidx.compose.material.icons.outlined.SettingsBackupRestore
 import androidx.compose.material.icons.outlined.SettingsRemote
+import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -61,6 +62,7 @@ import androidx.lifecycle.lifecycleScope
 import com.richardluo.globalIconPack.BuildConfig
 import com.richardluo.globalIconPack.MODE_LOCAL
 import com.richardluo.globalIconPack.MODE_PROVIDER
+import com.richardluo.globalIconPack.MODE_SHARE
 import com.richardluo.globalIconPack.Pref
 import com.richardluo.globalIconPack.R
 import com.richardluo.globalIconPack.get
@@ -80,8 +82,6 @@ import com.richardluo.globalIconPack.ui.components.myPreferenceTheme
 import com.richardluo.globalIconPack.ui.components.mySliderPreference
 import com.richardluo.globalIconPack.ui.components.mySwitchPreference
 import com.richardluo.globalIconPack.ui.viewModel.MainVM
-import com.richardluo.globalIconPack.utils.WorldPreference
-import com.richardluo.globalIconPack.utils.getPreferenceFlow
 import com.topjohnwu.superuser.Shell
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.launchIn
@@ -104,9 +104,6 @@ class MainActivity : ComponentActivity() {
   }
 
   private val viewModel: MainVM by viewModels()
-  private val prefFlow by lazy {
-    runCatching { WorldPreference.getPrefInApp(this) }.getOrNull()?.getPreferenceFlow()
-  }
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
@@ -114,7 +111,7 @@ class MainActivity : ComponentActivity() {
     // If onNewIntent() is not getting called
     applyIconPackIfNeeded(intent)
 
-    val prefFlow = prefFlow
+    val prefFlow = viewModel.prefFlow
     setContent {
       SampleTheme {
         if (prefFlow == null) {
@@ -137,7 +134,7 @@ class MainActivity : ComponentActivity() {
   }
 
   private fun applyIconPackIfNeeded(intent: Intent) {
-    val prefFlow = prefFlow
+    val prefFlow = viewModel.prefFlow
     if (prefFlow != null && intent.action == "${BuildConfig.APPLICATION_ID}.APPLY_ICON_PACK") {
       prefFlow.update {
         it.toMutablePreferences().apply {
@@ -199,7 +196,6 @@ class MainActivity : ComponentActivity() {
 
       val flow = LocalPreferenceFlow.current
       LaunchedEffect(flow) {
-        viewModel.bindPrefFlow(flow)
         flow
           .map { it.get(Pref.MODE) }
           .distinctUntilChanged()
@@ -237,6 +233,7 @@ object MainPreference {
       icon = {
         AnimatedContent(it) {
           when (it) {
+            MODE_SHARE -> Icon(Icons.Outlined.Share, it)
             MODE_PROVIDER -> Icon(Icons.Outlined.SettingsRemote, it)
             MODE_LOCAL -> Icon(Icons.Outlined.Memory, it)
           }
@@ -244,7 +241,7 @@ object MainPreference {
       },
       key = Pref.MODE.first,
       defaultValue = Pref.MODE.second,
-      values = listOf(MODE_PROVIDER, MODE_LOCAL),
+      values = listOf(MODE_SHARE, MODE_PROVIDER, MODE_LOCAL),
       valueToText = { AnnotatedString(modeToDesc(context, it)) },
       title = { OneLineText(stringResource(R.string.mode)) },
       summary = { TwoLineText(modeToDesc(context, it)) },
@@ -293,7 +290,7 @@ object MainPreference {
       myPreference(
         icon = { Icon(Icons.Outlined.Edit, "iconVariant") },
         key = "iconVariant",
-        enabled = { it.get(Pref.MODE) == MODE_PROVIDER && it.get(Pref.ICON_PACK).isNotEmpty() },
+        enabled = { it.get(Pref.MODE) != MODE_LOCAL && it.get(Pref.ICON_PACK).isNotEmpty() },
         onClick = { context.startActivity(Intent(context, IconVariantActivity::class.java)) },
         title = { OneLineText(stringResource(R.string.iconVariant)) },
         summary = { TwoLineText(stringResource(R.string.iconVariantSummary)) },
@@ -396,6 +393,7 @@ object MainPreference {
 
   private fun modeToDesc(context: Context, mode: String) =
     when (mode) {
+      MODE_SHARE -> context.getString(R.string.modeShare)
       MODE_PROVIDER -> context.getString(R.string.modeProvider)
       MODE_LOCAL -> context.getString(R.string.modeLocal)
       else -> mode

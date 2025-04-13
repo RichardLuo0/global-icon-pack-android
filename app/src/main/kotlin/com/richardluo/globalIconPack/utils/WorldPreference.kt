@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package com.richardluo.globalIconPack.utils
 
 import android.annotation.SuppressLint
@@ -23,7 +25,7 @@ object WorldPreference {
   }
 
   @SuppressLint("WorldReadableFiles")
-  @Suppress("KotlinConstantConditions", "DEPRECATION")
+  @Suppress("KotlinConstantConditions")
   fun getPrefInApp(context: Context): SharedPreferences {
     if (!::pref.isInitialized)
       pref =

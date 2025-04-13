@@ -3,6 +3,7 @@ package com.richardluo.globalIconPack
 import android.content.SharedPreferences
 import me.zhanghai.compose.preference.Preferences
 
+const val MODE_SHARE = "share"
 const val MODE_PROVIDER = "provider"
 const val MODE_LOCAL = "local"
 
@@ -22,6 +23,10 @@ object Pref {
   val NO_FORCE_SHAPE = "noForceShape" to false
   val NO_SHADOW = "noShadow" to false
   val FORCE_LOAD_CLOCK_AND_CALENDAR = "forceLoadClockAndCalendar" to true
+}
+
+object DBPref {
+  val PATH = "PATH" to "iconPack.db"
 }
 
 fun SharedPreferences.get(pair: Pair<String, String>) = getString(pair.first, pair.second) as String

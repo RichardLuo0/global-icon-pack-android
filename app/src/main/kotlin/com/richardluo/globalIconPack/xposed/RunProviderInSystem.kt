@@ -11,7 +11,7 @@ import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.XC_MethodHook.MethodHookParam
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 
-// TODO Lack db permission
+// Not used but keep it here anyway
 object RunProviderInSystem {
   fun onHookSystem(lpp: LoadPackageParam) {
     val contentProviderHelper =

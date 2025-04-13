@@ -29,9 +29,9 @@ import com.richardluo.globalIconPack.ui.model.OriginalIcon
 import com.richardluo.globalIconPack.ui.model.VariantIcon
 import com.richardluo.globalIconPack.ui.model.VariantPackIcon
 import com.richardluo.globalIconPack.utils.ContextVM
+import com.richardluo.globalIconPack.utils.InstanceManager.get
 import com.richardluo.globalIconPack.utils.WorldPreference
 import com.richardluo.globalIconPack.utils.get
-import com.richardluo.globalIconPack.utils.getInstance
 import com.richardluo.globalIconPack.utils.ifNotEmpty
 import com.richardluo.globalIconPack.utils.runCatchingToast
 import java.io.OutputStreamWriter
@@ -47,10 +47,10 @@ import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserFactory
 
 class IconVariantVM(context: Application) : ContextVM(context), IFilterApps by FilterApps(context) {
-  private val iconPackCache by getInstance { IconPackCache(context) }
-  private val iconCache by getInstance { IconCache(context) }
+  private val iconPackCache by get { IconPackCache(context) }
+  private val iconCache by get { IconCache(context) }
   private val fallbackIconCache = IconCache(context, 1.0 / 16)
-  private val iconPackDB by getInstance { IconPackDB(context) }
+  private val iconPackDB by get { IconPackDB(context) }
 
   val iconPack = iconPackCache.get(WorldPreference.getPrefInApp(context).get(Pref.ICON_PACK))
   private val pack

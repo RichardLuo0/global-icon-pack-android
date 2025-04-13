@@ -63,32 +63,32 @@ class RemoteIconPack(pack: String, res: Resources, config: IconPackConfig = defa
       val (hits, misses) = cnList.indices.partition { indexMap.contains(cnList[it]) }
       arrayOfNulls<Int?>(cnList.size).apply {
         hits.forEach { this[it] = indexMap[cnList[it]] }
-        if (misses.isNotEmpty())
-          contentResolver
-            .query(
-              IconPackProvider.ICON,
-              null,
-              null,
-              arrayOf(
-                pack,
-                iconPackAsFallback.toString(),
-                *misses.map { cnList[it].flattenToString() }.toTypedArray(),
-              ),
-              null,
-            )
-            ?.let { IconsCursorWrapper.useUnwrap(it, misses.size) }
-            ?.forEachIndexed { i, info ->
-              val index = misses[i]
-              val id =
-                if (info != null) {
-                  iconEntryList.add(info.entry)
-                  (iconEntryList.size - 1).also {
-                    if (info.fallback) indexMap[getComponentName(cnList[index].packageName)] = it
-                  }
-                } else null
-              indexMap[cnList[index]] = id
-              this[index] = id
-            } ?: run { misses.forEach { this[it] = null } }
+        if (misses.isEmpty()) return@apply
+        contentResolver
+          .query(
+            IconPackProvider.ICON,
+            null,
+            null,
+            arrayOf(
+              pack,
+              iconPackAsFallback.toString(),
+              *misses.map { cnList[it].flattenToString() }.toTypedArray(),
+            ),
+            null,
+          )
+          ?.let { IconsCursorWrapper.useUnwrap(it, misses.size) }
+          ?.forEachIndexed { i, info ->
+            val index = misses[i]
+            val id =
+              if (info != null) {
+                iconEntryList.add(info.entry)
+                (iconEntryList.size - 1).also {
+                  if (info.fallback) indexMap[getComponentName(cnList[index].packageName)] = it
+                }
+              } else null
+            indexMap[cnList[index]] = id
+            this[index] = id
+          } ?: run { misses.forEach { this[it] = null } }
       }
     }
 

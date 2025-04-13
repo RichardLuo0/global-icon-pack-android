@@ -3,25 +3,36 @@ package com.richardluo.globalIconPack.iconPack.database
 import android.content.ComponentName
 import android.content.ContentValues
 import android.content.Context
+import android.content.ContextWrapper
 import android.database.Cursor
 import android.database.MergeCursor
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 import android.widget.Toast
 import androidx.compose.ui.util.fastJoinToString
+import com.richardluo.globalIconPack.DBPref
+import com.richardluo.globalIconPack.get
 import com.richardluo.globalIconPack.iconPack.IconPackApps
 import com.richardluo.globalIconPack.ui.model.IconPack
 import com.richardluo.globalIconPack.utils.flowTrigger
 import com.richardluo.globalIconPack.utils.ifNotEmpty
 import com.richardluo.globalIconPack.utils.log
 import com.richardluo.globalIconPack.utils.tryEmit
-import kotlin.jvm.java
+import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 
-class IconPackDB(private val context: Context, path: String = "iconPack.db") :
-  SQLiteOpenHelper(context.createDeviceProtectedStorageContext(), path, null, 7) {
+// To bypass the permission reset
+class DBContext(context: Context) : ContextWrapper(context) {
+  override fun getDatabasePath(name: String): File? =
+    if (name.getOrNull(0) == File.separatorChar) File(name) else super.getDatabasePath(name)
+}
+
+class IconPackDB(
+  private val context: Context,
+  path: String = context.getSharedPreferences("db", Context.MODE_PRIVATE).get(DBPref.PATH),
+) : SQLiteOpenHelper(DBContext(context.createDeviceProtectedStorageContext()), path, null, 7) {
   val iconsUpdateFlow = flowTrigger()
   val modifiedUpdateFlow = flowTrigger()
 

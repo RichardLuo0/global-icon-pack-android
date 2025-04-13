@@ -21,8 +21,8 @@ import com.richardluo.globalIconPack.ui.model.VariantIcon
 import com.richardluo.globalIconPack.ui.model.VariantPackIcon
 import com.richardluo.globalIconPack.utils.ContextVM
 import com.richardluo.globalIconPack.utils.IconPackCreator
+import com.richardluo.globalIconPack.utils.InstanceManager.get
 import com.richardluo.globalIconPack.utils.MapPreferences
-import com.richardluo.globalIconPack.utils.getInstance
 import com.richardluo.globalIconPack.utils.getOrPutNullable
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
@@ -42,8 +42,8 @@ import me.zhanghai.compose.preference.Preferences
 
 @OptIn(FlowPreview::class)
 class MergerVM(context: Application) : ContextVM(context), IFilterApps by FilterApps(context) {
-  private val iconPackCache by getInstance { IconPackCache(context) }
-  private val iconCache by getInstance { IconCache(context) }
+  private val iconPackCache by get { IconPackCache(context) }
+  private val iconCache by get { IconCache(context) }
   private val fallbackIconCache = IconCache(context, 1.0 / 16)
 
   var baseIconPack by mutableStateOf<IconPack?>(null)

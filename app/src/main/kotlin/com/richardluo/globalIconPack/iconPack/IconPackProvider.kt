@@ -24,7 +24,7 @@ import com.richardluo.globalIconPack.iconPack.database.getInt
 import com.richardluo.globalIconPack.iconPack.database.getString
 import com.richardluo.globalIconPack.iconPack.database.useEachRow
 import com.richardluo.globalIconPack.iconPack.database.useMapToArray
-import com.richardluo.globalIconPack.utils.getInstance
+import com.richardluo.globalIconPack.utils.InstanceManager.get
 import com.richardluo.globalIconPack.utils.getOrNull
 import com.richardluo.globalIconPack.utils.log
 import com.richardluo.globalIconPack.utils.unflattenFromString
@@ -103,7 +103,7 @@ class IconPackProvider : ContentProvider() {
   private lateinit var iconPackDB: IconPackDB
 
   override fun onCreate(): Boolean {
-    iconPackDB = getInstance { IconPackDB(context!!) }.value
+    iconPackDB = get { IconPackDB(context!!) }.value
     return true
   }
 

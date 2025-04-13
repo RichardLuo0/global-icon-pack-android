@@ -2,6 +2,7 @@ package com.richardluo.globalIconPack.iconPack
 
 import android.app.AndroidAppHelper
 import com.richardluo.globalIconPack.MODE_PROVIDER
+import com.richardluo.globalIconPack.MODE_SHARE
 import com.richardluo.globalIconPack.Pref
 import com.richardluo.globalIconPack.get
 import com.richardluo.globalIconPack.utils.WorldPreference
@@ -30,6 +31,7 @@ private fun initIP() {
       val config = IconPackConfig(pref)
       ip =
         when (pref.get(Pref.MODE)) {
+          MODE_SHARE -> DatabaseIconPack(pack, res, config)
           MODE_PROVIDER -> createRemoteIconPack(pack, res, config)
           else -> LocalIconPack(pack, res, config)
         }
