@@ -2,6 +2,8 @@ package com.richardluo.globalIconPack.ui.components
 
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
@@ -10,6 +12,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -20,9 +24,10 @@ fun RoundSearchBar(
   trailingIcon: (@Composable () -> Unit)? = null,
   leadingIcon: @Composable () -> Unit,
 ) {
+  val keyboardController = LocalSoftwareKeyboardController.current
   TextField(
     value = state.value,
-    onValueChange = { state.value = it },
+    onValueChange = { state.value = it.replace("\n", "") },
     placeholder = { Text(placeHolder) },
     leadingIcon = leadingIcon,
     trailingIcon = trailingIcon,
@@ -35,5 +40,7 @@ fun RoundSearchBar(
         unfocusedIndicatorColor = Color.Transparent,
         disabledIndicatorColor = Color.Transparent,
       ),
+    keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Search),
+    keyboardActions = KeyboardActions(onSearch = { keyboardController?.hide() }),
   )
 }
