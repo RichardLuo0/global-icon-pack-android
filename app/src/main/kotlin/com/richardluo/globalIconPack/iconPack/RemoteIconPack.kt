@@ -11,7 +11,9 @@ import com.richardluo.globalIconPack.iconPack.database.useFirstRow
 import com.richardluo.globalIconPack.reflect.Resources.getDrawableForDensity
 import com.richardluo.globalIconPack.utils.ReflectHelper
 import com.richardluo.globalIconPack.utils.call
+import com.richardluo.globalIconPack.utils.getOrPut
 import com.richardluo.globalIconPack.utils.getOrPutNullable
+import com.richardluo.globalIconPack.utils.mapIndexed
 import java.util.Collections
 
 class RemoteIconPack(pack: String, res: Resources, config: IconPackConfig = defaultIconPackConfig) :
@@ -60,10 +62,7 @@ class RemoteIconPack(pack: String, res: Resources, config: IconPackConfig = defa
 
   override fun getId(cnList: List<ComponentName>): Array<Int?> =
     synchronized(indexMap) {
-      val (hits, misses) = cnList.indices.partition { indexMap.contains(cnList[it]) }
-      arrayOfNulls<Int?>(cnList.size).apply {
-        hits.forEach { this[it] = indexMap[cnList[it]] }
-        if (misses.isEmpty()) return@apply
+      indexMap.getOrPut(cnList) { misses, getKey ->
         contentResolver
           .query(
             IconPackProvider.ICON,
@@ -72,23 +71,19 @@ class RemoteIconPack(pack: String, res: Resources, config: IconPackConfig = defa
             arrayOf(
               pack,
               iconPackAsFallback.toString(),
-              *misses.map { cnList[it].flattenToString() }.toTypedArray(),
+              *misses.map { it.flattenToString() }.toTypedArray(),
             ),
             null,
           )
           ?.let { IconsCursorWrapper.useUnwrap(it, misses.size) }
-          ?.forEachIndexed { i, info ->
-            val index = misses[i]
-            val id =
-              if (info != null) {
-                iconEntryList.add(info.entry)
-                (iconEntryList.size - 1).also {
-                  if (info.fallback) indexMap[getComponentName(cnList[index].packageName)] = it
-                }
-              } else null
-            indexMap[cnList[index]] = id
-            this[index] = id
-          } ?: run { misses.forEach { this[it] = null } }
+          ?.mapIndexed { i, info ->
+            if (info != null) {
+              iconEntryList.add(info.entry)
+              (iconEntryList.size - 1).also {
+                if (info.fallback) indexMap[getComponentName(getKey(i).packageName)] = it
+              }
+            } else null
+          } ?: arrayOfNulls(misses.size)
       }
     }
 

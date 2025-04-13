@@ -17,6 +17,8 @@ import com.richardluo.globalIconPack.iconPack.database.getString
 import com.richardluo.globalIconPack.iconPack.database.useFirstRow
 import com.richardluo.globalIconPack.iconPack.database.useMapToArray
 import com.richardluo.globalIconPack.reflect.Resources.getDrawableForDensity
+import com.richardluo.globalIconPack.utils.getOrPut
+import com.richardluo.globalIconPack.utils.mapIndexed
 import java.util.Collections
 import kotlin.text.ifEmpty
 
@@ -52,29 +54,22 @@ class DatabaseIconPack(
 
   override fun getId(cnList: List<ComponentName>): Array<Int?> =
     synchronized(indexMap) {
-      val (hits, misses) = cnList.indices.partition { indexMap.contains(cnList[it]) }
-      arrayOfNulls<Int?>(cnList.size).apply {
-        hits.forEach { this[it] = indexMap[cnList[it]] }
-        if (misses.isEmpty()) return@apply
+      indexMap.getOrPut(cnList) { misses, getKey ->
         db
-          .getIcon(pack, misses.map { cnList[it] }, iconPackAsFallback)
+          .getIcon(pack, misses, iconPackAsFallback)
           .useMapToArray(misses.size) { c ->
             val entry = IconEntry.from(c.getBlob(GetIconColumn.Entry))
             val pack = c.getString(GetIconColumn.Pack)
             val fallback = c.getIntOrNull(GetIconColumn.Fallback.ordinal) == 1
             EntryInfo(if (pack.isEmpty()) entry else IconEntryFromOtherPack(entry, pack), fallback)
           }
-          .forEachIndexed { i, info ->
-            val index = misses[i]
-            val id =
-              if (info != null) {
-                iconEntryList.add(info.entry)
-                (iconEntryList.size - 1).also {
-                  if (info.fallback) indexMap[getComponentName(cnList[index].packageName)] = it
-                }
-              } else null
-            indexMap[cnList[index]] = id
-            this[index] = id
+          .mapIndexed { i, info ->
+            if (info != null) {
+              iconEntryList.add(info.entry)
+              (iconEntryList.size - 1).also {
+                if (info.fallback) indexMap[getComponentName(getKey(i).packageName)] = it
+              }
+            } else null
           }
       }
     }

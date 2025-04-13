@@ -9,6 +9,7 @@ import androidx.collection.LruCache
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.richardluo.globalIconPack.BuildConfig
+import kotlin.collections.set
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.BufferOverflow
@@ -107,7 +108,33 @@ fun MutableSharedFlow<Unit>.tryEmit() = tryEmit(Unit)
 
 suspend inline fun <R> runCatchingToast(context: Context, block: () -> R) =
   runCatching(block).getOrNull {
+    log(it)
     withContext(Dispatchers.Main) {
       Toast.makeText(context, it.toString(), Toast.LENGTH_LONG).show()
     }
   }
+
+inline fun <T, reified R> Array<T>.map(transform: (T) -> R): Array<R> {
+  return Array(size) { i -> transform(this[i]) }
+}
+
+inline fun <T, reified R> Array<T>.mapIndexed(transform: (Int, T) -> R): Array<R> {
+  return Array(size) { i -> transform(i, this[i]) }
+}
+
+inline fun <K, reified V> MutableMap<K, V>.getOrPut(
+  keys: List<K>,
+  fetch: (List<K>, getKey: (Int) -> K) -> Array<V>,
+): Array<V?> {
+  val (hits, misses) = keys.indices.partition { contains(keys[it]) }
+  val array = arrayOfNulls<V>(keys.size)
+  hits.forEach { array[it] = this[keys[it]] }
+  if (misses.isEmpty()) return array
+  fetch(misses.map { keys[it] }) { keys[misses[it]] }
+    .forEachIndexed { i, value ->
+      val index = misses[i]
+      this[keys[index]] = value
+      array[index] = value
+    }
+  return array
+}
