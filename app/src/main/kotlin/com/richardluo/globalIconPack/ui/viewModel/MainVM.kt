@@ -70,6 +70,7 @@ class MainVM(context: Application) : ContextVM(context) {
                       iconPackDBLazy.value.close()
                       iconPackDBLazy = update { IconPackDB(context) }
                     }
+                    val parent = shareDBFile.parent
                     val oldDB =
                       context
                         .createDeviceProtectedStorageContext()
@@ -79,8 +80,8 @@ class MainVM(context: Application) : ContextVM(context) {
                     val result =
                       Shell.cmd(
                           "set -e",
-                          "mkdir -p ${shareDBFile.parent}",
-                          "chown $uid:$uid ${shareDBFile.parent} && chmod 0775 ${shareDBFile.parent}",
+                          "mkdir -p $parent",
+                          "chown $uid:$uid $parent && chmod 0775 $parent && chcon u:object_r:magisk_file:s0 $parent",
                           "if [ -f $oldDB ]; then cp $oldDB $shareDB; fi",
                           "if ! [ -f $shareDB ]; then touch $shareDB; fi",
                           "chown $uid:$uid $shareDB && chmod 0666 $shareDB && chcon u:object_r:magisk_file:s0 $shareDB",
