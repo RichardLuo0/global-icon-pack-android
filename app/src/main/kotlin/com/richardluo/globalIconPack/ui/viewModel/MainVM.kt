@@ -84,7 +84,10 @@ class MainVM(context: Application) : ContextVM(context) {
                           "if [ -f $oldDB ]; then rm $oldDB; fi",
                         )
                         .exec()
-                    if (!result.isSuccess) throw Exception("Shared database creation failed!")
+                    if (!result.isSuccess)
+                      throw Exception(
+                        "Shared database creation failed: code: ${result.code} err: ${result.err.joinToString("\n")} out: ${result.out.joinToString("\n")}"
+                      )
                   }
                   AppPreference.get(context).edit { putString(AppPref.PATH.first, shareDB) }
                   updateDB(pack)
