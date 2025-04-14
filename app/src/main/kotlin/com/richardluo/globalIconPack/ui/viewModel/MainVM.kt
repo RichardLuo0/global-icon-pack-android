@@ -80,6 +80,7 @@ class MainVM(context: Application) : ContextVM(context) {
                           "set -e",
                           "mkdir -p ${shareDBFile.parent}",
                           "if [ -f $oldDB ]; then cp $oldDB $shareDB; fi",
+                          "if ! [ -f $shareDB ]; then touch $shareDB; fi",
                           "chmod 0666 $shareDB && chcon u:object_r:magisk_file:s0 $shareDB",
                           "if [ -f $oldDB ]; then rm $oldDB; fi",
                         )
