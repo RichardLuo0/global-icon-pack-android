@@ -16,14 +16,14 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 
 @Composable
-inline fun InfoDialog(
+fun InfoDialog(
   openState: MutableState<Boolean>,
   icon: ImageVector? = null,
   iconColor: Color? = null,
-  noinline title: @Composable () -> Unit,
-  noinline content: @Composable () -> Unit,
-  crossinline onCancel: () -> Unit = {},
-  crossinline onOk: () -> Unit = {},
+  title: @Composable () -> Unit,
+  content: @Composable () -> Unit,
+  onCancel: () -> Unit = {},
+  onOk: () -> Unit = {},
 ) {
   var open by openState
   if (!open) return
@@ -63,12 +63,12 @@ inline fun InfoDialog(
 }
 
 @Composable
-inline fun WarnDialog(
+fun WarnDialog(
   openState: MutableState<Boolean>,
-  noinline title: @Composable () -> Unit,
-  noinline content: @Composable () -> Unit,
-  crossinline onCancel: () -> Unit = {},
-  crossinline onOk: () -> Unit = {},
+  title: @Composable () -> Unit,
+  content: @Composable () -> Unit,
+  onCancel: () -> Unit = {},
+  onOk: () -> Unit = {},
 ) {
   InfoDialog(
     openState,
