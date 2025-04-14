@@ -75,13 +75,15 @@ class MainVM(context: Application) : ContextVM(context) {
                         .createDeviceProtectedStorageContext()
                         .getDatabasePath(AppPref.PATH.second)
                         .path
+                    val uid = android.os.Process.myUid()
                     val result =
                       Shell.cmd(
                           "set -e",
                           "mkdir -p ${shareDBFile.parent}",
+                          "chown $uid:$uid ${shareDBFile.parent} && chmod 0775 ${shareDBFile.parent}",
                           "if [ -f $oldDB ]; then cp $oldDB $shareDB; fi",
                           "if ! [ -f $shareDB ]; then touch $shareDB; fi",
-                          "chmod 0666 $shareDB && chcon u:object_r:magisk_file:s0 $shareDB",
+                          "chown $uid:$uid $shareDB && chmod 0666 $shareDB && chcon u:object_r:magisk_file:s0 $shareDB",
                           "if [ -f $oldDB ]; then rm $oldDB; fi",
                         )
                         .exec()

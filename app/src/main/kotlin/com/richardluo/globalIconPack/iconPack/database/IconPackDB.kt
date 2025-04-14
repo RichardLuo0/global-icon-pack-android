@@ -8,7 +8,6 @@ import android.database.Cursor
 import android.database.MatrixCursor
 import android.database.MergeCursor
 import android.database.sqlite.SQLiteDatabase
-import android.database.sqlite.SQLiteOpenHelper
 import android.widget.Toast
 import androidx.compose.ui.util.fastJoinToString
 import com.richardluo.globalIconPack.AppPref
@@ -16,6 +15,7 @@ import com.richardluo.globalIconPack.get
 import com.richardluo.globalIconPack.iconPack.IconPackApps
 import com.richardluo.globalIconPack.ui.model.IconPack
 import com.richardluo.globalIconPack.utils.AppPreference
+import com.richardluo.globalIconPack.utils.SQLiteOpenHelper
 import com.richardluo.globalIconPack.utils.flowTrigger
 import com.richardluo.globalIconPack.utils.ifNotEmpty
 import com.richardluo.globalIconPack.utils.log
