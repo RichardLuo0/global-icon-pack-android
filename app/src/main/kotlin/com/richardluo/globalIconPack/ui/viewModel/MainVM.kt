@@ -78,7 +78,7 @@ class MainVM(context: Application) : ContextVM(context) {
                     val result =
                       Shell.cmd(
                           "set -e",
-                          "mkdir ${shareDBFile.parent}",
+                          "mkdir -p ${shareDBFile.parent}",
                           "if [ -f $oldDB ]; then cp $oldDB $shareDB; fi",
                           "chmod 0666 $shareDB && chcon u:object_r:magisk_file:s0 $shareDB",
                           "if [ -f $oldDB ]; then rm $oldDB; fi",
