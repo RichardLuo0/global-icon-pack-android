@@ -31,7 +31,7 @@ class KeepAliveService : Service() {
     }
   }
 
-  override fun onCreate() {
+  override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
     createNotificationChannel()
     val builder: Notification.Builder =
       Notification.Builder(this, CHANNEL_ID)
@@ -39,6 +39,7 @@ class KeepAliveService : Service() {
         .setContentTitle("Providing icon pack to hooked apps")
         .setAutoCancel(true)
     startForeground(1, builder.build(), ServiceInfo.FOREGROUND_SERVICE_TYPE_MANIFEST)
+    return START_STICKY
   }
 
   private fun createNotificationChannel() {
