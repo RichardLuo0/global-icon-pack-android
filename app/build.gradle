@@ -2,6 +2,7 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.compose.compiler)
+    alias(libs.plugins.dependency.license.report)
 }
 
 android {
@@ -92,4 +93,11 @@ dependencies {
     implementation libs.documentfile
 
     compileOnly(fileTree("libs") { include("api-82.jar") })
+}
+
+import com.github.jk1.license.render.*
+
+licenseReport {
+    outputDir = project.layout.projectDirectory.dir("../licenses").getAsFile().path
+    renderers = [new SimpleHtmlReportRenderer('third-party-libs.html')]
 }

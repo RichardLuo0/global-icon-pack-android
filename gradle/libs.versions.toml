@@ -16,3 +16,4 @@ documentfile = { group = "androidx.documentfile", name = "documentfile", version
 android-application = { id = "com.android.application", version = "8.9.1" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version = "2.1.20" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version = "2.1.20" }
+dependency-license-report = { id = "com.github.jk1.dependency-license-report", version = "1.17" }
