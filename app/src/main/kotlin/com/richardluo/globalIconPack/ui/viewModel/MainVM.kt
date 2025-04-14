@@ -2,8 +2,6 @@ package com.richardluo.globalIconPack.ui.viewModel
 
 import android.app.Application
 import android.content.ComponentName
-import android.content.Context
-import android.content.SharedPreferences
 import android.content.pm.PackageManager
 import android.widget.Toast
 import androidx.compose.runtime.getValue
@@ -21,6 +19,7 @@ import com.richardluo.globalIconPack.iconPack.BootReceiver
 import com.richardluo.globalIconPack.iconPack.DatabaseIconPack
 import com.richardluo.globalIconPack.iconPack.KeepAliveService
 import com.richardluo.globalIconPack.iconPack.database.IconPackDB
+import com.richardluo.globalIconPack.utils.AppPreference
 import com.richardluo.globalIconPack.utils.ContextVM
 import com.richardluo.globalIconPack.utils.InstanceManager.get
 import com.richardluo.globalIconPack.utils.InstanceManager.update
@@ -44,7 +43,6 @@ class MainVM(context: Application) : ContextVM(context) {
   private var iconPackDBLazy = get { IconPackDB(context) }
   // Hold a strong reference to icon pack cache so it never gets recycled before MainVM is destroyed
   private val iconPackCache = get { IconPackCache(context) }.value
-  val appPref: SharedPreferences = context.getSharedPreferences("app", Context.MODE_PRIVATE)
 
   var waiting by mutableIntStateOf(0)
     private set
@@ -87,8 +85,8 @@ class MainVM(context: Application) : ContextVM(context) {
                         )
                         .exec()
                     if (!result.isSuccess) throw Exception("Shared database creation failed!")
-                    appPref.edit { putString(AppPref.PATH.first, shareDB) }
                   }
+                  AppPreference.get(context).edit { putString(AppPref.PATH.first, shareDB) }
                   updateDB(pack)
                 } catch (t: Throwable) {
                   log(t)

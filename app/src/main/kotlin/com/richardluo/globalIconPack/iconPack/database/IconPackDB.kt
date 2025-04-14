@@ -15,6 +15,7 @@ import com.richardluo.globalIconPack.AppPref
 import com.richardluo.globalIconPack.get
 import com.richardluo.globalIconPack.iconPack.IconPackApps
 import com.richardluo.globalIconPack.ui.model.IconPack
+import com.richardluo.globalIconPack.utils.AppPreference
 import com.richardluo.globalIconPack.utils.flowTrigger
 import com.richardluo.globalIconPack.utils.ifNotEmpty
 import com.richardluo.globalIconPack.utils.log
@@ -32,7 +33,7 @@ class DBContext(context: Context) : ContextWrapper(context) {
 
 class IconPackDB(
   private val context: Context,
-  path: String = context.getSharedPreferences("app", Context.MODE_PRIVATE).get(AppPref.PATH),
+  path: String = AppPreference.get(context).get(AppPref.PATH),
 ) : SQLiteOpenHelper(DBContext(context.createDeviceProtectedStorageContext()), path, null, 7) {
   val iconsUpdateFlow = flowTrigger()
   val modifiedUpdateFlow = flowTrigger()

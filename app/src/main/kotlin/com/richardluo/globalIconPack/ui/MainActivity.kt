@@ -93,6 +93,7 @@ import com.richardluo.globalIconPack.ui.components.myPreferenceTheme
 import com.richardluo.globalIconPack.ui.components.mySliderPreference
 import com.richardluo.globalIconPack.ui.components.mySwitchPreference
 import com.richardluo.globalIconPack.ui.viewModel.MainVM
+import com.richardluo.globalIconPack.utils.AppPreference
 import com.topjohnwu.superuser.Shell
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.launchIn
@@ -123,7 +124,9 @@ class MainActivity : ComponentActivity() {
     applyIconPackIfNeeded(intent)
 
     setContent {
-      val needSetup = rememberSaveable { mutableStateOf(viewModel.appPref.get(AppPref.NEED_SETUP)) }
+      val needSetup = rememberSaveable {
+        mutableStateOf(AppPreference.get(this).get(AppPref.NEED_SETUP))
+      }
       SampleTheme {
         if (needSetup.value) SetUpDialog(needSetup)
         else {
@@ -175,7 +178,7 @@ class MainActivity : ComponentActivity() {
               viewModel.prefFlow?.update {
                 it.toMutablePreferences().apply { set(Pref.MODE.first, mode) }
               }
-              viewModel.appPref.edit { putBoolean(AppPref.NEED_SETUP.first, false) }
+              AppPreference.get(this).edit { putBoolean(AppPref.NEED_SETUP.first, false) }
               dismiss()
             }
             .padding(horizontal = 16.dp, vertical = 8.dp),
