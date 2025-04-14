@@ -92,8 +92,8 @@ class MainVM(context: Application) : ContextVM(context) {
                         "Shared database creation failed: code: ${result.code} err: ${result.err.joinToString("\n")} out: ${result.out.joinToString("\n")}"
                       )
                   }
-                  AppPreference.get(context).edit { putString(AppPref.PATH.first, shareDB) }
                   updateDB(pack)
+                  AppPreference.get(context).edit { putString(AppPref.PATH.first, shareDB) }
                 } catch (t: Throwable) {
                   log(t)
                   withContext(Dispatchers.Main) {
