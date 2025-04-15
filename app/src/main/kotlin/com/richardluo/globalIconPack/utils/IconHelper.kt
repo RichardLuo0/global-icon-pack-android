@@ -178,9 +178,9 @@ object IconHelper {
         )
       else
         CustomAdaptiveIconDrawable(
-          back?.toDrawable(res)?.let { createScaledDrawable(it) } ?: Color.WHITE.toDrawable(),
+          Color.TRANSPARENT.toDrawable(),
           createScaledDrawable(drawable, ADAPTIVE_ICON_VIEWPORT_SCALE * iconScale),
-          null,
+          back,
           upon,
           mask,
         )
