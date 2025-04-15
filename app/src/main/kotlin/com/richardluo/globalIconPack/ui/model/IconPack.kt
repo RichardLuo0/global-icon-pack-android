@@ -16,6 +16,7 @@ import com.richardluo.globalIconPack.iconPack.database.NormalIconEntry
 import com.richardluo.globalIconPack.iconPack.defaultIconPackConfig
 import com.richardluo.globalIconPack.iconPack.getComponentName
 import com.richardluo.globalIconPack.iconPack.loadIconPack
+import com.richardluo.globalIconPack.iconPack.withConfig
 import com.richardluo.globalIconPack.utils.AXMLEditor
 import com.richardluo.globalIconPack.utils.IconHelper
 import com.richardluo.globalIconPack.utils.IconPackCreator.ApkBuilder
@@ -147,25 +148,25 @@ class IconPack(val pack: String, val res: Resources) {
 
   companion object {
     fun genIconFrom(
-      resources: Resources,
+      res: Resources,
       baseIcon: Drawable,
       iconFallback: IconFallback?,
       config: IconPackConfig,
-    ): Drawable {
-      return if (config.iconFallback) {
-        iconFallback.run {
+    ) =
+      (if (config.iconFallback) {
+          iconFallback.withConfig(config).orNullIfEmpty()
+        } else null)
+        ?.run {
           IconHelper.processIcon(
-            resources,
+            res,
             baseIcon,
-            this?.iconBacks?.randomOrNull(),
-            this?.iconUpons?.randomOrNull(),
-            this?.iconMasks?.randomOrNull(),
-            config.scale ?: (this?.iconScale ?: return baseIcon),
-            config.scaleOnlyForeground,
-            config.nonAdaptiveScale,
+            iconBacks.randomOrNull(),
+            iconUpons.randomOrNull(),
+            iconMasks.randomOrNull(),
+            iconScale,
+            scaleOnlyForeground,
+            nonAdaptiveScale,
           )
-        }
-      } else baseIcon
-    }
+        } ?: baseIcon
   }
 }

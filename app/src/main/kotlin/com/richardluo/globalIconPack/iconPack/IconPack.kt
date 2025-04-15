@@ -12,6 +12,7 @@ import androidx.core.graphics.drawable.toBitmap
 import com.richardluo.globalIconPack.iconPack.database.FallbackSettings
 import com.richardluo.globalIconPack.iconPack.database.IconEntry
 import com.richardluo.globalIconPack.utils.IconHelper
+import kotlin.collections.orEmpty
 
 class IconFallback(
   val iconBacks: List<Bitmap>,
@@ -35,10 +36,24 @@ class IconFallback(
   )
 
   fun isEmpty() =
-    iconBacks.isEmpty() && iconUpons.isEmpty() && iconMasks.isEmpty() && iconScale == 1f
+    iconBacks.isEmpty() &&
+      iconUpons.isEmpty() &&
+      iconMasks.isEmpty() &&
+      iconScale == 1f &&
+      nonAdaptiveScale == 1f
 
   fun orNullIfEmpty() = if (isEmpty()) null else this
 }
+
+fun IconFallback?.withConfig(config: IconPackConfig) =
+  IconFallback(
+    this?.iconBacks.orEmpty(),
+    this?.iconUpons.orEmpty(),
+    this?.iconMasks.orEmpty(),
+    config.scale ?: this?.iconScale ?: 1f,
+    config.scaleOnlyForeground,
+    config.nonAdaptiveScale,
+  )
 
 abstract class IconPack(val pack: String, val res: Resources) {
 
