@@ -40,9 +40,8 @@ class IconCache(private val context: Context, factor: Double = 1.0 / 8) {
     return if (entry != null) loadIcon(entry.entry, entry.pack)
     else
       bitmapCache.getOrPut("${basePack.pack}/fallback/${info.componentName}") {
-        getBaseIcon(info)?.let {
-          basePack.genIconFrom(it, config).toSafeBitmap(300, 300).asImageBitmap()
-        } ?: emptyImageBitmap
+        getBaseIcon(info)?.let { basePack.genIconFrom(it, config).toSafeBitmap().asImageBitmap() }
+          ?: emptyImageBitmap
       }
   }
 
@@ -54,16 +53,14 @@ class IconCache(private val context: Context, factor: Double = 1.0 / 8) {
   ) =
     bitmapCache.getOrPut("${basePack.pack}/fallback/${info.componentName}") {
       getBaseIcon(info)?.let {
-        IconPack.genIconFrom(basePack.res, it, iconFallback, config)
-          .toSafeBitmap(300, 300)
-          .asImageBitmap()
+        IconPack.genIconFrom(basePack.res, it, iconFallback, config).toSafeBitmap().asImageBitmap()
       } ?: emptyImageBitmap
     }
 
   suspend fun loadIcon(entry: IconEntry, basePack: IconPack) =
     bitmapCache.getOrPut("${basePack.pack}/icon/${entry.name}") {
       withContext(Dispatchers.IO) {
-        basePack.getIcon(entry, 0)?.toSafeBitmap(300, 300)?.asImageBitmap() ?: emptyImageBitmap
+        basePack.getIcon(entry, 0)?.toSafeBitmap()?.asImageBitmap() ?: emptyImageBitmap
       }
     }
 
@@ -85,7 +82,7 @@ class IconCache(private val context: Context, factor: Double = 1.0 / 8) {
   }
 }
 
-private fun Drawable.toSafeBitmap(maxWidth: Int, maxHeight: Int) =
+private fun Drawable.toSafeBitmap(maxWidth: Int = 192, maxHeight: Int = 192) =
   if (intrinsicWidth !in 1..maxWidth || intrinsicHeight !in 1..maxHeight) {
     toBitmap(maxWidth, maxHeight)
   } else toBitmap()
