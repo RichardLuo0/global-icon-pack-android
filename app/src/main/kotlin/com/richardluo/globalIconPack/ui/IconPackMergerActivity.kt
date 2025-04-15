@@ -254,8 +254,10 @@ class IconPackMergerActivity : ComponentActivity() {
     LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = contentPadding) {
       items(valueMap.toList()) { (key, value) ->
         IconPackItem(key, value, viewModel.basePack ?: "") {
-          coroutineScope.launch { pagerState.animateScrollToPage(Page.IconList.ordinal) }
-          viewModel.basePack = key
+          coroutineScope.launch {
+            pagerState.animateScrollToPage(Page.IconList.ordinal)
+            viewModel.basePack = key
+          }
         }
       }
     }
