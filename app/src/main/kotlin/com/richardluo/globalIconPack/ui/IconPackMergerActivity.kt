@@ -15,6 +15,7 @@ import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -48,16 +49,20 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.key
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -107,6 +112,7 @@ class IconPackMergerActivity : ComponentActivity() {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     val pagerState = rememberPagerState(pageCount = { Page.Count.ordinal })
     val coroutineScope = rememberCoroutineScope()
+
     val expandFabScrollConnection = remember {
       object : ExpandFabScrollConnection() {
         override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
@@ -115,6 +121,9 @@ class IconPackMergerActivity : ComponentActivity() {
         }
       }
     }
+
+    var fabHeight by rememberSaveable { mutableIntStateOf(0) }
+    val fabHeightInDp = with(LocalDensity.current) { fabHeight.toDp() }
 
     PredictiveBackHandler(enabled = pagerState.settledPage > 0) { progress ->
       val oriPage = pagerState.currentPage
@@ -174,7 +183,7 @@ class IconPackMergerActivity : ComponentActivity() {
         }
       },
       floatingActionButton = {
-        Column {
+        Column(modifier = Modifier.onGloballyPositioned { fabHeight = it.size.height }) {
           AnimatedVisibility(
             pagerState.currentPage == Page.IconList.ordinal,
             enter = fadeIn() + scaleIn(),
@@ -206,10 +215,11 @@ class IconPackMergerActivity : ComponentActivity() {
       },
     ) { contentPadding ->
       HorizontalPager(pagerState, contentPadding = contentPadding, beyondViewportPageCount = 1) {
+        val contentPadding = PaddingValues(bottom = fabHeightInDp)
         when (it) {
-          Page.SelectBasePack.ordinal -> SelectBasePack(pagerState)
-          Page.IconList.ordinal -> IconList()
-          Page.PackInfoForm.ordinal -> PackInfoForm()
+          Page.SelectBasePack.ordinal -> SelectBasePack(pagerState, contentPadding)
+          Page.IconList.ordinal -> IconList(contentPadding)
+          Page.PackInfoForm.ordinal -> PackInfoForm(contentPadding)
         }
       }
 
@@ -238,10 +248,10 @@ class IconPackMergerActivity : ComponentActivity() {
     }
 
   @Composable
-  private fun SelectBasePack(pagerState: PagerState) {
+  private fun SelectBasePack(pagerState: PagerState, contentPadding: PaddingValues) {
     val coroutineScope = rememberCoroutineScope()
     val valueMap = IconPackApps.getFlow(this).getValue(mapOf())
-    LazyColumn(modifier = Modifier.fillMaxSize()) {
+    LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = contentPadding) {
       items(valueMap.toList()) { (key, value) ->
         IconPackItem(key, value, viewModel.basePack ?: "") {
           coroutineScope.launch { pagerState.animateScrollToPage(Page.IconList.ordinal) }
@@ -252,12 +262,13 @@ class IconPackMergerActivity : ComponentActivity() {
   }
 
   @Composable
-  private fun IconList() {
+  private fun IconList(contentPadding: PaddingValues) {
     val iconChooser: IconChooserVM = viewModel()
     val icons = viewModel.filteredIcons.getValue(null)
     if (icons != null)
       LazyVerticalGrid(
         modifier = Modifier.fillMaxSize().padding(horizontal = 2.dp),
+        contentPadding = contentPadding,
         columns = GridCells.Adaptive(minSize = 74.dp),
       ) {
         items(icons, key = { it.first.componentName }) { pair ->
@@ -294,9 +305,10 @@ class IconPackMergerActivity : ComponentActivity() {
   }
 
   @Composable
-  private fun PackInfoForm() {
+  private fun PackInfoForm(contentPadding: PaddingValues) {
     LazyColumn(
       modifier = Modifier.fillMaxSize().padding(horizontal = 12.dp),
+      contentPadding = contentPadding,
       verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
       item(key = "newPackName", contentType = "TextField") {
