@@ -141,6 +141,10 @@ class IconPack(val pack: String, val res: Resources) {
     xml.append("/>")
   }
 
+  override fun equals(other: Any?) = other is IconPack && other.pack == pack
+
+  override fun hashCode() = pack.hashCode()
+
   companion object {
     fun genIconFrom(
       resources: Resources,

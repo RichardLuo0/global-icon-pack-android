@@ -48,6 +48,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -259,11 +260,13 @@ class IconPackMergerActivity : ComponentActivity() {
         modifier = Modifier.fillMaxSize().padding(horizontal = 2.dp),
         columns = GridCells.Adaptive(minSize = 74.dp),
       ) {
-        items(icons.toList(), key = { it.first.componentName }) { pair ->
+        items(icons, key = { it.first.componentName }) { pair ->
           val (info, entry) = pair
           AppIcon(
             info.label,
-            key = "${viewModel.basePack}/${entry?.entry?.name ?: ""}/${viewModel.iconCacheToken}",
+            key =
+              if (entry != null) "${entry.pack.pack}/icon/${entry.entry.name}"
+              else "${viewModel.basePack}/fallback/${viewModel.iconCacheToken}",
             loadImage = { viewModel.loadIcon(pair) },
           ) {
             iconChooser.open(info, viewModel.baseIconPack ?: return@AppIcon)
