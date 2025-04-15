@@ -84,7 +84,7 @@ object IconHelper {
     private val hasMask = mask != null
 
     override fun makeAdaptive() =
-      createScaledDrawable(this).let {
+      scale(this).let {
         if (hasMask) UnClipAdaptiveIconDrawable(null, it)
         else AdaptiveIconDrawable(Color.WHITE.toDrawable(), it)
       }
@@ -112,7 +112,7 @@ object IconHelper {
     }
 
     override fun makeAdaptive() =
-      createScaledDrawable(this).let {
+      scale(this).let {
         if (mask != null) UnClipAdaptiveIconDrawable(null, it)
         else AdaptiveIconDrawable(Color.WHITE.toDrawable(), it)
       }
@@ -127,7 +127,7 @@ object IconHelper {
     iconScale: Float,
     nonAdaptiveScale: Float,
   ): Drawable =
-    createScaledDrawable(drawable, iconScale * nonAdaptiveScale).let {
+    scale(drawable, iconScale * nonAdaptiveScale).let {
       if (drawable is BitmapDrawable) CustomBitmapDrawable(res, it, back, upon, mask)
       else CustomDrawable(it, back, upon, mask)
     }
@@ -145,11 +145,8 @@ object IconHelper {
     if (drawable is AdaptiveIconDrawable)
       CustomDrawable(
         if (scaleOnlyForeground && iconScale != 1f)
-          UnClipAdaptiveIconDrawable(
-            drawable.background,
-            createScaledDrawable(drawable.foreground, iconScale),
-          )
-        else createScaledDrawable(drawable, iconScale),
+          UnClipAdaptiveIconDrawable(drawable.background, scale(drawable.foreground, iconScale))
+        else scale(drawable, iconScale),
         back,
         upon,
         mask,
@@ -171,7 +168,7 @@ object IconHelper {
       if (scaleOnlyForeground)
         CustomAdaptiveIconDrawable(
           drawable.background,
-          drawable.foreground?.let { createScaledDrawable(it, iconScale) },
+          drawable.foreground?.let { scale(it, iconScale) },
           back,
           upon,
           mask,
@@ -179,7 +176,7 @@ object IconHelper {
       else
         CustomAdaptiveIconDrawable(
           Color.TRANSPARENT.toDrawable(),
-          createScaledDrawable(drawable, ADAPTIVE_ICON_VIEWPORT_SCALE * iconScale),
+          scale(drawable, ADAPTIVE_ICON_VIEWPORT_SCALE * iconScale),
           back,
           upon,
           mask,
@@ -187,7 +184,7 @@ object IconHelper {
     else if (mask != null)
       CustomAdaptiveIconDrawable(
         Color.TRANSPARENT.toDrawable(),
-        createScaledDrawable(drawable, ADAPTIVE_ICON_VIEWPORT_SCALE * iconScale * nonAdaptiveScale),
+        scale(drawable, ADAPTIVE_ICON_VIEWPORT_SCALE * iconScale * nonAdaptiveScale),
         back,
         upon,
         mask,
@@ -219,7 +216,7 @@ object IconHelper {
 
   fun makeAdaptive(drawable: Drawable, static: Boolean = false) =
     if (!static && drawable !is AdaptiveIconDrawable)
-      UnClipAdaptiveIconDrawable(Color.TRANSPARENT.toDrawable(), createScaledDrawable(drawable))
+      UnClipAdaptiveIconDrawable(Color.TRANSPARENT.toDrawable(), scale(drawable))
     else drawable
 
   fun Canvas.drawIcon(
@@ -254,10 +251,7 @@ object IconHelper {
     paint.xfermode = null
   }
 
-  fun createScaledDrawable(
-    drawable: Drawable,
-    scale: Float = ADAPTIVE_ICON_VIEWPORT_SCALE,
-  ): Drawable {
+  fun scale(drawable: Drawable, scale: Float = ADAPTIVE_ICON_VIEWPORT_SCALE): Drawable {
     if (scale == 1f) return drawable
     val h = drawable.intrinsicHeight.toFloat()
     val w = drawable.intrinsicWidth.toFloat()

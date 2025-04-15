@@ -124,5 +124,5 @@ class NoForceShape : Hook {
   }
 
   fun makeUnMask(drawable: Drawable) =
-    UnmaskAdaptiveIconDrawable(null, IconHelper.createScaledDrawable(drawable))
+    UnmaskAdaptiveIconDrawable(null, IconHelper.scale(drawable))
 }
