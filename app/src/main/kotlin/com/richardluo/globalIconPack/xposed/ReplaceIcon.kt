@@ -1,26 +1,26 @@
 package com.richardluo.globalIconPack.xposed
 
+import android.accessibilityservice.AccessibilityServiceInfo
 import android.app.ActivityManager.RecentTaskInfo
 import android.app.ActivityManager.RunningTaskInfo
 import android.app.TaskInfo
 import android.content.pm.ActivityInfo
 import android.content.pm.ApplicationInfo
+import android.content.pm.ComponentInfo
 import android.content.pm.LauncherApps
 import android.content.pm.PackageInfo
 import android.content.pm.PackageItemInfo
 import android.content.pm.ResolveInfo
+import android.content.pm.ServiceInfo
 import android.content.pm.ShortcutInfo
 import android.graphics.drawable.Drawable
 import android.os.Parcel
-import com.richardluo.globalIconPack.Pref
-import com.richardluo.globalIconPack.get
 import com.richardluo.globalIconPack.iconPack.IconPack
 import com.richardluo.globalIconPack.iconPack.getComponentName
 import com.richardluo.globalIconPack.iconPack.getIP
 import com.richardluo.globalIconPack.reflect.ClockDrawableWrapper
 import com.richardluo.globalIconPack.reflect.Resources.getDrawableForDensityM
 import com.richardluo.globalIconPack.utils.ReflectHelper
-import com.richardluo.globalIconPack.utils.WorldPreference
 import com.richardluo.globalIconPack.utils.asType
 import com.richardluo.globalIconPack.utils.callOriginalMethod
 import com.richardluo.globalIconPack.utils.getAs
@@ -34,7 +34,9 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 
 typealias ListReplacer = (list: List<Any?>, ip: IconPack) -> Unit
 
-class ReplaceIcon : Hook {
+// Resource id always starts with 0x7f, use it to indicate that this is an icon
+// Assume the icon res id is only used in getDrawable()
+class ReplaceIcon(val shortcut: Boolean) : Hook {
   companion object {
     const val IN_IP = 0xff000000.toInt()
     const val NOT_IN_IP = 0xfe000000.toInt()
@@ -48,32 +50,36 @@ class ReplaceIcon : Hook {
   }
 
   private val listReplacerMap = run {
-    val iconResourceIdF = ReflectHelper.findField(ResolveInfo::class.java, "iconResourceId")
-
     val defaultReplacer: ListReplacer = { list, ip ->
       replaceItemInfo(list.mapNotNull { it.asType<PackageItemInfo>() }, ip)
     }
-    val activityInfoReplacer: ListReplacer = { list, ip ->
+    val componentInfoReplacer: ListReplacer = { list, ip ->
       defaultReplacer(list, ip)
-      replaceItemInfo(list.mapNotNull { it.asType<ActivityInfo>()?.applicationInfo }, ip)
+      replaceItemInfo(list.mapNotNull { it.asType<ComponentInfo>()?.applicationInfo }, ip)
+    }
+    val resolveInfoReplacer: ListReplacer? = run {
+      val iconResourceIdF =
+        ReflectHelper.findField(ResolveInfo::class.java, "iconResourceId") ?: return@run null
+      { list, ip ->
+        val riList = list.mapNotNull { it.asType<ResolveInfo>() }
+        componentInfoReplacer(riList.map { it.getComponentInfo() }, ip)
+        riList.forEach { ri ->
+          val icon = ri.getComponentInfo().icon.takeIf { it != 0 } ?: return@forEach
+          ri.icon = icon
+          iconResourceIdF.set(ri, icon)
+        }
+      }
     }
 
     buildMap<Class<*>, ListReplacer> {
       set(ApplicationInfo::class.java, defaultReplacer)
-      set(ActivityInfo::class.java, activityInfoReplacer)
-      set(ResolveInfo::class.java) { list, ip ->
-        val riList = list.mapNotNull { it.asType<ResolveInfo>() }
-        activityInfoReplacer(riList.mapNotNull { it.activityInfo }, ip)
-        riList.forEach { ri ->
-          val icon = ri.activityInfo?.icon?.takeIf { it != 0 } ?: return@forEach
-          ri.icon = icon
-          iconResourceIdF?.set(ri, icon)
-        }
-      }
+      set(ActivityInfo::class.java, componentInfoReplacer)
+      set(ServiceInfo::class.java, componentInfoReplacer)
+      resolveInfoReplacer?.let { set(ResolveInfo::class.java, it) }
       set(PackageInfo::class.java) { list, ip ->
         val piList = list.mapNotNull { it.asType<PackageInfo>() }
         defaultReplacer(piList.mapNotNull { it.applicationInfo }, ip)
-        piList.forEach { pi -> pi.activities?.let { activityInfoReplacer(it.toList(), ip) } }
+        piList.forEach { pi -> pi.activities?.let { componentInfoReplacer(it.toList(), ip) } }
       }
       run {
         val topActivityInfoF =
@@ -93,7 +99,7 @@ class ReplaceIcon : Hook {
         val mActivityInfoF =
           ReflectHelper.findField(launcherActivityInfo, "mActivityInfo") ?: return@run
         set(launcherActivityInfo) { list, ip ->
-          activityInfoReplacer(
+          componentInfoReplacer(
             list.mapNotNull { it?.let { mActivityInfoF.getAs<ActivityInfo>(it) } },
             ip,
           )
@@ -104,13 +110,35 @@ class ReplaceIcon : Hook {
           ReflectHelper.findClass("android.app.servertransaction.LaunchActivityItem") ?: return@run
         val mInfoF = ReflectHelper.findField(launchActivityItem, "mInfo") ?: return@run
         set(launchActivityItem) { list, ip ->
-          activityInfoReplacer(list.mapNotNull { it?.let { mInfoF.getAs<ActivityInfo>(it) } }, ip)
+          componentInfoReplacer(list.mapNotNull { it?.let { mInfoF.getAs<ActivityInfo>(it) } }, ip)
+        }
+      }
+      resolveInfoReplacer?.let {
+        set(AccessibilityServiceInfo::class.java) { list, ip ->
+          it(list.mapNotNull { it.asType<AccessibilityServiceInfo>()?.resolveInfo }, ip)
         }
       }
     }
   }
 
   private val blockReplaceIconResId = ThreadLocal.withInitial { false }
+
+  private val replaceIconResId =
+    object : XC_MethodHook() {
+      override fun afterHookedMethod(param: MethodHookParam) {
+        if (blockReplaceIconResId.get() == true) return
+        blockReplaceIconResId.set(true)
+        afterHookedMethodSafe(param)
+        blockReplaceIconResId.set(false)
+      }
+
+      fun afterHookedMethodSafe(param: MethodHookParam) {
+        val info = param.result as? PackageItemInfo ?: return
+        info.packageName ?: return
+        val ip = getIP() ?: return
+        replaceIconResIdInInfo(info, ip.getId(getComponentName(info)))
+      }
+    }
 
   private abstract inner class ReplaceInList : XC_MethodHook() {
     override fun beforeHookedMethod(param: MethodHookParam) {
@@ -133,43 +161,25 @@ class ReplaceIcon : Hook {
   }
 
   override fun onHookApp(lpp: LoadPackageParam) {
-    // Resource id always starts with 0x7f, use it to indicate that this is an icon
-    // Assume the icon res id is only used in getDrawable()
-    val replaceIconResId =
-      object : XC_MethodHook() {
-        override fun afterHookedMethod(param: MethodHookParam) {
-          if (blockReplaceIconResId.get() == true) return
-          blockReplaceIconResId.set(true)
-          afterHookedMethodSafe(param)
-          blockReplaceIconResId.set(false)
-        }
-
-        fun afterHookedMethodSafe(param: MethodHookParam) {
-          val info = param.result as? PackageItemInfo ?: return
-          info.packageName ?: return
-          val ip = getIP() ?: return
-          replaceIconResIdInInfo(info, ip.getId(getComponentName(info)))
-        }
-      }
-    ReflectHelper.hookAllMethodsOrLog(
+    ReflectHelper.hookAllMethods(
       ApplicationInfo.CREATOR.javaClass,
       "createFromParcel",
       replaceIconResId,
     )
-    ReflectHelper.hookAllMethodsOrLog(
+    ReflectHelper.hookAllMethods(
       ActivityInfo.CREATOR.javaClass,
       "createFromParcel",
       replaceIconResId,
     )
 
-    ReflectHelper.hookAllMethodsOrLog(
+    ReflectHelper.hookAllMethods(
       Parcel::class.java,
       "readTypedList",
       object : ReplaceInList() {
         override fun getList(param: MethodHookParam) = param.args[0].asType<List<Any?>>()
       },
     )
-    ReflectHelper.hookAllMethodsOrLog(
+    ReflectHelper.hookAllMethods(
       Parcel::class.java,
       "createTypedArray",
       object : ReplaceInList() {
@@ -207,8 +217,8 @@ class ReplaceIcon : Hook {
     )
 
     // Generate shortcut icon
-    if (WorldPreference.getPrefInMod().get(Pref.SHORTCUT))
-      ReflectHelper.hookAllMethodsOrLog(
+    if (shortcut)
+      ReflectHelper.hookAllMethods(
         LauncherApps::class.java,
         "getShortcutIconDrawable",
         object : XC_MethodHook() {
@@ -236,4 +246,11 @@ fun replaceItemInfo(list: List<PackageItemInfo>, ip: IconPack) {
   ip.getId(list.map { getComponentName(it) }).forEachIndexed { i, it ->
     replaceIconResIdInInfo(list[i], it)
   }
+}
+
+private fun ResolveInfo.getComponentInfo(): ComponentInfo {
+  if (activityInfo != null) return activityInfo
+  if (serviceInfo != null) return serviceInfo
+  if (providerInfo != null) return providerInfo
+  throw IllegalStateException("Missing ComponentInfo!")
 }
