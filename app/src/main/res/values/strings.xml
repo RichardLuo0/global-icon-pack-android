@@ -30,7 +30,7 @@
     <string name="scaleOnlyForeground">Scale only the foreground for adaptive icons</string>
     <string name="backAsAdaptiveBack">Fallback background as Adaptive background</string>
     <string name="nonAdaptiveScale">Scale non-adaptive icons</string>
-    <string name="convertToAdaptive">Convert to adaptive</string>
+    <string name="convertToAdaptive">Convert to adaptive icons</string>
     <string name="convertToAdaptiveSummary">Removes the white shape that some apps add to non-adaptive icons.</string>
     <string name="overrideIconFallback">Override fallback settings</string>
     <string name="overrideIconFallbackSummary">Use new values for the fallback settings.</string>
