@@ -91,6 +91,7 @@ dependencies {
     implementation libs.material.icons.extended
     implementation libs.libsu
     implementation libs.documentfile
+    implementation libs.hiddenapibypass
 
     compileOnly(fileTree("libs") { include("api-82.jar") })
 }

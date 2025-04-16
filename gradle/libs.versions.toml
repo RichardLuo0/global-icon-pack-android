@@ -8,6 +8,7 @@ material3 = { group = "androidx.compose.material3", name = "material3", version 
 material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended", version = "1.7.8" }
 libsu = { group = "com.github.topjohnwu.libsu", name = "core", version = "6.0.0" }
 documentfile = { group = "androidx.documentfile", name = "documentfile", version = "1.0.1" }
+hiddenapibypass = { group = "org.lsposed.hiddenapibypass", name = "hiddenapibypass", version = "+" }
 #junit = { group = "junit", name = "junit", version.ref = "junit" }
 #ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 #espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }

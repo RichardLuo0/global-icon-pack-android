@@ -10,7 +10,10 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 class XposedMain : IXposedHookLoadPackage {
   override fun handleLoadPackage(lpp: LoadPackageParam) {
     if (!lpp.isFirstApplication) return
-    if (BuildConfig.APPLICATION_ID == lpp.packageName) return
+    if (BuildConfig.APPLICATION_ID == lpp.packageName) {
+      BypassReflectRestrictions.onHookSelf(lpp)
+      return
+    }
 
     if (lpp.packageName == "android") {
       BypassShortcutPermission.onHookSystem(lpp)

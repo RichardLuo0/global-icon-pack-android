@@ -28,22 +28,15 @@ open class UnClipAdaptiveIconDrawable(background: Drawable?, foreground: Drawabl
   AdaptiveIconDrawable(background, foreground) {
 
   override fun draw(canvas: Canvas) {
-    if (isInMod)
-      draw(
-        canvas,
-        Path().apply {
-          addRect(
-            RectF(0f, 0f, bounds.width().toFloat(), bounds.height().toFloat()),
-            Path.Direction.CW,
-          )
-        },
-      )
-    else {
-      canvas.translate(bounds.left.toFloat(), bounds.top.toFloat())
-      background?.draw(canvas)
-      foreground?.draw(canvas)
-      canvas.translate(-bounds.left.toFloat(), -bounds.top.toFloat())
-    }
+    draw(
+      canvas,
+      Path().apply {
+        addRect(
+          RectF(0f, 0f, bounds.width().toFloat(), bounds.height().toFloat()),
+          Path.Direction.CW,
+        )
+      },
+    )
   }
 
   protected fun draw(canvas: Canvas, path: Path) {
@@ -66,8 +59,7 @@ open class UnClipAdaptiveIconDrawable(background: Drawable?, foreground: Drawabl
     }
   }
 
-  protected fun drawClip(canvas: Canvas) =
-    if (isInMod) getMask()?.let { draw(canvas, it) } else super.draw(canvas)
+  protected fun drawClip(canvas: Canvas) = getMask()?.let { draw(canvas, it) }
 
   protected fun getMask() = mMaskScaleOnly?.getAs<Path?>(this)
 
