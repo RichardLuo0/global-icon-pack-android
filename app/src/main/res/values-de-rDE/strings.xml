@@ -14,8 +14,6 @@
     <string name="overrideIconFallback">Rückfall-Einstellungen überschreiben</string>
     <string name="overrideIconFallbackSummary">Andere Werte für Rückfall-Einstellungen verwenden.</string>
     <string name="iconPackScale">Skalierung</string>
-    <string name="noForceShape">Keine Form erzwingen</string>
-    <string name="noForceShapeSummary">Entfernt den weißen Hintergrund hinter ungewöhnlich geformten Symbolen.</string>
     <string name="forceLoadClockAndCalendar">Laden des Uhr- und Kalendersymbols erzwingen</string>
     <string name="moreOptions">Weitere Optionen</string>
     <string name="restartSystemUI">SystemUI neustarten</string>

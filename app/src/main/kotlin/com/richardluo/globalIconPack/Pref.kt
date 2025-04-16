@@ -15,6 +15,7 @@ object Pref {
 
   val ICON_FALLBACK = "iconFallback" to true
   val SCALE_ONLY_FOREGROUND = "scaleOnlyForeground" to false
+  val BACK_AS_ADAPTIVE_BACK = "backAsAdaptiveBack" to false
   val NON_ADAPTIVE_SCALE = "nonAdaptiveScale" to 1f
   val CONVERT_TO_ADAPTIVE = "convertToAdaptive" to true
   val OVERRIDE_ICON_FALLBACK = "overrideIconFallback" to false

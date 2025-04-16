@@ -33,8 +33,6 @@
     <string name="pixelSettings">Pixel</string>
     <string name="pixelLauncherPackage">启动器包名</string>
     <string name="pixelLauncherPackageSummary">用于识别基于launcher 3的启动器，但以下功能不保证正常工作。</string>
-    <string name="noForceShape">阻止强制形状</string>
-    <string name="noForceShapeSummary">移除不规则图标背后的白色背景。</string>
     <string name="noShadow">移除下方的阴影</string>
     <string name="noShadowSummary">删除系统图标遮罩生成的阴影。</string>
     <string name="forceLoadClockAndCalendar">强制加载时钟和日历图标</string>

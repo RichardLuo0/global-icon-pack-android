@@ -165,6 +165,7 @@ class IconPack(val pack: String, val res: Resources) {
             iconMasks.randomOrNull(),
             iconScale,
             scaleOnlyForeground,
+            backAsAdaptiveBack,
             nonAdaptiveScale,
             convertToAdaptive,
           )

@@ -28,6 +28,7 @@
     <string name="iconFallback">Generate fallback icons</string>
     <string name="iconFallbackSummary">Apply background, mask, and scale from the icon pack to apps without dedicated icons.</string>
     <string name="scaleOnlyForeground">Scale only the foreground for adaptive icons</string>
+    <string name="backAsAdaptiveBack">Fallback background as Adaptive background</string>
     <string name="nonAdaptiveScale">Scale non-adaptive icons</string>
     <string name="convertToAdaptive">Convert to adaptive</string>
     <string name="convertToAdaptiveSummary">Removes the white shape that some apps add to non-adaptive icons.</string>
@@ -38,8 +39,6 @@
     <string name="pixelSettings">Pixel</string>
     <string name="pixelLauncherPackage">Launcher package name</string>
     <string name="pixelLauncherPackageSummary">Used to identify a launcher 3 based launcher, but the features below are not guaranteed.</string>
-    <string name="noForceShape">No force shape</string>
-    <string name="noForceShapeSummary">Remove the white background behind irregular icon.</string>
     <string name="noShadow">Remove shadow underneath</string>
     <string name="noShadowSummary">Remove the shadow generated for system icon mask.</string>
     <string name="forceLoadClockAndCalendar">Force load clock and calendar icon</string>

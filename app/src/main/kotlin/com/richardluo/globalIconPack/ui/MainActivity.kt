@@ -354,6 +354,13 @@ object MainPreference {
       defaultValue = Pref.SCALE_ONLY_FOREGROUND.second,
       title = { OneLineText(stringResource(R.string.scaleOnlyForeground)) },
     )
+    mySwitchPreference(
+      icon = {},
+      key = Pref.BACK_AS_ADAPTIVE_BACK.first,
+      enabled = { it.get(Pref.ICON_FALLBACK) },
+      defaultValue = Pref.BACK_AS_ADAPTIVE_BACK.second,
+      title = { OneLineText(stringResource(R.string.backAsAdaptiveBack)) },
+    )
     mySliderPreference(
       icon = {},
       key = Pref.NON_ADAPTIVE_SCALE.first,

@@ -107,6 +107,7 @@ object IconHelper {
     mask: Bitmap?,
     iconScale: Float = 1f,
     scaleOnlyForeground: Boolean,
+    backAsAdaptiveBack: Boolean,
     nonAdaptiveScale: Float,
     convertToAdaptive: Boolean,
   ): Drawable =
@@ -120,13 +121,18 @@ object IconHelper {
           mask,
         )
       else
-        CustomAdaptiveIconDrawable(
-          Color.TRANSPARENT.toDrawable(),
-          scale(baseIcon, ADAPTIVE_ICON_VIEWPORT_SCALE * iconScale),
-          back,
-          upon,
-          mask,
-        )
+        scale(baseIcon, iconScale).let {
+          if (backAsAdaptiveBack && back != null)
+            UnClipAdaptiveIconDrawable(
+              scale(back.toDrawable(res)),
+              scale(CustomDrawable(it, null, upon, mask)),
+            )
+          else
+            UnClipAdaptiveIconDrawable(
+              Color.TRANSPARENT.toDrawable(),
+              scale(CustomDrawable(it, back, upon, mask)),
+            )
+        }
     else if (mask != null)
       CustomAdaptiveIconDrawable(
         Color.TRANSPARENT.toDrawable(),
@@ -142,7 +148,8 @@ object IconHelper {
           else CustomDrawable(it, back, upon, mask)
         }
         .let {
-          if (convertToAdaptive) UnClipAdaptiveIconDrawable(Color.TRANSPARENT.toDrawable(), it)
+          if (convertToAdaptive)
+            UnClipAdaptiveIconDrawable(Color.TRANSPARENT.toDrawable(), scale(it))
           else it
         }
 

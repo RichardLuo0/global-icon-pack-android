@@ -27,8 +27,6 @@
     <string name="pixelSettings">Pixel</string>
     <string name="pixelLauncherPackage">啟動器包名</string>
     <string name="pixelLauncherPackageSummary">用於識別基於 launcher 3 的啟動器，但以下功能不保證正常工作。</string>
-    <string name="noForceShape">阻止強制形狀</string>
-    <string name="noForceShapeSummary">移除不規則圖示背後的白色背景。</string>
     <string name="noShadow">移除下方的陰影</string>
     <string name="noShadowSummary">刪除系統圖標遮罩生成的陰影。</string>
     <string name="forceLoadClockAndCalendar">強制載入時鐘和日曆圖示</string>
