@@ -299,9 +299,7 @@ class IconPackMergerActivity : ComponentActivity() {
       value = viewModel.optionsFlow,
     ) {
       ProvidePreferenceLocals(flow = it, myPreferenceTheme()) {
-        LazyColumn(modifier = Modifier.fillMaxWidth().padding(top = 8.dp)) {
-          MainPreference.run { iconPack(this@IconPackMergerActivity, true) }
-        }
+        MainPreference.IconPack(modifier = Modifier.padding(top = 8.dp), onlyOptions = true)
       }
     }
   }
