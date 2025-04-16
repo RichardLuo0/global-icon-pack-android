@@ -36,14 +36,14 @@ class NoShadow : Hook {
   override fun onHookSettings(lpp: LoadPackageParam) = removeIconShadow(lpp)
 
   private fun removeIconShadow(lpp: LoadPackageParam) {
-    ReflectHelper.hookAllMethodsOrLog(
+    ReflectHelper.hookAllMethods(
       ReflectHelper.findClass("android.util.LauncherIcons"),
       "wrapIconDrawableWithShadow",
       object : MethodReplacement() {
         override fun replaceHookedMethod(param: MethodHookParam) = param.args[0]
       },
     )
-    ReflectHelper.hookAllMethodsOrLog(
+    ReflectHelper.hookAllMethods(
       BaseIconFactory.getClazz(lpp),
       "drawIconBitmap",
       object : XC_MethodHook() {

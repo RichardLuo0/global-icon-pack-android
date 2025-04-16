@@ -64,13 +64,13 @@ class CalendarAndClockHook : Hook {
         return ip.getIcon(entry, density)
       }
     }
-    ReflectHelper.hookAllMethodsOrLog(
+    ReflectHelper.hookAllMethods(
       iconProvider,
       "getIcon",
       arrayOf(ActivityInfo::class.java),
       CollectCC { it.args[0] as? ActivityInfo },
     )
-    ReflectHelper.hookAllMethodsOrLog(
+    ReflectHelper.hookAllMethods(
       iconProvider,
       "getIcon",
       arrayOf(LauncherActivityInfo::class.java),
@@ -78,7 +78,7 @@ class CalendarAndClockHook : Hook {
     )
     // Change calendar state so it updates
     // https://cs.android.com/android/platform/superproject/+/android15-qpr1-release:frameworks/libs/systemui/iconloaderlib/src/com/android/launcher3/icons/IconProvider.java;l=89
-    ReflectHelper.hookAllMethodsOrLog(
+    ReflectHelper.hookAllMethods(
       iconProvider,
       "getSystemStateForPackage",
       arrayOf(String::class.java, String::class.java),
@@ -102,7 +102,7 @@ class CalendarAndClockHook : Hook {
       ReflectHelper.findClass("com.android.launcher3.icons.IconProvider\$IconChangeListener", lpp)
         ?.let { ReflectHelper.findMethodFirstMatch(it, "onAppIconChanged") } ?: return
 
-    ReflectHelper.hookAllMethodsOrLog(
+    ReflectHelper.hookAllMethods(
       iconChangeReceiver,
       "onReceive",
       object : XC_MethodHook() {

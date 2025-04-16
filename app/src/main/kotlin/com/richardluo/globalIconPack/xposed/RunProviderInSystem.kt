@@ -44,7 +44,7 @@ object RunProviderInSystem {
         .also { cph = it }
     }
 
-    ReflectHelper.hookAllMethodsOrLog(
+    ReflectHelper.hookAllMethods(
       contentProviderHelper,
       "getContentProviderImpl",
       arrayOf(null, String::class.java),

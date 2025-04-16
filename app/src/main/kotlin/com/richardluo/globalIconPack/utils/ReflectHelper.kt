@@ -57,22 +57,12 @@ object ReflectHelper {
         }
       }
       .getOrNull { log(it) }
+      .also {
+        if (it.isNullOrEmpty()) log("No method $methodName is found on class ${clazz?.name}")
+      }
 
   fun hookAllMethods(clazz: Class<*>?, methodName: String, hook: XC_MethodHook) =
     hookAllMethods(clazz, methodName, arrayOf(), hook)
-
-  fun hookAllMethodsOrLog(
-    clazz: Class<*>?,
-    methodName: String,
-    parameterTypes: Array<Class<*>?>,
-    hook: XC_MethodHook,
-  ) =
-    hookAllMethods(clazz, methodName, parameterTypes, hook).also {
-      if (it.isNullOrEmpty()) log("No method $methodName is found on class ${clazz?.name}")
-    }
-
-  fun hookAllMethodsOrLog(clazz: Class<*>?, methodName: String, hook: XC_MethodHook) =
-    hookAllMethodsOrLog(clazz, methodName, arrayOf(), hook)
 
   fun hookAllConstructors(clazz: Class<*>?, hook: XC_MethodHook) =
     clazz
