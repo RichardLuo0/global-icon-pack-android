@@ -1,6 +1,5 @@
 package com.richardluo.globalIconPack.iconPack
 
-import android.app.Application
 import android.content.ComponentName
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageItemInfo
@@ -21,6 +20,7 @@ class IconFallback(
   val iconScale: Float = 1f,
   val scaleOnlyForeground: Boolean,
   val nonAdaptiveScale: Float,
+  val convertToAdaptive: Boolean,
 ) {
   constructor(
     fs: FallbackSettings,
@@ -33,6 +33,7 @@ class IconFallback(
     config.scale ?: fs.iconScale,
     config.scaleOnlyForeground,
     config.nonAdaptiveScale,
+    config.convertToAdaptive,
   )
 
   fun isEmpty() =
@@ -40,7 +41,8 @@ class IconFallback(
       iconUpons.isEmpty() &&
       iconMasks.isEmpty() &&
       iconScale == 1f &&
-      nonAdaptiveScale == 1f
+      nonAdaptiveScale == 1f &&
+      convertToAdaptive == false
 
   fun orNullIfEmpty() = if (isEmpty()) null else this
 }
@@ -53,6 +55,7 @@ fun IconFallback?.withConfig(config: IconPackConfig) =
     config.scale ?: this?.iconScale ?: 1f,
     config.scaleOnlyForeground,
     config.nonAdaptiveScale,
+    config.convertToAdaptive,
   )
 
 abstract class IconPack(val pack: String, val res: Resources) {
@@ -68,7 +71,7 @@ abstract class IconPack(val pack: String, val res: Resources) {
   protected abstract fun getIconNotAdaptive(entry: IconEntry, iconDpi: Int): Drawable?
 
   fun getIcon(entry: IconEntry, iconDpi: Int) =
-    getIconNotAdaptive(entry, iconDpi)?.let { IconHelper.makeAdaptive(it, staticIcon) }
+    getIconNotAdaptive(entry, iconDpi)?.let { IconHelper.makeAdaptive(it) }
 
   fun getIcon(id: Int, iconDpi: Int) = getIconEntry(id)?.let { getIcon(it, iconDpi) }
 
@@ -79,25 +82,18 @@ abstract class IconPack(val pack: String, val res: Resources) {
   protected fun genIconFrom(baseIcon: Drawable, iconFallback: IconFallback?) =
     iconFallback?.run {
       IconHelper.processIcon(
-        res,
         baseIcon,
+        res,
         iconBacks.randomOrNull(),
         iconUpons.randomOrNull(),
         iconMasks.randomOrNull(),
         iconScale,
         scaleOnlyForeground,
         nonAdaptiveScale,
-        staticIcon,
+        convertToAdaptive,
       )
     } ?: baseIcon
 }
-
-private val staticIcon =
-  when (Application.getProcessName()) {
-    // https://cs.android.com/android/platform/superproject/+/android15-qpr1-release:frameworks/base/libs/WindowManager/Shell/src/com/android/wm/shell/startingsurface/SplashscreenContentDrawer.java;l=676
-    "com.android.systemui" -> true
-    else -> false
-  }
 
 fun getComponentName(info: PackageItemInfo) =
   if (info is ApplicationInfo) getComponentName(info.packageName)

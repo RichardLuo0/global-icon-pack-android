@@ -23,8 +23,8 @@ class XposedMain : IXposedHookLoadPackage {
     val pref = getPrefInMod()
     val hookList =
       listOfNotNull(
-        ReplaceIcon(),
-        if (pref.get(Pref.NO_FORCE_SHAPE)) NoForceShape() else null,
+        ReplaceIcon(pref.get(Pref.SHORTCUT)),
+        NoForceShape(true),
         if (pref.get(Pref.NO_SHADOW)) NoShadow() else null,
         if (pref.get(Pref.FORCE_LOAD_CLOCK_AND_CALENDAR)) CalendarAndClockHook() else null,
       )

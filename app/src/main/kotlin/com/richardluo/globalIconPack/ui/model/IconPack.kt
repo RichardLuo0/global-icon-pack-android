@@ -158,14 +158,15 @@ class IconPack(val pack: String, val res: Resources) {
         } else null)
         ?.run {
           IconHelper.processIcon(
-            res,
             baseIcon,
+            res,
             iconBacks.randomOrNull(),
             iconUpons.randomOrNull(),
             iconMasks.randomOrNull(),
             iconScale,
             scaleOnlyForeground,
             nonAdaptiveScale,
+            convertToAdaptive,
           )
         } ?: baseIcon
   }

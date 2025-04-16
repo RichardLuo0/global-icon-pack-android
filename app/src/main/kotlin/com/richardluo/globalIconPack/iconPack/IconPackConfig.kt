@@ -11,6 +11,7 @@ data class IconPackConfig(
   val scale: Float? = if (Pref.OVERRIDE_ICON_FALLBACK.second) Pref.ICON_PACK_SCALE.second else null,
   val scaleOnlyForeground: Boolean = Pref.SCALE_ONLY_FOREGROUND.second,
   val nonAdaptiveScale: Float = Pref.NON_ADAPTIVE_SCALE.second,
+  val convertToAdaptive: Boolean = Pref.CONVERT_TO_ADAPTIVE.second,
 ) {
   constructor(
     pref: SharedPreferences

@@ -367,6 +367,14 @@ object MainPreference {
     )
     mySwitchPreference(
       icon = {},
+      key = Pref.CONVERT_TO_ADAPTIVE.first,
+      enabled = { it.get(Pref.ICON_FALLBACK) },
+      defaultValue = Pref.CONVERT_TO_ADAPTIVE.second,
+      title = { OneLineText(stringResource(R.string.convertToAdaptive)) },
+      summary = { TwoLineText(stringResource(R.string.convertToAdaptiveSummary)) },
+    )
+    mySwitchPreference(
+      icon = {},
       key = Pref.OVERRIDE_ICON_FALLBACK.first,
       enabled = { it.get(Pref.ICON_FALLBACK) },
       defaultValue = Pref.OVERRIDE_ICON_FALLBACK.second,
@@ -412,13 +420,6 @@ object MainPreference {
       },
       title = { OneLineText(stringResource(R.string.pixelLauncherPackage)) },
       summary = { TwoLineText(stringResource(R.string.pixelLauncherPackageSummary)) },
-    )
-    switchPreference(
-      icon = {},
-      key = Pref.NO_FORCE_SHAPE.first,
-      defaultValue = Pref.NO_FORCE_SHAPE.second,
-      title = { OneLineText(stringResource(R.string.noForceShape)) },
-      summary = { TwoLineText(stringResource(R.string.noForceShapeSummary)) },
     )
     switchPreference(
       icon = {},

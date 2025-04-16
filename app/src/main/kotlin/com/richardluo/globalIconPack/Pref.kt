@@ -16,11 +16,11 @@ object Pref {
   val ICON_FALLBACK = "iconFallback" to true
   val SCALE_ONLY_FOREGROUND = "scaleOnlyForeground" to false
   val NON_ADAPTIVE_SCALE = "nonAdaptiveScale" to 1f
+  val CONVERT_TO_ADAPTIVE = "convertToAdaptive" to true
   val OVERRIDE_ICON_FALLBACK = "overrideIconFallback" to false
   val ICON_PACK_SCALE = "iconPackScale" to 1f
 
   val PIXEL_LAUNCHER_PACKAGE = "pixelLauncherPackage" to "com.google.android.apps.nexuslauncher"
-  val NO_FORCE_SHAPE = "noForceShape" to false
   val NO_SHADOW = "noShadow" to false
   val FORCE_LOAD_CLOCK_AND_CALENDAR = "forceLoadClockAndCalendar" to true
 }
