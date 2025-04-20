@@ -105,7 +105,7 @@ object IconHelper {
     back: Bitmap?,
     upon: Bitmap?,
     mask: Bitmap?,
-    iconScale: Float = 1f,
+    iconScale: Float,
     scaleOnlyForeground: Boolean,
     backAsAdaptiveBack: Boolean,
     nonAdaptiveScale: Float,
@@ -120,38 +120,45 @@ object IconHelper {
           upon,
           mask,
         )
+      else backAsAdaptiveBack(baseIcon, res, back, upon, mask, iconScale, backAsAdaptiveBack)
+    else {
+      val iconScale = iconScale * nonAdaptiveScale
+      if (mask != null)
+        backAsAdaptiveBack(baseIcon, res, back, upon, mask, iconScale, backAsAdaptiveBack)
       else
-        scale(baseIcon, iconScale).let {
-          if (backAsAdaptiveBack && back != null)
-            UnClipAdaptiveIconDrawable(
-              scale(back.toDrawable(res)),
-              scale(CustomDrawable(it, null, upon, mask)),
-            )
-          else
-            UnClipAdaptiveIconDrawable(
-              Color.TRANSPARENT.toDrawable(),
-              scale(CustomDrawable(it, back, upon, mask)),
-            )
-        }
-    else if (mask != null)
-      CustomAdaptiveIconDrawable(
-        Color.TRANSPARENT.toDrawable(),
-        scale(baseIcon, ADAPTIVE_ICON_VIEWPORT_SCALE * iconScale * nonAdaptiveScale),
-        back,
-        upon,
-        mask,
-      )
-    else
-      scale(baseIcon, iconScale * nonAdaptiveScale)
-        .let {
-          if (baseIcon is BitmapDrawable) CustomBitmapDrawable(res, it, back, upon, mask)
-          else CustomDrawable(it, back, upon, mask)
-        }
-        .let {
-          if (convertToAdaptive)
-            UnClipAdaptiveIconDrawable(Color.TRANSPARENT.toDrawable(), scale(it))
-          else it
-        }
+        scale(baseIcon, iconScale)
+          .let {
+            if (baseIcon is BitmapDrawable) CustomBitmapDrawable(res, it, back, upon, mask)
+            else CustomDrawable(it, back, upon, mask)
+          }
+          .let {
+            if (convertToAdaptive)
+              backAsAdaptiveBack(baseIcon, res, back, upon, mask, iconScale, backAsAdaptiveBack)
+            else it
+          }
+    }
+
+  private fun backAsAdaptiveBack(
+    baseIcon: Drawable,
+    res: Resources,
+    back: Bitmap?,
+    upon: Bitmap?,
+    mask: Bitmap?,
+    iconScale: Float,
+    backAsAdaptiveBack: Boolean,
+  ) =
+    scale(baseIcon, iconScale).let {
+      if (backAsAdaptiveBack && back != null)
+        UnClipAdaptiveIconDrawable(
+          scale(back.toDrawable(res)),
+          scale(CustomDrawable(it, null, upon, mask)),
+        )
+      else
+        UnClipAdaptiveIconDrawable(
+          Color.TRANSPARENT.toDrawable(),
+          scale(CustomDrawable(it, back, upon, mask)),
+        )
+    }
 
   fun makeAdaptive(drawable: Drawable) =
     drawable as? AdaptiveIconDrawable
