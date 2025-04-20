@@ -47,11 +47,25 @@ object IconHelper {
       paint.alpha = alpha
     }
 
-    override val cState by lazy { CState() }
+    override val cState by lazy {
+      CState(background?.constantState, foreground?.constantState, back, upon, mask)
+    }
 
-    private inner class CState : UnClipState() {
+    private class CState(
+      backgroundCS: ConstantState?,
+      foregroundCS: ConstantState?,
+      private val back: Bitmap?,
+      private val upon: Bitmap?,
+      private val mask: Bitmap?,
+    ) : UnClipState(backgroundCS, foregroundCS) {
       override fun newDrawable() =
-        CustomAdaptiveIconDrawable(newBackground(), newForeground(), back, upon, mask)
+        CustomAdaptiveIconDrawable(
+          backgroundCS?.newDrawable(),
+          foregroundCS?.newDrawable(),
+          back,
+          upon,
+          mask,
+        )
     }
   }
 
@@ -97,6 +111,21 @@ object IconHelper {
       super.setAlpha(alpha)
       paint.alpha = alpha
     }
+
+    val cState by lazy { drawable.constantState?.let { CState(it, back, upon, mask) } }
+
+    override fun getConstantState(): ConstantState? = cState
+
+    private class CState(
+      private val cs: ConstantState,
+      private val back: Bitmap?,
+      private val upon: Bitmap?,
+      private val mask: Bitmap?,
+    ) : ConstantState() {
+      override fun newDrawable(): Drawable = CustomDrawable(cs.newDrawable(), back, upon, mask)
+
+      override fun getChangingConfigurations(): Int = cs.changingConfigurations
+    }
   }
 
   fun processIcon(
@@ -120,45 +149,34 @@ object IconHelper {
           upon,
           mask,
         )
-      else backAsAdaptiveBack(baseIcon, res, back, upon, mask, iconScale, backAsAdaptiveBack)
+      else
+        makeAdaptiveBack(res, backAsAdaptiveBack, back) {
+          CustomDrawable(scale(baseIcon, iconScale), it, upon, mask)
+        }
     else {
       val iconScale = iconScale * nonAdaptiveScale
-      if (mask != null)
-        backAsAdaptiveBack(baseIcon, res, back, upon, mask, iconScale, backAsAdaptiveBack)
-      else
-        scale(baseIcon, iconScale)
-          .let {
-            if (baseIcon is BitmapDrawable) CustomBitmapDrawable(res, it, back, upon, mask)
-            else CustomDrawable(it, back, upon, mask)
-          }
-          .let {
-            if (convertToAdaptive)
-              backAsAdaptiveBack(baseIcon, res, back, upon, mask, iconScale, backAsAdaptiveBack)
-            else it
-          }
+      val makeIcon = { back: Bitmap? ->
+        scale(baseIcon, iconScale).let {
+          if (baseIcon is BitmapDrawable) CustomBitmapDrawable(res, it, back, upon, null)
+          else CustomDrawable(it, back, upon, null)
+        }
+      }
+      if (mask != null) makeAdaptiveBack(res, backAsAdaptiveBack, back, makeIcon)
+      else {
+        if (convertToAdaptive) makeAdaptiveBack(res, backAsAdaptiveBack, back, makeIcon)
+        else makeIcon(back)
+      }
     }
 
-  private fun backAsAdaptiveBack(
-    baseIcon: Drawable,
+  private fun makeAdaptiveBack(
     res: Resources,
-    back: Bitmap?,
-    upon: Bitmap?,
-    mask: Bitmap?,
-    iconScale: Float,
     backAsAdaptiveBack: Boolean,
+    back: Bitmap?,
+    makeBaseIcon: (Bitmap?) -> Drawable,
   ) =
-    scale(baseIcon, iconScale).let {
-      if (backAsAdaptiveBack && back != null)
-        UnClipAdaptiveIconDrawable(
-          scale(back.toDrawable(res)),
-          scale(CustomDrawable(it, null, upon, mask)),
-        )
-      else
-        UnClipAdaptiveIconDrawable(
-          Color.TRANSPARENT.toDrawable(),
-          scale(CustomDrawable(it, back, upon, mask)),
-        )
-    }
+    if (backAsAdaptiveBack && back != null)
+      UnClipAdaptiveIconDrawable(scale(back.toDrawable(res)), scale(makeBaseIcon(back)))
+    else UnClipAdaptiveIconDrawable(Color.TRANSPARENT.toDrawable(), scale(makeBaseIcon(null)))
 
   fun makeAdaptive(drawable: Drawable) =
     drawable as? AdaptiveIconDrawable
