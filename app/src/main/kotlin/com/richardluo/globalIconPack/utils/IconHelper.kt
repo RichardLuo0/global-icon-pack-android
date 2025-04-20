@@ -175,8 +175,8 @@ object IconHelper {
     makeBaseIcon: (Bitmap?) -> Drawable,
   ) =
     if (backAsAdaptiveBack && back != null)
-      UnClipAdaptiveIconDrawable(scale(back.toDrawable(res)), scale(makeBaseIcon(back)))
-    else UnClipAdaptiveIconDrawable(Color.TRANSPARENT.toDrawable(), scale(makeBaseIcon(null)))
+      UnClipAdaptiveIconDrawable(scale(back.toDrawable(res)), scale(makeBaseIcon(null)))
+    else UnClipAdaptiveIconDrawable(Color.TRANSPARENT.toDrawable(), scale(makeBaseIcon(back)))
 
   fun makeAdaptive(drawable: Drawable) =
     drawable as? AdaptiveIconDrawable
