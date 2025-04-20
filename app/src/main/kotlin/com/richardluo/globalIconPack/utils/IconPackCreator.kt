@@ -82,7 +82,7 @@ object IconPackCreator {
       xml.createFileAndOpenStream(contentResolver, "text/xml", "appfilter.xml").writeText(content)
     }
 
-    fun build(label: String) {
+    fun build(label: String, icon: String? = null) {
       colorMap.build()
       dimenMap.build()
       values
@@ -99,6 +99,7 @@ object IconPackCreator {
           workDir.createFileAndOpenStream(contentResolver, "text/xml", "AndroidManifest.xml"),
           packageName,
           label,
+          icon ?: "@android:drawable/sym_def_app_icon",
         )
       context.resources
         .openRawResource(R.raw.create_icon_pack)
@@ -117,6 +118,7 @@ object IconPackCreator {
   fun createIconPack(
     context: Context,
     uri: Uri,
+    icon: IconEntryWithPack?,
     label: String,
     packageName: String,
     baseIconPack: IconPack,
@@ -141,19 +143,22 @@ object IconPackCreator {
       baseIconPack.iconEntryMap.forEach { (cn, entry) ->
         val iconName = "icon_${i++}"
         val newEntry = if (newIcons.containsKey(cn)) newIcons[cn] ?: return@forEach else null
-        val finalIconEntry = newEntry?.entry ?: entry
-        val finalIconPack = newEntry?.pack ?: baseIconPack
-        finalIconPack.copyIcon(
-          finalIconEntry,
-          cn.flattenToString(),
-          iconName,
-          appfilterXML,
-          apkBuilder,
-        )
+        val entry = newEntry?.entry ?: entry
+        val pack = newEntry?.pack ?: baseIconPack
+        pack.copyIcon(entry, cn.flattenToString(), iconName, appfilterXML, apkBuilder)
       }
     apkBuilder.addXML(appfilterXML.append("</resources>").toString())
 
-    apkBuilder.build(label)
+    if (icon != null) {
+      icon.pack.copyIcon(
+        icon.entry,
+        ComponentName(packageName, "").flattenToString(),
+        "ic_launcher",
+        appfilterXML,
+        apkBuilder,
+      )
+      apkBuilder.build(label, "@drawable/ic_launcher")
+    } else apkBuilder.build(label)
   }
 
   private fun InputStream.writeTo(output: OutputStream) {

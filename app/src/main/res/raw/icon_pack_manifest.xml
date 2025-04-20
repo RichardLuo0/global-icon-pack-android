@@ -6,7 +6,9 @@
         android:minSdkVersion="31"
         android:targetSdkVersion="35" />
 
-    <application android:label="$1">
+    <application
+        android:icon="$2"
+        android:label="$1">
 
         <activity
             android:name="android.app.Activity"

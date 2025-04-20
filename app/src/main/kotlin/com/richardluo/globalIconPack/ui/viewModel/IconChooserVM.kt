@@ -33,6 +33,9 @@ class IconChooserVM(context: Application) : ContextVM(context) {
   var iconInfo by mutableStateOf<IconInfo?>(null)
     private set
 
+  var replaceIcon: (IconInfo, VariantIcon) -> Unit = { info, icon -> }
+    private set
+
   val icons =
     snapshotFlow { iconPack }
       .transform { pack ->
@@ -76,9 +79,10 @@ class IconChooserVM(context: Application) : ContextVM(context) {
     this.iconPack = iconPackCache[pack]
   }
 
-  fun open(iconInfo: IconInfo, iconPack: IconPack) {
+  fun open(iconInfo: IconInfo, iconPack: IconPack, replaceIcon: (IconInfo, VariantIcon) -> Unit) {
     this.iconInfo = iconInfo
     this.iconPack = iconPack
+    this.replaceIcon = replaceIcon
     variantSheet = true
   }
 

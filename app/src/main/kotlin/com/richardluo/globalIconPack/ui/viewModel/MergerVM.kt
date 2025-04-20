@@ -109,6 +109,7 @@ class MergerVM(context: Application) : ContextVM(context), IAppsFilter by AppsFi
       .flowOn(Dispatchers.Default)
       .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
+  var newPackIcon by mutableStateOf<IconEntryWithPack?>(null)
   var newPackName by mutableStateOf("Merged Icon Pack")
   var newPackPackage by mutableStateOf("com.dummy.iconPack")
   var installedAppsOnly by mutableStateOf(true)
@@ -143,12 +144,15 @@ class MergerVM(context: Application) : ContextVM(context), IAppsFilter by AppsFi
   fun createIconPack(uri: Uri) {
     val iconPack = baseIconPack
     iconPack ?: return
+    if (newPackName.isEmpty()) return
+    if (newPackPackage.isEmpty()) return
     viewModelScope.launch(Dispatchers.Default) {
       isCreatingApk = true
       try {
         IconPackCreator.createIconPack(
           context,
           uri,
+          newPackIcon,
           newPackName,
           newPackPackage,
           iconPack,

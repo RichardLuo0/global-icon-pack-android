@@ -1,5 +1,6 @@
 package com.richardluo.globalIconPack.ui
 
+import android.content.ComponentName
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.PredictiveBackHandler
@@ -12,6 +13,8 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,6 +23,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -36,6 +41,7 @@ import androidx.compose.material.icons.outlined.FilterList
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Settings
+import androidx.compose.material3.Card
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -59,13 +65,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.core.graphics.drawable.toBitmap
 import com.richardluo.globalIconPack.R
 import com.richardluo.globalIconPack.iconPack.IconPackApps
 import com.richardluo.globalIconPack.ui.components.AnimatedFab
@@ -79,11 +89,15 @@ import com.richardluo.globalIconPack.ui.components.IconChooserSheet
 import com.richardluo.globalIconPack.ui.components.IconPackItem
 import com.richardluo.globalIconPack.ui.components.InfoDialog
 import com.richardluo.globalIconPack.ui.components.LazyDialog
+import com.richardluo.globalIconPack.ui.components.LazyImage
 import com.richardluo.globalIconPack.ui.components.LoadingDialog
 import com.richardluo.globalIconPack.ui.components.SampleTheme
 import com.richardluo.globalIconPack.ui.components.WarnDialog
 import com.richardluo.globalIconPack.ui.components.getLabelByType
 import com.richardluo.globalIconPack.ui.components.myPreferenceTheme
+import com.richardluo.globalIconPack.ui.model.IconEntryWithPack
+import com.richardluo.globalIconPack.ui.model.IconInfo
+import com.richardluo.globalIconPack.ui.model.VariantPackIcon
 import com.richardluo.globalIconPack.ui.viewModel.IconChooserVM
 import com.richardluo.globalIconPack.ui.viewModel.MergerVM
 import com.richardluo.globalIconPack.utils.getValue
@@ -92,6 +106,7 @@ import me.zhanghai.compose.preference.ProvidePreferenceLocals
 
 class IconPackMergerActivity : ComponentActivity() {
   private val viewModel: MergerVM by viewModels()
+  private val iconChooser: IconChooserVM by viewModels()
   private val iconOptionDialogState = mutableStateOf(false)
 
   override fun onCreate(savedInstanceState: Bundle?) {
@@ -214,7 +229,7 @@ class IconPackMergerActivity : ComponentActivity() {
         }
       },
     ) { contentPadding ->
-      HorizontalPager(pagerState, contentPadding = contentPadding, beyondViewportPageCount = 1) {
+      HorizontalPager(pagerState, contentPadding = contentPadding, beyondViewportPageCount = 2) {
         val contentPadding = PaddingValues(bottom = fabHeightInDp)
         when (it) {
           Page.SelectBasePack.ordinal -> SelectBasePack(pagerState, contentPadding)
@@ -222,6 +237,8 @@ class IconPackMergerActivity : ComponentActivity() {
           Page.PackInfoForm.ordinal -> PackInfoForm(contentPadding)
         }
       }
+
+      IconChooserSheet(iconChooser) { viewModel.loadIcon(it to null) }
 
       WarnDialog(
         viewModel.warningDialogState,
@@ -265,7 +282,6 @@ class IconPackMergerActivity : ComponentActivity() {
 
   @Composable
   private fun IconList(contentPadding: PaddingValues) {
-    val iconChooser: IconChooserVM = viewModel()
     val icons = viewModel.filteredIcons.getValue(null)
     if (icons != null)
       LazyVerticalGrid(
@@ -282,7 +298,7 @@ class IconPackMergerActivity : ComponentActivity() {
               else "${viewModel.basePack}/fallback/${viewModel.iconCacheToken}",
             loadImage = { viewModel.loadIcon(pair) },
           ) {
-            iconChooser.open(info, viewModel.baseIconPack ?: return@AppIcon)
+            iconChooser.open(info, viewModel.baseIconPack ?: return@AppIcon, viewModel::saveNewIcon)
           }
         }
       }
@@ -290,8 +306,6 @@ class IconPackMergerActivity : ComponentActivity() {
       Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         CircularProgressIndicator(trackColor = MaterialTheme.colorScheme.surfaceVariant)
       }
-
-    IconChooserSheet(iconChooser, { viewModel.loadIcon(it to null) }, viewModel::saveNewIcon)
 
     LazyDialog(
       iconOptionDialogState,
@@ -304,36 +318,78 @@ class IconPackMergerActivity : ComponentActivity() {
     }
   }
 
+  private class FakeIconInfo(packageName: String) : IconInfo(ComponentName(packageName, ""), "")
+
   @Composable
   private fun PackInfoForm(contentPadding: PaddingValues) {
-    LazyColumn(
-      modifier = Modifier.fillMaxSize().padding(horizontal = 12.dp),
-      contentPadding = contentPadding,
-      verticalArrangement = Arrangement.spacedBy(12.dp),
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val focusManager = LocalFocusManager.current
+    Box(
+      modifier =
+        Modifier.fillMaxSize().padding(contentPadding).clickable(
+          indication = null,
+          interactionSource = remember { MutableInteractionSource() },
+        ) {
+          keyboardController?.hide()
+          focusManager.clearFocus(true)
+        },
+      contentAlignment = Alignment.TopCenter,
     ) {
-      item(key = "newPackName", contentType = "TextField") {
-        OutlinedTextField(
-          value = viewModel.newPackName,
-          onValueChange = { viewModel.newPackName = it },
-          label = { Text(getString(R.string.newPackName)) },
-          modifier = Modifier.fillMaxWidth(),
-        )
-      }
-      item(key = "newPackPackage", contentType = "TextField") {
-        OutlinedTextField(
-          value = viewModel.newPackPackage,
-          onValueChange = { viewModel.newPackPackage = it },
-          label = { Text(getString(R.string.newPackPackage)) },
-          modifier = Modifier.fillMaxWidth(),
-        )
-      }
-      item(key = "installedAppsOnly", contentType = "Checkbox") {
-        Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-          Checkbox(
-            checked = viewModel.installedAppsOnly,
-            onCheckedChange = { viewModel.installedAppsOnly = it },
+      Card(modifier = Modifier.padding(8.dp).wrapContentHeight()) {
+        Column(
+          modifier = Modifier.padding(12.dp),
+          verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+          val info = remember(viewModel.basePack) { viewModel.basePack?.let { FakeIconInfo(it) } }
+          if (info != null)
+            LazyImage(
+              key = viewModel.newPackIcon,
+              contentDescription = "newPackIcon",
+              modifier =
+                Modifier.align(Alignment.CenterHorizontally)
+                  .clickable {
+                    val iconPack = viewModel.baseIconPack ?: return@clickable
+                    iconChooser.open(info, iconPack) { info, icon ->
+                      viewModel.newPackIcon =
+                        if (icon is VariantPackIcon) IconEntryWithPack(icon.entry, icon.pack)
+                        else null
+                    }
+                  }
+                  .padding(12.dp)
+                  .size(72.dp),
+              contentScale = ContentScale.Crop,
+              loadImage = {
+                viewModel.newPackIcon?.let { viewModel.loadIcon(info to it) }
+                  ?: getDrawable(android.R.drawable.sym_def_app_icon)!!.toBitmap().asImageBitmap()
+              },
+            )
+          OutlinedTextField(
+            value = viewModel.newPackName,
+            onValueChange = { viewModel.newPackName = it },
+            label = { Text(getString(R.string.newPackName)) },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
           )
-          Text(text = getString(R.string.installedAppsOnly), modifier = Modifier.fillMaxWidth())
+          OutlinedTextField(
+            value = viewModel.newPackPackage,
+            onValueChange = { viewModel.newPackPackage = it },
+            label = { Text(getString(R.string.newPackPackage)) },
+            modifier = Modifier.fillMaxWidth(),
+            singleLine = true,
+          )
+          Row(
+            modifier =
+              Modifier.fillMaxWidth().clickable {
+                viewModel.installedAppsOnly = !viewModel.installedAppsOnly
+              },
+            verticalAlignment = Alignment.CenterVertically,
+          ) {
+            Checkbox(
+              checked = viewModel.installedAppsOnly,
+              onCheckedChange = { viewModel.installedAppsOnly = it },
+            )
+            Text(text = getString(R.string.installedAppsOnly), modifier = Modifier.fillMaxWidth())
+          }
         }
       }
     }

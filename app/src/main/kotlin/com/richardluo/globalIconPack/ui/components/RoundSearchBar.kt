@@ -27,11 +27,11 @@ fun RoundSearchBar(
   val keyboardController = LocalSoftwareKeyboardController.current
   TextField(
     value = state.value,
-    onValueChange = { state.value = it.replace("\n", "") },
+    onValueChange = { state.value = it },
     placeholder = { Text(placeHolder) },
     leadingIcon = leadingIcon,
     trailingIcon = trailingIcon,
-    maxLines = 1,
+    singleLine = true,
     shape = MaterialTheme.shapes.extraLarge,
     modifier = modifier.fillMaxWidth().padding(horizontal = 12.dp),
     colors =

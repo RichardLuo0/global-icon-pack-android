@@ -173,7 +173,7 @@ class IconVariantActivity : ComponentActivity() {
               key = entry?.entry?.name,
               loadImage = { viewModel.loadIcon(pair) },
             ) {
-              iconChooser.open(info, viewModel.iconPack)
+              iconChooser.open(info, viewModel.iconPack, viewModel::replaceIcon)
             }
           }
         }
@@ -183,7 +183,7 @@ class IconVariantActivity : ComponentActivity() {
         }
     }
 
-    IconChooserSheet(iconChooser, { viewModel.loadIcon(it to null) }, viewModel::replaceIcon)
+    IconChooserSheet(iconChooser) { viewModel.loadIcon(it to null) }
 
     WarnDialog(
       resetWarnDialogState,
