@@ -31,6 +31,7 @@ This module is designed to extend the icon packs throughout the entire system.
 3. Open Global Icon Pack, choose an icon pack.
 4. Open the three dot menu, click each of `Restart xxx`.
 
+* Use share mode if possible. The provider is provided as a fallback in case share mode doesn't work. Local mode is only reserved for testing and you can't use icon variants with this mode (However it maybe faster if there are only a few icon records).
 * You can long press icon in icon chooser bottom sheet to try as calendar icon.
 * Recent screen will use your default launcher unless you use quickswitch. So you will need to select pixel launcher for that to work.
 * Pixel launcher saves its icon database in `/data/data/com.google.android.apps.nexuslauncher/databases/app_icons.db`.
