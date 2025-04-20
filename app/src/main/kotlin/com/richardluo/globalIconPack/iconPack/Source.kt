@@ -62,43 +62,42 @@ fun IconFallback?.withConfig(config: IconPackConfig) =
     config.convertToAdaptive,
   )
 
-abstract class IconPack(val pack: String, val res: Resources) {
+interface Source {
+  fun getId(cn: ComponentName): Int?
 
-  abstract fun getId(cn: ComponentName): Int?
+  fun getId(cnList: List<ComponentName>): Array<Int?>
 
-  abstract fun getId(cnList: List<ComponentName>): Array<Int?>
-
-  abstract fun getIconEntry(id: Int): IconEntry?
+  fun getIconEntry(id: Int): IconEntry?
 
   fun getIconEntry(cn: ComponentName) = getId(cn)?.let { getIconEntry(it) }
 
-  protected abstract fun getIconNotAdaptive(entry: IconEntry, iconDpi: Int): Drawable?
+  fun getIconNotAdaptive(entry: IconEntry, iconDpi: Int): Drawable?
 
   fun getIcon(entry: IconEntry, iconDpi: Int) =
     getIconNotAdaptive(entry, iconDpi)?.let { IconHelper.makeAdaptive(it) }
 
   fun getIcon(id: Int, iconDpi: Int) = getIconEntry(id)?.let { getIcon(it, iconDpi) }
 
-  abstract fun getIcon(name: String, iconDpi: Int = 0): Drawable?
+  fun getIcon(name: String, iconDpi: Int = 0): Drawable?
 
-  abstract fun genIconFrom(baseIcon: Drawable): Drawable
-
-  protected fun genIconFrom(baseIcon: Drawable, iconFallback: IconFallback?) =
-    iconFallback?.run {
-      IconHelper.processIcon(
-        baseIcon,
-        res,
-        iconBacks.randomOrNull(),
-        iconUpons.randomOrNull(),
-        iconMasks.randomOrNull(),
-        iconScale,
-        scaleOnlyForeground,
-        backAsAdaptiveBack,
-        nonAdaptiveScale,
-        convertToAdaptive,
-      )
-    } ?: baseIcon
+  fun genIconFrom(baseIcon: Drawable): Drawable
 }
+
+fun genIconFrom(res: Resources, baseIcon: Drawable, iconFallback: IconFallback?) =
+  iconFallback?.run {
+    IconHelper.processIcon(
+      baseIcon,
+      res,
+      iconBacks.randomOrNull(),
+      iconUpons.randomOrNull(),
+      iconMasks.randomOrNull(),
+      iconScale,
+      scaleOnlyForeground,
+      backAsAdaptiveBack,
+      nonAdaptiveScale,
+      convertToAdaptive,
+    )
+  } ?: baseIcon
 
 fun getComponentName(info: PackageItemInfo) =
   if (info is ApplicationInfo) getComponentName(info.packageName)

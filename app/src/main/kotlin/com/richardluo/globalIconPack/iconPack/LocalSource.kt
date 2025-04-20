@@ -12,7 +12,6 @@ import com.richardluo.globalIconPack.iconPack.database.ClockMetadata
 import com.richardluo.globalIconPack.iconPack.database.FallbackSettings
 import com.richardluo.globalIconPack.iconPack.database.IconEntry
 import com.richardluo.globalIconPack.iconPack.database.NormalIconEntry
-import com.richardluo.globalIconPack.reflect.Resources.getDrawableForDensity
 import com.richardluo.globalIconPack.utils.get
 import com.richardluo.globalIconPack.utils.getOrNull
 import com.richardluo.globalIconPack.utils.log
@@ -20,15 +19,13 @@ import com.richardluo.globalIconPack.utils.unflattenFromString
 import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserFactory
 
-class LocalIconPack(pack: String, res: Resources, config: IconPackConfig = defaultIconPackConfig) :
-  IconPack(pack, res) {
+class LocalSource(pack: String, config: IconPackConfig = defaultIconPackConfig) :
+  Source, ResourceOwner(pack) {
   private val iconPackAsFallback = config.iconPackAsFallback
   private val iconFallback: IconFallback?
 
   private val indexMap: Map<ComponentName, Int>
   private val iconEntryList: List<IconEntry>
-
-  private val idCache = mutableMapOf<String, Int>()
 
   init {
     val info = loadIconPack(res, pack)
@@ -55,14 +52,11 @@ class LocalIconPack(pack: String, res: Resources, config: IconPackConfig = defau
   override fun getIconNotAdaptive(entry: IconEntry, iconDpi: Int) =
     entry.getIcon { getIcon(it, iconDpi) }
 
-  override fun getIcon(name: String, iconDpi: Int) =
-    getDrawableId(name).takeIf { it != 0 }?.let { getDrawableForDensity(res, it, iconDpi, null) }
+  override fun getIcon(name: String, iconDpi: Int) = getIconById(getDrawableId(name), iconDpi)
 
-  @SuppressLint("DiscouragedApi")
-  private fun getDrawableId(name: String) =
-    idCache.getOrPut(name) { res.getIdentifier(name, "drawable", pack) }
+  private fun getDrawableId(name: String) = getIdByName(name)
 
-  override fun genIconFrom(baseIcon: Drawable) = genIconFrom(baseIcon, iconFallback)
+  override fun genIconFrom(baseIcon: Drawable) = genIconFrom(res, baseIcon, iconFallback)
 }
 
 interface IconPackInfo {

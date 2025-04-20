@@ -59,9 +59,9 @@ class NormalIconEntry(override val name: String) : IconEntry {
   override fun toByteArray(): ByteArray =
     ByteArrayOutputStream()
       .also {
-        DataOutputStream(it).apply {
-          writeByte(type.ordinal)
-          writeUTF(name)
+        DataOutputStream(it).use {
+          it.writeByte(type.ordinal)
+          it.writeUTF(name)
         }
       }
       .toByteArray()
@@ -94,9 +94,9 @@ class CalendarIconEntry(override val name: String) : IconEntry {
   override fun toByteArray(): ByteArray =
     ByteArrayOutputStream()
       .also {
-        DataOutputStream(it).apply {
-          writeByte(type.ordinal)
-          writeUTF(name)
+        DataOutputStream(it).use {
+          it.writeByte(type.ordinal)
+          it.writeUTF(name)
         }
       }
       .toByteArray()
@@ -147,15 +147,15 @@ class ClockIconEntry(override val name: String, private val metadata: ClockMetad
   override fun toByteArray(): ByteArray =
     ByteArrayOutputStream()
       .also {
-        DataOutputStream(it).apply {
-          writeByte(type.ordinal)
-          writeUTF(name)
-          writeInt(metadata.hourLayerIndex)
-          writeInt(metadata.minuteLayerIndex)
-          writeInt(metadata.secondLayerIndex)
-          writeInt(metadata.defaultHour)
-          writeInt(metadata.defaultMinute)
-          writeInt(metadata.defaultSecond)
+        DataOutputStream(it).use {
+          it.writeByte(type.ordinal)
+          it.writeUTF(name)
+          it.writeInt(metadata.hourLayerIndex)
+          it.writeInt(metadata.minuteLayerIndex)
+          it.writeInt(metadata.secondLayerIndex)
+          it.writeInt(metadata.defaultHour)
+          it.writeInt(metadata.defaultMinute)
+          it.writeInt(metadata.defaultSecond)
         }
       }
       .toByteArray()

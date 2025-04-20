@@ -14,7 +14,7 @@ import android.os.Process
 import android.os.UserManager
 import com.richardluo.globalIconPack.iconPack.database.IconEntry
 import com.richardluo.globalIconPack.iconPack.getComponentName
-import com.richardluo.globalIconPack.iconPack.getIP
+import com.richardluo.globalIconPack.iconPack.getSC
 import com.richardluo.globalIconPack.utils.MethodReplacement
 import com.richardluo.globalIconPack.utils.ReflectHelper
 import com.richardluo.globalIconPack.utils.asType
@@ -36,12 +36,13 @@ class CalendarAndClockHook : Hook {
     val mCalendar = ReflectHelper.findField(iconProvider, "mCalendar")
     val mClock = ReflectHelper.findField(iconProvider, "mClock")
     // Collect calendar and clock packages
-    class CollectCC(val getActivityInfo: (MethodHookParam) -> ActivityInfo?) : MethodReplacement() {
+    class CollectCC(val getComponentName: (MethodHookParam) -> ComponentName?) :
+      MethodReplacement() {
       override fun replaceHookedMethod(param: MethodHookParam): Drawable? {
-        val ip = getIP() ?: return param.callOriginalMethod()
-        val ai = getActivityInfo(param) ?: return param.callOriginalMethod()
-        val packageName = ai.packageName
-        val entry = ip.getIconEntry(getComponentName(ai))
+        val sc = getSC() ?: return param.callOriginalMethod()
+        val cn = getComponentName(param) ?: return param.callOriginalMethod()
+        val packageName = cn.packageName
+        val entry = sc.getIconEntry(cn)
 
         if (entry == null) {
           // Not in icon pack, update the original package
@@ -50,7 +51,7 @@ class CalendarAndClockHook : Hook {
               calendars.add(packageName)
             mClock?.getAs<ComponentName>(param.thisObject)?.packageName -> clocks.add(packageName)
           }
-          return param.callOriginalMethod<Drawable?>()?.let { ip.genIconFrom(it) }
+          return param.callOriginalMethod<Drawable?>()?.let { sc.genIconFrom(it) }
         }
 
         val density =
@@ -61,20 +62,20 @@ class CalendarAndClockHook : Hook {
           IconEntry.Type.Clock -> clocks.add(packageName)
           else -> {}
         }
-        return ip.getIcon(entry, density)
+        return sc.getIcon(entry, density)
       }
     }
     ReflectHelper.hookAllMethods(
       iconProvider,
       "getIcon",
       arrayOf(ActivityInfo::class.java),
-      CollectCC { it.args[0] as? ActivityInfo },
+      CollectCC { it.args[0].asType<ActivityInfo>()?.let { info -> getComponentName(info) } },
     )
     ReflectHelper.hookAllMethods(
       iconProvider,
       "getIcon",
       arrayOf(LauncherActivityInfo::class.java),
-      CollectCC { it.args[0].asType<LauncherActivityInfo>()?.activityInfo },
+      CollectCC { it.args[0].asType<LauncherActivityInfo>()?.componentName },
     )
     // Change calendar state so it updates
     // https://cs.android.com/android/platform/superproject/+/android15-qpr1-release:frameworks/libs/systemui/iconloaderlib/src/com/android/launcher3/icons/IconProvider.java;l=89

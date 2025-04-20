@@ -55,7 +55,7 @@ class MergerVM(context: Application) : ContextVM(context), IAppsFilter by AppsFi
     set(value) {
       if (value == null || baseIconPack?.pack == value) return
       changedIcons.clear()
-      baseIconPack = iconPackCache.get(value)
+      baseIconPack = iconPackCache[value]
     }
 
   val expandSearchBar = mutableStateOf(false)

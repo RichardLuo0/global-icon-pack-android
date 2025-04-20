@@ -8,32 +8,31 @@ import com.richardluo.globalIconPack.get
 import com.richardluo.globalIconPack.utils.WorldPreference
 import com.richardluo.globalIconPack.utils.log
 
-@Volatile private var ip: IconPack? = null
+@Volatile private var sc: Source? = null
 
-fun getIP(): IconPack? {
-  if (ip == null) {
-    synchronized(LocalIconPack::class) {
-      if (ip == null) {
-        initIP()
+fun getSC(): Source? {
+  if (sc == null) {
+    synchronized(LocalSource::class) {
+      if (sc == null) {
+        initSC()
       }
     }
   }
-  return ip
+  return sc
 }
 
-private fun initIP() {
-  val pm = AndroidAppHelper.currentApplication()?.packageManager ?: return
+private fun initSC() {
+  AndroidAppHelper.currentApplication() ?: return
   runCatching {
       val pref = WorldPreference.getPrefInMod()
       val pack =
         pref.get(Pref.ICON_PACK).takeIf { it.isNotEmpty() } ?: throw Exception("No icon pack set")
-      val res = pm.getResourcesForApplication(pack)
       val config = IconPackConfig(pref)
-      ip =
+      sc =
         when (pref.get(Pref.MODE)) {
-          MODE_SHARE -> DatabaseIconPack(pack, res, config)
-          MODE_PROVIDER -> createRemoteIconPack(pack, res, config)
-          else -> LocalIconPack(pack, res, config)
+          MODE_SHARE -> DatabaseSource(pack, config)
+          MODE_PROVIDER -> createRemoteIconPack(pack, config)
+          else -> LocalSource(pack, config)
         }
     }
     .onFailure { log(it) }

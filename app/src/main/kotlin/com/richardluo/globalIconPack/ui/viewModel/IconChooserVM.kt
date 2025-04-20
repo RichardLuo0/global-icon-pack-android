@@ -73,7 +73,7 @@ class IconChooserVM(context: Application) : ContextVM(context) {
   suspend fun loadIcon(icon: VariantPackIcon) = iconCache.loadIcon(icon.entry, icon.pack)
 
   fun setPack(pack: String) {
-    this.iconPack = iconPackCache.get(pack)
+    this.iconPack = iconPackCache[pack]
   }
 
   fun open(iconInfo: IconInfo, iconPack: IconPack) {

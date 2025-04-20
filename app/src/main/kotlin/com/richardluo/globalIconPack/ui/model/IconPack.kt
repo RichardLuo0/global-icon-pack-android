@@ -6,13 +6,10 @@ import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.Bitmap.CompressFormat
 import android.graphics.drawable.Drawable
-import com.richardluo.globalIconPack.iconPack.IconEntryWithId
 import com.richardluo.globalIconPack.iconPack.IconFallback
 import com.richardluo.globalIconPack.iconPack.IconPackConfig
-import com.richardluo.globalIconPack.iconPack.database.ClockIconEntry
 import com.richardluo.globalIconPack.iconPack.database.FallbackSettings
 import com.richardluo.globalIconPack.iconPack.database.IconEntry
-import com.richardluo.globalIconPack.iconPack.database.NormalIconEntry
 import com.richardluo.globalIconPack.iconPack.defaultIconPackConfig
 import com.richardluo.globalIconPack.iconPack.getComponentName
 import com.richardluo.globalIconPack.iconPack.loadIconPack
@@ -25,6 +22,8 @@ import com.richardluo.globalIconPack.utils.isHighTwoByte
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import org.xmlpull.v1.XmlPullParser
+
+private class IconEntryWithId(val entry: IconEntry, val id: Int) : IconEntry by entry
 
 class IconPack(val pack: String, val res: Resources) {
   val info by lazy { loadIconPack(res, pack) }
@@ -43,19 +42,23 @@ class IconPack(val pack: String, val res: Resources) {
         ?: if (iconPackAsFallback) iconEntryMap[getComponentName(cn.packageName)] else null)
       ?.let { entry -> makeValidEntry(entry) }
 
-  fun makeValidEntry(entry: IconEntry) =
-    // Get id now because it will be used anyway, in the meantime exclude those without valid
-    // drawable id
-    when (entry) {
-      is NormalIconEntry,
-      is ClockIconEntry ->
-        getDrawableId(entry.name).takeIf { it != 0 }?.let { IconEntryWithId(entry, it) }
-      else -> entry
-    }
+  fun makeValidEntry(entry: IconEntry, expectId: Int? = null): IconEntry? {
+    // Get id now because it will be used anyway
+    // Exclude those without valid drawable id
+    val id =
+      when (entry.type) {
+        IconEntry.Type.Normal,
+        IconEntry.Type.Clock -> getDrawableId(entry.name).takeIf { it != 0 } ?: return null
+        else -> 0
+      }
+    return if (expectId == null || id == expectId) {
+      id.takeIf { it != 0 }?.let { IconEntryWithId(entry, it) } ?: entry
+    } else null
+  }
 
   fun getIcon(entry: IconEntry, iconDpi: Int) =
     when (entry) {
-      is IconEntryWithId -> entry.getIconWithId { res.getDrawableForDensity(it, iconDpi, null) }
+      is IconEntryWithId -> entry.getIcon { res.getDrawableForDensity(entry.id, iconDpi, null) }
       else -> entry.getIcon { getIcon(it, iconDpi) }
     }?.let { IconHelper.makeAdaptive(it) }
 
@@ -63,7 +66,7 @@ class IconPack(val pack: String, val res: Resources) {
     getDrawableId(name).takeIf { it != 0 }?.let { res.getDrawableForDensity(it, iconDpi, null) }
 
   @SuppressLint("DiscouragedApi")
-  private fun getDrawableId(name: String) =
+  fun getDrawableId(name: String) =
     idCache.getOrPut(name) { res.getIdentifier(name, "drawable", pack) }
 
   fun genIconFrom(baseIcon: Drawable, config: IconPackConfig) =

@@ -16,7 +16,7 @@ import com.richardluo.globalIconPack.Pref
 import com.richardluo.globalIconPack.R
 import com.richardluo.globalIconPack.get
 import com.richardluo.globalIconPack.iconPack.BootReceiver
-import com.richardluo.globalIconPack.iconPack.DatabaseIconPack
+import com.richardluo.globalIconPack.iconPack.DatabaseSource
 import com.richardluo.globalIconPack.iconPack.KeepAliveService
 import com.richardluo.globalIconPack.iconPack.database.IconPackDB
 import com.richardluo.globalIconPack.utils.AppPreference
@@ -63,7 +63,7 @@ class MainVM(context: Application) : ContextVM(context) {
                 KeepAliveService.stopForeground(context)
                 startOnBoot(false)
                 try {
-                  val shareDB = DatabaseIconPack.DATABASE_PATH
+                  val shareDB = DatabaseSource.DATABASE_PATH
                   val shareDBFile = File(shareDB)
                   if (!shareDBFile.exists()) {
                     if (iconPackDBLazy.isInitialized()) {
@@ -134,7 +134,7 @@ class MainVM(context: Application) : ContextVM(context) {
     runCatchingToast(context) {
       if (pack.isEmpty()) return
       iconPackCache.delete(pack)
-      iconPackDBLazy.value.onIconPackChange(iconPackCache.get(pack))
+      iconPackDBLazy.value.onIconPackChange(iconPackCache[pack])
     }
   }
 }

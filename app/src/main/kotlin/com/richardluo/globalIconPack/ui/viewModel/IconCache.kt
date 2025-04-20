@@ -57,10 +57,10 @@ class IconCache(private val context: Context, factor: Double = 1.0 / 8) {
       } ?: emptyImageBitmap
     }
 
-  suspend fun loadIcon(entry: IconEntry, basePack: IconPack) =
-    bitmapCache.getOrPut("${basePack.pack}/icon/${entry.name}") {
+  suspend fun loadIcon(entry: IconEntry, pack: IconPack) =
+    bitmapCache.getOrPut("${pack.pack}/icon/${entry.name}") {
       withContext(Dispatchers.IO) {
-        basePack.getIcon(entry, 0)?.toSafeBitmap()?.asImageBitmap() ?: emptyImageBitmap
+        pack.getIcon(entry, 0)?.toSafeBitmap()?.asImageBitmap() ?: emptyImageBitmap
       }
     }
 

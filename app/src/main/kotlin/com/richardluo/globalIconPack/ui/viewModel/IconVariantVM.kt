@@ -20,6 +20,7 @@ import com.richardluo.globalIconPack.iconPack.database.IconPackDB
 import com.richardluo.globalIconPack.iconPack.database.IconPackDB.GetIconColumn
 import com.richardluo.globalIconPack.iconPack.database.NormalIconEntry
 import com.richardluo.globalIconPack.iconPack.database.getBlob
+import com.richardluo.globalIconPack.iconPack.database.getInt
 import com.richardluo.globalIconPack.iconPack.database.getString
 import com.richardluo.globalIconPack.iconPack.database.useFirstRow
 import com.richardluo.globalIconPack.iconPack.database.useMapToArray
@@ -56,7 +57,7 @@ class IconVariantVM(context: Application) : ContextVM(context), IAppsFilter by A
   private val fallbackIconCache = IconCache(context, 1.0 / 16)
   private val iconPackDB by get { IconPackDB(context) }
 
-  val iconPack = iconPackCache.get(WorldPreference.getPrefInApp(context).get(Pref.ICON_PACK))
+  val iconPack = iconPackCache[WorldPreference.getPrefInApp(context).get(Pref.ICON_PACK)]
   private val pack
     get() = iconPack.pack
 
@@ -98,11 +99,14 @@ class IconVariantVM(context: Application) : ContextVM(context), IAppsFilter by A
       .stateIn(viewModelScope, SharingStarted.Lazily, false)
 
   private fun getIconEntry(cnList: List<ComponentName>) =
-    iconPackDB.getIcon(pack, cnList, iconPackConfig.iconPackAsFallback).useMapToArray(cnList.size) {
-      val entry = IconEntry.from(it.getBlob(GetIconColumn.Entry))
-      val pack = it.getString(GetIconColumn.Pack)
-      val iconPack = if (pack.isNotEmpty()) iconPackCache.get(pack) else iconPack
-      iconPack.makeValidEntry(entry)?.let { entry -> IconEntryWithPack(entry, iconPack) }
+    iconPackDB.getIcon(pack, cnList, iconPackConfig.iconPackAsFallback).useMapToArray(
+      cnList.size
+    ) { c ->
+      val entry = IconEntry.from(c.getBlob(GetIconColumn.Entry))
+      val pack = c.getString(GetIconColumn.Pack)
+      val id = c.getInt(GetIconColumn.Id).takeIf { it != 0 }
+      val iconPack = if (pack.isNotEmpty()) iconPackCache[pack] else iconPack
+      iconPack.makeValidEntry(entry, id)?.let { IconEntryWithPack(it, iconPack) }
     }
 
   suspend fun loadIcon(pair: Pair<IconInfo, IconEntryWithPack?>) =
@@ -126,7 +130,7 @@ class IconVariantVM(context: Application) : ContextVM(context), IAppsFilter by A
       runCatchingToast(context) {
         when (icon) {
           is OriginalIcon -> iconPackDB.deleteIcon(pack, cn)
-          is VariantPackIcon -> iconPackDB.insertOrUpdateIcon(pack, cn, icon.entry, icon.pack.pack)
+          is VariantPackIcon -> iconPackDB.insertOrUpdateIcon(pack, cn, icon.entry, icon.pack)
         }
       }
     }
@@ -184,7 +188,12 @@ class IconVariantVM(context: Application) : ContextVM(context), IAppsFilter by A
                   "calendar" -> CalendarIconEntry(parser["prefix"] ?: continue)
                   else -> continue
                 }
-              insertOrUpdateIcon(pack, cn, entry, parser["pack"] ?: "")
+              insertOrUpdateIcon(
+                pack,
+                cn,
+                entry,
+                parser["pack"]?.let { iconPackCache[it] } ?: iconPack,
+              )
             }
           }
         }
