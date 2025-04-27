@@ -51,10 +51,9 @@ class MainVM(context: Application) : ContextVM(context) {
     runCatching { WorldPreference.getPrefInApp(context) }
       .getOrNull()
       ?.getPreferenceFlow()
-      ?.also { prefFlow ->
+      ?.apply {
         @OptIn(ExperimentalCoroutinesApi::class)
-        prefFlow
-          .mapLatest { Pair(it.get(Pref.MODE), it.get(Pref.ICON_PACK)) }
+        mapLatest { Pair(it.get(Pref.MODE), it.get(Pref.ICON_PACK)) }
           .distinctUntilChanged()
           .onEach { (mode, pack) ->
             waiting++
@@ -62,48 +61,7 @@ class MainVM(context: Application) : ContextVM(context) {
               MODE_SHARE -> {
                 KeepAliveService.stopForeground(context)
                 startOnBoot(false)
-                try {
-                  val shareDB = DatabaseSource.DATABASE_PATH
-                  val shareDBFile = File(shareDB)
-                  if (!shareDBFile.exists()) {
-                    if (iconPackDBLazy.isInitialized()) {
-                      iconPackDBLazy.value.close()
-                      iconPackDBLazy = update { IconPackDB(context) }
-                    }
-                    val parent = shareDBFile.parent
-                    val oldDB =
-                      context
-                        .createDeviceProtectedStorageContext()
-                        .getDatabasePath(AppPref.PATH.second)
-                        .path
-                    val uid = android.os.Process.myUid()
-                    val result =
-                      Shell.cmd(
-                          "set -e",
-                          "mkdir -p $parent",
-                          "chown $uid:$uid $parent && chmod 0775 $parent && chcon u:object_r:magisk_file:s0 $parent",
-                          "if [ -f $oldDB ]; then cp $oldDB $shareDB; fi",
-                          "if ! [ -f $shareDB ]; then touch $shareDB; fi",
-                          "chown $uid:$uid $shareDB && chmod 0666 $shareDB && chcon u:object_r:magisk_file:s0 $shareDB",
-                          "if [ -f $oldDB ]; then rm $oldDB; fi",
-                        )
-                        .exec()
-                    if (!result.isSuccess)
-                      throw Exception(
-                        "Shared database creation failed: code: ${result.code} err: ${result.err.joinToString("\n")} out: ${result.out.joinToString("\n")}"
-                      )
-                  }
-                  updateDB(pack)
-                  AppPreference.get(context).edit { putString(AppPref.PATH.first, shareDB) }
-                } catch (t: Throwable) {
-                  log(t)
-                  withContext(Dispatchers.Main) {
-                    Toast.makeText(context, R.string.errorOnShareMode, Toast.LENGTH_LONG).show()
-                  }
-                  prefFlow.update {
-                    it.toMutablePreferences().apply { set(Pref.MODE.first, MODE_PROVIDER) }
-                  }
-                }
+                enableShareMode(pack)
               }
               MODE_PROVIDER -> {
                 KeepAliveService.startForeground(context)
@@ -120,6 +78,46 @@ class MainVM(context: Application) : ContextVM(context) {
           .flowOn(Dispatchers.IO)
           .launchIn(viewModelScope)
       }
+
+  private suspend fun enableShareMode(pack: String) {
+    try {
+      val shareDB = DatabaseSource.DATABASE_PATH
+      val shareDBFile = File(shareDB)
+      if (!shareDBFile.exists()) {
+        if (iconPackDBLazy.isInitialized()) {
+          iconPackDBLazy.value.close()
+          iconPackDBLazy = update { IconPackDB(context) }
+        }
+        val parent = shareDBFile.parent
+        val oldDB =
+          context.createDeviceProtectedStorageContext().getDatabasePath(AppPref.PATH.second).path
+        val uid = android.os.Process.myUid()
+        val result =
+          Shell.cmd(
+              "set -e",
+              "mkdir -p $parent",
+              "chown $uid:$uid $parent && chmod 0775 $parent && chcon u:object_r:magisk_file:s0 $parent",
+              "if [ -f $oldDB ]; then cp $oldDB $shareDB; fi",
+              "if ! [ -f $shareDB ]; then touch $shareDB; fi",
+              "chown $uid:$uid $shareDB && chmod 0666 $shareDB && chcon u:object_r:magisk_file:s0 $shareDB",
+              "if [ -f $oldDB ]; then rm $oldDB; fi",
+            )
+            .exec()
+        if (!result.isSuccess)
+          throw Exception(
+            "Shared database creation failed: code: ${result.code} err: ${result.err.joinToString("\n")} out: ${result.out.joinToString("\n")}"
+          )
+      }
+      updateDB(pack)
+      AppPreference.get(context).edit { putString(AppPref.PATH.first, shareDB) }
+    } catch (t: Throwable) {
+      log(t)
+      withContext(Dispatchers.Main) {
+        Toast.makeText(context, R.string.errorOnShareMode, Toast.LENGTH_LONG).show()
+      }
+      prefFlow?.update { it.toMutablePreferences().apply { set(Pref.MODE.first, MODE_PROVIDER) } }
+    }
+  }
 
   private fun startOnBoot(enable: Boolean = true) {
     context.packageManager.setComponentEnabledSetting(
