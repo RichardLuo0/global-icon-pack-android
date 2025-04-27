@@ -3,6 +3,7 @@ package com.richardluo.globalIconPack.xposed
 import android.graphics.Color
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.LayerDrawable
+import android.os.Build
 import com.richardluo.globalIconPack.utils.ReflectHelper
 import com.richardluo.globalIconPack.utils.asType
 import de.robv.android.xposed.XC_MethodHook
@@ -36,6 +37,7 @@ class NoForceShape(val drawWholeIconForTransparentBackgroundInSplashScreen: Bool
 
   override fun onHookSettings(lpp: LoadPackageParam) {
     // Fix accessibility
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.VANILLA_ICE_CREAM) return
     val adaptiveIcon =
       ReflectHelper.findClass("com.android.settingslib.widget.AdaptiveIcon", lpp) ?: return
     val extractOriIcon =

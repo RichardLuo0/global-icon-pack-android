@@ -15,6 +15,7 @@ import android.content.pm.ServiceInfo
 import android.content.pm.ShortcutInfo
 import android.graphics.drawable.Drawable
 import android.os.Parcel
+import android.os.Parcelable
 import com.richardluo.globalIconPack.iconPack.Source
 import com.richardluo.globalIconPack.iconPack.getComponentName
 import com.richardluo.globalIconPack.iconPack.getSC
@@ -32,7 +33,7 @@ import com.richardluo.globalIconPack.xposed.ReplaceIcon.Companion.NOT_IN_SC
 import de.robv.android.xposed.XC_MethodHook
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 
-typealias ListReplacer = (list: List<Any?>, sc: Source) -> Unit
+typealias ListReplacer = (list: Iterable<Any?>, sc: Source) -> Unit
 
 // Resource id always starts with 0x7f, use it to indicate that this is an icon
 // Assume the icon res id is only used in getDrawable()
@@ -51,32 +52,30 @@ class ReplaceIcon(val shortcut: Boolean) : Hook {
 
   private val listReplacerMap = run {
     val defaultReplacer: ListReplacer = { list, sc ->
-      replaceItemInfo(list.mapNotNull { it.asType<PackageItemInfo>() }, sc)
+      replaceIconInItemInfoList(list.mapNotNull { it.asType<PackageItemInfo>() }, sc)
     }
     val componentInfoReplacer: ListReplacer = { list, sc ->
       defaultReplacer(list, sc)
-      replaceItemInfo(list.mapNotNull { it.asType<ComponentInfo>()?.applicationInfo }, sc)
+      replaceIconInItemInfoList(list.mapNotNull { it.asType<ComponentInfo>()?.applicationInfo }, sc)
     }
     val resolveInfoReplacer: ListReplacer? = run {
-      val iconResourceIdF =
-        ReflectHelper.findField(ResolveInfo::class.java, "iconResourceId") ?: return@run null
       { list, sc ->
         val riList = list.mapNotNull { it.asType<ResolveInfo>() }
         componentInfoReplacer(riList.map { it.getComponentInfo() }, sc)
-        riList.forEach { ri ->
-          val icon = ri.getComponentInfo().icon.takeIf { it != 0 } ?: return@forEach
-          ri.icon = icon
-          iconResourceIdF.set(ri, icon)
-        }
+        riList.forEach(::replaceIconInResolveInfo)
       }
     }
 
-    buildMap<Class<*>, ListReplacer> {
-      set(ApplicationInfo::class.java, defaultReplacer)
-      set(ActivityInfo::class.java, componentInfoReplacer)
-      set(ServiceInfo::class.java, componentInfoReplacer)
-      resolveInfoReplacer?.let { set(ResolveInfo::class.java, it) }
-      set(PackageInfo::class.java) { list, sc ->
+    buildMap<Parcelable.Creator<*>, ListReplacer> {
+      fun setCreator(parcelableC: Class<*>, replacer: ListReplacer) {
+        set(ReflectHelper.findField(parcelableC, "CREATOR")?.getAs() ?: return, replacer)
+      }
+
+      setCreator(ApplicationInfo::class.java, defaultReplacer)
+      setCreator(ActivityInfo::class.java, componentInfoReplacer)
+      setCreator(ServiceInfo::class.java, componentInfoReplacer)
+      resolveInfoReplacer?.let { setCreator(ResolveInfo::class.java, it) }
+      setCreator(PackageInfo::class.java) { list, sc ->
         val piList = list.mapNotNull { it.asType<PackageInfo>() }
         defaultReplacer(piList.mapNotNull { it.applicationInfo }, sc)
         piList.forEach { pi -> pi.activities?.let { componentInfoReplacer(it.toList(), sc) } }
@@ -90,15 +89,15 @@ class ReplaceIcon(val shortcut: Boolean) : Hook {
             sc,
           )
         }
-        set(RunningTaskInfo::class.java, taskInfoReplacer)
-        set(RecentTaskInfo::class.java, taskInfoReplacer)
+        setCreator(RunningTaskInfo::class.java, taskInfoReplacer)
+        setCreator(RecentTaskInfo::class.java, taskInfoReplacer)
       }
       run {
         val launcherActivityInfo =
           ReflectHelper.findClass("android.content.pm.LauncherActivityInfoInternal") ?: return@run
         val mActivityInfoF =
           ReflectHelper.findField(launcherActivityInfo, "mActivityInfo") ?: return@run
-        set(launcherActivityInfo) { list, sc ->
+        setCreator(launcherActivityInfo) { list, sc ->
           componentInfoReplacer(
             list.mapNotNull { it?.let { mActivityInfoF.getAs<ActivityInfo>(it) } },
             sc,
@@ -109,12 +108,12 @@ class ReplaceIcon(val shortcut: Boolean) : Hook {
         val launchActivityItem =
           ReflectHelper.findClass("android.app.servertransaction.LaunchActivityItem") ?: return@run
         val mInfoF = ReflectHelper.findField(launchActivityItem, "mInfo") ?: return@run
-        set(launchActivityItem) { list, sc ->
+        setCreator(launchActivityItem) { list, sc ->
           componentInfoReplacer(list.mapNotNull { it?.let { mInfoF.getAs<ActivityInfo>(it) } }, sc)
         }
       }
       resolveInfoReplacer?.let {
-        set(AccessibilityServiceInfo::class.java) { list, sc ->
+        setCreator(AccessibilityServiceInfo::class.java) { list, sc ->
           it(list.mapNotNull { it.asType<AccessibilityServiceInfo>()?.resolveInfo }, sc)
         }
       }
@@ -133,68 +132,71 @@ class ReplaceIcon(val shortcut: Boolean) : Hook {
       }
 
       fun afterHookedMethodSafe(param: MethodHookParam) {
-        val info = param.result as? PackageItemInfo ?: return
+        val info = param.thisObject as? PackageItemInfo ?: return
         info.packageName ?: return
         val sc = getSC() ?: return
-        replaceIconResIdInInfo(info, sc.getId(getComponentName(info)))
+        replaceIconInItemInfo(info, sc.getId(getComponentName(info)))
       }
     }
 
   private abstract inner class ReplaceInList : XC_MethodHook() {
+    private var replacer: ListReplacer? = null
+
     override fun beforeHookedMethod(param: MethodHookParam) {
+      replacer = getReplacer(param) ?: return
       val oldBlock = blockReplaceIconResId.get()
       blockReplaceIconResId.set(true)
-      replaceIconResId(param)
+      beforeHookedMethodSafe(param)
       blockReplaceIconResId.set(oldBlock)
     }
 
-    fun replaceIconResId(param: MethodHookParam) {
+    fun beforeHookedMethodSafe(param: MethodHookParam) {
       val sc = getSC() ?: return
       param.result = param.callOriginalMethod<Unit>()
       val list = getList(param) ?: return
-      val clazz = list.getOrNull(0)?.javaClass ?: return
-      val replacer = listReplacerMap[clazz] ?: return
-      replacer(list, sc)
+      replacer?.invoke(list, sc)
     }
 
-    abstract fun getList(param: MethodHookParam): List<Any?>?
+    abstract fun getReplacer(param: MethodHookParam): ListReplacer?
+
+    abstract fun getList(param: MethodHookParam): Iterable<Any?>?
   }
 
   override fun onHookApp(lpp: LoadPackageParam) {
-    ReflectHelper.hookAllMethods(
-      ApplicationInfo.CREATOR.javaClass,
-      "createFromParcel",
-      replaceIconResId,
-    )
-    ReflectHelper.hookAllMethods(
-      ActivityInfo.CREATOR.javaClass,
-      "createFromParcel",
-      replaceIconResId,
+    ReflectHelper.hookAllConstructors(ApplicationInfo::class.java, replaceIconResId)
+    ReflectHelper.hookAllConstructors(ActivityInfo::class.java, replaceIconResId)
+    ReflectHelper.hookAllConstructors(
+      ResolveInfo::class.java,
+      object : XC_MethodHook() {
+        override fun afterHookedMethod(param: MethodHookParam) {
+          if (blockReplaceIconResId.get() == true) return
+          replaceIconInResolveInfo(param.thisObject.asType() ?: return)
+        }
+      },
     )
 
     ReflectHelper.hookAllMethods(
       Parcel::class.java,
       "readTypedList",
       object : ReplaceInList() {
-        override fun getList(param: MethodHookParam) = param.args[0].asType<List<Any?>>()
+        override fun getReplacer(param: MethodHookParam): ListReplacer? =
+          param.args.getOrNull(1)?.let { listReplacerMap[it] }
+
+        override fun getList(param: MethodHookParam): Iterable<Any?>? = param.args[0].asType()
       },
     )
     ReflectHelper.hookAllMethods(
       Parcel::class.java,
       "createTypedArray",
       object : ReplaceInList() {
-        override fun getList(param: MethodHookParam) = param.result.asType<Array<Any?>>()?.toList()
+        override fun getReplacer(param: MethodHookParam): ListReplacer? =
+          param.args.getOrNull(0)?.let { listReplacerMap[it] }
+
+        override fun getList(param: MethodHookParam) =
+          param.result.asType<Array<Any?>>()?.asIterable()
       },
     )
-    val baseParceledListSlice =
-      ReflectHelper.findClass("android.content.pm.BaseParceledListSlice") ?: return
-    val mListF = ReflectHelper.findField(baseParceledListSlice, "mList") ?: return
-    ReflectHelper.hookAllConstructors(
-      baseParceledListSlice,
-      object : ReplaceInList() {
-        override fun getList(param: MethodHookParam) = mListF.getAs<List<Any?>?>(param.thisObject)
-      },
-    )
+    hookParceledListSlice()
 
     ReflectHelper.hookMethod(
       getDrawableForDensityM ?: return,
@@ -233,18 +235,69 @@ class ReplaceIcon(val shortcut: Boolean) : Hook {
         },
       )
   }
+
+  private fun hookParceledListSlice() {
+    val baseParceledListSlice =
+      ReflectHelper.findClass("android.content.pm.BaseParceledListSlice") ?: return
+    val mListF = ReflectHelper.findField(baseParceledListSlice, "mList") ?: return
+    val replacer = ThreadLocal.withInitial<ListReplacer?> { null }
+    ReflectHelper.hookAllConstructors(
+      baseParceledListSlice,
+      object : XC_MethodHook() {
+        override fun beforeHookedMethod(param: MethodHookParam) {
+          val oldBlock = blockReplaceIconResId.get()
+          blockReplaceIconResId.set(true)
+          beforeHookedMethodSafe(param)
+          blockReplaceIconResId.set(oldBlock)
+        }
+
+        fun beforeHookedMethodSafe(param: MethodHookParam) {
+          val sc = getSC() ?: return
+          param.result = param.callOriginalMethod<Unit>()
+          val currentReplacer = replacer.get()
+          if (currentReplacer == null) return
+          val list = mListF.getAs<List<Any?>?>(param.thisObject) ?: return
+          currentReplacer.invoke(list, sc)
+          replacer.set(null)
+        }
+      },
+    )
+    val parceledListSlice =
+      ReflectHelper.findClass("android.content.pm.ParceledListSlice") ?: return
+    ReflectHelper.hookAllMethods(
+      parceledListSlice,
+      "readParcelableCreator",
+      object : XC_MethodHook() {
+        override fun afterHookedMethod(param: MethodHookParam) {
+          if (blockReplaceIconResId.get() == false) return
+          val currentReplacer = listReplacerMap[param.result]
+          // Not the class we can batch replace, replaced by replaceIconResId
+          if (currentReplacer == null) blockReplaceIconResId.set(false)
+          replacer.set(currentReplacer)
+        }
+      },
+    )
+  }
 }
 
-private fun replaceIconResIdInInfo(info: PackageItemInfo, id: Int?) {
+private fun replaceIconInItemInfo(info: PackageItemInfo, id: Int?) {
   info.icon =
     id?.let { withHighByteSet(it, IN_SC) }
       ?: if (isHighTwoByte(info.icon, ANDROID_DEFAULT)) withHighByteSet(info.icon, NOT_IN_SC)
       else info.icon
 }
 
-fun replaceItemInfo(list: List<PackageItemInfo>, sc: Source) {
+private val iconResourceIdF = ReflectHelper.findField(ResolveInfo::class.java, "iconResourceId")
+
+private fun replaceIconInResolveInfo(ri: ResolveInfo) {
+  val icon = ri.getComponentInfo().icon.takeIf { it != 0 } ?: return
+  ri.icon = icon
+  iconResourceIdF?.set(ri, icon)
+}
+
+private fun replaceIconInItemInfoList(list: List<PackageItemInfo>, sc: Source) {
   sc.getId(list.map { getComponentName(it) }).forEachIndexed { i, it ->
-    replaceIconResIdInInfo(list[i], it)
+    replaceIconInItemInfo(list[i], it)
   }
 }
 
