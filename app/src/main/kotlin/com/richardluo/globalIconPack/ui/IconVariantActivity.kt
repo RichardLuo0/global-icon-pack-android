@@ -173,7 +173,7 @@ class IconVariantActivity : ComponentActivity() {
               key = entry?.entry?.name,
               loadImage = { viewModel.loadIcon(pair) },
             ) {
-              iconChooser.open(info, viewModel.iconPack, viewModel::replaceIcon)
+              iconChooser.open(info, viewModel.iconPack, entry?.entry?.name, viewModel::replaceIcon)
             }
           }
         }

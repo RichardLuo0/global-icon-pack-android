@@ -33,6 +33,7 @@ class IconChooserVM(context: Application) : ContextVM(context) {
   var iconInfo by mutableStateOf<IconInfo?>(null)
     private set
 
+  private var suggestHint: String? = null
   var replaceIcon: (IconInfo, VariantIcon) -> Unit = { info, icon -> }
     private set
 
@@ -61,9 +62,10 @@ class IconChooserVM(context: Application) : ContextVM(context) {
           mutableListOf<VariantIcon>(OriginalIcon()).apply {
             val keyword =
               text.ifEmpty {
-                appInfo.componentName.packageName.let {
-                  it.substringAfterLast(".").takeIf { it.length > 3 } ?: it
-                }
+                suggestHint?.substringBeforeLast("_")
+                  ?: appInfo.componentName.packageName.let {
+                    it.substringAfterLast(".").takeIf { it.length > 3 } ?: it
+                  }
               }
             addAll(icons.filter { it.entry.name.contains(keyword, ignoreCase = true) })
           }
@@ -79,9 +81,15 @@ class IconChooserVM(context: Application) : ContextVM(context) {
     this.iconPack = iconPackCache[pack]
   }
 
-  fun open(iconInfo: IconInfo, iconPack: IconPack, replaceIcon: (IconInfo, VariantIcon) -> Unit) {
+  fun open(
+    iconInfo: IconInfo,
+    iconPack: IconPack,
+    suggestHint: String? = null,
+    replaceIcon: (IconInfo, VariantIcon) -> Unit,
+  ) {
     this.iconInfo = iconInfo
     this.iconPack = iconPack
+    this.suggestHint = suggestHint
     this.replaceIcon = replaceIcon
     variantSheet = true
   }

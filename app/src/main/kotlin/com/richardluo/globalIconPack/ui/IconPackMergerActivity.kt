@@ -298,7 +298,12 @@ class IconPackMergerActivity : ComponentActivity() {
               else "${viewModel.basePack}/fallback/${viewModel.iconCacheToken}",
             loadImage = { viewModel.loadIcon(pair) },
           ) {
-            iconChooser.open(info, viewModel.baseIconPack ?: return@AppIcon, viewModel::saveNewIcon)
+            iconChooser.open(
+              info,
+              viewModel.baseIconPack ?: return@AppIcon,
+              entry?.entry?.name,
+              viewModel::saveNewIcon,
+            )
           }
         }
       }
@@ -349,7 +354,9 @@ class IconPackMergerActivity : ComponentActivity() {
                 Modifier.align(Alignment.CenterHorizontally)
                   .clickable {
                     val iconPack = viewModel.baseIconPack ?: return@clickable
-                    iconChooser.open(info, iconPack) { info, icon ->
+                    iconChooser.open(info, iconPack, viewModel.newPackIcon?.entry?.name) {
+                      info,
+                      icon ->
                       viewModel.newPackIcon =
                         if (icon is VariantPackIcon) IconEntryWithPack(icon.entry, icon.pack)
                         else null
