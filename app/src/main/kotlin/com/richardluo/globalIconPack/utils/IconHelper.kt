@@ -4,6 +4,7 @@ import android.content.res.Resources
 import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.ColorFilter
 import android.graphics.Paint
 import android.graphics.PorterDuff
 import android.graphics.PorterDuffXfermode
@@ -45,6 +46,11 @@ object IconHelper {
     override fun setAlpha(alpha: Int) {
       super.setAlpha(alpha)
       paint.alpha = alpha
+    }
+
+    override fun setColorFilter(colorFilter: ColorFilter?) {
+      super.setColorFilter(colorFilter)
+      paint.colorFilter = colorFilter
     }
 
     override val cState by lazy {
@@ -110,6 +116,11 @@ object IconHelper {
     override fun setAlpha(alpha: Int) {
       super.setAlpha(alpha)
       paint.alpha = alpha
+    }
+
+    override fun setColorFilter(colorFilter: ColorFilter?) {
+      super.setColorFilter(colorFilter)
+      paint.colorFilter = colorFilter
     }
 
     val cState by lazy { drawable.constantState?.let { CState(it, back, upon, mask) } }
