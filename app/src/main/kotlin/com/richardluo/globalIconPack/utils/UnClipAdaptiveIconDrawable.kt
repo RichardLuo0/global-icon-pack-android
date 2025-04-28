@@ -10,19 +10,11 @@ import android.graphics.Shader
 import android.graphics.drawable.AdaptiveIconDrawable
 import android.graphics.drawable.Drawable
 
-private val mLayersBitmapF by lazy {
-  ReflectHelper.findField(AdaptiveIconDrawable::class.java, "mLayersBitmap")
-}
-private val mLayersShaderF by lazy {
-  ReflectHelper.findField(AdaptiveIconDrawable::class.java, "mLayersShader")
-}
-private val mCanvasF by lazy {
-  ReflectHelper.findField(AdaptiveIconDrawable::class.java, "mCanvas")
-}
-private val mPaintF by lazy { ReflectHelper.findField(AdaptiveIconDrawable::class.java, "mPaint") }
-private val mMaskScaleOnly by lazy {
-  ReflectHelper.findField(AdaptiveIconDrawable::class.java, "mMaskScaleOnly")
-}
+private val mLayersBitmapF by lazy { AdaptiveIconDrawable::class.java.field("mLayersBitmap") }
+private val mLayersShaderF by lazy { AdaptiveIconDrawable::class.java.field("mLayersShader") }
+private val mCanvasF by lazy { AdaptiveIconDrawable::class.java.field("mCanvas") }
+private val mPaintF by lazy { AdaptiveIconDrawable::class.java.field("mPaint") }
+private val mMaskScaleOnly by lazy { AdaptiveIconDrawable::class.java.field("mMaskScaleOnly") }
 
 open class UnClipAdaptiveIconDrawable(background: Drawable?, foreground: Drawable?) :
   AdaptiveIconDrawable(background, foreground) {

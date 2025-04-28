@@ -5,87 +5,19 @@ import de.robv.android.xposed.XC_MethodHook.MethodHookParam
 import de.robv.android.xposed.XposedBridge
 import de.robv.android.xposed.XposedHelpers
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
+import java.lang.reflect.Executable
 import java.lang.reflect.Field
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Method
 
-// Not cached
-object ReflectHelper {
-  fun findClass(className: String, lpp: LoadPackageParam? = null) =
-    runCatching { XposedHelpers.findClass(className, lpp?.classLoader) }.getOrNull { log(it) }
+private fun Method.match(methodName: String, parameterTypes: Array<out Class<*>?>) =
+  this.name == methodName && match(parameterTypes)
 
-  private fun Method.match(methodName: String, parameterTypes: Array<out Class<*>?>) =
-    this.name == methodName &&
-      this.parameterTypes.size >= parameterTypes.size &&
-      this.parameterTypes.zip(parameterTypes).all { (param, expected) ->
-        expected == null || param.isAssignableFrom(expected)
-      }
-
-  fun findMethodFirstMatch(
-    clazz: Class<*>,
-    methodName: String,
-    vararg parameterTypes: Class<*>?,
-  ): Method? {
-    return (runCatching { clazz.getDeclaredMethod(methodName, *parameterTypes) }.getOrNull()
-        ?: clazz.declaredMethods.firstOrNull { it.match(methodName, parameterTypes) })
-      ?.apply { isAccessible = true }
-      ?: run {
-        log("No method $methodName is found on class ${clazz.name}")
-        null
-      }
-  }
-
-  fun findMethodFirstMatch(
-    clazzName: String,
-    lpp: LoadPackageParam? = null,
-    methodName: String,
-    vararg parameterTypes: Class<*>?,
-  ): Method? =
-    findClass(clazzName, lpp)?.let { findMethodFirstMatch(it, methodName, *parameterTypes) }
-
-  fun hookAllMethods(
-    clazz: Class<*>?,
-    methodName: String,
-    parameterTypes: Array<Class<*>?>,
-    hook: XC_MethodHook,
-  ) =
-    runCatching {
-        clazz?.run {
-          declaredMethods
-            .filter { it.match(methodName, parameterTypes) }
-            .map { XposedBridge.hookMethod(it, hook) }
-        }
-      }
-      .getOrNull { log(it) }
-      .also {
-        if (it.isNullOrEmpty()) log("No method $methodName is found on class ${clazz?.name}")
-      }
-
-  fun hookAllMethods(clazz: Class<*>?, methodName: String, hook: XC_MethodHook) =
-    hookAllMethods(clazz, methodName, arrayOf(), hook)
-
-  fun hookAllConstructors(clazz: Class<*>?, hook: XC_MethodHook) =
-    clazz
-      ?.let { XposedBridge.hookAllConstructors(it, hook) }
-      .also { if (it.isNullOrEmpty()) log("No constructors are found on class ${clazz?.name}") }
-
-  fun hookMethod(method: Method, hook: XC_MethodHook) =
-    runCatching { XposedBridge.hookMethod(method, hook) }.getOrNull { log(it) }
-
-  fun findField(clazz: Class<*>?, name: String) =
-    runCatching { clazz?.run { getDeclaredField(name).apply { isAccessible = true } } }
-      .getOrNull { log(it) }
-}
-
-abstract class MethodReplacement : XC_MethodHook() {
-  override fun beforeHookedMethod(param: MethodHookParam) {
-    runCatching { param.result = replaceHookedMethod(param) }
-      .exceptionOrNull()
-      ?.also { param.throwable = it }
-  }
-
-  abstract fun replaceHookedMethod(param: MethodHookParam): Any?
-}
+private fun Executable.match(parameterTypes: Array<out Class<*>?>) =
+  this.parameterTypes.size >= parameterTypes.size &&
+    this.parameterTypes.zip(parameterTypes).all { (param, expected) ->
+      expected == null || param.isAssignableFrom(expected)
+    }
 
 @Suppress("UNCHECKED_CAST")
 fun <R> MethodHookParam.callOriginalMethod() =
@@ -97,5 +29,68 @@ fun <R> MethodHookParam.callOriginalMethod() =
 @Suppress("UNCHECKED_CAST")
 fun <T> Method.call(thisObj: Any?, vararg param: Any?) = invoke(thisObj, *param) as? T
 
-fun <T> Any.getValue(name: String, clazz: Class<*> = javaClass) =
-  ReflectHelper.findField(clazz, name)?.getAs<T>(this)
+fun classOf(name: String, lpp: LoadPackageParam? = null) =
+  runCatching { XposedHelpers.findClass(name, lpp?.classLoader) }.getOrNull { log(it) }
+
+fun Class<*>?.method(name: String, vararg parameterTypes: Class<*>?) =
+  this?.run {
+      (runCatching { getDeclaredMethod(name, *parameterTypes) }.getOrNull()
+          ?: declaredMethods.firstOrNull { it.match(name, parameterTypes) })
+        ?.apply { isAccessible = true }
+    }
+    .also { if (it == null) log("No method $name is found on class ${this?.name}") }
+
+fun Class<*>?.allMethods(methodName: String, vararg parameterTypes: Class<*>?) =
+  this?.run { declaredMethods.filter { it.match(methodName, parameterTypes) } }
+    .also { if (it.isNullOrEmpty()) log("No methods $methodName are found on class ${this?.name}") }
+
+fun Class<*>?.allConstructors(vararg parameterTypes: Class<*>?) =
+  this?.run { declaredConstructors.filter { it.match(parameterTypes) } }
+    .also { if (it.isNullOrEmpty()) log("No constructors are found on class ${this?.name}") }
+
+fun Class<*>?.field(name: String) =
+  this?.runCatching { getDeclaredField(name).apply { isAccessible = true } }
+    ?.getOrNull()
+    .also { if (it == null) log("No field $name is found on class ${this?.name}") }
+
+class HookBuilder {
+  private var beforeAction: ((MethodHookParam) -> Unit)? = null
+  private var afterAction: ((MethodHookParam) -> Unit)? = null
+
+  fun before(block: (MethodHookParam) -> Unit) {
+    beforeAction = block
+  }
+
+  fun after(block: (MethodHookParam) -> Unit) {
+    afterAction = block
+  }
+
+  fun replace(block: (MethodHookParam) -> Any?) = before { param ->
+    runCatching { param.result = block(param) }.exceptionOrNull()?.also { param.throwable = it }
+  }
+
+  fun callOriginal(param: MethodHookParam) {
+    param.result = param.callOriginalMethod()
+  }
+
+  fun build() =
+    object : XC_MethodHook() {
+      override fun beforeHookedMethod(param: MethodHookParam) {
+        beforeAction?.invoke(param)
+      }
+
+      override fun afterHookedMethod(param: MethodHookParam) {
+        afterAction?.invoke(param)
+      }
+    }
+}
+
+inline fun Executable?.hook(crossinline block: HookBuilder.() -> Unit) =
+  runCatching {
+      this?.run { XposedBridge.hookMethod(this, HookBuilder().apply { block() }.build()) }
+    }
+    .getOrNull { log(it) }
+
+inline fun List<Executable>?.hook(crossinline block: HookBuilder.() -> Unit) =
+  runCatching { this?.map { XposedBridge.hookMethod(it, HookBuilder().apply { block() }.build()) } }
+    .getOrNull { log(it) }

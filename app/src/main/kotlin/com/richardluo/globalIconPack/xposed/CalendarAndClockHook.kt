@@ -15,13 +15,17 @@ import android.os.UserManager
 import com.richardluo.globalIconPack.iconPack.database.IconEntry
 import com.richardluo.globalIconPack.iconPack.getComponentName
 import com.richardluo.globalIconPack.iconPack.getSC
-import com.richardluo.globalIconPack.utils.MethodReplacement
-import com.richardluo.globalIconPack.utils.ReflectHelper
+import com.richardluo.globalIconPack.utils.HookBuilder
+import com.richardluo.globalIconPack.utils.allMethods
 import com.richardluo.globalIconPack.utils.asType
 import com.richardluo.globalIconPack.utils.call
 import com.richardluo.globalIconPack.utils.callOriginalMethod
+import com.richardluo.globalIconPack.utils.classOf
+import com.richardluo.globalIconPack.utils.field
 import com.richardluo.globalIconPack.utils.getAs
-import de.robv.android.xposed.XC_MethodHook
+import com.richardluo.globalIconPack.utils.hook
+import com.richardluo.globalIconPack.utils.method
+import de.robv.android.xposed.XC_MethodHook.MethodHookParam
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 import java.util.Calendar
 
@@ -31,16 +35,14 @@ class CalendarAndClockHook : Hook {
     val calendars = mutableSetOf<String>()
     val clocks = mutableSetOf<String>()
 
-    val iconProvider =
-      ReflectHelper.findClass("com.android.launcher3.icons.IconProvider", lpp) ?: return
-    val mCalendar = ReflectHelper.findField(iconProvider, "mCalendar")
-    val mClock = ReflectHelper.findField(iconProvider, "mClock")
+    val iconProvider = classOf("com.android.launcher3.icons.IconProvider", lpp) ?: return
+    val mCalendar = iconProvider.field("mCalendar")
+    val mClock = iconProvider.field("mClock")
     // Collect calendar and clock packages
-    class CollectCC(val getComponentName: (MethodHookParam) -> ComponentName?) :
-      MethodReplacement() {
-      override fun replaceHookedMethod(param: MethodHookParam): Drawable? {
-        val sc = getSC() ?: return param.callOriginalMethod()
-        val cn = getComponentName(param) ?: return param.callOriginalMethod()
+    fun HookBuilder.collectCCHook(getComponentName: (MethodHookParam) -> ComponentName?) {
+      replace { param ->
+        val sc = getSC() ?: return@replace param.callOriginalMethod()
+        val cn = getComponentName(param) ?: return@replace param.callOriginalMethod()
         val packageName = cn.packageName
         val entry = sc.getIconEntry(cn)
 
@@ -51,7 +53,7 @@ class CalendarAndClockHook : Hook {
               calendars.add(packageName)
             mClock?.getAs<ComponentName>(param.thisObject)?.packageName -> clocks.add(packageName)
           }
-          return param.callOriginalMethod<Drawable?>()?.let { sc.genIconFrom(it) }
+          return@replace param.callOriginalMethod<Drawable?>()?.let { sc.genIconFrom(it) }
         }
 
         val density =
@@ -62,84 +64,66 @@ class CalendarAndClockHook : Hook {
           IconEntry.Type.Clock -> clocks.add(packageName)
           else -> {}
         }
-        return sc.getIcon(entry, density)
+        return@replace sc.getIcon(entry, density)
       }
     }
-    ReflectHelper.hookAllMethods(
-      iconProvider,
-      "getIcon",
-      arrayOf(ActivityInfo::class.java),
-      CollectCC { it.args[0].asType<ActivityInfo>()?.let { info -> getComponentName(info) } },
-    )
-    ReflectHelper.hookAllMethods(
-      iconProvider,
-      "getIcon",
-      arrayOf(LauncherActivityInfo::class.java),
-      CollectCC { it.args[0].asType<LauncherActivityInfo>()?.componentName },
-    )
+    iconProvider.allMethods("getIcon", ActivityInfo::class.java).hook {
+      collectCCHook { it.args[0].asType<ActivityInfo>()?.let { info -> getComponentName(info) } }
+    }
+    iconProvider.allMethods("getIcon", LauncherActivityInfo::class.java).hook {
+      collectCCHook { it.args[0].asType<LauncherActivityInfo>()?.componentName }
+    }
     // Change calendar state so it updates
     // https://cs.android.com/android/platform/superproject/+/android15-qpr1-release:frameworks/libs/systemui/iconloaderlib/src/com/android/launcher3/icons/IconProvider.java;l=89
-    ReflectHelper.hookAllMethods(
-      iconProvider,
-      "getSystemStateForPackage",
-      arrayOf(String::class.java, String::class.java),
-      object : XC_MethodHook() {
-        override fun beforeHookedMethod(param: MethodHookParam) {
-          val systemState = param.args[0].asType<String>()
-          param.result =
-            if (calendars.contains(param.args[1]))
+    iconProvider
+      .allMethods("getSystemStateForPackage", String::class.java, String::class.java)
+      .hook {
+        before {
+          val systemState = it.args[0].asType<String>()
+          it.result =
+            if (calendars.contains(it.args[1]))
               systemState + (Calendar.getInstance().get(Calendar.DAY_OF_MONTH) - 1)
             else systemState
         }
-      },
-    )
+      }
 
     val iconChangeReceiver =
-      ReflectHelper.findClass("com.android.launcher3.icons.IconProvider\$IconChangeReceiver", lpp)
-        ?: return
-    val mCallbackF = ReflectHelper.findField(iconChangeReceiver, "mCallback") ?: return
+      classOf("com.android.launcher3.icons.IconProvider\$IconChangeReceiver", lpp) ?: return
+    val mCallbackF = iconChangeReceiver.field("mCallback") ?: return
 
     val onAppIconChangedM =
-      ReflectHelper.findClass("com.android.launcher3.icons.IconProvider\$IconChangeListener", lpp)
-        ?.let { ReflectHelper.findMethodFirstMatch(it, "onAppIconChanged") } ?: return
+      classOf("com.android.launcher3.icons.IconProvider\$IconChangeListener", lpp)
+        .method("onAppIconChanged") ?: return
 
-    ReflectHelper.hookAllMethods(
-      iconChangeReceiver,
-      "onReceive",
-      object : XC_MethodHook() {
-        override fun beforeHookedMethod(param: MethodHookParam) {
-          val context = param.args[0] as? Context ?: return
-          val intent = param.args[1] as? Intent ?: return
-          val mCallback = mCallbackF.get(param.thisObject) ?: return
-          when (intent.action) {
-            ACTION_TIMEZONE_CHANGED -> {
-              changeClockIcon(mCallback)
-              changeCalendarIcon(context, mCallback)
-              param.result = null
-            }
-            ACTION_DATE_CHANGED,
-            ACTION_TIME_CHANGED -> {
-              changeCalendarIcon(context, mCallback)
-              param.result = null
-            }
-            else -> return
+    fun changeClockIcon(mCallback: Any) {
+      for (clock in clocks) onAppIconChangedM.call<Unit>(mCallback, clock, Process.myUserHandle())
+    }
+
+    fun changeCalendarIcon(context: Context, mCallback: Any) {
+      for (user in context.getSystemService(UserManager::class.java).getUserProfiles()) {
+        for (calendar in calendars) onAppIconChangedM.call<Unit>(mCallback, calendar, user)
+      }
+    }
+
+    iconChangeReceiver.allMethods("onReceive").hook {
+      before { param ->
+        val context = param.args[0] as? Context ?: return@before
+        val intent = param.args[1] as? Intent ?: return@before
+        val mCallback = mCallbackF.get(param.thisObject) ?: return@before
+        when (intent.action) {
+          ACTION_TIMEZONE_CHANGED -> {
+            changeClockIcon(mCallback)
+            changeCalendarIcon(context, mCallback)
+            param.result = null
           }
-        }
-
-        fun changeClockIcon(mCallback: Any) {
-          for (clock in clocks) onAppIconChangedM.call<Unit>(
-            mCallback,
-            clock,
-            Process.myUserHandle(),
-          )
-        }
-
-        fun changeCalendarIcon(context: Context, mCallback: Any) {
-          for (user in context.getSystemService(UserManager::class.java).getUserProfiles()) {
-            for (calendar in calendars) onAppIconChangedM.call<Unit>(mCallback, calendar, user)
+          ACTION_DATE_CHANGED,
+          ACTION_TIME_CHANGED -> {
+            changeCalendarIcon(context, mCallback)
+            param.result = null
           }
+          else -> return@before
         }
-      },
-    )
+      }
+    }
   }
 }

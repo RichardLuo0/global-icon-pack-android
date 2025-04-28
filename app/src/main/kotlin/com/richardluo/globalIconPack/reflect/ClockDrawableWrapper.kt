@@ -6,8 +6,9 @@ import android.graphics.drawable.Drawable
 import android.os.Bundle
 import androidx.core.graphics.drawable.toDrawable
 import com.richardluo.globalIconPack.iconPack.database.ClockMetadata
-import com.richardluo.globalIconPack.utils.ReflectHelper
 import com.richardluo.globalIconPack.utils.call
+import com.richardluo.globalIconPack.utils.classOf
+import com.richardluo.globalIconPack.utils.method
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 import java.lang.reflect.Method
 import java.util.function.IntFunction
@@ -17,13 +18,8 @@ object ClockDrawableWrapper {
 
   fun initWithPixelLauncher(lpp: LoadPackageParam) {
     forExtras =
-      ReflectHelper.findMethodFirstMatch(
-        "com.android.launcher3.icons.ClockDrawableWrapper",
-        lpp,
-        "forExtras",
-        Bundle::class.java,
-        IntFunction::class.java,
-      )
+      classOf("com.android.launcher3.icons.ClockDrawableWrapper", lpp)
+        .method("forExtras", Bundle::class.java, IntFunction::class.java)
   }
 
   fun from(drawable: Drawable, metadata: ClockMetadata): Drawable? {

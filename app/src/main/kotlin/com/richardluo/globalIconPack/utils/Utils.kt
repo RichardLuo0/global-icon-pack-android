@@ -106,6 +106,10 @@ suspend fun MutableSharedFlow<Unit>.emit() = emit(Unit)
 
 fun MutableSharedFlow<Unit>.tryEmit() = tryEmit(Unit)
 
+inline fun <R> runSafe(crossinline block: () -> R) = run { block() }
+
+inline fun <T, R> T.runSafe(crossinline block: T.() -> R) = run { block() }
+
 suspend inline fun <R> runCatchingToast(context: Context, block: () -> R) =
   runCatching(block).getOrNull {
     log(it)

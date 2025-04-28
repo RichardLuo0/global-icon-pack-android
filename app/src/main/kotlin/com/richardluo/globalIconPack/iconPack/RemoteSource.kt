@@ -9,11 +9,12 @@ import com.richardluo.globalIconPack.iconPack.database.IconEntry
 import com.richardluo.globalIconPack.iconPack.database.IconPackDB.GetIconColumn
 import com.richardluo.globalIconPack.iconPack.database.useFirstRow
 import com.richardluo.globalIconPack.iconPack.database.useMapToArray
-import com.richardluo.globalIconPack.utils.ReflectHelper
 import com.richardluo.globalIconPack.utils.call
+import com.richardluo.globalIconPack.utils.classOf
 import com.richardluo.globalIconPack.utils.getOrPut
 import com.richardluo.globalIconPack.utils.getOrPutNullable
 import com.richardluo.globalIconPack.utils.mapIndexed
+import com.richardluo.globalIconPack.utils.method
 import java.util.Collections
 
 class RemoteSource(pack: String, config: IconPackConfig = defaultIconPackConfig) :
@@ -106,7 +107,7 @@ class RemoteSource(pack: String, config: IconPackConfig = defaultIconPackConfig)
 private var waitingForBootCompleted = true
 
 private val getSystemProperty by lazy {
-  ReflectHelper.findMethodFirstMatch("android.os.SystemProperties", null, "get", String::class.java)
+  classOf("android.os.SystemProperties").method("get", String::class.java)
 }
 
 fun createRemoteIconPack(

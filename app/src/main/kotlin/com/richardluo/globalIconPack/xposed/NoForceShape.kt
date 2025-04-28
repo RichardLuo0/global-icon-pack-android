@@ -4,9 +4,13 @@ import android.graphics.Color
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.LayerDrawable
 import android.os.Build
-import com.richardluo.globalIconPack.utils.ReflectHelper
+import com.richardluo.globalIconPack.utils.HookBuilder
+import com.richardluo.globalIconPack.utils.allConstructors
+import com.richardluo.globalIconPack.utils.allMethods
 import com.richardluo.globalIconPack.utils.asType
-import de.robv.android.xposed.XC_MethodHook
+import com.richardluo.globalIconPack.utils.classOf
+import com.richardluo.globalIconPack.utils.field
+import com.richardluo.globalIconPack.utils.hook
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 
 class NoForceShape(val drawWholeIconForTransparentBackgroundInSplashScreen: Boolean) : Hook {
@@ -15,54 +19,38 @@ class NoForceShape(val drawWholeIconForTransparentBackgroundInSplashScreen: Bool
     // https://cs.android.com/android/platform/superproject/+/android15-qpr1-release:frameworks/base/libs/WindowManager/Shell/src/com/android/wm/shell/startingsurface/SplashscreenContentDrawer.java;l=676
     if (drawWholeIconForTransparentBackgroundInSplashScreen) {
       val iconColor =
-        ReflectHelper.findClass(
+        classOf(
           "com.android.wm.shell.startingsurface.SplashscreenContentDrawer\$ColorCache\$IconColor",
           lpp,
         )
-      val mBgColorF = ReflectHelper.findField(iconColor, "mBgColor") ?: return
-      val mIsBgComplexF = ReflectHelper.findField(iconColor, "mIsBgComplex") ?: return
-      ReflectHelper.hookAllConstructors(
-        iconColor,
-        object : XC_MethodHook() {
-          override fun afterHookedMethod(param: MethodHookParam) {
-            val mBgColor = mBgColorF.get(param.thisObject).asType<Int>() ?: return
-            val mIsBgComplex = mIsBgComplexF.get(param.thisObject).asType<Boolean>() ?: return
-            if (!mIsBgComplex && mBgColor == Color.TRANSPARENT)
-              mIsBgComplexF.set(param.thisObject, true)
-          }
-        },
-      )
+      val mBgColorF = iconColor.field("mBgColor") ?: return
+      val mIsBgComplexF = iconColor.field("mIsBgComplex") ?: return
+      iconColor.allConstructors().hook {
+        after {
+          val mBgColor = mBgColorF.get(it.thisObject).asType<Int>() ?: return@after
+          val mIsBgComplex = mIsBgComplexF.get(it.thisObject).asType<Boolean>() ?: return@after
+          if (!mIsBgComplex && mBgColor == Color.TRANSPARENT) mIsBgComplexF.set(it.thisObject, true)
+        }
+      }
     }
   }
 
   override fun onHookSettings(lpp: LoadPackageParam) {
     // Fix accessibility
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.VANILLA_ICE_CREAM) return
-    val adaptiveIcon =
-      ReflectHelper.findClass("com.android.settingslib.widget.AdaptiveIcon", lpp) ?: return
-    val extractOriIcon =
-      object : XC_MethodHook() {
-        override fun afterHookedMethod(param: MethodHookParam) {
-          val icon = param.result.asType<Drawable?>() ?: return
-          if (adaptiveIcon.isAssignableFrom(icon::class.java))
-            icon.asType<LayerDrawable>()?.getDrawable(1)?.let { param.result = it }
-        }
+    val adaptiveIcon = classOf("com.android.settingslib.widget.AdaptiveIcon", lpp) ?: return
+    fun HookBuilder.extractOriIcon() {
+      after { param ->
+        val icon = param.result.asType<Drawable?>() ?: return@after
+        if (adaptiveIcon.isAssignableFrom(icon::class.java))
+          icon.asType<LayerDrawable>()?.getDrawable(1)?.let { param.result = it }
       }
-    ReflectHelper.hookAllMethods(
-      ReflectHelper.findClass(
-        "com.android.settings.accessibility.AccessibilityActivityPreference",
-        lpp,
-      ),
-      "getA11yActivityIcon",
-      extractOriIcon,
-    )
-    ReflectHelper.hookAllMethods(
-      ReflectHelper.findClass(
-        "com.android.settings.accessibility.AccessibilityServicePreference",
-        lpp,
-      ),
-      "getA11yServiceIcon",
-      extractOriIcon,
-    )
+    }
+    classOf("com.android.settings.accessibility.AccessibilityActivityPreference", lpp)
+      .allMethods("getA11yActivityIcon")
+      .hook(HookBuilder::extractOriIcon)
+    classOf("com.android.settings.accessibility.AccessibilityServicePreference", lpp)
+      .allMethods("getA11yServiceIcon")
+      .hook(HookBuilder::extractOriIcon)
   }
 }
