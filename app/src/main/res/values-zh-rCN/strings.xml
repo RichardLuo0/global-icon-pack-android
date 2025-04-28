@@ -5,7 +5,7 @@
     <string name="iconPackApplied">图标包已应用。请手动点击“重启XXX”。</string>
     <string name="chooseMode">请选择一种模式</string>
     <string name="errorOnShareMode">启用共享模式时出错，回退到提供器模式。</string>
-    <string name="general">总体</string>
+    <string name="general">常规</string>
     <string name="mode">模式</string>
     <string name="shareMode">共享模式</string>
     <string name="shareModeSummary">从位于 /data/misc/com.\u200Brichardluo.\u200BglobalIconPack 的共享数据库加载。某些系统上 SELinux 可能会阻止访问。</string>
