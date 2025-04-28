@@ -30,6 +30,7 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
@@ -312,13 +313,18 @@ class IconPackMergerActivity : ComponentActivity() {
         CircularProgressIndicator(trackColor = MaterialTheme.colorScheme.surfaceVariant)
       }
 
+    val iconOptionScrollState = rememberLazyListState()
     LazyDialog(
       iconOptionDialogState,
       title = { Text(getString(R.string.options)) },
       value = viewModel.optionsFlow,
     ) {
       ProvidePreferenceLocals(flow = it, myPreferenceTheme()) {
-        MainPreference.IconPack(modifier = Modifier.padding(top = 8.dp), onlyOptions = true)
+        MainPreference.IconPack(
+          modifier = Modifier.padding(top = 8.dp),
+          state = iconOptionScrollState,
+          onlyOptions = true,
+        )
       }
     }
   }

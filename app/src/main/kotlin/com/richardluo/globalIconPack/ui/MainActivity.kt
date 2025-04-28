@@ -20,6 +20,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.text.KeyboardActions
@@ -346,9 +348,13 @@ object MainPreference {
   }
 
   @Composable
-  fun IconPack(modifier: Modifier = Modifier.fillMaxSize(), onlyOptions: Boolean = false) {
+  fun IconPack(
+    modifier: Modifier = Modifier.fillMaxSize(),
+    state: LazyListState = rememberLazyListState(),
+    onlyOptions: Boolean = false,
+  ) {
     val context = LocalContext.current
-    LazyColumn(modifier = modifier) {
+    LazyColumn(modifier = modifier, state = state) {
       if (!onlyOptions) {
         myPreference(
           icon = { Icon(Icons.Outlined.Edit, "iconVariant") },
