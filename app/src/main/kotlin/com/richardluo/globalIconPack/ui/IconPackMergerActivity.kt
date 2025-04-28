@@ -93,6 +93,7 @@ import com.richardluo.globalIconPack.ui.components.LazyDialog
 import com.richardluo.globalIconPack.ui.components.LazyImage
 import com.richardluo.globalIconPack.ui.components.LoadingDialog
 import com.richardluo.globalIconPack.ui.components.SampleTheme
+import com.richardluo.globalIconPack.ui.components.ScrollIndicationBox
 import com.richardluo.globalIconPack.ui.components.WarnDialog
 import com.richardluo.globalIconPack.ui.components.getLabelByType
 import com.richardluo.globalIconPack.ui.components.myPreferenceTheme
@@ -320,11 +321,12 @@ class IconPackMergerActivity : ComponentActivity() {
       value = viewModel.optionsFlow,
     ) {
       ProvidePreferenceLocals(flow = it, myPreferenceTheme()) {
-        MainPreference.IconPack(
+        ScrollIndicationBox(
           modifier = Modifier.padding(top = 8.dp),
           state = iconOptionScrollState,
-          onlyOptions = true,
-        )
+        ) {
+          MainPreference.IconPack(state = it, onlyOptions = true)
+        }
       }
     }
   }

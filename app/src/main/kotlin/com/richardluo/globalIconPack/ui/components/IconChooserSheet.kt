@@ -199,6 +199,7 @@ fun IconChooserSheet(
         title = { Text(stringResource(R.string.iconPack)) },
         value = IconPackApps.getFlow(context).collectAsState(mapOf()).value.toList(),
         key = { it.first },
+        focusItem = { it.first == viewModel.iconPack?.pack },
       ) { item, dismiss ->
         IconPackItem(item.first, item.second, viewModel.iconPack?.pack ?: "") {
           viewModel.setPack(item.first)

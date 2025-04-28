@@ -32,7 +32,6 @@ import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
 import com.richardluo.globalIconPack.utils.getValue
-import me.zhanghai.compose.preference.ListPreference
 import me.zhanghai.compose.preference.LocalPreferenceFlow
 import me.zhanghai.compose.preference.Preference
 import me.zhanghai.compose.preference.PreferenceTheme
@@ -92,7 +91,7 @@ inline fun <T, U> LazyListScope.mapListPreference(
     val state = rememberState()
     val valueMap = getValueMap()
     val valueKey by state
-    ListPreference(
+    MyListPreference(
       state = state,
       modifier = modifier,
       values = valueMap.keys.toList(),
@@ -102,6 +101,36 @@ inline fun <T, U> LazyListScope.mapListPreference(
       summary = summary?.let { { it(valueKey, valueMap[valueKey]) } },
       item = { key, currentKey, onClick -> item(key, valueMap.getValue(key), currentKey, onClick) },
     )
+  }
+}
+
+@Composable
+fun <T> MyListPreference(
+  state: MutableState<T>,
+  values: List<T>,
+  title: @Composable () -> Unit,
+  modifier: Modifier = Modifier,
+  enabled: Boolean = true,
+  icon: @Composable (() -> Unit)? = null,
+  summary: @Composable (() -> Unit)? = null,
+  item: @Composable (value: T, currentValue: T, onClick: () -> Unit) -> Unit,
+) {
+  var value by state
+  var openSelector = rememberSaveable { mutableStateOf(false) }
+  LazyListDialog(openSelector, title, values, focusItem = { it == value }) { v, dismiss ->
+    item(v, value) {
+      value = v
+      dismiss()
+    }
+  }
+  Preference(
+    title = title,
+    modifier = modifier,
+    enabled = enabled,
+    icon = icon,
+    summary = summary,
+  ) {
+    openSelector.value = true
   }
 }
 

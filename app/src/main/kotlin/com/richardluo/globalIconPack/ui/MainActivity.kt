@@ -1,7 +1,6 @@
 package com.richardluo.globalIconPack.ui
 
 import android.Manifest
-import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -13,6 +12,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -218,7 +218,6 @@ class MainActivity : ComponentActivity() {
       )
     }
     val pagerState = rememberPagerState(pageCount = { pages.size })
-
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     val snackbarState = remember { SnackbarHostState() }
     Scaffold(
@@ -287,16 +286,15 @@ class MainActivity : ComponentActivity() {
       }
 
       HorizontalPager(pagerState, contentPadding = contentPadding, beyondViewportPageCount = 2) {
-        pages.getOrNull(it)?.screen()
+        Box(modifier = Modifier.fillMaxSize()) { pages.getOrNull(it)?.screen() }
       }
     }
   }
 }
 
-@SuppressLint("ModifierParameter")
 object MainPreference {
   @Composable
-  fun General(modifier: Modifier = Modifier.fillMaxSize()) {
+  fun General(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val typography = MaterialTheme.typography
     LazyColumn(modifier = modifier) {
@@ -349,7 +347,7 @@ object MainPreference {
 
   @Composable
   fun IconPack(
-    modifier: Modifier = Modifier.fillMaxSize(),
+    modifier: Modifier = Modifier,
     state: LazyListState = rememberLazyListState(),
     onlyOptions: Boolean = false,
   ) {
@@ -428,7 +426,7 @@ object MainPreference {
   }
 
   @Composable
-  fun Pixel(modifier: Modifier = Modifier.fillMaxSize()) {
+  fun Pixel(modifier: Modifier = Modifier) {
     LazyColumn(modifier = modifier) {
       textFieldPreference(
         icon = { Icon(Icons.Outlined.Apps, Pref.PIXEL_LAUNCHER_PACKAGE.first) },

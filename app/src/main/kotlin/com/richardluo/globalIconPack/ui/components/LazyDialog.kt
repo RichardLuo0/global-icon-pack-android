@@ -3,8 +3,10 @@ package com.richardluo.globalIconPack.ui.components
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -17,6 +19,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
@@ -31,12 +34,13 @@ fun <T> LazyDialog(
 ) {
   if (!openState.value) return
   BasicAlertDialog(
+    modifier = Modifier.heightIn(max = 600.dp),
     onDismissRequest =
       if (dismissible)
         fun() {
           openState.value = false
         }
-      else fun() {}
+      else fun() {},
   ) {
     Surface(
       modifier = Modifier.fillMaxWidth(),
@@ -73,13 +77,22 @@ fun <T> LazyListDialog(
   key: ((item: T) -> Any)? = null,
   nothing: @Composable () -> Unit = {},
   dismissible: Boolean = true,
+  focusItem: (T) -> Boolean = { true },
   itemContent: @Composable (item: T, dismiss: () -> Unit) -> Unit,
 ) =
   LazyDialog(openState, title, value, dismissible) { list ->
     if (list.isEmpty()) nothing()
     else
-      LazyColumn(modifier = Modifier.fillMaxWidth().padding(top = 16.dp)) {
-        items(list, key) { item -> itemContent(item) { openState.value = false } }
+      ScrollIndicationBox(
+        modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
+        state =
+          rememberSaveable(saver = LazyListState.Saver) {
+            LazyListState(list.indexOfFirst(focusItem), 0)
+          },
+      ) {
+        LazyColumn(state = it) {
+          items(list, key) { item -> itemContent(item) { openState.value = false } }
+        }
       }
   }
 
@@ -96,7 +109,7 @@ fun <T> LazyGridDialog(
     if (list.isEmpty()) nothing()
     else
       LazyVerticalGrid(
-        modifier = Modifier.padding(horizontal = 2.dp).padding(top = 16.dp),
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 2.dp).padding(top = 16.dp),
         columns = GridCells.Adaptive(minSize = 80.dp),
       ) {
         items(list) { item -> itemContent(item) { openState.value = false } }
