@@ -54,6 +54,7 @@ The list may not be latest.
   - elisenlebkuch
 - Russian
   - Кирилл Гук
+  - Alohaa666
 - Chinese Traditional
   - Jia-Bin
 
