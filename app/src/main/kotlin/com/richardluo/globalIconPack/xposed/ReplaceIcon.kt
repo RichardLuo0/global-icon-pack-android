@@ -14,16 +14,19 @@ import android.content.pm.ResolveInfo
 import android.content.pm.ServiceInfo
 import android.content.pm.ShortcutInfo
 import android.graphics.Bitmap
+import android.graphics.Color
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.os.Parcel
 import android.os.Parcelable
+import androidx.core.graphics.drawable.toDrawable
 import com.richardluo.globalIconPack.iconPack.getSC
 import com.richardluo.globalIconPack.iconPack.source.Source
 import com.richardluo.globalIconPack.iconPack.source.getComponentName
 import com.richardluo.globalIconPack.reflect.ClockDrawableWrapper
 import com.richardluo.globalIconPack.reflect.Resources.getDrawableForDensityM
 import com.richardluo.globalIconPack.utils.HookBuilder
+import com.richardluo.globalIconPack.utils.IconHelper
 import com.richardluo.globalIconPack.utils.allConstructors
 import com.richardluo.globalIconPack.utils.allMethods
 import com.richardluo.globalIconPack.utils.asType
@@ -59,21 +62,25 @@ class ReplaceIcon(val shortcut: Boolean, val forceActivityIconForTask: Boolean) 
 
     // Replace icon in task description
     val taskIconCache = classOf("com.android.quickstep.TaskIconCache", lpp)
-    val tdBitmapSet = Collections.newSetFromMap<Bitmap>(WeakHashMap())
-    taskIconCache.allMethods("getIcon").hook {
-      before {
-        if (forceActivityIconForTask) {
-          result = null
-          return@before
+    if (forceActivityIconForTask) taskIconCache.allMethods("getIcon").hook { replace { null } }
+    else {
+      val tdBitmapSet = Collections.newSetFromMap<Bitmap>(WeakHashMap())
+      taskIconCache.allMethods("getIcon").hook {
+        before {
+          result = callOriginalMethod()
+          tdBitmapSet.add(result.asType() ?: return@before)
         }
-        result = callOriginalMethod()
-        tdBitmapSet.add(result.asType() ?: return@before)
       }
-    }
-    taskIconCache.allMethods("getBitmapInfo").hook {
-      before {
-        val drawable = args[0].asType<BitmapDrawable>() ?: return@before
-        if (tdBitmapSet.contains(drawable.bitmap)) getSC()?.run { args[0] = genIconFrom(drawable) }
+      taskIconCache.allMethods("getBitmapInfo").hook {
+        before {
+          val drawable = args[0].asType<BitmapDrawable>() ?: return@before
+          if (tdBitmapSet.contains(drawable.bitmap)) {
+            val background =
+              args[2].asType<Int>()?.let { Color.valueOf(it).toDrawable() }
+                ?: Color.TRANSPARENT.toDrawable()
+            getSC()?.run { args[0] = genIconFrom(IconHelper.makeAdaptive(drawable, background)) }
+          }
+        }
       }
     }
   }

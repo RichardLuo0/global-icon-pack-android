@@ -58,7 +58,7 @@ fun <T> Array<T>.rSet(i: Int, obj: T) {
   if (index in indices) this[index] = obj
 }
 
-@Suppress("UNCHECKED_CAST") inline fun <reified T> Any?.asType() = this as? T
+inline fun <reified T> Any?.asType() = this as? T
 
 inline fun <T> Result<T>.getOrNull(block: (Throwable) -> Unit) = getOrElse {
   block(it)

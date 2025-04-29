@@ -189,9 +189,8 @@ object IconHelper {
       UnClipAdaptiveIconDrawable(scale(back.toDrawable(res)), scale(makeBaseIcon(null)))
     else UnClipAdaptiveIconDrawable(Color.TRANSPARENT.toDrawable(), scale(makeBaseIcon(back)))
 
-  fun makeAdaptive(drawable: Drawable) =
-    drawable as? AdaptiveIconDrawable
-      ?: UnClipAdaptiveIconDrawable(Color.TRANSPARENT.toDrawable(), scale(drawable))
+  fun makeAdaptive(drawable: Drawable, background: Drawable = Color.TRANSPARENT.toDrawable()) =
+    drawable as? AdaptiveIconDrawable ?: UnClipAdaptiveIconDrawable(background, scale(drawable))
 
   fun Canvas.drawIcon(
     paint: Paint,
