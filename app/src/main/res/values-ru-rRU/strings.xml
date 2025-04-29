@@ -3,9 +3,14 @@
     <string name="appName">Global Icon Pack</string>
     <string name="plzEnableModuleFirst">Пожалуйста, сначала убедитесь, что модуль Xposed включен.</string>
     <string name="iconPackApplied">Набор иконок был применен. Пожалуйста, нажмите «Перезапустить XXX» вручную.</string>
+    <string name="chooseMode">Выберите режим</string>
+    <string name="errorOnShareMode">Произошла ошибка при включении режима общего доступа, резервный доступ в режиме провайдера.</string>
     <string name="general">Основные</string>
     <string name="mode">Режим</string>
+    <string name="shareMode">Режим общего доступа</string>
+    <string name="shareModeSummary">Загрузка с общей базы данных из /data/misc/com.\u200Brichardluo.\u200BglobalIconPack. SELinux может блокировать доступ на некоторых системах.</string>
     <string name="providerMode">Режим поставщика</string>
+    <string name="providerModeSummary">Приложение предоставляет данные для подключенных приложений и должно работать в фоновом режиме.</string>
     <string name="localMode">Локальный режим</string>
     <string name="localModeSummary">Подключенные приложения перезагружают пакет значков при каждом запуске.</string>
     <string name="iconPack">Набор иконок</string>
@@ -20,6 +25,13 @@
     <string name="iconVariantSummary">Выбирайте различные варианты из набора иконок.</string>
     <string name="iconFallback">Создание резервных иконок</string>
     <string name="iconFallbackSummary">Применяйте фон, маску и масштаб из набора иконок к приложениям без отдельных иконок.</string>
+    <string name="scaleOnlyForeground">Масштабирование только переднего плана для адаптивных иконок</string>
+    <string name="backAsAdaptiveBack">Резервный фон в качестве адаптивного фона</string>
+    <string name="nonAdaptiveScale">Масштабировать неадаптивные иконки</string>
+    <string name="convertToAdaptive">Преобразовать в адаптивные иконки</string>
+    <string name="convertToAdaptiveSummary">Удаляет белую форму, которую некоторые приложения добавляют в неадаптивные значки.</string>
+    <string name="overrideIconFallback">Переопределить резервные параметры</string>
+    <string name="overrideIconFallbackSummary">Использовать новые значения для резервных параметров.</string>
     <string name="iconPackScale">Масштаб</string>
     <string name="pixelSettings">Pixel</string>
     <string name="pixelLauncherPackage">Имя пакета лаунчера</string>
@@ -65,4 +77,7 @@
     <string name="mergerWarning">Приложение соберет и сгенерирует файлы, необходимые для создания нового набора иконок. \nВам не разрешается распространять созданный контент без разрешения его создателей. \nВы были предупреждены!</string>
     <string name="requiresEmptyFolder">Необходима пустая папка!</string>
     <string name="mergerInstruction">Выполните следующие действия:\n1. Установите Termux и предоставьте доступ к хранению.\n2. Запустите команду `cd &lt;выходная папка&gt; &amp;&amp; bash create_icon_pack.sh`.</string>
+    <string name="asNormalIcon">Как обычная иконка</string>
+    <string name="asCalendarIcon">Иконка календаря</string>
+    <string name="notCalendarIcon">Недопустимый значок календаря!</string>
 </resources>
