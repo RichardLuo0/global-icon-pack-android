@@ -19,9 +19,9 @@ interface Source {
 
   fun getIconEntry(cn: ComponentName) = getId(cn)?.let { getIconEntry(it) }
 
-  fun getIconNotAdaptive(entry: IconEntry, iconDpi: Int): Drawable?
+  fun getIconNotAdaptive(entry: IconEntry, iconDpi: Int = 0): Drawable?
 
-  fun getIcon(entry: IconEntry, iconDpi: Int) =
+  fun getIcon(entry: IconEntry, iconDpi: Int = 0) =
     getIconNotAdaptive(entry, iconDpi)?.let { IconHelper.makeAdaptive(it) }
 
   fun getIcon(id: Int, iconDpi: Int) = getIconEntry(id)?.let { getIcon(it, iconDpi) }

@@ -463,6 +463,13 @@ object MainPreference {
         defaultValue = Pref.FORCE_LOAD_CLOCK_AND_CALENDAR.second,
         title = { TwoLineText(stringResource(R.string.forceLoadClockAndCalendar)) },
       )
+      switchPreference(
+        icon = {},
+        key = Pref.FORCE_ACTIVITY_ICON_FOR_TASK.first,
+        defaultValue = Pref.FORCE_ACTIVITY_ICON_FOR_TASK.second,
+        title = { TwoLineText(stringResource(R.string.forceActivityIconForTask)) },
+        summary = { TwoLineText(stringResource(R.string.forceActivityIconForTaskSummary)) },
+      )
     }
   }
 

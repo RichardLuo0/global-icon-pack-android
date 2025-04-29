@@ -41,11 +41,19 @@ fun Class<*>?.method(name: String, vararg parameterTypes: Class<*>?) =
     .also { if (it == null) log("No method $name is found on class ${this?.name}") }
 
 fun Class<*>?.allMethods(methodName: String, vararg parameterTypes: Class<*>?) =
-  this?.run { declaredMethods.filter { it.match(methodName, parameterTypes) } }
+  this?.run {
+      declaredMethods
+        .filter { it.match(methodName, parameterTypes) }
+        .apply { forEach { it.isAccessible = true } }
+    }
     .also { if (it.isNullOrEmpty()) log("No methods $methodName are found on class ${this?.name}") }
 
 fun Class<*>?.allConstructors(vararg parameterTypes: Class<*>?) =
-  this?.run { declaredConstructors.filter { it.match(parameterTypes) } }
+  this?.run {
+      declaredConstructors
+        .filter { it.match(parameterTypes) }
+        .apply { forEach { it.isAccessible = true } }
+    }
     .also { if (it.isNullOrEmpty()) log("No constructors are found on class ${this?.name}") }
 
 fun Class<*>?.field(name: String) =
@@ -53,7 +61,7 @@ fun Class<*>?.field(name: String) =
     ?.getOrNull()
     .also { if (it == null) log("No field $name is found on class ${this?.name}") }
 
-class HookBuilder {
+class HookBuilder : XC_MethodHook() {
   private var beforeAction: ((MethodHookParam) -> Unit)? = null
   private var afterAction: ((MethodHookParam) -> Unit)? = null
 
@@ -73,24 +81,19 @@ class HookBuilder {
     param.result = param.callOriginalMethod()
   }
 
-  fun build() =
-    object : XC_MethodHook() {
-      override fun beforeHookedMethod(param: MethodHookParam) {
-        beforeAction?.invoke(param)
-      }
+  override fun beforeHookedMethod(param: MethodHookParam) {
+    beforeAction?.invoke(param)
+  }
 
-      override fun afterHookedMethod(param: MethodHookParam) {
-        afterAction?.invoke(param)
-      }
-    }
+  override fun afterHookedMethod(param: MethodHookParam) {
+    afterAction?.invoke(param)
+  }
 }
 
 inline fun Executable?.hook(crossinline block: HookBuilder.() -> Unit) =
-  runCatching {
-      this?.run { XposedBridge.hookMethod(this, HookBuilder().apply { block() }.build()) }
-    }
+  runCatching { this?.run { XposedBridge.hookMethod(this, HookBuilder().apply { block() }) } }
     .getOrNull { log(it) }
 
 inline fun List<Executable>?.hook(crossinline block: HookBuilder.() -> Unit) =
-  runCatching { this?.map { XposedBridge.hookMethod(it, HookBuilder().apply { block() }.build()) } }
+  runCatching { this?.map { XposedBridge.hookMethod(it, HookBuilder().apply { block() }) } }
     .getOrNull { log(it) }

@@ -13,12 +13,14 @@ import android.content.pm.PackageItemInfo
 import android.content.pm.ResolveInfo
 import android.content.pm.ServiceInfo
 import android.content.pm.ShortcutInfo
+import android.graphics.Bitmap
+import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.os.Parcel
 import android.os.Parcelable
+import com.richardluo.globalIconPack.iconPack.getSC
 import com.richardluo.globalIconPack.iconPack.source.Source
 import com.richardluo.globalIconPack.iconPack.source.getComponentName
-import com.richardluo.globalIconPack.iconPack.getSC
 import com.richardluo.globalIconPack.reflect.ClockDrawableWrapper
 import com.richardluo.globalIconPack.reflect.Resources.getDrawableForDensityM
 import com.richardluo.globalIconPack.utils.HookBuilder
@@ -38,10 +40,12 @@ import com.richardluo.globalIconPack.xposed.ReplaceIcon.Companion.IN_SC
 import com.richardluo.globalIconPack.xposed.ReplaceIcon.Companion.NOT_IN_SC
 import de.robv.android.xposed.XC_MethodHook.MethodHookParam
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
+import java.util.Collections
+import java.util.WeakHashMap
 
 // Resource id always starts with 0x7f, use it to indicate that this is an icon
 // Assume the icon res id is only used in getDrawable()
-class ReplaceIcon(val shortcut: Boolean) : Hook {
+class ReplaceIcon(val shortcut: Boolean, val forceActivityIconForTask: Boolean) : Hook {
   companion object {
     const val IN_SC = 0xff000000.toInt()
     const val NOT_IN_SC = 0xfe000000.toInt()
@@ -52,6 +56,27 @@ class ReplaceIcon(val shortcut: Boolean) : Hook {
   override fun onHookPixelLauncher(lpp: LoadPackageParam) {
     // Find needed class for clock
     ClockDrawableWrapper.initWithPixelLauncher(lpp)
+
+    // Replace icon in task description
+    val taskIconCache = classOf("com.android.quickstep.TaskIconCache", lpp)
+    val tdBitmapSet = Collections.newSetFromMap<Bitmap>(WeakHashMap())
+    taskIconCache.allMethods("getIcon").hook {
+      before {
+        if (forceActivityIconForTask) {
+          it.result = null
+          return@before
+        }
+        callOriginal(it)
+        tdBitmapSet.add(it.result.asType() ?: return@before)
+      }
+    }
+    taskIconCache.allMethods("getBitmapInfo").hook {
+      before { param ->
+        val drawable = param.args[0].asType<BitmapDrawable>() ?: return@before
+        if (tdBitmapSet.contains(drawable.bitmap))
+          getSC()?.run { param.args[0] = genIconFrom(drawable) }
+      }
+    }
   }
 
   override fun onHookApp(lpp: LoadPackageParam) {
@@ -143,74 +168,6 @@ class ReplaceIcon(val shortcut: Boolean) : Hook {
 
 private typealias ListReplacer = (list: Iterable<Any?>, sc: Source) -> Unit
 
-private val listReplacerMap = run {
-  val defaultReplacer: ListReplacer = { list, sc ->
-    replaceIconInItemInfoList(list.mapNotNull { it.asType<PackageItemInfo>() }, sc)
-  }
-  val componentInfoReplacer: ListReplacer = { list, sc ->
-    defaultReplacer(list, sc)
-    replaceIconInItemInfoList(list.mapNotNull { it.asType<ComponentInfo>()?.applicationInfo }, sc)
-  }
-  val resolveInfoReplacer: ListReplacer? = run {
-    { list, sc ->
-      val riList = list.mapNotNull { it.asType<ResolveInfo>() }
-      componentInfoReplacer(riList.map { it.getComponentInfo() }, sc)
-      riList.forEach(::replaceIconInResolveInfo)
-    }
-  }
-
-  buildMap<Parcelable.Creator<*>, ListReplacer> {
-    fun setCreator(parcelableC: Class<*>, replacer: ListReplacer) {
-      set(parcelableC.field("CREATOR")?.getAs() ?: return, replacer)
-    }
-
-    setCreator(ApplicationInfo::class.java, defaultReplacer)
-    setCreator(ActivityInfo::class.java, componentInfoReplacer)
-    setCreator(ServiceInfo::class.java, componentInfoReplacer)
-    resolveInfoReplacer?.let { setCreator(ResolveInfo::class.java, it) }
-    setCreator(PackageInfo::class.java) { list, sc ->
-      val piList = list.mapNotNull { it.asType<PackageInfo>() }
-      defaultReplacer(piList.mapNotNull { it.applicationInfo }, sc)
-      piList.forEach { pi -> pi.activities?.let { componentInfoReplacer(it.toList(), sc) } }
-    }
-    runSafe {
-      val topActivityInfoF = TaskInfo::class.java.field("topActivityInfo") ?: return@runSafe
-      val taskInfoReplacer: ListReplacer = { list, sc ->
-        defaultReplacer(
-          list.mapNotNull { it?.let { topActivityInfoF.getAs<ActivityInfo>(it) } },
-          sc,
-        )
-      }
-      setCreator(RunningTaskInfo::class.java, taskInfoReplacer)
-      setCreator(RecentTaskInfo::class.java, taskInfoReplacer)
-    }
-    runSafe {
-      val launcherActivityInfo =
-        classOf("android.content.pm.LauncherActivityInfoInternal") ?: return@runSafe
-      val mActivityInfoF = launcherActivityInfo.field("mActivityInfo") ?: return@runSafe
-      setCreator(launcherActivityInfo) { list, sc ->
-        componentInfoReplacer(
-          list.mapNotNull { it?.let { mActivityInfoF.getAs<ActivityInfo>(it) } },
-          sc,
-        )
-      }
-    }
-    runSafe {
-      val launchActivityItem =
-        classOf("android.app.servertransaction.LaunchActivityItem") ?: return@runSafe
-      val mInfoF = launchActivityItem.field("mInfo") ?: return@runSafe
-      setCreator(launchActivityItem) { list, sc ->
-        componentInfoReplacer(list.mapNotNull { it?.let { mInfoF.getAs<ActivityInfo>(it) } }, sc)
-      }
-    }
-    resolveInfoReplacer?.let {
-      setCreator(AccessibilityServiceInfo::class.java) { list, sc ->
-        it(list.mapNotNull { it.asType<AccessibilityServiceInfo>()?.resolveInfo }, sc)
-      }
-    }
-  }
-}
-
 private val blockReplaceIconResId = ThreadLocal.withInitial { false }
 
 private fun HookBuilder.replaceIconHook() {
@@ -271,4 +228,65 @@ private fun ResolveInfo.getComponentInfo(): ComponentInfo {
   if (serviceInfo != null) return serviceInfo
   if (providerInfo != null) return providerInfo
   throw IllegalStateException("Missing ComponentInfo!")
+}
+
+private val listReplacerMap = run {
+  fun defaultReplacer(list: Iterable<Any?>, sc: Source) {
+    replaceIconInItemInfoList(list.mapNotNull { it.asType<PackageItemInfo>() }, sc)
+  }
+  fun componentInfoReplacer(list: Iterable<Any?>, sc: Source) {
+    defaultReplacer(list, sc)
+    replaceIconInItemInfoList(list.mapNotNull { it.asType<ComponentInfo>()?.applicationInfo }, sc)
+  }
+  fun resolveInfoReplacer(list: Iterable<Any?>, sc: Source) {
+    val riList = list.mapNotNull { it.asType<ResolveInfo>() }
+    componentInfoReplacer(riList.map { it.getComponentInfo() }, sc)
+    riList.forEach(::replaceIconInResolveInfo)
+  }
+
+  buildMap<Parcelable.Creator<*>, ListReplacer> {
+    fun setCreator(parcelableC: Class<*>, replacer: ListReplacer) {
+      set(parcelableC.field("CREATOR")?.getAs() ?: return, replacer)
+    }
+
+    setCreator(ApplicationInfo::class.java, ::defaultReplacer)
+    setCreator(ActivityInfo::class.java, ::componentInfoReplacer)
+    setCreator(ServiceInfo::class.java, ::componentInfoReplacer)
+    setCreator(ResolveInfo::class.java, ::resolveInfoReplacer)
+    setCreator(PackageInfo::class.java) { list, sc ->
+      val piList = list.mapNotNull { it.asType<PackageInfo>() }
+      defaultReplacer(piList.mapNotNull { it.applicationInfo }, sc)
+      piList.forEach { pi -> pi.activities?.let { componentInfoReplacer(it.toList(), sc) } }
+    }
+    runSafe {
+      val topActivityInfoF = TaskInfo::class.java.field("topActivityInfo") ?: return@runSafe
+      val taskInfoReplacer: ListReplacer = { list, sc ->
+        defaultReplacer(list.mapNotNull { it?.let { topActivityInfoF.get(it) } }, sc)
+      }
+      setCreator(RunningTaskInfo::class.java, taskInfoReplacer)
+      setCreator(RecentTaskInfo::class.java, taskInfoReplacer)
+    }
+    runSafe {
+      val launcherActivityInfo =
+        classOf("android.content.pm.LauncherActivityInfoInternal") ?: return@runSafe
+      val mActivityInfoF = launcherActivityInfo.field("mActivityInfo") ?: return@runSafe
+      setCreator(launcherActivityInfo) { list, sc ->
+        componentInfoReplacer(list.mapNotNull { it?.let { mActivityInfoF.get(it) } }, sc)
+      }
+    }
+    runSafe {
+      val launchActivityItem =
+        classOf("android.app.servertransaction.LaunchActivityItem") ?: return@runSafe
+      val mInfoF = launchActivityItem.field("mInfo") ?: return@runSafe
+      setCreator(launchActivityItem) { list, sc ->
+        componentInfoReplacer(list.mapNotNull { it?.let { mInfoF.get(it) } }, sc)
+      }
+    }
+    setCreator(AccessibilityServiceInfo::class.java) { list, sc ->
+      resolveInfoReplacer(
+        list.mapNotNull { it.asType<AccessibilityServiceInfo>()?.resolveInfo },
+        sc,
+      )
+    }
+  }
 }
