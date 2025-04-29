@@ -2,6 +2,7 @@ package com.richardluo.globalIconPack.ui.components
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Spacer
@@ -10,7 +11,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -27,9 +27,12 @@ fun ScrollIndicationBox(
   Box(modifier = modifier) {
     content(state)
 
-    val topShadowColors = remember {
-      listOf(Color.Black.copy(alpha = 0.12f), Color.Black.copy(alpha = 0.02f), Color.Transparent)
-    }
+    val darkTheme = isSystemInDarkTheme()
+    val topShadowColors =
+      remember(darkTheme) {
+        val baseColor = if (darkTheme) Color.Black else Color.DarkGray
+        listOf(baseColor.copy(alpha = 0.12f), baseColor.copy(alpha = 0.02f), Color.Transparent)
+      }
 
     AnimatedVisibility(
       state.canScrollBackward,
