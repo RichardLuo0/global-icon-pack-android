@@ -24,7 +24,7 @@ class NoShadow : Hook {
   override fun onHookSystemUI(lpp: LoadPackageParam) {
     // Remove bubble shadow
     classOf("com.android.wm.shell.bubbles.BadgedImageView", lpp).allConstructors().hook {
-      after { it.thisObject.asType<View>()?.outlineProvider = null }
+      after { thisObject.asType<View>()?.outlineProvider = null }
     }
     removeIconShadow(lpp)
   }
@@ -33,12 +33,12 @@ class NoShadow : Hook {
 
   private fun removeIconShadow(lpp: LoadPackageParam) {
     classOf("android.util.LauncherIcons").allMethods("wrapIconDrawableWithShadow").hook {
-      replace { it.args[0] }
+      replace { args[0] }
     }
     BaseIconFactory.getClazz(lpp).allMethods("drawIconBitmap").hook {
       before {
-        val bitmapGenerationMode = it.args.rGet(-2) as? Int ?: return@before
-        it.args.rSet(
+        val bitmapGenerationMode = args.rGet(-2) as? Int ?: return@before
+        args.rSet(
           -2,
           when (bitmapGenerationMode) {
             MODE_WITH_SHADOW -> MODE_DEFAULT

@@ -62,23 +62,19 @@ fun Class<*>?.field(name: String) =
     .also { if (it == null) log("No field $name is found on class ${this?.name}") }
 
 class HookBuilder : XC_MethodHook() {
-  private var beforeAction: ((MethodHookParam) -> Unit)? = null
-  private var afterAction: ((MethodHookParam) -> Unit)? = null
+  private var beforeAction: (MethodHookParam.() -> Unit)? = null
+  private var afterAction: (MethodHookParam.() -> Unit)? = null
 
-  fun before(block: (MethodHookParam) -> Unit) {
+  fun before(block: MethodHookParam.() -> Unit) {
     beforeAction = block
   }
 
-  fun after(block: (MethodHookParam) -> Unit) {
+  fun after(block: MethodHookParam.() -> Unit) {
     afterAction = block
   }
 
-  fun replace(block: (MethodHookParam) -> Any?) = before { param ->
-    runCatching { param.result = block(param) }.exceptionOrNull()?.also { param.throwable = it }
-  }
-
-  fun callOriginal(param: MethodHookParam) {
-    param.result = param.callOriginalMethod()
+  fun replace(block: MethodHookParam.() -> Any?) = before {
+    runCatching { result = block() }.exceptionOrNull()?.also { throwable = it }
   }
 
   override fun beforeHookedMethod(param: MethodHookParam) {

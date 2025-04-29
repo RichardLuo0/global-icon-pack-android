@@ -63,18 +63,17 @@ class ReplaceIcon(val shortcut: Boolean, val forceActivityIconForTask: Boolean) 
     taskIconCache.allMethods("getIcon").hook {
       before {
         if (forceActivityIconForTask) {
-          it.result = null
+          result = null
           return@before
         }
-        callOriginal(it)
-        tdBitmapSet.add(it.result.asType() ?: return@before)
+        result = callOriginalMethod()
+        tdBitmapSet.add(result.asType() ?: return@before)
       }
     }
     taskIconCache.allMethods("getBitmapInfo").hook {
-      before { param ->
-        val drawable = param.args[0].asType<BitmapDrawable>() ?: return@before
-        if (tdBitmapSet.contains(drawable.bitmap))
-          getSC()?.run { param.args[0] = genIconFrom(drawable) }
+      before {
+        val drawable = args[0].asType<BitmapDrawable>() ?: return@before
+        if (tdBitmapSet.contains(drawable.bitmap)) getSC()?.run { args[0] = genIconFrom(drawable) }
       }
     }
   }
@@ -85,35 +84,32 @@ class ReplaceIcon(val shortcut: Boolean, val forceActivityIconForTask: Boolean) 
     ResolveInfo::class.java.allConstructors().hook {
       after {
         if (blockReplaceIconResId.get() == true) return@after
-        replaceIconInResolveInfo(it.thisObject.asType() ?: return@after)
+        replaceIconInResolveInfo(thisObject.asType() ?: return@after)
       }
     }
 
     Parcel::class.java.allMethods("readTypedList").hook {
-      batchReplaceIconHook(
-        { it.args.getOrNull(1)?.let { listReplacerMap[it] } },
-        { it.args[0].asType() },
-      )
+      batchReplaceIconHook({ args.getOrNull(1)?.let { listReplacerMap[it] } }, { args[0].asType() })
     }
     Parcel::class.java.allMethods("createTypedArray").hook {
       batchReplaceIconHook(
-        { it.args.getOrNull(0)?.let { listReplacerMap[it] } },
-        { it.result.asType<Array<Any?>>()?.asIterable() },
+        { args.getOrNull(0)?.let { listReplacerMap[it] } },
+        { result.asType<Array<Any?>>()?.asIterable() },
       )
     }
     hookParceledListSlice()
 
     getDrawableForDensityM.hook {
       before {
-        val resId = it.args[0] as? Int ?: return@before
-        val density = it.args[1] as? Int ?: return@before
-        it.result =
+        val resId = args[0] as? Int ?: return@before
+        val density = args[1] as? Int ?: return@before
+        result =
           when {
             isHighTwoByte(resId, IN_SC) ->
               getSC()?.getIcon(withHighByteSet(resId, SC_DEFAULT), density)
             isHighTwoByte(resId, NOT_IN_SC) -> {
-              it.args[0] = withHighByteSet(resId, ANDROID_DEFAULT)
-              it.callOriginalMethod<Drawable?>()?.let { getSC()?.genIconFrom(it) ?: it }
+              args[0] = withHighByteSet(resId, ANDROID_DEFAULT)
+              callOriginalMethod<Drawable?>()?.let { getSC()?.genIconFrom(it) ?: it }
             }
             else -> return@before
           }
@@ -124,12 +120,12 @@ class ReplaceIcon(val shortcut: Boolean, val forceActivityIconForTask: Boolean) 
     if (shortcut)
       LauncherApps::class.java.allMethods("getShortcutIconDrawable").hook {
         before {
-          val shortcut = it.args[0] as? ShortcutInfo ?: return@before
-          val density = it.args[1] as? Int ?: return@before
+          val shortcut = args[0] as? ShortcutInfo ?: return@before
+          val density = args[1] as? Int ?: return@before
           val sc = getSC() ?: return@before
-          it.result =
+          result =
             sc.getIconEntry(getComponentName(shortcut))?.let { sc.getIcon(it, density) }
-              ?: it.callOriginalMethod<Drawable?>()?.let { sc.genIconFrom(it) }
+              ?: callOriginalMethod<Drawable?>()?.let { sc.genIconFrom(it) }
         }
       }
   }
@@ -144,10 +140,10 @@ class ReplaceIcon(val shortcut: Boolean, val forceActivityIconForTask: Boolean) 
         blockReplaceIconResId.set(true)
         runSafe {
           val sc = getSC() ?: return@runSafe
-          it.result = it.callOriginalMethod<Unit>()
+          result = callOriginalMethod<Unit>()
           val currentReplacer = replacer.get()
           if (currentReplacer == null) return@runSafe
-          val list = mListF.getAs<List<Any?>?>(it.thisObject) ?: return@runSafe
+          val list = mListF.getAs<List<Any?>?>(thisObject) ?: return@runSafe
           currentReplacer.invoke(list, sc)
           replacer.set(null)
         }
@@ -157,7 +153,7 @@ class ReplaceIcon(val shortcut: Boolean, val forceActivityIconForTask: Boolean) 
     classOf("android.content.pm.ParceledListSlice").allMethods("readParcelableCreator").hook {
       after {
         if (blockReplaceIconResId.get() == false) return@after
-        val currentReplacer = listReplacerMap[it.result]
+        val currentReplacer = listReplacerMap[result]
         // Not a class we can batch replace
         if (currentReplacer == null) blockReplaceIconResId.set(false)
         replacer.set(currentReplacer)
@@ -175,7 +171,7 @@ private fun HookBuilder.replaceIconHook() {
     if (blockReplaceIconResId.get() == true) return@after
     blockReplaceIconResId.set(true)
     runSafe {
-      val info = it.thisObject as? PackageItemInfo ?: return@runSafe
+      val info = thisObject as? PackageItemInfo ?: return@runSafe
       info.packageName ?: return@runSafe
       val sc = getSC() ?: return@runSafe
       replaceIconInItemInfo(info, sc.getId(getComponentName(info)))
@@ -185,17 +181,17 @@ private fun HookBuilder.replaceIconHook() {
 }
 
 private fun HookBuilder.batchReplaceIconHook(
-  getReplacer: (param: MethodHookParam) -> ListReplacer?,
-  getList: (param: MethodHookParam) -> Iterable<Any?>?,
+  getReplacer: MethodHookParam.() -> ListReplacer?,
+  getList: MethodHookParam.() -> Iterable<Any?>?,
 ) {
   before {
-    val replacer = getReplacer(it) ?: return@before
+    val replacer = getReplacer() ?: return@before
     val oldBlock = blockReplaceIconResId.get()
     blockReplaceIconResId.set(true)
     runSafe {
       val sc = getSC() ?: return@runSafe
-      callOriginal(it)
-      val list = getList(it) ?: return@runSafe
+      result = callOriginalMethod()
+      val list = getList() ?: return@runSafe
       replacer(list, sc)
     }
     blockReplaceIconResId.set(oldBlock)

@@ -9,7 +9,6 @@ import com.richardluo.globalIconPack.utils.allMethods
 import com.richardluo.globalIconPack.utils.classOf
 import com.richardluo.globalIconPack.utils.field
 import com.richardluo.globalIconPack.utils.getAs
-import com.richardluo.globalIconPack.utils.getValue
 import com.richardluo.globalIconPack.utils.hook
 import de.robv.android.xposed.XC_MethodHook.MethodHookParam
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
@@ -49,8 +48,8 @@ object RunProviderInSystem {
 
     contentProviderHelper.allMethods("getContentProviderImpl").hook {
       before {
-        val name = it.args[1] as? String ?: return@before
-        if (name == IconPackProvider.AUTHORITIES) it.result = getCph(it)
+        val name = args[1] as? String ?: return@before
+        if (name == IconPackProvider.AUTHORITIES) result = getCph(this)
       }
     }
   }

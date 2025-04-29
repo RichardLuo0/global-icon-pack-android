@@ -27,9 +27,9 @@ class NoForceShape(val drawWholeIconForTransparentBackgroundInSplashScreen: Bool
       val mIsBgComplexF = iconColor.field("mIsBgComplex") ?: return
       iconColor.allConstructors().hook {
         after {
-          val mBgColor = mBgColorF.get(it.thisObject).asType<Int>() ?: return@after
-          val mIsBgComplex = mIsBgComplexF.get(it.thisObject).asType<Boolean>() ?: return@after
-          if (!mIsBgComplex && mBgColor == Color.TRANSPARENT) mIsBgComplexF.set(it.thisObject, true)
+          val mBgColor = mBgColorF.get(thisObject).asType<Int>() ?: return@after
+          val mIsBgComplex = mIsBgComplexF.get(thisObject).asType<Boolean>() ?: return@after
+          if (!mIsBgComplex && mBgColor == Color.TRANSPARENT) mIsBgComplexF.set(thisObject, true)
         }
       }
     }
@@ -40,10 +40,10 @@ class NoForceShape(val drawWholeIconForTransparentBackgroundInSplashScreen: Bool
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.VANILLA_ICE_CREAM) return
     val adaptiveIcon = classOf("com.android.settingslib.widget.AdaptiveIcon", lpp) ?: return
     fun HookBuilder.extractOriIcon() {
-      after { param ->
-        val icon = param.result.asType<Drawable?>() ?: return@after
+      after {
+        val icon = result.asType<Drawable?>() ?: return@after
         if (adaptiveIcon.isAssignableFrom(icon::class.java))
-          icon.asType<LayerDrawable>()?.getDrawable(1)?.let { param.result = it }
+          icon.asType<LayerDrawable>()?.getDrawable(1)?.let { result = it }
       }
     }
     classOf("com.android.settings.accessibility.AccessibilityActivityPreference", lpp)
