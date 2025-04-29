@@ -1,4 +1,4 @@
-package com.richardluo.globalIconPack.iconPack
+package com.richardluo.globalIconPack.iconPack.source
 
 import android.annotation.SuppressLint
 import android.content.ComponentName
@@ -6,12 +6,16 @@ import android.content.res.Resources
 import android.content.res.XmlResourceParser
 import android.graphics.drawable.Drawable
 import android.util.Xml
-import com.richardluo.globalIconPack.iconPack.database.CalendarIconEntry
-import com.richardluo.globalIconPack.iconPack.database.ClockIconEntry
-import com.richardluo.globalIconPack.iconPack.database.ClockMetadata
-import com.richardluo.globalIconPack.iconPack.database.FallbackSettings
-import com.richardluo.globalIconPack.iconPack.database.IconEntry
-import com.richardluo.globalIconPack.iconPack.database.NormalIconEntry
+import com.richardluo.globalIconPack.iconPack.model.CalendarIconEntry
+import com.richardluo.globalIconPack.iconPack.model.ClockIconEntry
+import com.richardluo.globalIconPack.iconPack.model.ClockMetadata
+import com.richardluo.globalIconPack.iconPack.model.FallbackSettings
+import com.richardluo.globalIconPack.iconPack.model.IconEntry
+import com.richardluo.globalIconPack.iconPack.model.NormalIconEntry
+import com.richardluo.globalIconPack.iconPack.model.IconFallback
+import com.richardluo.globalIconPack.iconPack.model.IconPackConfig
+import com.richardluo.globalIconPack.iconPack.model.ResourceOwner
+import com.richardluo.globalIconPack.iconPack.model.defaultIconPackConfig
 import com.richardluo.globalIconPack.utils.get
 import com.richardluo.globalIconPack.utils.getOrNull
 import com.richardluo.globalIconPack.utils.log

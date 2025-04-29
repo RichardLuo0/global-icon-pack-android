@@ -6,8 +6,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.viewModelScope
-import com.richardluo.globalIconPack.iconPack.database.CalendarIconEntry
-import com.richardluo.globalIconPack.iconPack.database.NormalIconEntry
+import com.richardluo.globalIconPack.iconPack.model.CalendarIconEntry
+import com.richardluo.globalIconPack.iconPack.model.NormalIconEntry
 import com.richardluo.globalIconPack.ui.model.IconInfo
 import com.richardluo.globalIconPack.ui.model.IconPack
 import com.richardluo.globalIconPack.ui.model.OriginalIcon

@@ -1,14 +1,20 @@
-package com.richardluo.globalIconPack.iconPack
+package com.richardluo.globalIconPack.iconPack.source
 
 import android.app.AndroidAppHelper
 import android.content.ComponentName
 import android.graphics.drawable.Drawable
 import androidx.core.database.getIntOrNull
-import com.richardluo.globalIconPack.iconPack.database.FallbackSettings
-import com.richardluo.globalIconPack.iconPack.database.IconEntry
-import com.richardluo.globalIconPack.iconPack.database.IconPackDB.GetIconColumn
-import com.richardluo.globalIconPack.iconPack.database.useFirstRow
-import com.richardluo.globalIconPack.iconPack.database.useMapToArray
+import com.richardluo.globalIconPack.iconPack.IconPackDB.GetIconColumn
+import com.richardluo.globalIconPack.iconPack.IconPackProvider
+import com.richardluo.globalIconPack.iconPack.model.FallbackSettings
+import com.richardluo.globalIconPack.iconPack.model.IconEntry
+import com.richardluo.globalIconPack.iconPack.model.IconFallback
+import com.richardluo.globalIconPack.iconPack.model.IconPackConfig
+import com.richardluo.globalIconPack.iconPack.model.IconResolver
+import com.richardluo.globalIconPack.iconPack.model.ResourceOwner
+import com.richardluo.globalIconPack.iconPack.model.defaultIconPackConfig
+import com.richardluo.globalIconPack.iconPack.useFirstRow
+import com.richardluo.globalIconPack.iconPack.useMapToArray
 import com.richardluo.globalIconPack.utils.call
 import com.richardluo.globalIconPack.utils.classOf
 import com.richardluo.globalIconPack.utils.getOrPut
@@ -32,7 +38,7 @@ class RemoteSource(pack: String, config: IconPackConfig = defaultIconPackConfig)
     iconFallback =
       if (config.iconFallback)
         contentResolver
-          .query(IconPackProvider.FALLBACK, null, null, arrayOf(pack), null)
+          .query(IconPackProvider.Companion.FALLBACK, null, null, arrayOf(pack), null)
           ?.useFirstRow {
             IconFallback(FallbackSettings.from(it.getBlob(0)), ::getIcon, config).orNullIfEmpty()
           }
@@ -44,14 +50,14 @@ class RemoteSource(pack: String, config: IconPackConfig = defaultIconPackConfig)
       indexMap.getOrPutNullable(cn) {
         contentResolver
           .query(
-            IconPackProvider.ICON,
+            IconPackProvider.Companion.ICON,
             null,
             null,
             arrayOf(pack, iconPackAsFallback.toString(), cn.flattenToString()),
             null,
           )
           ?.useFirstRow { c ->
-            val entry = IconResolver.from(c)
+            val entry = IconResolver.Companion.from(c)
             val fallback = c.getIntOrNull(GetIconColumn.Fallback.ordinal) == 1
             iconEntryList.add(entry)
             (iconEntryList.size - 1).also {
@@ -66,7 +72,7 @@ class RemoteSource(pack: String, config: IconPackConfig = defaultIconPackConfig)
       indexMap.getOrPut(cnList) { misses, getKey ->
         contentResolver
           .query(
-            IconPackProvider.ICON,
+            IconPackProvider.Companion.ICON,
             null,
             null,
             arrayOf(
@@ -77,7 +83,7 @@ class RemoteSource(pack: String, config: IconPackConfig = defaultIconPackConfig)
             null,
           )
           ?.useMapToArray(misses.size) { c ->
-            IconResolver.from(c) to (c.getIntOrNull(GetIconColumn.Fallback.ordinal) == 1)
+            IconResolver.Companion.from(c) to (c.getIntOrNull(GetIconColumn.Fallback.ordinal) == 1)
           }
           ?.mapIndexed { i, info ->
             if (info != null) {

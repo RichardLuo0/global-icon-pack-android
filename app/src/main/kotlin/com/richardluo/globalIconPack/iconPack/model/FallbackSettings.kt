@@ -1,6 +1,6 @@
-package com.richardluo.globalIconPack.iconPack.database
+package com.richardluo.globalIconPack.iconPack.model
 
-import com.richardluo.globalIconPack.iconPack.IconPackInfo
+import com.richardluo.globalIconPack.iconPack.source.IconPackInfo
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.DataInputStream

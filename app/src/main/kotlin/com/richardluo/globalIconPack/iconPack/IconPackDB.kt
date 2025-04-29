@@ -1,4 +1,4 @@
-package com.richardluo.globalIconPack.iconPack.database
+package com.richardluo.globalIconPack.iconPack
 
 import android.content.ComponentName
 import android.content.ContentValues
@@ -12,8 +12,9 @@ import android.widget.Toast
 import androidx.compose.ui.util.fastJoinToString
 import com.richardluo.globalIconPack.AppPref
 import com.richardluo.globalIconPack.get
-import com.richardluo.globalIconPack.iconPack.IconPackApps
-import com.richardluo.globalIconPack.iconPack.database.IconEntry.Type
+import com.richardluo.globalIconPack.iconPack.model.FallbackSettings
+import com.richardluo.globalIconPack.iconPack.model.IconEntry
+import com.richardluo.globalIconPack.iconPack.model.IconEntry.Type
 import com.richardluo.globalIconPack.ui.model.IconPack
 import com.richardluo.globalIconPack.ui.viewModel.IconPackCache
 import com.richardluo.globalIconPack.utils.AppPreference

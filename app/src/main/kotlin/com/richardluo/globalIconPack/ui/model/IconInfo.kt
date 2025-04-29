@@ -5,7 +5,7 @@ import android.content.Context
 import android.content.pm.ApplicationInfo
 import android.content.pm.LauncherActivityInfo
 import android.content.pm.ShortcutInfo
-import com.richardluo.globalIconPack.iconPack.getComponentName
+import com.richardluo.globalIconPack.iconPack.source.getComponentName
 
 abstract class IconInfo(val componentName: ComponentName, val label: String) {
 

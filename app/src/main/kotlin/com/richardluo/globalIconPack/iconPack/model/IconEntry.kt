@@ -1,7 +1,7 @@
-package com.richardluo.globalIconPack.iconPack.database
+package com.richardluo.globalIconPack.iconPack.model
 
 import android.graphics.drawable.Drawable
-import com.richardluo.globalIconPack.iconPack.database.IconEntry.Type
+import com.richardluo.globalIconPack.iconPack.model.IconEntry.Type
 import com.richardluo.globalIconPack.reflect.ClockDrawableWrapper
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream

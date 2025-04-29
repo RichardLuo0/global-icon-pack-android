@@ -12,8 +12,8 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.lifecycle.viewModelScope
 import com.richardluo.globalIconPack.R
-import com.richardluo.globalIconPack.iconPack.IconPackConfig
-import com.richardluo.globalIconPack.iconPack.defaultIconPackConfig
+import com.richardluo.globalIconPack.iconPack.model.IconPackConfig
+import com.richardluo.globalIconPack.iconPack.model.defaultIconPackConfig
 import com.richardluo.globalIconPack.ui.model.IconEntryWithPack
 import com.richardluo.globalIconPack.ui.model.IconInfo
 import com.richardluo.globalIconPack.ui.model.IconPack

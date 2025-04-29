@@ -15,12 +15,17 @@ import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -115,3 +120,17 @@ fun <T> LazyGridDialog(
         items(list) { item -> itemContent(item) { openState.value = false } }
       }
   }
+
+@Composable
+private fun ProvideContentColorTextStyle(
+  contentColor: Color,
+  textStyle: TextStyle,
+  content: @Composable () -> Unit,
+) {
+  val mergedStyle = LocalTextStyle.current.merge(textStyle)
+  CompositionLocalProvider(
+    LocalContentColor provides contentColor,
+    LocalTextStyle provides mergedStyle,
+    content = content,
+  )
+}

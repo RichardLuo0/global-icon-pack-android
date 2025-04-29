@@ -12,8 +12,8 @@ import android.content.pm.LauncherActivityInfo
 import android.graphics.drawable.Drawable
 import android.os.Process
 import android.os.UserManager
-import com.richardluo.globalIconPack.iconPack.database.IconEntry
-import com.richardluo.globalIconPack.iconPack.getComponentName
+import com.richardluo.globalIconPack.iconPack.model.IconEntry
+import com.richardluo.globalIconPack.iconPack.source.getComponentName
 import com.richardluo.globalIconPack.iconPack.getSC
 import com.richardluo.globalIconPack.utils.HookBuilder
 import com.richardluo.globalIconPack.utils.allMethods

@@ -16,8 +16,8 @@ import android.content.pm.ShortcutInfo
 import android.graphics.drawable.Drawable
 import android.os.Parcel
 import android.os.Parcelable
-import com.richardluo.globalIconPack.iconPack.Source
-import com.richardluo.globalIconPack.iconPack.getComponentName
+import com.richardluo.globalIconPack.iconPack.source.Source
+import com.richardluo.globalIconPack.iconPack.source.getComponentName
 import com.richardluo.globalIconPack.iconPack.getSC
 import com.richardluo.globalIconPack.reflect.ClockDrawableWrapper
 import com.richardluo.globalIconPack.reflect.Resources.getDrawableForDensityM

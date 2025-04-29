@@ -33,9 +33,7 @@ class NoShadow : Hook {
 
   private fun removeIconShadow(lpp: LoadPackageParam) {
     classOf("android.util.LauncherIcons").allMethods("wrapIconDrawableWithShadow").hook {
-      replace {
-        return@replace it.args[0]
-      }
+      replace { it.args[0] }
     }
     BaseIconFactory.getClazz(lpp).allMethods("drawIconBitmap").hook {
       before {

@@ -1,22 +1,25 @@
-package com.richardluo.globalIconPack.iconPack
+package com.richardluo.globalIconPack.iconPack.source
 
 import android.app.AndroidAppHelper
 import android.content.ComponentName
 import android.graphics.drawable.Drawable
 import androidx.core.database.getIntOrNull
 import com.richardluo.globalIconPack.BuildConfig
-import com.richardluo.globalIconPack.iconPack.database.FallbackSettings
-import com.richardluo.globalIconPack.iconPack.database.IconEntry
-import com.richardluo.globalIconPack.iconPack.database.IconPackDB
-import com.richardluo.globalIconPack.iconPack.database.IconPackDB.GetIconColumn
-import com.richardluo.globalIconPack.iconPack.database.useFirstRow
-import com.richardluo.globalIconPack.iconPack.database.useMapToArray
+import com.richardluo.globalIconPack.iconPack.model.FallbackSettings
+import com.richardluo.globalIconPack.iconPack.model.IconEntry
+import com.richardluo.globalIconPack.iconPack.IconPackDB
+import com.richardluo.globalIconPack.iconPack.useFirstRow
+import com.richardluo.globalIconPack.iconPack.useMapToArray
+import com.richardluo.globalIconPack.iconPack.model.IconFallback
+import com.richardluo.globalIconPack.iconPack.model.IconPackConfig
+import com.richardluo.globalIconPack.iconPack.model.IconResolver
+import com.richardluo.globalIconPack.iconPack.model.ResourceOwner
+import com.richardluo.globalIconPack.iconPack.model.defaultIconPackConfig
 import com.richardluo.globalIconPack.utils.getOrPut
 import com.richardluo.globalIconPack.utils.mapIndexed
 import java.util.Collections
-import kotlin.to
 
-class DatabaseSource(pack: String, config: IconPackConfig = defaultIconPackConfig) :
+class ShareSource(pack: String, config: IconPackConfig = defaultIconPackConfig) :
   Source, ResourceOwner(pack) {
   companion object {
     const val DATABASE_PATH = "/data/misc/${BuildConfig.APPLICATION_ID}/iconPack.db"
@@ -35,7 +38,8 @@ class DatabaseSource(pack: String, config: IconPackConfig = defaultIconPackConfi
     iconFallback =
       if (config.iconFallback)
         db.getFallbackSettings(pack).useFirstRow {
-          IconFallback(FallbackSettings.from(it.getBlob(0)), ::getIcon, config).orNullIfEmpty()
+          IconFallback(FallbackSettings.Companion.from(it.getBlob(0)), ::getIcon, config)
+            .orNullIfEmpty()
         }
       else null
   }
@@ -48,7 +52,8 @@ class DatabaseSource(pack: String, config: IconPackConfig = defaultIconPackConfi
         db
           .getIcon(pack, misses, iconPackAsFallback)
           .useMapToArray(misses.size) { c ->
-            IconResolver.from(c) to (c.getIntOrNull(GetIconColumn.Fallback.ordinal) == 1)
+            IconResolver.Companion.from(c) to
+              (c.getIntOrNull(IconPackDB.GetIconColumn.Fallback.ordinal) == 1)
           }
           .mapIndexed { i, info ->
             if (info != null) {

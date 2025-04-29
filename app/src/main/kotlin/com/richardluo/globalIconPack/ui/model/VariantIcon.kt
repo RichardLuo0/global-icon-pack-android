@@ -1,6 +1,6 @@
 package com.richardluo.globalIconPack.ui.model
 
-import com.richardluo.globalIconPack.iconPack.database.IconEntry
+import com.richardluo.globalIconPack.iconPack.model.IconEntry
 
 interface VariantIcon
 

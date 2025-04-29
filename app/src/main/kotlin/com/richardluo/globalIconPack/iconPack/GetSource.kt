@@ -5,6 +5,11 @@ import com.richardluo.globalIconPack.MODE_PROVIDER
 import com.richardluo.globalIconPack.MODE_SHARE
 import com.richardluo.globalIconPack.Pref
 import com.richardluo.globalIconPack.get
+import com.richardluo.globalIconPack.iconPack.model.IconPackConfig
+import com.richardluo.globalIconPack.iconPack.source.LocalSource
+import com.richardluo.globalIconPack.iconPack.source.ShareSource
+import com.richardluo.globalIconPack.iconPack.source.Source
+import com.richardluo.globalIconPack.iconPack.source.createRemoteIconPack
 import com.richardluo.globalIconPack.utils.WorldPreference
 import com.richardluo.globalIconPack.utils.log
 
@@ -30,7 +35,7 @@ private fun initSC() {
       val config = IconPackConfig(pref)
       sc =
         when (pref.get(Pref.MODE)) {
-          MODE_SHARE -> DatabaseSource(pack, config)
+          MODE_SHARE -> ShareSource(pack, config)
           MODE_PROVIDER -> createRemoteIconPack(pack, config)
           else -> LocalSource(pack, config)
         }

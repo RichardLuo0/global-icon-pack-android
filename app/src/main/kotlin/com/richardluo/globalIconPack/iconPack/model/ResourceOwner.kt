@@ -1,9 +1,9 @@
-package com.richardluo.globalIconPack.iconPack
+package com.richardluo.globalIconPack.iconPack.model
 
 import android.annotation.SuppressLint
 import android.app.AndroidAppHelper
 import android.graphics.drawable.Drawable
-import com.richardluo.globalIconPack.reflect.Resources.getDrawableForDensity
+import com.richardluo.globalIconPack.reflect.Resources
 
 open class ResourceOwner(protected val pack: String) {
   protected val res =
@@ -15,7 +15,7 @@ open class ResourceOwner(protected val pack: String) {
     idCache.getOrPut("$pack/$name") { res.getIdentifier(name, "drawable", pack) }
 
   fun getIconById(id: Int, iconDpi: Int): Drawable? =
-    if (id == 0) null else getDrawableForDensity(res, id, iconDpi, null)
+    if (id == 0) null else Resources.getDrawableForDensity(res, id, iconDpi, null)
 
   fun getIconByName(name: String, iconDpi: Int): Drawable? = getIconById(getIdByName(name), iconDpi)
 }

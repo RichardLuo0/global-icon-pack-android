@@ -8,9 +8,9 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.core.graphics.drawable.toBitmap
-import com.richardluo.globalIconPack.iconPack.IconFallback
-import com.richardluo.globalIconPack.iconPack.IconPackConfig
-import com.richardluo.globalIconPack.iconPack.database.IconEntry
+import com.richardluo.globalIconPack.iconPack.model.IconEntry
+import com.richardluo.globalIconPack.iconPack.model.IconFallback
+import com.richardluo.globalIconPack.iconPack.model.IconPackConfig
 import com.richardluo.globalIconPack.ui.model.AppIconInfo
 import com.richardluo.globalIconPack.ui.model.IconEntryWithPack
 import com.richardluo.globalIconPack.ui.model.IconInfo

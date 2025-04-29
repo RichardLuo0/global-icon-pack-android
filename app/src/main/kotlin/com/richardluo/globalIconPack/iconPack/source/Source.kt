@@ -1,66 +1,14 @@
-package com.richardluo.globalIconPack.iconPack
+package com.richardluo.globalIconPack.iconPack.source
 
 import android.content.ComponentName
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageItemInfo
 import android.content.pm.ShortcutInfo
 import android.content.res.Resources
-import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
-import androidx.core.graphics.drawable.toBitmap
-import com.richardluo.globalIconPack.iconPack.database.FallbackSettings
-import com.richardluo.globalIconPack.iconPack.database.IconEntry
+import com.richardluo.globalIconPack.iconPack.model.IconEntry
+import com.richardluo.globalIconPack.iconPack.model.IconFallback
 import com.richardluo.globalIconPack.utils.IconHelper
-import kotlin.collections.orEmpty
-
-class IconFallback(
-  val iconBacks: List<Bitmap>,
-  val iconUpons: List<Bitmap>,
-  val iconMasks: List<Bitmap>,
-  val iconScale: Float = 1f,
-  val scaleOnlyForeground: Boolean,
-  val backAsAdaptiveBack: Boolean,
-  val nonAdaptiveScale: Float,
-  val convertToAdaptive: Boolean,
-) {
-  constructor(
-    fs: FallbackSettings,
-    getIcon: (String) -> Drawable?,
-    config: IconPackConfig,
-  ) : this(
-    fs.iconBacks.mapNotNull { getIcon(it)?.toBitmap() },
-    fs.iconUpons.mapNotNull { getIcon(it)?.toBitmap() },
-    fs.iconMasks.mapNotNull { getIcon(it)?.toBitmap() },
-    config.scale ?: fs.iconScale,
-    config.scaleOnlyForeground,
-    config.backAsAdaptiveBack,
-    config.nonAdaptiveScale,
-    config.convertToAdaptive,
-  )
-
-  fun isEmpty() =
-    iconBacks.isEmpty() &&
-      iconUpons.isEmpty() &&
-      iconMasks.isEmpty() &&
-      iconScale == 1f &&
-      backAsAdaptiveBack == false &&
-      nonAdaptiveScale == 1f &&
-      convertToAdaptive == false
-
-  fun orNullIfEmpty() = if (isEmpty()) null else this
-}
-
-fun IconFallback?.withConfig(config: IconPackConfig) =
-  IconFallback(
-    this?.iconBacks.orEmpty(),
-    this?.iconUpons.orEmpty(),
-    this?.iconMasks.orEmpty(),
-    config.scale ?: this?.iconScale ?: 1f,
-    config.scaleOnlyForeground,
-    config.backAsAdaptiveBack,
-    config.nonAdaptiveScale,
-    config.convertToAdaptive,
-  )
 
 interface Source {
   fun getId(cn: ComponentName): Int?

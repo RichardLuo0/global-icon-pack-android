@@ -5,7 +5,7 @@ import android.graphics.drawable.AdaptiveIconDrawable
 import android.graphics.drawable.Drawable
 import android.os.Bundle
 import androidx.core.graphics.drawable.toDrawable
-import com.richardluo.globalIconPack.iconPack.database.ClockMetadata
+import com.richardluo.globalIconPack.iconPack.model.ClockMetadata
 import com.richardluo.globalIconPack.utils.call
 import com.richardluo.globalIconPack.utils.classOf
 import com.richardluo.globalIconPack.utils.method

@@ -7,7 +7,6 @@ import android.net.Uri
 import android.os.StrictMode
 import androidx.core.net.toUri
 import com.richardluo.globalIconPack.BuildConfig
-import com.richardluo.globalIconPack.iconPack.database.IconPackDB
 import com.richardluo.globalIconPack.utils.InstanceManager.get
 import com.richardluo.globalIconPack.utils.getOrNull
 import com.richardluo.globalIconPack.utils.log

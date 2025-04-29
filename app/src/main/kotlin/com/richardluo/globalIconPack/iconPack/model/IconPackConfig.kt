@@ -1,4 +1,4 @@
-package com.richardluo.globalIconPack.iconPack
+package com.richardluo.globalIconPack.iconPack.model
 
 import android.content.SharedPreferences
 import com.richardluo.globalIconPack.Pref
