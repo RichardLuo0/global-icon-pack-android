@@ -5,16 +5,16 @@ import android.content.ComponentName
 import android.graphics.drawable.Drawable
 import androidx.core.database.getIntOrNull
 import com.richardluo.globalIconPack.BuildConfig
+import com.richardluo.globalIconPack.iconPack.IconPackDB
 import com.richardluo.globalIconPack.iconPack.model.FallbackSettings
 import com.richardluo.globalIconPack.iconPack.model.IconEntry
-import com.richardluo.globalIconPack.iconPack.IconPackDB
-import com.richardluo.globalIconPack.iconPack.useFirstRow
-import com.richardluo.globalIconPack.iconPack.useMapToArray
 import com.richardluo.globalIconPack.iconPack.model.IconFallback
 import com.richardluo.globalIconPack.iconPack.model.IconPackConfig
 import com.richardluo.globalIconPack.iconPack.model.IconResolver
 import com.richardluo.globalIconPack.iconPack.model.ResourceOwner
 import com.richardluo.globalIconPack.iconPack.model.defaultIconPackConfig
+import com.richardluo.globalIconPack.iconPack.useFirstRow
+import com.richardluo.globalIconPack.iconPack.useMapToArray
 import com.richardluo.globalIconPack.utils.getOrPut
 import com.richardluo.globalIconPack.utils.mapIndexed
 import java.util.Collections
@@ -38,8 +38,7 @@ class ShareSource(pack: String, config: IconPackConfig = defaultIconPackConfig) 
     iconFallback =
       if (config.iconFallback)
         db.getFallbackSettings(pack).useFirstRow {
-          IconFallback(FallbackSettings.Companion.from(it.getBlob(0)), ::getIcon, config)
-            .orNullIfEmpty()
+          IconFallback(FallbackSettings.from(it.getBlob(0)), ::getIcon, config).orNullIfEmpty()
         }
       else null
   }
@@ -52,8 +51,7 @@ class ShareSource(pack: String, config: IconPackConfig = defaultIconPackConfig) 
         db
           .getIcon(pack, misses, iconPackAsFallback)
           .useMapToArray(misses.size) { c ->
-            IconResolver.Companion.from(c) to
-              (c.getIntOrNull(IconPackDB.GetIconColumn.Fallback.ordinal) == 1)
+            IconResolver.from(c) to (c.getIntOrNull(IconPackDB.GetIconColumn.Fallback.ordinal) == 1)
           }
           .mapIndexed { i, info ->
             if (info != null) {

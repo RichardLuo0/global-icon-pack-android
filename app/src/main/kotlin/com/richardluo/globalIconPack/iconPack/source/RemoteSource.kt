@@ -38,7 +38,7 @@ class RemoteSource(pack: String, config: IconPackConfig = defaultIconPackConfig)
     iconFallback =
       if (config.iconFallback)
         contentResolver
-          .query(IconPackProvider.Companion.FALLBACK, null, null, arrayOf(pack), null)
+          .query(IconPackProvider.FALLBACK, null, null, arrayOf(pack), null)
           ?.useFirstRow {
             IconFallback(FallbackSettings.from(it.getBlob(0)), ::getIcon, config).orNullIfEmpty()
           }
@@ -50,14 +50,14 @@ class RemoteSource(pack: String, config: IconPackConfig = defaultIconPackConfig)
       indexMap.getOrPutNullable(cn) {
         contentResolver
           .query(
-            IconPackProvider.Companion.ICON,
+            IconPackProvider.ICON,
             null,
             null,
             arrayOf(pack, iconPackAsFallback.toString(), cn.flattenToString()),
             null,
           )
           ?.useFirstRow { c ->
-            val entry = IconResolver.Companion.from(c)
+            val entry = IconResolver.from(c)
             val fallback = c.getIntOrNull(GetIconColumn.Fallback.ordinal) == 1
             iconEntryList.add(entry)
             (iconEntryList.size - 1).also {
@@ -72,7 +72,7 @@ class RemoteSource(pack: String, config: IconPackConfig = defaultIconPackConfig)
       indexMap.getOrPut(cnList) { misses, getKey ->
         contentResolver
           .query(
-            IconPackProvider.Companion.ICON,
+            IconPackProvider.ICON,
             null,
             null,
             arrayOf(
@@ -83,7 +83,7 @@ class RemoteSource(pack: String, config: IconPackConfig = defaultIconPackConfig)
             null,
           )
           ?.useMapToArray(misses.size) { c ->
-            IconResolver.Companion.from(c) to (c.getIntOrNull(GetIconColumn.Fallback.ordinal) == 1)
+            IconResolver.from(c) to (c.getIntOrNull(GetIconColumn.Fallback.ordinal) == 1)
           }
           ?.mapIndexed { i, info ->
             if (info != null) {

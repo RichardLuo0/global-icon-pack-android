@@ -19,15 +19,14 @@ private fun Executable.match(parameterTypes: Array<out Class<*>?>) =
       expected == null || param.isAssignableFrom(expected)
     }
 
-@Suppress("UNCHECKED_CAST")
-fun <R> MethodHookParam.callOriginalMethod() =
+inline fun <reified R> MethodHookParam.callOriginalMethod() =
   runCatching { XposedBridge.invokeOriginalMethod(method, thisObject, args) as? R }
     .getOrElse { throw if (it is InvocationTargetException) it.cause ?: it else it }
 
-@Suppress("UNCHECKED_CAST") fun <T> Field.getAs(thisObj: Any? = null) = get(thisObj) as? T
+inline fun <reified T> Field.getAs(thisObj: Any? = null) = get(thisObj) as? T
 
-@Suppress("UNCHECKED_CAST")
-fun <T> Method.call(thisObj: Any?, vararg param: Any?) = invoke(thisObj, *param) as? T
+inline fun <reified T> Method.call(thisObj: Any?, vararg param: Any?) =
+  invoke(thisObj, *param) as? T
 
 fun classOf(name: String, lpp: LoadPackageParam? = null) =
   runCatching { XposedHelpers.findClass(name, lpp?.classLoader) }.getOrNull { log(it) }
@@ -73,7 +72,7 @@ class HookBuilder : XC_MethodHook() {
     afterAction = block
   }
 
-  fun replace(block: MethodHookParam.() -> Any?) = before {
+  inline fun replace(crossinline block: MethodHookParam.() -> Any?) = before {
     runCatching { result = block() }.exceptionOrNull()?.also { throwable = it }
   }
 

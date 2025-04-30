@@ -14,23 +14,24 @@ import android.os.Process
 import android.os.UserManager
 import com.richardluo.globalIconPack.iconPack.getSC
 import com.richardluo.globalIconPack.iconPack.model.IconEntry
-import com.richardluo.globalIconPack.iconPack.source.getComponentName
 import com.richardluo.globalIconPack.utils.HookBuilder
 import com.richardluo.globalIconPack.utils.allMethods
 import com.richardluo.globalIconPack.utils.asType
-import com.richardluo.globalIconPack.utils.call
 import com.richardluo.globalIconPack.utils.callOriginalMethod
 import com.richardluo.globalIconPack.utils.classOf
 import com.richardluo.globalIconPack.utils.field
 import com.richardluo.globalIconPack.utils.getAs
 import com.richardluo.globalIconPack.utils.hook
+import com.richardluo.globalIconPack.utils.isHighTwoByte
 import com.richardluo.globalIconPack.utils.method
+import com.richardluo.globalIconPack.utils.withHighByteSet
+import com.richardluo.globalIconPack.xposed.ReplaceIcon.Companion.IN_SC
+import com.richardluo.globalIconPack.xposed.ReplaceIcon.Companion.SC_DEFAULT
 import de.robv.android.xposed.XC_MethodHook.MethodHookParam
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 import java.util.Calendar
 
 class CalendarAndClockHook : Hook {
-
   override fun onHookPixelLauncher(lpp: LoadPackageParam) {
     val calendars = mutableSetOf<String>()
     val clocks = mutableSetOf<String>()
@@ -39,12 +40,14 @@ class CalendarAndClockHook : Hook {
     val mCalendar = iconProvider.field("mCalendar")
     val mClock = iconProvider.field("mClock")
     // Collect calendar and clock packages
-    fun HookBuilder.collectCCHook(getComponentName: MethodHookParam.() -> ComponentName?) {
+    fun HookBuilder.collectCCHook(getActivityIcon: MethodHookParam.() -> ActivityInfo?) {
       replace {
+        val ai = getActivityIcon() ?: return@replace callOriginalMethod()
         val sc = getSC() ?: return@replace callOriginalMethod()
-        val cn = getComponentName() ?: return@replace callOriginalMethod()
-        val packageName = cn.packageName
-        val entry = sc.getIconEntry(cn)
+        val packageName = ai.packageName
+        val entry =
+          if (isHighTwoByte(ai.icon, IN_SC)) sc.getIconEntry(withHighByteSet(ai.icon, SC_DEFAULT))
+          else null
 
         if (entry == null) {
           // Not in icon pack, update the original package
@@ -67,10 +70,10 @@ class CalendarAndClockHook : Hook {
       }
     }
     iconProvider.allMethods("getIcon", ActivityInfo::class.java).hook {
-      collectCCHook { args[0].asType<ActivityInfo>()?.let { info -> getComponentName(info) } }
+      collectCCHook { args[0].asType<ActivityInfo>() }
     }
     iconProvider.allMethods("getIcon", LauncherActivityInfo::class.java).hook {
-      collectCCHook { args[0].asType<LauncherActivityInfo>()?.componentName }
+      collectCCHook { args[0].asType<LauncherActivityInfo>()?.activityInfo }
     }
     // Change calendar state so it updates
     // https://cs.android.com/android/platform/superproject/+/android15-qpr1-release:frameworks/libs/systemui/iconloaderlib/src/com/android/launcher3/icons/IconProvider.java;l=89
@@ -95,12 +98,12 @@ class CalendarAndClockHook : Hook {
         .method("onAppIconChanged") ?: return
 
     fun changeClockIcon(mCallback: Any) {
-      for (clock in clocks) onAppIconChangedM.call<Unit>(mCallback, clock, Process.myUserHandle())
+      for (clock in clocks) onAppIconChangedM.invoke(mCallback, clock, Process.myUserHandle())
     }
 
     fun changeCalendarIcon(context: Context, mCallback: Any) {
       for (user in context.getSystemService(UserManager::class.java).getUserProfiles()) {
-        for (calendar in calendars) onAppIconChangedM.call<Unit>(mCallback, calendar, user)
+        for (calendar in calendars) onAppIconChangedM.invoke(mCallback, calendar, user)
       }
     }
 
