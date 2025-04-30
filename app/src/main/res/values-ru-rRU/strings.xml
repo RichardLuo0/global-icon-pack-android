@@ -39,6 +39,8 @@
     <string name="noShadow">Удалите тень снизу</string>
     <string name="noShadowSummary">Удалить тень, созданную для маски системной иконки.</string>
     <string name="forceLoadClockAndCalendar">Принудительная загрузка иконок часов и календаря</string>
+    <string name="forceActivityIconForTask">Принудительная загрузка иконки активности</string>
+    <string name="forceActivityIconForTaskSummary">Некоторые приложения устанавливают значок задачи при запуске</string>
     <string name="moreOptions">Дополнительные параметры</string>
     <string name="restartSystemUI">Перезапустить SystemUI</string>
     <string name="restartPixelLauncher">Очистить бд &amp; перезапустить Pixel Launcher</string>
