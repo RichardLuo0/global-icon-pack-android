@@ -36,6 +36,8 @@ class XposedMain : IXposedHookLoadPackage {
 
     hookList.forEach { it.onHookApp(lpp) }
     when (lpp.packageName) {
+      "com.android.launcher3",
+      Pref.PIXEL_LAUNCHER_PACKAGE.def,
       pref.get(Pref.PIXEL_LAUNCHER_PACKAGE) -> hookList.forEach { it.onHookPixelLauncher(lpp) }
       "com.android.systemui" -> hookList.forEach { it.onHookSystemUI(lpp) }
       "com.android.settings" -> hookList.forEach { it.onHookSettings(lpp) }
