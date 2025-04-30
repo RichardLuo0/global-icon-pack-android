@@ -16,9 +16,9 @@ import com.richardluo.globalIconPack.Pref
 import com.richardluo.globalIconPack.R
 import com.richardluo.globalIconPack.get
 import com.richardluo.globalIconPack.iconPack.BootReceiver
-import com.richardluo.globalIconPack.iconPack.source.ShareSource
-import com.richardluo.globalIconPack.iconPack.KeepAliveService
 import com.richardluo.globalIconPack.iconPack.IconPackDB
+import com.richardluo.globalIconPack.iconPack.KeepAliveService
+import com.richardluo.globalIconPack.iconPack.source.ShareSource
 import com.richardluo.globalIconPack.utils.AppPreference
 import com.richardluo.globalIconPack.utils.ContextVM
 import com.richardluo.globalIconPack.utils.InstanceManager.get
@@ -90,7 +90,7 @@ class MainVM(context: Application) : ContextVM(context) {
         }
         val parent = shareDBFile.parent
         val oldDB =
-          context.createDeviceProtectedStorageContext().getDatabasePath(AppPref.PATH.second).path
+          context.createDeviceProtectedStorageContext().getDatabasePath(AppPref.PATH.def).path
         val uid = android.os.Process.myUid()
         val result =
           Shell.cmd(
@@ -109,13 +109,13 @@ class MainVM(context: Application) : ContextVM(context) {
           )
       }
       updateDB(pack)
-      AppPreference.get(context).edit { putString(AppPref.PATH.first, shareDB) }
+      AppPreference.get(context).edit { putString(AppPref.PATH.key, shareDB) }
     } catch (t: Throwable) {
       log(t)
       withContext(Dispatchers.Main) {
         Toast.makeText(context, R.string.errorOnShareMode, Toast.LENGTH_LONG).show()
       }
-      prefFlow?.update { it.toMutablePreferences().apply { set(Pref.MODE.first, MODE_PROVIDER) } }
+      prefFlow?.update { it.toMutablePreferences().apply { set(Pref.MODE.key, MODE_PROVIDER) } }
     }
   }
 

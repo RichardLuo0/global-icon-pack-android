@@ -161,7 +161,7 @@ class MainActivity : ComponentActivity() {
     if (prefFlow != null && intent.action == "${BuildConfig.APPLICATION_ID}.APPLY_ICON_PACK") {
       prefFlow.update {
         it.toMutablePreferences().apply {
-          set(Pref.ICON_PACK.first, intent.getStringExtra("packageName"))
+          set(Pref.ICON_PACK.key, intent.getStringExtra("packageName"))
         }
       }
       Toast.makeText(this, R.string.iconPackApplied, Toast.LENGTH_LONG).show()
@@ -181,9 +181,9 @@ class MainActivity : ComponentActivity() {
           Modifier.fillMaxWidth()
             .clickable {
               viewModel.prefFlow?.update {
-                it.toMutablePreferences().apply { set(Pref.MODE.first, mode) }
+                it.toMutablePreferences().apply { set(Pref.MODE.key, mode) }
               }
-              AppPreference.get(this).edit { putBoolean(AppPref.NEED_SETUP.first, false) }
+              AppPreference.get(this).edit { putBoolean(AppPref.NEED_SETUP.key, false) }
               dismiss()
             }
             .padding(horizontal = 16.dp, vertical = 8.dp),
@@ -300,17 +300,17 @@ object MainPreference {
     LazyColumn(modifier = modifier) {
       listPreference(
         icon = { AnimatedContent(it) { ModeToIcon(it) } },
-        key = Pref.MODE.first,
-        defaultValue = Pref.MODE.second,
+        key = Pref.MODE.key,
+        defaultValue = Pref.MODE.def,
         values = listOf(MODE_SHARE, MODE_PROVIDER, MODE_LOCAL),
         valueToText = { modeToAnnotatedString(context, it, typography) },
         title = { TwoLineText(modeToTitle(context, it)) },
         summary = { TwoLineText(modeToSummary(context, it)) },
       )
       mapListPreference(
-        icon = { Icon(Icons.Outlined.Backpack, Pref.ICON_PACK.first) },
-        key = Pref.ICON_PACK.first,
-        defaultValue = Pref.ICON_PACK.second,
+        icon = { Icon(Icons.Outlined.Backpack, Pref.ICON_PACK.key) },
+        key = Pref.ICON_PACK.key,
+        defaultValue = Pref.ICON_PACK.def,
         getValueMap = { IconPackApps.getFlow(context).collectAsState(mapOf()).value },
         item = { key, value, currentKey, onClick -> IconPackItem(key, value, currentKey, onClick) },
         title = { TwoLineText(stringResource(R.string.iconPack)) },
@@ -324,15 +324,15 @@ object MainPreference {
       )
       switchPreference(
         icon = {},
-        key = Pref.ICON_PACK_AS_FALLBACK.first,
-        defaultValue = Pref.ICON_PACK_AS_FALLBACK.second,
+        key = Pref.ICON_PACK_AS_FALLBACK.key,
+        defaultValue = Pref.ICON_PACK_AS_FALLBACK.def,
         title = { TwoLineText(stringResource(R.string.iconPackAsFallback)) },
         summary = { TwoLineText(stringResource(R.string.iconPackAsFallbackSummary)) },
       )
       switchPreference(
-        icon = { Icon(Icons.AutoMirrored.Outlined.Shortcut, Pref.SHORTCUT.first) },
-        key = Pref.SHORTCUT.first,
-        defaultValue = Pref.SHORTCUT.second,
+        icon = { Icon(Icons.AutoMirrored.Outlined.Shortcut, Pref.SHORTCUT.key) },
+        key = Pref.SHORTCUT.key,
+        defaultValue = Pref.SHORTCUT.def,
         title = { TwoLineText(stringResource(R.string.shortcut)) },
       )
       preference(
@@ -364,31 +364,31 @@ object MainPreference {
         )
       }
       switchPreference(
-        icon = { Icon(Icons.Outlined.SettingsBackupRestore, Pref.ICON_FALLBACK.first) },
-        key = Pref.ICON_FALLBACK.first,
-        defaultValue = Pref.ICON_FALLBACK.second,
+        icon = { Icon(Icons.Outlined.SettingsBackupRestore, Pref.ICON_FALLBACK.key) },
+        key = Pref.ICON_FALLBACK.key,
+        defaultValue = Pref.ICON_FALLBACK.def,
         title = { TwoLineText(stringResource(R.string.iconFallback)) },
         summary = { TwoLineText(stringResource(R.string.iconFallbackSummary)) },
       )
       mySwitchPreference(
         icon = {},
-        key = Pref.SCALE_ONLY_FOREGROUND.first,
+        key = Pref.SCALE_ONLY_FOREGROUND.key,
         enabled = { it.get(Pref.ICON_FALLBACK) },
-        defaultValue = Pref.SCALE_ONLY_FOREGROUND.second,
+        defaultValue = Pref.SCALE_ONLY_FOREGROUND.def,
         title = { TwoLineText(stringResource(R.string.scaleOnlyForeground)) },
       )
       mySwitchPreference(
         icon = {},
-        key = Pref.BACK_AS_ADAPTIVE_BACK.first,
+        key = Pref.BACK_AS_ADAPTIVE_BACK.key,
         enabled = { it.get(Pref.ICON_FALLBACK) },
-        defaultValue = Pref.BACK_AS_ADAPTIVE_BACK.second,
+        defaultValue = Pref.BACK_AS_ADAPTIVE_BACK.def,
         title = { TwoLineText(stringResource(R.string.backAsAdaptiveBack)) },
       )
       mySliderPreference(
         icon = {},
-        key = Pref.NON_ADAPTIVE_SCALE.first,
+        key = Pref.NON_ADAPTIVE_SCALE.key,
         enabled = { it.get(Pref.ICON_FALLBACK) },
-        defaultValue = Pref.NON_ADAPTIVE_SCALE.second,
+        defaultValue = Pref.NON_ADAPTIVE_SCALE.def,
         valueRange = 0f..1.5f,
         valueSteps = 29,
         title = { TwoLineText(stringResource(R.string.nonAdaptiveScale)) },
@@ -397,25 +397,25 @@ object MainPreference {
       )
       mySwitchPreference(
         icon = {},
-        key = Pref.CONVERT_TO_ADAPTIVE.first,
+        key = Pref.CONVERT_TO_ADAPTIVE.key,
         enabled = { it.get(Pref.ICON_FALLBACK) },
-        defaultValue = Pref.CONVERT_TO_ADAPTIVE.second,
+        defaultValue = Pref.CONVERT_TO_ADAPTIVE.def,
         title = { TwoLineText(stringResource(R.string.convertToAdaptive)) },
         summary = { TwoLineText(stringResource(R.string.convertToAdaptiveSummary)) },
       )
       mySwitchPreference(
         icon = {},
-        key = Pref.OVERRIDE_ICON_FALLBACK.first,
+        key = Pref.OVERRIDE_ICON_FALLBACK.key,
         enabled = { it.get(Pref.ICON_FALLBACK) },
-        defaultValue = Pref.OVERRIDE_ICON_FALLBACK.second,
+        defaultValue = Pref.OVERRIDE_ICON_FALLBACK.def,
         title = { TwoLineText(stringResource(R.string.overrideIconFallback)) },
         summary = { TwoLineText(stringResource(R.string.overrideIconFallbackSummary)) },
       )
       mySliderPreference(
-        icon = { Icon(Icons.Outlined.PhotoSizeSelectSmall, Pref.ICON_PACK_SCALE.first) },
+        icon = { Icon(Icons.Outlined.PhotoSizeSelectSmall, Pref.ICON_PACK_SCALE.key) },
         enabled = { it.get(Pref.ICON_FALLBACK) && it.get(Pref.OVERRIDE_ICON_FALLBACK) },
-        key = Pref.ICON_PACK_SCALE.first,
-        defaultValue = Pref.ICON_PACK_SCALE.second,
+        key = Pref.ICON_PACK_SCALE.key,
+        defaultValue = Pref.ICON_PACK_SCALE.def,
         valueRange = 0f..1.5f,
         valueSteps = 29,
         title = { TwoLineText(stringResource(R.string.iconPackScale)) },
@@ -429,9 +429,9 @@ object MainPreference {
   fun Pixel(modifier: Modifier = Modifier) {
     LazyColumn(modifier = modifier) {
       textFieldPreference(
-        icon = { Icon(Icons.Outlined.Apps, Pref.PIXEL_LAUNCHER_PACKAGE.first) },
-        key = Pref.PIXEL_LAUNCHER_PACKAGE.first,
-        defaultValue = Pref.PIXEL_LAUNCHER_PACKAGE.second,
+        icon = { Icon(Icons.Outlined.Apps, Pref.PIXEL_LAUNCHER_PACKAGE.key) },
+        key = Pref.PIXEL_LAUNCHER_PACKAGE.key,
+        defaultValue = Pref.PIXEL_LAUNCHER_PACKAGE.def,
         textToValue = { it },
         textField = { value, onValueChange, onOk ->
           OutlinedTextField(
@@ -442,7 +442,7 @@ object MainPreference {
             singleLine = true,
             trailingIcon = {
               IconButtonWithTooltip(Icons.Outlined.Restore, "Restore") {
-                onValueChange(TextFieldValue(Pref.PIXEL_LAUNCHER_PACKAGE.second))
+                onValueChange(TextFieldValue(Pref.PIXEL_LAUNCHER_PACKAGE.def))
               }
             },
           )
@@ -452,21 +452,21 @@ object MainPreference {
       )
       switchPreference(
         icon = {},
-        key = Pref.NO_SHADOW.first,
-        defaultValue = Pref.NO_SHADOW.second,
+        key = Pref.NO_SHADOW.key,
+        defaultValue = Pref.NO_SHADOW.def,
         title = { TwoLineText(stringResource(R.string.noShadow)) },
         summary = { TwoLineText(stringResource(R.string.noShadowSummary)) },
       )
       switchPreference(
         icon = {},
-        key = Pref.FORCE_LOAD_CLOCK_AND_CALENDAR.first,
-        defaultValue = Pref.FORCE_LOAD_CLOCK_AND_CALENDAR.second,
+        key = Pref.FORCE_LOAD_CLOCK_AND_CALENDAR.key,
+        defaultValue = Pref.FORCE_LOAD_CLOCK_AND_CALENDAR.def,
         title = { TwoLineText(stringResource(R.string.forceLoadClockAndCalendar)) },
       )
       switchPreference(
         icon = {},
-        key = Pref.FORCE_ACTIVITY_ICON_FOR_TASK.first,
-        defaultValue = Pref.FORCE_ACTIVITY_ICON_FOR_TASK.second,
+        key = Pref.FORCE_ACTIVITY_ICON_FOR_TASK.key,
+        defaultValue = Pref.FORCE_ACTIVITY_ICON_FOR_TASK.def,
         title = { TwoLineText(stringResource(R.string.forceActivityIconForTask)) },
         summary = { TwoLineText(stringResource(R.string.forceActivityIconForTaskSummary)) },
       )

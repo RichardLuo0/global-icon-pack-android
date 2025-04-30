@@ -3,39 +3,44 @@ package com.richardluo.globalIconPack
 import android.content.SharedPreferences
 import me.zhanghai.compose.preference.Preferences
 
+data class PrefEntry<out V>(val key: String, val def: V)
+
+infix fun <V> String.defaultTo(def: V): PrefEntry<V> = PrefEntry(this, def)
+
 const val MODE_SHARE = "share"
 const val MODE_PROVIDER = "provider"
 const val MODE_LOCAL = "local"
 
 object Pref {
-  val MODE = "mode" to MODE_LOCAL
-  val ICON_PACK = "iconPack" to ""
-  val ICON_PACK_AS_FALLBACK = "iconPackAsFallback" to false
-  val SHORTCUT = "shortcut" to true
+  val MODE = "mode" defaultTo MODE_LOCAL
+  val ICON_PACK = "iconPack" defaultTo ""
+  val ICON_PACK_AS_FALLBACK = "iconPackAsFallback" defaultTo false
+  val SHORTCUT = "shortcut" defaultTo true
 
-  val ICON_FALLBACK = "iconFallback" to true
-  val SCALE_ONLY_FOREGROUND = "scaleOnlyForeground" to false
-  val BACK_AS_ADAPTIVE_BACK = "backAsAdaptiveBack" to false
-  val NON_ADAPTIVE_SCALE = "nonAdaptiveScale" to 1f
-  val CONVERT_TO_ADAPTIVE = "convertToAdaptive" to true
-  val OVERRIDE_ICON_FALLBACK = "overrideIconFallback" to false
-  val ICON_PACK_SCALE = "iconPackScale" to 1f
+  val ICON_FALLBACK = "iconFallback" defaultTo true
+  val SCALE_ONLY_FOREGROUND = "scaleOnlyForeground" defaultTo false
+  val BACK_AS_ADAPTIVE_BACK = "backAsAdaptiveBack" defaultTo false
+  val NON_ADAPTIVE_SCALE = "nonAdaptiveScale" defaultTo 1f
+  val CONVERT_TO_ADAPTIVE = "convertToAdaptive" defaultTo true
+  val OVERRIDE_ICON_FALLBACK = "overrideIconFallback" defaultTo false
+  val ICON_PACK_SCALE = "iconPackScale" defaultTo 1f
 
-  val PIXEL_LAUNCHER_PACKAGE = "pixelLauncherPackage" to "com.google.android.apps.nexuslauncher"
-  val NO_SHADOW = "noShadow" to false
-  val FORCE_LOAD_CLOCK_AND_CALENDAR = "forceLoadClockAndCalendar" to true
-  val FORCE_ACTIVITY_ICON_FOR_TASK = "forceActivityIconForTask" to false
+  val PIXEL_LAUNCHER_PACKAGE =
+    "pixelLauncherPackage" defaultTo "com.google.android.apps.nexuslauncher"
+  val NO_SHADOW = "noShadow" defaultTo false
+  val FORCE_LOAD_CLOCK_AND_CALENDAR = "forceLoadClockAndCalendar" defaultTo true
+  val FORCE_ACTIVITY_ICON_FOR_TASK = "forceActivityIconForTask" defaultTo false
 }
 
 object AppPref {
-  val NEED_SETUP = "needSetup" to true
-  val PATH = "PATH" to "iconPack.db"
+  val NEED_SETUP = "needSetup" defaultTo true
+  val PATH = "PATH" defaultTo "iconPack.db"
 }
 
-fun SharedPreferences.get(pair: Pair<String, String>) = getString(pair.first, pair.second) as String
+fun SharedPreferences.get(pair: PrefEntry<String>) = getString(pair.key, pair.def) as String
 
-fun SharedPreferences.get(pair: Pair<String, Boolean>) = getBoolean(pair.first, pair.second)
+fun SharedPreferences.get(pair: PrefEntry<Boolean>) = getBoolean(pair.key, pair.def)
 
-fun SharedPreferences.get(pair: Pair<String, Float>) = getFloat(pair.first, pair.second)
+fun SharedPreferences.get(pair: PrefEntry<Float>) = getFloat(pair.key, pair.def)
 
-fun <T> Preferences.get(pair: Pair<String, T>) = this[pair.first] ?: pair.second
+fun <T> Preferences.get(pair: PrefEntry<T>) = this[pair.key] ?: pair.def
