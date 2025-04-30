@@ -448,7 +448,13 @@ object MainPreference {
           )
         },
         title = { TwoLineText(stringResource(R.string.pixelLauncherPackage)) },
-        summary = { TwoLineText(stringResource(R.string.pixelLauncherPackageSummary)) },
+        summary = {
+          TwoLineText(
+            if (it == Pref.PIXEL_LAUNCHER_PACKAGE.def)
+              stringResource(R.string.pixelLauncherPackageSummary)
+            else it
+          )
+        },
       )
       switchPreference(
         icon = {},
