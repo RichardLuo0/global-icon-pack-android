@@ -30,8 +30,8 @@ import androidx.core.graphics.drawable.toBitmap
 import com.richardluo.globalIconPack.iconPack.IconPackApp
 
 @Composable
-fun IconPackItem(key: String, value: IconPackApp, currentKey: String, onClick: () -> Unit) {
-  val selected = key == currentKey
+fun IconPackItem(pack: String, app: IconPackApp, currentKey: String, onClick: () -> Unit) {
+  val selected = pack == currentKey
   Row(
     modifier =
       Modifier.fillMaxWidth()
@@ -45,8 +45,8 @@ fun IconPackItem(key: String, value: IconPackApp, currentKey: String, onClick: (
   ) {
     Box(modifier = Modifier.fillMaxHeight().aspectRatio(1f)) {
       Image(
-        bitmap = value.icon.toBitmap().asImageBitmap(),
-        contentDescription = key,
+        bitmap = app.icon.toBitmap().asImageBitmap(),
+        contentDescription = pack,
         modifier = Modifier.matchParentSize(),
         contentScale = ContentScale.Crop,
       )
@@ -54,7 +54,7 @@ fun IconPackItem(key: String, value: IconPackApp, currentKey: String, onClick: (
     Spacer(modifier = Modifier.width(12.dp))
     Column(modifier = Modifier.fillMaxWidth()) {
       Text(
-        value.label,
+        app.label,
         color =
           if (selected) MaterialTheme.colorScheme.onPrimary
           else MaterialTheme.colorScheme.onSurface,
@@ -63,7 +63,7 @@ fun IconPackItem(key: String, value: IconPackApp, currentKey: String, onClick: (
         overflow = TextOverflow.Ellipsis,
       )
       Text(
-        key,
+        pack,
         color =
           if (selected) MaterialTheme.colorScheme.onPrimary
           else MaterialTheme.colorScheme.onSurfaceVariant,

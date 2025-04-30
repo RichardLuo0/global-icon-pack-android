@@ -92,7 +92,7 @@ fun <T> LazyListDialog(
         modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
         state =
           rememberSaveable(saver = LazyListState.Saver) {
-            LazyListState(list.indexOfFirst(focusItem), 0)
+            LazyListState(list.indexOfFirst(focusItem).takeIf { it > 0 } ?: 0, 0)
           },
       ) {
         LazyColumn(state = it) {

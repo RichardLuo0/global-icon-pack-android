@@ -33,9 +33,8 @@ object IconPackApps {
         .map { action -> pm.queryIntentActivities(Intent(action), 0) }
         .flatten()
         .associate { info ->
-          info.activityInfo.applicationInfo.let {
-            Pair(it.packageName, IconPackApp(it.loadLabel(pm).toString(), it.loadIcon(pm)))
-          }
+          val ai = info.activityInfo.applicationInfo
+          ai.packageName to IconPackApp(ai.loadLabel(pm).toString(), ai.loadIcon(pm))
         }
     }
 
