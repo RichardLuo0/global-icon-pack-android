@@ -3,7 +3,7 @@
     <string name="appName">Global Icon Pack</string>
     <string name="plzEnableModuleFirst">Пожалуйста, сначала убедитесь, что модуль Xposed включен.</string>
     <string name="iconPackApplied">Набор иконок был применен. Пожалуйста, нажмите «Перезапустить XXX» вручную.</string>
-    <string name="chooseMode">Выберите режим</string>
+    <string name="chooseMode">Выбор режима </string>
     <string name="errorOnShareMode">Произошла ошибка при включении режима общего доступа, резервный доступ в режиме провайдера.</string>
     <string name="general">Основные</string>
     <string name="mode">Режим</string>
@@ -17,8 +17,8 @@
     <string name="iconPackSummary">Название пакета, который будет использоваться в качестве пакета значков.</string>
     <string name="iconPackAsFallback">Набор иконок в качестве запасного варианта</string>
     <string name="iconPackAsFallbackSummary">Используйте пакет иконок, даже если название класса не совпадает.</string>
-    <string name="shortcut">Генерация значков для ярлыков</string>
-    <string name="mergeIconPack">Объединить набор значков</string>
+    <string name="shortcut">Генерация иконок для ярлыков</string>
+    <string name="mergeIconPack">Объединить наборы иконок</string>
     <string name="mergeIconPackSummary">Создать новый набор иконок из различных наборов.</string>
     <string name="iconPackSettings">Набор иконок</string>
     <string name="iconVariant">Варианты иконок</string>
