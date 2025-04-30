@@ -166,15 +166,14 @@ object IconHelper {
         }
     else {
       val iconScale = iconScale * nonAdaptiveScale
-      val makeIcon = { back: Bitmap? ->
+      fun makeIcon(back: Bitmap?) =
         scale(baseIcon, iconScale).let {
           if (baseIcon is BitmapDrawable) CustomBitmapDrawable(res, it, back, upon, mask)
           else CustomDrawable(it, back, upon, mask)
         }
-      }
-      if (mask != null) makeAdaptiveBack(res, backAsAdaptiveBack, back, makeIcon)
+      if (mask != null) makeAdaptiveBack(res, backAsAdaptiveBack, back, ::makeIcon)
       else {
-        if (convertToAdaptive) makeAdaptiveBack(res, backAsAdaptiveBack, back, makeIcon)
+        if (convertToAdaptive) makeAdaptiveBack(res, backAsAdaptiveBack, back, ::makeIcon)
         else makeIcon(back)
       }
     }
@@ -189,8 +188,16 @@ object IconHelper {
       UnClipAdaptiveIconDrawable(scale(back.toDrawable(res)), scale(makeBaseIcon(null)))
     else UnClipAdaptiveIconDrawable(Color.TRANSPARENT.toDrawable(), scale(makeBaseIcon(back)))
 
-  fun makeAdaptive(drawable: Drawable, background: Drawable = Color.TRANSPARENT.toDrawable()) =
-    drawable as? AdaptiveIconDrawable ?: UnClipAdaptiveIconDrawable(background, scale(drawable))
+  fun makeAdaptive(
+    drawable: Drawable,
+    background: Drawable = Color.TRANSPARENT.toDrawable(),
+    iconScale: Float = 1f,
+  ) =
+    drawable as? AdaptiveIconDrawable
+      ?: UnClipAdaptiveIconDrawable(
+        background,
+        scale(drawable, ADAPTIVE_ICON_VIEWPORT_SCALE * iconScale),
+      )
 
   fun Canvas.drawIcon(
     paint: Paint,

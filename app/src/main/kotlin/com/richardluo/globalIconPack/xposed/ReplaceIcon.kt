@@ -48,7 +48,11 @@ import java.util.WeakHashMap
 
 // Resource id always starts with 0x7f, use it to indicate that this is an icon
 // Assume the icon res id is only used in getDrawable()
-class ReplaceIcon(val shortcut: Boolean, val forceActivityIconForTask: Boolean) : Hook {
+class ReplaceIcon(
+  private val shortcut: Boolean,
+  private val forceActivityIconForTask: Boolean,
+  private val taskIconScale: Float,
+) : Hook {
   companion object {
     const val IN_SC = 0xff000000.toInt()
     const val NOT_IN_SC = 0xfe000000.toInt()
@@ -78,7 +82,9 @@ class ReplaceIcon(val shortcut: Boolean, val forceActivityIconForTask: Boolean) 
             val background =
               args[2].asType<Int>()?.let { Color.valueOf(it).toDrawable() }
                 ?: Color.TRANSPARENT.toDrawable()
-            getSC()?.run { args[0] = genIconFrom(IconHelper.makeAdaptive(drawable, background)) }
+            getSC()?.run {
+              args[0] = genIconFrom(IconHelper.makeAdaptive(drawable, background, taskIconScale))
+            }
           }
         }
       }

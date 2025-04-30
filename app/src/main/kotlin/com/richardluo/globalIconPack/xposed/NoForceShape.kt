@@ -13,7 +13,8 @@ import com.richardluo.globalIconPack.utils.field
 import com.richardluo.globalIconPack.utils.hook
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 
-class NoForceShape(val drawWholeIconForTransparentBackgroundInSplashScreen: Boolean) : Hook {
+class NoForceShape(private val drawWholeIconForTransparentBackgroundInSplashScreen: Boolean) :
+  Hook {
   override fun onHookSystemUI(lpp: LoadPackageParam) {
     // Draw the whole icon even if the background is transparent
     // https://cs.android.com/android/platform/superproject/+/android15-qpr1-release:frameworks/base/libs/WindowManager/Shell/src/com/android/wm/shell/startingsurface/SplashscreenContentDrawer.java;l=676

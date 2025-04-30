@@ -10,7 +10,8 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 class XposedMain : IXposedHookLoadPackage {
   override fun handleLoadPackage(lpp: LoadPackageParam) {
     if (!lpp.isFirstApplication) return
-    if (BuildConfig.APPLICATION_ID == lpp.packageName) {
+
+    if (lpp.packageName == BuildConfig.APPLICATION_ID) {
       BypassReflectRestrictions.onHookSelf(lpp)
       return
     }
@@ -23,7 +24,11 @@ class XposedMain : IXposedHookLoadPackage {
     val pref = getPrefInMod()
     val hookList =
       listOfNotNull(
-        ReplaceIcon(pref.get(Pref.SHORTCUT), pref.get(Pref.FORCE_ACTIVITY_ICON_FOR_TASK)),
+        ReplaceIcon(
+          pref.get(Pref.SHORTCUT),
+          pref.get(Pref.FORCE_ACTIVITY_ICON_FOR_TASK),
+          pref.get(Pref.NON_ADAPTIVE_SCALE),
+        ),
         NoForceShape(true),
         if (pref.get(Pref.NO_SHADOW)) NoShadow() else null,
         if (pref.get(Pref.FORCE_LOAD_CLOCK_AND_CALENDAR)) CalendarAndClockHook() else null,
