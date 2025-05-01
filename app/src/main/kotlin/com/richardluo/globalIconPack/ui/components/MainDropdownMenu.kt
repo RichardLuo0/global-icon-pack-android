@@ -17,7 +17,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.core.net.toUri
+import com.richardluo.globalIconPack.Pref
 import com.richardluo.globalIconPack.R
+import com.richardluo.globalIconPack.get
+import com.richardluo.globalIconPack.utils.WorldPreference
 import com.richardluo.globalIconPack.utils.log
 import com.topjohnwu.superuser.Shell
 import kotlinx.coroutines.launch
@@ -26,6 +29,8 @@ import kotlinx.coroutines.launch
 fun MainDropdownMenu(snackbarState: SnackbarHostState) {
   val context = LocalContext.current
   val scope = rememberCoroutineScope()
+  var expanded by rememberSaveable { mutableStateOf(false) }
+
   val onShellResult = remember {
     Shell.ResultCallback { result ->
       scope.launch {
@@ -51,8 +56,6 @@ fun MainDropdownMenu(snackbarState: SnackbarHostState) {
     }
   }
 
-  var expanded by rememberSaveable { mutableStateOf(false) }
-
   fun runCommand(vararg cmd: String): () -> Unit {
     return {
       Shell.cmd("set -e", *cmd).submit(onShellResult)
@@ -69,13 +72,12 @@ fun MainDropdownMenu(snackbarState: SnackbarHostState) {
       text = { Text(stringResource(R.string.restartSystemUI)) },
       onClick = runCommand("killall com.android.systemui"),
     )
+    val launcher = WorldPreference.getPrefInApp(context).get(Pref.PIXEL_LAUNCHER_PACKAGE)
     DropdownMenuItem(
       leadingIcon = {},
       text = { Text(stringResource(R.string.restartPixelLauncher)) },
       onClick =
-        runCommand(
-          "rm -f /data/data/com.google.android.apps.nexuslauncher/databases/app_icons.db && am force-stop com.google.android.apps.nexuslauncher"
-        ),
+        runCommand("rm -f /data/data/$launcher/databases/app_icons.db && am force-stop $launcher"),
     )
     DropdownMenuItem(
       leadingIcon = {},
