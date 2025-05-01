@@ -36,6 +36,7 @@ import com.richardluo.globalIconPack.utils.field
 import com.richardluo.globalIconPack.utils.getAs
 import com.richardluo.globalIconPack.utils.hook
 import com.richardluo.globalIconPack.utils.isHighTwoByte
+import com.richardluo.globalIconPack.utils.logD
 import com.richardluo.globalIconPack.utils.runSafe
 import com.richardluo.globalIconPack.utils.withHighByteSet
 import com.richardluo.globalIconPack.xposed.ReplaceIcon.Companion.ANDROID_DEFAULT
@@ -66,16 +67,16 @@ class ReplaceIcon(
 
     // Replace icon in task description
     val taskIconCache = classOf("com.android.quickstep.TaskIconCache", lpp)
-    if (forceActivityIconForTask) taskIconCache.allMethods("getIcon").hook { replace { null } }
+    if (forceActivityIconForTask) taskIconCache?.allMethods("getIcon")?.hook { replace { null } }
     else {
       val tdBitmapSet = Collections.newSetFromMap<Bitmap>(WeakHashMap())
-      taskIconCache.allMethods("getIcon").hook {
+      taskIconCache?.allMethods("getIcon")?.hook {
         before {
           result = callOriginalMethod()
           tdBitmapSet.add(result.asType() ?: return@before)
         }
       }
-      taskIconCache.allMethods("getBitmapInfo").hook {
+      taskIconCache?.allMethods("getBitmapInfo")?.hook {
         before {
           val drawable = args[0].asType<BitmapDrawable>() ?: return@before
           if (tdBitmapSet.contains(drawable.bitmap)) {
@@ -102,17 +103,20 @@ class ReplaceIcon(
     }
 
     Parcel::class.java.allMethods("readTypedList").hook {
-      batchReplaceIconHook({ args.getOrNull(1)?.let { listReplacerMap[it] } }, { args[0].asType() })
+      batchReplaceIconHook(
+        { args.getOrNull(1)?.let { batchReplacerMap[it] } },
+        { args[0].asType() },
+      )
     }
     Parcel::class.java.allMethods("createTypedArray").hook {
       batchReplaceIconHook(
-        { args.getOrNull(0)?.let { listReplacerMap[it] } },
+        { args.getOrNull(0)?.let { batchReplacerMap[it] } },
         { result.asType<Array<Any?>>()?.asIterable() },
       )
     }
     hookParceledListSlice()
 
-    getDrawableForDensityM.hook {
+    getDrawableForDensityM?.hook {
       before {
         val resId = args[0] as? Int ?: return@before
         val density = args[1] as? Int ?: return@before
@@ -144,38 +148,45 @@ class ReplaceIcon(
   }
 
   private fun hookParceledListSlice() {
-    val baseParceledListSlice = classOf("android.content.pm.BaseParceledListSlice")
+    val baseParceledListSlice = classOf("android.content.pm.BaseParceledListSlice") ?: return
     val mListF = baseParceledListSlice.field("mList") ?: return
-    val replacer = ThreadLocal.withInitial<ListReplacer?> { null }
+    val plsMap = ThreadLocal.withInitial { WeakHashMap<Any, BatchReplacer?>() }
     baseParceledListSlice.allConstructors().hook {
       before {
         val oldBlock = blockReplaceIconResId.get()
         blockReplaceIconResId.set(true)
+        val localPlsMap = plsMap.get() ?: return@before
         runSafe {
           val sc = getSC() ?: return@runSafe
           result = callOriginalMethod<Unit>()
-          val currentReplacer = replacer.get()
-          if (currentReplacer == null) return@runSafe
           val list = mListF.getAs<List<Any?>?>(thisObject) ?: return@runSafe
-          currentReplacer.invoke(list, sc)
-          replacer.set(null)
+          val currentReplacer =
+            localPlsMap[thisObject]
+              ?: if (blockReplaceIconResId.get() == true) {
+                batchReplacerMap[list.getOrNull(0)?.javaClass?.field("CREATOR")?.getAs()]
+                  ?: return@runSafe
+              } else return@runSafe
+          currentReplacer(list, sc)
+          logD("Batch replaced ParceledListSlice: " + list.size)
         }
+        localPlsMap.remove(thisObject)
         blockReplaceIconResId.set(oldBlock)
       }
     }
-    classOf("android.content.pm.ParceledListSlice").allMethods("readParcelableCreator").hook {
+    classOf("android.content.pm.ParceledListSlice")?.allMethods("readParcelableCreator")?.hook {
       after {
         if (blockReplaceIconResId.get() == false) return@after
-        val currentReplacer = listReplacerMap[result]
+        val localPlsMap = plsMap.get() ?: return@after
+        val replacer = batchReplacerMap[result]
         // Not a class we can batch replace
-        if (currentReplacer == null) blockReplaceIconResId.set(false)
-        replacer.set(currentReplacer)
+        if (replacer == null) blockReplaceIconResId.set(false)
+        localPlsMap[thisObject] = replacer
       }
     }
   }
 }
 
-private typealias ListReplacer = (list: Iterable<Any?>, sc: Source) -> Unit
+private typealias BatchReplacer = (list: Iterable<Any?>, sc: Source) -> Unit
 
 private val blockReplaceIconResId = ThreadLocal.withInitial { false }
 
@@ -188,14 +199,15 @@ private fun HookBuilder.replaceIconHook() {
       info.packageName ?: return@runSafe
       val sc = getSC() ?: return@runSafe
       replaceIconInItemInfo(info, sc.getId(getComponentName(info)))
+      logD("Replaced PackageItemInfo: " + info.packageName)
     }
     blockReplaceIconResId.set(false)
   }
 }
 
-private fun HookBuilder.batchReplaceIconHook(
-  getReplacer: MethodHookParam.() -> ListReplacer?,
-  getList: MethodHookParam.() -> Iterable<Any?>?,
+private inline fun HookBuilder.batchReplaceIconHook(
+  crossinline getReplacer: MethodHookParam.() -> BatchReplacer?,
+  crossinline getList: MethodHookParam.() -> Iterable<Any?>?,
 ) {
   before {
     val replacer = getReplacer() ?: return@before
@@ -206,6 +218,7 @@ private fun HookBuilder.batchReplaceIconHook(
       result = callOriginalMethod()
       val list = getList() ?: return@runSafe
       replacer(list, sc)
+      logD("Batch replaced: " + list.count())
     }
     blockReplaceIconResId.set(oldBlock)
   }
@@ -239,7 +252,7 @@ private fun ResolveInfo.getComponentInfo(): ComponentInfo {
   throw IllegalStateException("Missing ComponentInfo!")
 }
 
-private val listReplacerMap = run {
+private val batchReplacerMap = run {
   fun defaultReplacer(list: Iterable<Any?>, sc: Source) {
     replaceIconInItemInfoList(list.mapNotNull { it.asType<PackageItemInfo>() }, sc)
   }
@@ -253,8 +266,8 @@ private val listReplacerMap = run {
     riList.forEach(::replaceIconInResolveInfo)
   }
 
-  buildMap<Parcelable.Creator<*>, ListReplacer> {
-    fun setCreator(parcelableC: Class<*>, replacer: ListReplacer) {
+  buildMap<Parcelable.Creator<*>, BatchReplacer> {
+    fun setCreator(parcelableC: Class<*>, replacer: BatchReplacer) {
       set(parcelableC.field("CREATOR")?.getAs() ?: return, replacer)
     }
 
@@ -269,7 +282,7 @@ private val listReplacerMap = run {
     }
     runSafe {
       val topActivityInfoF = TaskInfo::class.java.field("topActivityInfo") ?: return@runSafe
-      val taskInfoReplacer: ListReplacer = { list, sc ->
+      val taskInfoReplacer: BatchReplacer = { list, sc ->
         defaultReplacer(list.mapNotNull { it?.let { topActivityInfoF.get(it) } }, sc)
       }
       setCreator(RunningTaskInfo::class.java, taskInfoReplacer)

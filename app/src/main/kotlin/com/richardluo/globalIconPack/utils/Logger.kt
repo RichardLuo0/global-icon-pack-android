@@ -2,6 +2,7 @@ package com.richardluo.globalIconPack.utils
 
 import android.app.AndroidAppHelper
 import android.util.Log
+import com.richardluo.globalIconPack.BuildConfig
 import de.robv.android.xposed.XposedBridge
 
 private const val TAG = "[Global Icon Pack]"
@@ -16,4 +17,8 @@ fun log(text: String) {
 fun log(t: Throwable) {
   if (isInMod) XposedBridge.log("$TAG $currentPackageName: ${t.stackTraceToString()}")
   else Log.e("LSPosed-Bridge", "$TAG ${t.stackTraceToString()}")
+}
+
+fun logD(text: String) {
+  if (BuildConfig.DEBUG) log(text)
 }
