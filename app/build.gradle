@@ -82,6 +82,7 @@ dependencies {
 //    testImplementation libs.junit
 //    androidTestImplementation libs.ext.junit
 //    androidTestImplementation libs.espresso.core
+    compileOnly libs.api
     implementation libs.core.ktx
     implementation libs.activity
     implementation libs.viewmodel
@@ -92,8 +93,6 @@ dependencies {
     implementation libs.libsu
     implementation libs.documentfile
     implementation libs.hiddenapibypass
-
-    compileOnly(fileTree("libs") { include("api-82.jar") })
 }
 
 import com.github.jk1.license.render.*
