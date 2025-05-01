@@ -95,7 +95,7 @@ class CalendarAndClockHook : Hook {
 
     val onAppIconChangedM =
       classOf("com.android.launcher3.icons.IconProvider\$IconChangeListener", lpp)
-        .method("onAppIconChanged") ?: return
+        ?.method("onAppIconChanged") ?: return
 
     fun changeClockIcon(mCallback: Any) {
       for (clock in clocks) onAppIconChangedM.invoke(mCallback, clock, Process.myUserHandle())

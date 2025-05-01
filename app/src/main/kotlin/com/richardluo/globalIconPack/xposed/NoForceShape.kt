@@ -24,7 +24,7 @@ class NoForceShape(private val drawWholeIconForTransparentBackgroundInSplashScre
           "com.android.wm.shell.startingsurface.SplashscreenContentDrawer\$ColorCache\$IconColor",
           lpp,
         )
-      val mBgColorF = iconColor.field("mBgColor") ?: return
+      val mBgColorF = iconColor?.field("mBgColor") ?: return
       val mIsBgComplexF = iconColor.field("mIsBgComplex") ?: return
       iconColor.allConstructors().hook {
         after {
@@ -48,10 +48,10 @@ class NoForceShape(private val drawWholeIconForTransparentBackgroundInSplashScre
       }
     }
     classOf("com.android.settings.accessibility.AccessibilityActivityPreference", lpp)
-      .allMethods("getA11yActivityIcon")
-      .hook(HookBuilder::extractOriIcon)
+      ?.allMethods("getA11yActivityIcon")
+      ?.hook(HookBuilder::extractOriIcon)
     classOf("com.android.settings.accessibility.AccessibilityServicePreference", lpp)
-      .allMethods("getA11yServiceIcon")
-      .hook(HookBuilder::extractOriIcon)
+      ?.allMethods("getA11yServiceIcon")
+      ?.hook(HookBuilder::extractOriIcon)
   }
 }

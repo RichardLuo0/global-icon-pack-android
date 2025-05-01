@@ -113,7 +113,7 @@ class RemoteSource(pack: String, config: IconPackConfig = defaultIconPackConfig)
 private var waitingForBootCompleted = true
 
 private val getSystemProperty by lazy {
-  classOf("android.os.SystemProperties").method("get", String::class.java)
+  classOf("android.os.SystemProperties")?.method("get", String::class.java)
 }
 
 fun createRemoteIconPack(

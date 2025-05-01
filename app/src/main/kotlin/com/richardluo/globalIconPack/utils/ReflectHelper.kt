@@ -25,40 +25,34 @@ inline fun <reified R> MethodHookParam.callOriginalMethod() =
 
 inline fun <reified T> Field.getAs(thisObj: Any? = null) = get(thisObj) as? T
 
-inline fun <reified T> Method.call(thisObj: Any?, vararg param: Any?) =
+inline fun <reified T> Method.call(thisObj: Any? = null, vararg param: Any?) =
   invoke(thisObj, *param) as? T
 
 fun classOf(name: String, lpp: LoadPackageParam? = null) =
   runCatching { XposedHelpers.findClass(name, lpp?.classLoader) }.getOrNull { log(it) }
 
-fun Class<*>?.method(name: String, vararg parameterTypes: Class<*>?) =
-  this?.run {
-      (runCatching { getDeclaredMethod(name, *parameterTypes) }.getOrNull()
-          ?: declaredMethods.firstOrNull { it.match(name, parameterTypes) })
-        ?.apply { isAccessible = true }
-    }
-    .also { if (it == null) log("No method $name is found on class ${this?.name}") }
+fun Class<*>.method(name: String, vararg parameterTypes: Class<*>?) =
+  (runCatching { getDeclaredMethod(name, *parameterTypes) }.getOrNull()
+      ?: declaredMethods.firstOrNull { it.match(name, parameterTypes) })
+    ?.apply { isAccessible = true }
+    .also { if (it == null) log("No method $name is found on class ${this.name}") }
 
-fun Class<*>?.allMethods(methodName: String, vararg parameterTypes: Class<*>?) =
-  this?.run {
-      declaredMethods
-        .filter { it.match(methodName, parameterTypes) }
-        .apply { forEach { it.isAccessible = true } }
-    }
-    .also { if (it.isNullOrEmpty()) log("No methods $methodName are found on class ${this?.name}") }
+fun Class<*>.allMethods(methodName: String, vararg parameterTypes: Class<*>?) =
+  declaredMethods
+    .filter { it.match(methodName, parameterTypes) }
+    .apply { forEach { it.isAccessible = true } }
+    .also { if (it.isEmpty()) log("No methods $methodName are found on class ${this.name}") }
 
-fun Class<*>?.allConstructors(vararg parameterTypes: Class<*>?) =
-  this?.run {
-      declaredConstructors
-        .filter { it.match(parameterTypes) }
-        .apply { forEach { it.isAccessible = true } }
-    }
-    .also { if (it.isNullOrEmpty()) log("No constructors are found on class ${this?.name}") }
+fun Class<*>.allConstructors(vararg parameterTypes: Class<*>?) =
+  declaredConstructors
+    .filter { it.match(parameterTypes) }
+    .apply { forEach { it.isAccessible = true } }
+    .also { if (it.isEmpty()) log("No constructors are found on class ${this.name}") }
 
-fun Class<*>?.field(name: String) =
-  this?.runCatching { getDeclaredField(name).apply { isAccessible = true } }
-    ?.getOrNull()
-    .also { if (it == null) log("No field $name is found on class ${this?.name}") }
+fun Class<*>.field(name: String) =
+  runCatching { getDeclaredField(name).apply { isAccessible = true } }
+    .getOrNull()
+    .also { if (it == null) log("No field $name is found on class ${this.name}") }
 
 class HookBuilder : XC_MethodHook() {
   private var beforeAction: (MethodHookParam.() -> Unit)? = null
@@ -85,10 +79,10 @@ class HookBuilder : XC_MethodHook() {
   }
 }
 
-inline fun Executable?.hook(crossinline block: HookBuilder.() -> Unit) =
-  runCatching { this?.run { XposedBridge.hookMethod(this, HookBuilder().apply { block() }) } }
+inline fun Executable.hook(crossinline block: HookBuilder.() -> Unit) =
+  runCatching { XposedBridge.hookMethod(this, HookBuilder().apply { block() }) }
     .getOrNull { log(it) }
 
-inline fun List<Executable>?.hook(crossinline block: HookBuilder.() -> Unit) =
-  runCatching { this?.map { XposedBridge.hookMethod(it, HookBuilder().apply { block() }) } }
+inline fun List<Executable>.hook(crossinline block: HookBuilder.() -> Unit) =
+  runCatching { map { XposedBridge.hookMethod(it, HookBuilder().apply { block() }) } }
     .getOrNull { log(it) }
