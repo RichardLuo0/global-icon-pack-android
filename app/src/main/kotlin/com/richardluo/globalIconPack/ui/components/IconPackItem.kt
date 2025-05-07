@@ -27,7 +27,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
-import com.richardluo.globalIconPack.iconPack.IconPackApp
+import com.richardluo.globalIconPack.ui.viewModel.IconPackApp
 
 @Composable
 fun IconPackItem(pack: String, app: IconPackApp, currentKey: String, onClick: () -> Unit) {

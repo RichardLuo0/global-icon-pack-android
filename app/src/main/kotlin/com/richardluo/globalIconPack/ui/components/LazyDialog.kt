@@ -80,25 +80,22 @@ fun <T> LazyListDialog(
   title: @Composable () -> Unit,
   value: List<T>?,
   key: ((item: T) -> Any)? = null,
-  nothing: @Composable () -> Unit = {},
   dismissible: Boolean = true,
   focusItem: (T) -> Boolean = { true },
   itemContent: @Composable (item: T, dismiss: () -> Unit) -> Unit,
 ) =
   LazyDialog(openState, title, value, dismissible) { list ->
-    if (list.isEmpty()) nothing()
-    else
-      ScrollIndicationBox(
-        modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
-        state =
-          rememberSaveable(saver = LazyListState.Saver) {
-            LazyListState(list.indexOfFirst(focusItem).takeIf { it > 0 } ?: 0, 0)
-          },
-      ) {
-        LazyColumn(state = it) {
-          items(list, key) { item -> itemContent(item) { openState.value = false } }
-        }
+    ScrollIndicationBox(
+      modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
+      state =
+        rememberSaveable(saver = LazyListState.Saver) {
+          LazyListState(list.indexOfFirst(focusItem).takeIf { it > 0 } ?: 0, 0)
+        },
+    ) {
+      LazyColumn(state = it) {
+        items(list, key) { item -> itemContent(item) { openState.value = false } }
       }
+    }
   }
 
 @Composable

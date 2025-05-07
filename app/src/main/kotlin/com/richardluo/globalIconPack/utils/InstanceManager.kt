@@ -1,6 +1,7 @@
 package com.richardluo.globalIconPack.utils
 
 import java.lang.ref.SoftReference
+import java.lang.ref.WeakReference
 import java.util.WeakHashMap
 
 object InstanceManager {
@@ -23,8 +24,8 @@ object InstanceManager {
   inline fun <reified T> update(noinline create: () -> T) = update(T::class.java, create)
 }
 
-class Weak<T, ARG>(private val create: (args: ARG) -> T) {
-  private var ref: SoftReference<T>? = null
+class Weak<T, Arg>(private val create: (args: Arg) -> T) {
+  private var ref: WeakReference<T>? = null
 
-  fun get(args: ARG) = ref?.get() ?: create(args).also { ref = SoftReference<T>(it) }
+  fun get(args: Arg) = ref?.get() ?: create(args).also { ref = WeakReference<T>(it) }
 }

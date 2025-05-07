@@ -5,55 +5,68 @@ import android.content.pm.ApplicationInfo
 import android.content.pm.LauncherApps
 import android.content.pm.LauncherApps.ShortcutQuery
 import android.os.Process
-import android.widget.Toast
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshotFlow
 import com.richardluo.globalIconPack.R
+import com.richardluo.globalIconPack.ui.MyApplication
 import com.richardluo.globalIconPack.ui.model.AppIconInfo
 import com.richardluo.globalIconPack.ui.model.IconInfo
 import com.richardluo.globalIconPack.ui.model.ShortcutIconInfo
 import com.richardluo.globalIconPack.ui.viewModel.IAppsFilter.Type
 import com.richardluo.globalIconPack.utils.Weak
 import com.richardluo.globalIconPack.utils.asType
-import com.richardluo.globalIconPack.utils.log
+import com.richardluo.globalIconPack.utils.runCatchingToast
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.withContext
 
+@OptIn(DelicateCoroutinesApi::class)
 private val appsCache =
-  Weak<Array<List<IconInfo>>, Context> { context ->
-    val userApps = mutableListOf<IconInfo>()
-    val systemApps = mutableListOf<IconInfo>()
+  InstalledAppsMonitor.flow
+    .map {
+      val app = MyApplication.context
 
-    fun add(flags: Int, iconInfo: IconInfo) =
-      if ((flags and ApplicationInfo.FLAG_SYSTEM) == ApplicationInfo.FLAG_SYSTEM)
-        systemApps.add(iconInfo)
-      else userApps.add(iconInfo)
+      val userApps = mutableListOf<IconInfo>()
+      val systemApps = mutableListOf<IconInfo>()
 
-    val launcherApps =
-      context
-        .getSystemService(Context.LAUNCHER_APPS_SERVICE)
-        .asType<LauncherApps>()!!
-        .getActivityList(null, Process.myUserHandle())
-        .map { info ->
-          add(info.applicationInfo.flags, AppIconInfo(info))
-          info.componentName.packageName
-        }
-        .toSet()
-    context.packageManager
-      .getInstalledApplications(0)
-      .filter { !launcherApps.contains(it.packageName) }
-      .forEach { info -> add(info.flags, AppIconInfo(context, info)) }
+      fun add(flags: Int, iconInfo: IconInfo) =
+        if ((flags and ApplicationInfo.FLAG_SYSTEM) == ApplicationInfo.FLAG_SYSTEM)
+          systemApps.add(iconInfo)
+        else userApps.add(iconInfo)
 
-    arrayOf(userApps.distinct().sortedBy { it.label }, systemApps.distinct().sortedBy { it.label })
-  }
+      val launcherApps =
+        app
+          .getSystemService(Context.LAUNCHER_APPS_SERVICE)
+          .asType<LauncherApps>()!!
+          .getActivityList(null, Process.myUserHandle())
+          .map { info ->
+            add(info.applicationInfo.flags, AppIconInfo(info))
+            info.componentName.packageName
+          }
+          .toSet()
+      app.packageManager
+        .getInstalledApplications(0)
+        .filter { !launcherApps.contains(it.packageName) }
+        .forEach { info -> add(info.flags, AppIconInfo(app, info)) }
+
+      arrayOf(
+        userApps.distinct().sortedBy { it.label },
+        systemApps.distinct().sortedBy { it.label },
+      )
+    }
+    .shareIn(GlobalScope, started = SharingStarted.WhileSubscribed(), replay = 1)
 private val shortcutsCache =
-  Weak<List<IconInfo>, Context> { context ->
+  Weak<List<IconInfo>, Unit> {
     val shortcuts =
-      context
+      MyApplication.context
         .getSystemService(Context.LAUNCHER_APPS_SERVICE)
         .asType<LauncherApps>()!!
         .getShortcuts(
@@ -84,32 +97,26 @@ interface IAppsFilter {
 class AppsFilter(context: Context) : IAppsFilter {
   override val filterType = mutableStateOf(Type.User)
 
-  private val apps by lazy { appsCache.get(context) }
-  private val shortcuts by lazy { shortcutsCache.get(context) }
+  private val shortcuts by lazy { shortcutsCache.get(Unit) }
 
   override suspend fun getAllApps(): List<IconInfo> =
     withContext(Dispatchers.Default) {
       mutableListOf<IconInfo>().apply {
-        apps.forEach { addAll(it) }
+        appsCache.replayCache.getOrNull(0)?.forEach { addAll(it) }
         runCatching { addAll(shortcuts) }
       }
     }
 
   override val appsByType =
     snapshotFlow { filterType.value }
-      .map { type ->
+      .combine(appsCache) { type, apps ->
         when (type) {
           Type.User,
           Type.System -> apps[type.ordinal]
           Type.Shortcut ->
-            runCatching { shortcuts }
-              .getOrElse {
-                log(it)
-                withContext(Dispatchers.Main) {
-                  Toast.makeText(context, R.string.requiresHookSystem, Toast.LENGTH_LONG).show()
-                }
-                listOf()
-              }
+            runCatchingToast(context, { context.getString(R.string.requiresHookSystem) }) {
+              shortcuts
+            } ?: listOf()
         }
       }
       .flowOn(Dispatchers.IO)

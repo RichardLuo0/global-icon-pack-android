@@ -110,12 +110,14 @@ inline fun <R> runSafe(crossinline block: () -> R) = run { block() }
 
 inline fun <T, R> T.runSafe(crossinline block: T.() -> R) = run { block() }
 
-suspend inline fun <R> runCatchingToast(context: Context, block: () -> R) =
+suspend inline fun <R> runCatchingToast(
+  context: Context,
+  crossinline message: (Throwable) -> String = { it.toString() },
+  block: () -> R,
+) =
   runCatching(block).getOrNull {
     log(it)
-    withContext(Dispatchers.Main) {
-      Toast.makeText(context, it.toString(), Toast.LENGTH_LONG).show()
-    }
+    withContext(Dispatchers.Main) { Toast.makeText(context, message(it), Toast.LENGTH_LONG).show() }
   }
 
 inline fun <T, reified R> Array<T>.map(transform: (T) -> R): Array<R> {

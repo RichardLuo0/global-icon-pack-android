@@ -132,7 +132,7 @@ class MainVM(context: Application) : ContextVM(context) {
     runCatchingToast(context) {
       if (pack.isEmpty()) return
       iconPackCache.delete(pack)
-      iconPackDBLazy.value.onIconPackChange(iconPackCache[pack])
+      iconPackDBLazy.value.onIconPackChange(iconPackCache[pack], IconPackApps.get().keys)
     }
   }
 }

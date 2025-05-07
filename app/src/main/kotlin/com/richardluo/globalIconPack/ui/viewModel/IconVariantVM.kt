@@ -115,7 +115,7 @@ class IconVariantVM(context: Application) : ContextVM(context), IAppsFilter by A
 
   fun restoreDefault() =
     viewModelScope.launch(Dispatchers.IO) {
-      runCatchingToast(context) { iconPackDB.resetPack(iconPack) }
+      runCatchingToast(context) { iconPackDB.resetPack(iconPack, IconPackApps.get().keys) }
     }
 
   fun flipModified() =

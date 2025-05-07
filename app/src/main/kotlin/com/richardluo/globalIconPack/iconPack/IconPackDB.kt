@@ -46,11 +46,11 @@ class IconPackDB(
 
   override fun onCreate(db: SQLiteDatabase) {}
 
-  fun onIconPackChange(iconPack: IconPack) {
-    update(iconPack)
+  fun onIconPackChange(iconPack: IconPack, installedPacks: Set<String>) {
+    update(iconPack, installedPacks)
   }
 
-  private fun update(iconPack: IconPack) {
+  private fun update(iconPack: IconPack, installedPacks: Set<String>) {
     val pack = iconPack.pack
     writableDatabase.transaction {
       execSQL(
@@ -83,13 +83,11 @@ class IconPackDB(
       updateIconId(this, iconPack)
       // Insert fallback
       insertFallbackSettings(this, pack, FallbackSettings(iconPack.info))
-      // Get installed icon packs
-      val packs = runBlocking { IconPackApps.get(context).keys }
       // Delete expired iconPack
-      val packSet = packs.joinToString(", ") { "'$it'" }
+      val packSet = installedPacks.joinToString(", ") { "'$it'" }
       delete("iconPack", "pack not in ($packSet)", null)
       // Drop expired tables
-      val packTables = packs.map { pt(it) }
+      val packTables = installedPacks.map { pt(it) }
       foreachPackTable { if (!packTables.contains("'$it'")) execSQL("DROP TABLE '$it'") }
       log("Database: $pack updated")
       iconsUpdateFlow.tryEmit()
@@ -296,7 +294,7 @@ class IconPackDB(
     }
   }
 
-  fun resetPack(iconPack: IconPack) {
+  fun resetPack(iconPack: IconPack, installedPacks: Set<String>) {
     writableDatabase.transaction {
       update(
         "iconPack",
@@ -307,7 +305,7 @@ class IconPackDB(
         "pack=?",
         arrayOf(iconPack.pack),
       )
-      update(iconPack)
+      update(iconPack, installedPacks)
       iconsUpdateFlow.tryEmit()
       modifiedUpdateFlow.tryEmit()
     }

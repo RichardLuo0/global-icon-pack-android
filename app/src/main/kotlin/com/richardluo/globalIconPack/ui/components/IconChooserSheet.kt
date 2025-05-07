@@ -45,12 +45,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.richardluo.globalIconPack.R
-import com.richardluo.globalIconPack.iconPack.IconPackApps
 import com.richardluo.globalIconPack.ui.model.IconInfo
 import com.richardluo.globalIconPack.ui.model.OriginalIcon
 import com.richardluo.globalIconPack.ui.model.VariantIcon
 import com.richardluo.globalIconPack.ui.model.VariantPackIcon
 import com.richardluo.globalIconPack.ui.viewModel.IconChooserVM
+import com.richardluo.globalIconPack.ui.viewModel.IconPackApps
 import com.richardluo.globalIconPack.ui.viewModel.emptyImageBitmap
 import com.richardluo.globalIconPack.utils.getValue
 import kotlinx.coroutines.launch
@@ -197,7 +197,7 @@ fun IconChooserSheet(
       LazyListDialog(
         packDialogState,
         title = { Text(stringResource(R.string.iconPack)) },
-        value = IconPackApps.getFlow(context).collectAsState(mapOf()).value.toList(),
+        value = IconPackApps.flow.collectAsState(null).value?.toList(),
         key = { it.first },
         focusItem = { it.first == viewModel.iconPack?.pack },
       ) { item, dismiss ->

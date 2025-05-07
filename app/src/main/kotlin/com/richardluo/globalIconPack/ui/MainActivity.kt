@@ -81,7 +81,6 @@ import com.richardluo.globalIconPack.MODE_SHARE
 import com.richardluo.globalIconPack.Pref
 import com.richardluo.globalIconPack.R
 import com.richardluo.globalIconPack.get
-import com.richardluo.globalIconPack.iconPack.IconPackApps
 import com.richardluo.globalIconPack.ui.components.IconButtonWithTooltip
 import com.richardluo.globalIconPack.ui.components.IconPackItem
 import com.richardluo.globalIconPack.ui.components.LazyListDialog
@@ -97,8 +96,10 @@ import com.richardluo.globalIconPack.ui.components.myPreference
 import com.richardluo.globalIconPack.ui.components.myPreferenceTheme
 import com.richardluo.globalIconPack.ui.components.mySliderPreference
 import com.richardluo.globalIconPack.ui.components.mySwitchPreference
+import com.richardluo.globalIconPack.ui.viewModel.IconPackApps
 import com.richardluo.globalIconPack.ui.viewModel.MainVM
 import com.richardluo.globalIconPack.utils.AppPreference
+import com.richardluo.globalIconPack.utils.getValue
 import com.topjohnwu.superuser.Shell
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.launchIn
@@ -311,7 +312,7 @@ object MainPreference {
         icon = { Icon(Icons.Outlined.Backpack, Pref.ICON_PACK.key) },
         key = Pref.ICON_PACK.key,
         defaultValue = Pref.ICON_PACK.def,
-        getValueMap = { IconPackApps.getFlow(context).collectAsState(mapOf()).value },
+        getValueMap = { IconPackApps.flow.collectAsState(null).value },
         item = { key, value, currentKey, onClick -> IconPackItem(key, value, currentKey, onClick) },
         title = { TwoLineText(stringResource(R.string.iconPack)) },
         summary = { key, value ->

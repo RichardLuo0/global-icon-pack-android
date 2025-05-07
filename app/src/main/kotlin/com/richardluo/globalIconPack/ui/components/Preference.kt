@@ -76,7 +76,7 @@ fun LazyListScope.myPreference(
 inline fun <T, U> LazyListScope.mapListPreference(
   key: String,
   defaultValue: T,
-  crossinline getValueMap: @Composable () -> Map<T, U>,
+  crossinline getValueMap: @Composable () -> Map<T, U>?,
   crossinline title: @Composable (T) -> Unit,
   modifier: Modifier = Modifier.fillMaxWidth(),
   crossinline rememberState: @Composable () -> MutableState<T> = {
@@ -94,12 +94,14 @@ inline fun <T, U> LazyListScope.mapListPreference(
     MyListPreference(
       state = state,
       modifier = modifier,
-      values = valueMap.keys.toList(),
+      values = valueMap?.keys?.toList(),
       title = { title(valueKey) },
       enabled = enabled(LocalPreferenceFlow.current.getValue()),
       icon = icon?.let { { it(valueKey) } },
-      summary = summary?.let { { it(valueKey, valueMap[valueKey]) } },
-      item = { key, currentKey, onClick -> item(key, valueMap.getValue(key), currentKey, onClick) },
+      summary = summary?.let { { it(valueKey, valueMap?.get(valueKey)) } },
+      item = { key, currentKey, onClick ->
+        item(key, valueMap!!.getValue(key), currentKey, onClick)
+      },
     )
   }
 }
@@ -107,7 +109,7 @@ inline fun <T, U> LazyListScope.mapListPreference(
 @Composable
 fun <T> MyListPreference(
   state: MutableState<T>,
-  values: List<T>,
+  values: List<T>?,
   title: @Composable () -> Unit,
   modifier: Modifier = Modifier,
   enabled: Boolean = true,

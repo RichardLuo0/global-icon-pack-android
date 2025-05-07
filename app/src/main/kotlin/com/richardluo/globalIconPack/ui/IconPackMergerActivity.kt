@@ -55,6 +55,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -78,7 +79,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
 import com.richardluo.globalIconPack.R
-import com.richardluo.globalIconPack.iconPack.IconPackApps
 import com.richardluo.globalIconPack.ui.components.AnimatedFab
 import com.richardluo.globalIconPack.ui.components.AppFilterByType
 import com.richardluo.globalIconPack.ui.components.AppIcon
@@ -101,6 +101,7 @@ import com.richardluo.globalIconPack.ui.model.IconEntryWithPack
 import com.richardluo.globalIconPack.ui.model.IconInfo
 import com.richardluo.globalIconPack.ui.model.VariantPackIcon
 import com.richardluo.globalIconPack.ui.viewModel.IconChooserVM
+import com.richardluo.globalIconPack.ui.viewModel.IconPackApps
 import com.richardluo.globalIconPack.ui.viewModel.MergerVM
 import com.richardluo.globalIconPack.utils.getValue
 import kotlinx.coroutines.launch
@@ -269,17 +270,22 @@ class IconPackMergerActivity : ComponentActivity() {
   @Composable
   private fun SelectBasePack(pagerState: PagerState, contentPadding: PaddingValues) {
     val coroutineScope = rememberCoroutineScope()
-    val valueMap = IconPackApps.getFlow(this).getValue(mapOf())
-    LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = contentPadding) {
-      items(valueMap.toList()) { (key, value) ->
-        IconPackItem(key, value, viewModel.basePack ?: "") {
-          coroutineScope.launch {
-            pagerState.animateScrollToPage(Page.IconList.ordinal)
-            viewModel.basePack = key
+    val valueMap = IconPackApps.flow.collectAsState(null).value
+    if (valueMap == null)
+      Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        CircularProgressIndicator(trackColor = MaterialTheme.colorScheme.surfaceVariant)
+      }
+    else
+      LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = contentPadding) {
+        items(valueMap.toList()) { (key, value) ->
+          IconPackItem(key, value, viewModel.basePack ?: "") {
+            coroutineScope.launch {
+              pagerState.animateScrollToPage(Page.IconList.ordinal)
+              viewModel.basePack = key
+            }
           }
         }
       }
-    }
   }
 
   @Composable
