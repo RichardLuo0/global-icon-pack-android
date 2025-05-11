@@ -83,33 +83,45 @@ class MainVM(context: Application) : ContextVM(context) {
     try {
       val shareDB = ShareSource.DATABASE_PATH
       val shareDBFile = File(shareDB)
+      val parent = shareDBFile.parent
+      val uid = android.os.Process.myUid()
       if (!shareDBFile.exists()) {
         if (iconPackDBLazy.isInitialized()) {
           iconPackDBLazy.value.close()
           iconPackDBLazy = update { IconPackDB(context) }
         }
-        val parent = shareDBFile.parent
         val oldDB =
           context.createDeviceProtectedStorageContext().getDatabasePath(AppPref.PATH.def).path
-        val uid = android.os.Process.myUid()
-        val result =
-          Shell.cmd(
-              "set -e",
-              "mkdir -p $parent",
-              "chown $uid:$uid $parent && chmod 0775 $parent && chcon u:object_r:magisk_file:s0 $parent",
-              "if [ -f $oldDB ]; then cp $oldDB $shareDB; fi",
-              "if ! [ -f $shareDB ]; then touch $shareDB; fi",
-              "chown $uid:$uid $shareDB && chmod 0666 $shareDB && chcon u:object_r:magisk_file:s0 $shareDB",
-              "if [ -f $oldDB ]; then rm $oldDB; fi",
-            )
-            .exec()
-        if (!result.isSuccess)
-          throw Exception(
-            "Shared database creation failed: code: ${result.code} err: ${result.err.joinToString("\n")} out: ${result.out.joinToString("\n")}"
+        Shell.cmd(
+            "set -e",
+            "mkdir -p $parent",
+            "chown $uid:$uid $parent && chmod 0775 $parent && chcon u:object_r:magisk_file:s0 $parent",
+            "if [ -f $oldDB ]; then cp $oldDB $shareDB; fi",
+            "if ! [ -f $shareDB ]; then touch $shareDB; fi",
+            "if [ -f $oldDB ]; then rm $oldDB; fi",
           )
+          .exec()
+          .run {
+            if (!isSuccess)
+              throw Exception(
+                "Shared database creation failed: code: $code err: ${err.joinToString("\n")} out: ${out.joinToString("\n")}"
+              )
+          }
       }
-      updateDB(pack)
+      Shell.cmd(
+          "set -e",
+          "chown $uid:$uid $parent && chmod 0775 $parent && chcon u:object_r:magisk_file:s0 $parent",
+          "chown $uid:$uid $shareDB && chmod 0666 $shareDB && chcon u:object_r:magisk_file:s0 $shareDB",
+        )
+        .exec()
+        .run {
+          if (!isSuccess)
+            throw Exception(
+              "Database permission setting failed: code: $code err: ${err.joinToString("\n")} out: ${out.joinToString("\n")}"
+            )
+        }
       AppPreference.get(context).edit { putString(AppPref.PATH.key, shareDB) }
+      updateDB(pack)
     } catch (t: Throwable) {
       log(t)
       withContext(Dispatchers.Main) {
