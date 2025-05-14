@@ -128,6 +128,8 @@ class ReplaceIcon(
               args[0] = withHighByteSet(resId, ANDROID_DEFAULT)
               callOriginalMethod<Drawable?>()?.let { getSC()?.genIconFrom(it) ?: it }
             }
+            resId == android.R.drawable.sym_def_app_icon ->
+              callOriginalMethod<Drawable?>()?.let { getSC()?.genIconFrom(it) ?: it }
             else -> return@before
           }
       }
@@ -199,7 +201,7 @@ private fun HookBuilder.replaceIconHook() {
       info.packageName ?: return@runSafe
       val sc = getSC() ?: return@runSafe
       replaceIconInItemInfo(info, sc.getId(getComponentName(info)))
-      logD("Replaced PackageItemInfo: " + info.packageName)
+      logD("Single replaced: " + info.packageName)
     }
     blockReplaceIconResId.set(false)
   }
@@ -225,6 +227,7 @@ private inline fun HookBuilder.batchReplaceIconHook(
 }
 
 private fun replaceIconInItemInfo(info: PackageItemInfo, id: Int?) {
+  logD("Replace in ItemInfo: " + info.packageName + "/" + info.name + ": " + id)
   info.icon =
     id?.let { withHighByteSet(it, IN_SC) }
       ?: if (isHighTwoByte(info.icon, ANDROID_DEFAULT)) withHighByteSet(info.icon, NOT_IN_SC)
