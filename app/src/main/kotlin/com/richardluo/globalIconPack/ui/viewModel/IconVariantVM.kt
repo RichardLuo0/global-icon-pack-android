@@ -190,8 +190,7 @@ class IconVariantVM(context: Application) :
           iconPackDB.transaction {
             while (parser.next() != XmlPullParser.END_DOCUMENT) {
               if (parser.eventType != XmlPullParser.START_TAG) continue
-              var cn =
-                parser["component"]?.let { ComponentName.unflattenFromString(it) } ?: continue
+              var cn = parser["component"]?.let { unflattenFromString(it) } ?: continue
               val entry =
                 when (parser.name) {
                   "item" -> NormalIconEntry(parser["drawable"] ?: continue)
