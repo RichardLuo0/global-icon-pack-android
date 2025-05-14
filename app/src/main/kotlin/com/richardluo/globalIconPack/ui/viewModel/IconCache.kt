@@ -1,5 +1,6 @@
 package com.richardluo.globalIconPack.ui.viewModel
 
+import android.content.ComponentName
 import android.content.Context
 import android.content.pm.LauncherApps
 import android.graphics.drawable.Drawable
@@ -11,6 +12,7 @@ import androidx.core.graphics.drawable.toBitmap
 import com.richardluo.globalIconPack.iconPack.model.IconEntry
 import com.richardluo.globalIconPack.iconPack.model.IconFallback
 import com.richardluo.globalIconPack.iconPack.model.IconPackConfig
+import com.richardluo.globalIconPack.ui.model.ActivityIconInfo
 import com.richardluo.globalIconPack.ui.model.AppIconInfo
 import com.richardluo.globalIconPack.ui.model.IconEntryWithPack
 import com.richardluo.globalIconPack.ui.model.IconInfo
@@ -38,11 +40,7 @@ class IconCache(private val context: Context, factor: Double = 1.0 / 8) {
     config: IconPackConfig,
   ): ImageBitmap {
     return if (entry != null) loadIcon(entry.entry, entry.pack)
-    else
-      bitmapCache.getOrPut("${basePack.pack}/fallback/${info.componentName}") {
-        getBaseIcon(info)?.let { basePack.genIconFrom(it, config).toSafeBitmap().asImageBitmap() }
-          ?: emptyImageBitmap
-      }
+    else loadIcon(info, basePack.iconFallback, basePack, config)
   }
 
   suspend fun loadIcon(
@@ -50,24 +48,40 @@ class IconCache(private val context: Context, factor: Double = 1.0 / 8) {
     iconFallback: IconFallback?,
     basePack: IconPack,
     config: IconPackConfig,
-  ) =
+  ): ImageBitmap =
     bitmapCache.getOrPut("${basePack.pack}/fallback/${info.componentName}") {
-      getBaseIcon(info)?.let {
-        IconPack.genIconFrom(basePack.res, it, iconFallback, config).toSafeBitmap().asImageBitmap()
-      } ?: emptyImageBitmap
+      // If ActivityIconInfo does not have an icon, return application icon directly
+      if (info is ActivityIconInfo && info.info.icon == 0)
+        loadIcon(
+          AppIconInfo(
+            ComponentName(info.componentName.packageName, ""),
+            "",
+            info.info.applicationInfo,
+          ),
+          iconFallback,
+          basePack,
+          config,
+        )
+      else
+        getBaseIcon(info)?.let {
+          IconPack.genIconFrom(basePack.res, it, iconFallback, config)
+            .toSafeBitmap()
+            .asImageBitmap()
+        } ?: emptyImageBitmap
     }
 
-  suspend fun loadIcon(entry: IconEntry, pack: IconPack) =
-    bitmapCache.getOrPut("${pack.pack}/icon/${entry.name}") {
+  suspend fun loadIcon(entry: IconEntry, iconPack: IconPack) =
+    bitmapCache.getOrPut("${iconPack.pack}/icon/${entry.name}") {
       withContext(Dispatchers.IO) {
-        pack.getIcon(entry, 0)?.toSafeBitmap()?.asImageBitmap() ?: emptyImageBitmap
+        iconPack.getIcon(entry, 0)?.toSafeBitmap()?.asImageBitmap() ?: emptyImageBitmap
       }
     }
 
   private suspend fun getBaseIcon(info: IconInfo) =
-    withContext(Dispatchers.Default) {
+    withContext(Dispatchers.IO) {
       when (info) {
         is AppIconInfo -> context.packageManager.getApplicationIcon(info.info)
+        is ActivityIconInfo -> info.info.loadIcon(context.packageManager)
         is ShortcutIconInfo ->
           context
             .getSystemService(Context.LAUNCHER_APPS_SERVICE)

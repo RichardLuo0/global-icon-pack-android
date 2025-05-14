@@ -3,13 +3,15 @@ api = { module = "de.robv.android.xposed:api", version = "82" }
 core-ktx = { group = "androidx.core", name = "core-ktx", version = "1.16.0" }
 activity = { group = "androidx.activity", name = "activity-compose", version = "1.10.1" }
 viewmodel = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose", version = "2.9.0" }
-compose-foundation = { group = "androidx.compose.foundation", name = "foundation", version = "1.8.1" } # https://developer.android.com/reference/kotlin/androidx/compose/foundation/lazy/grid/LazyGridLayoutInfo#maxSpan()
+compose-foundation = { group = "androidx.compose.foundation", name = "foundation", version = "1.8.1" }
 preference = { group = "me.zhanghai.compose.preference", name = "library", version = "1.1.1" }
 material3 = { group = "androidx.compose.material3", name = "material3", version = "1.4.0-alpha14" }  # Fix https://issuetracker.google.com/issues/353304855
 material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended", version = "1.7.8" }
 libsu = { group = "com.github.topjohnwu.libsu", name = "core", version = "6.0.0" }
 documentfile = { group = "androidx.documentfile", name = "documentfile", version = "1.1.0" }
 hiddenapibypass = { group = "org.lsposed.hiddenapibypass", name = "hiddenapibypass", version = "+" }
+navigation = { group = "androidx.navigation", name = "navigation-compose", version = "2.9.0" }
+
 #junit = { group = "junit", name = "junit", version.ref = "junit" }
 #ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 #espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }

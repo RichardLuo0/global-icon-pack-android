@@ -69,9 +69,6 @@ class IconPack(val pack: String, val res: Resources) {
   fun getDrawableId(name: String) =
     idCache.getOrPut(name) { res.getIdentifier(name, "drawable", pack) }
 
-  fun genIconFrom(baseIcon: Drawable, config: IconPackConfig) =
-    genIconFrom(res, baseIcon, iconFallback, config)
-
   val drawables: Set<String> by lazy {
     @SuppressLint("DiscouragedApi")
     val parser =

@@ -85,7 +85,6 @@ import com.richardluo.globalIconPack.ui.components.IconButtonWithTooltip
 import com.richardluo.globalIconPack.ui.components.IconPackItem
 import com.richardluo.globalIconPack.ui.components.LazyListDialog
 import com.richardluo.globalIconPack.ui.components.LoadingDialog
-import com.richardluo.globalIconPack.ui.components.MainDropdownMenu
 import com.richardluo.globalIconPack.ui.components.OneLineText
 import com.richardluo.globalIconPack.ui.components.SampleTheme
 import com.richardluo.globalIconPack.ui.components.SnackbarErrorVisuals
@@ -99,7 +98,6 @@ import com.richardluo.globalIconPack.ui.components.mySwitchPreference
 import com.richardluo.globalIconPack.ui.viewModel.IconPackApps
 import com.richardluo.globalIconPack.ui.viewModel.MainVM
 import com.richardluo.globalIconPack.utils.AppPreference
-import com.richardluo.globalIconPack.utils.getValue
 import com.topjohnwu.superuser.Shell
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.launchIn
@@ -121,7 +119,7 @@ class MainActivity : ComponentActivity() {
     }
   }
 
-  private val viewModel: MainVM by viewModels()
+  private val vm: MainVM by viewModels()
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
@@ -136,7 +134,7 @@ class MainActivity : ComponentActivity() {
       SampleTheme {
         if (needSetup.value) SetUpDialog(needSetup)
         else {
-          val prefFlow = viewModel.prefFlow
+          val prefFlow = vm.prefFlow
           if (prefFlow == null)
             WarnDialog(
               openState = remember { mutableStateOf(true) },
@@ -158,7 +156,7 @@ class MainActivity : ComponentActivity() {
   }
 
   private fun applyIconPackIfNeeded(intent: Intent) {
-    val prefFlow = viewModel.prefFlow
+    val prefFlow = vm.prefFlow
     if (prefFlow != null && intent.action == "${BuildConfig.APPLICATION_ID}.APPLY_ICON_PACK") {
       prefFlow.update {
         it.toMutablePreferences().apply {
@@ -181,9 +179,7 @@ class MainActivity : ComponentActivity() {
         modifier =
           Modifier.fillMaxWidth()
             .clickable {
-              viewModel.prefFlow?.update {
-                it.toMutablePreferences().apply { set(Pref.MODE.key, mode) }
-              }
+              vm.prefFlow?.update { it.toMutablePreferences().apply { set(Pref.MODE.key, mode) } }
               AppPreference.get(this).edit { putBoolean(AppPref.NEED_SETUP.key, false) }
               dismiss()
             }
@@ -266,7 +262,7 @@ class MainActivity : ComponentActivity() {
         }
       },
     ) { contentPadding ->
-      if (viewModel.waiting > 0) LoadingDialog()
+      if (vm.waiting > 0) LoadingDialog()
 
       val flow = LocalPreferenceFlow.current
       LaunchedEffect(flow) {

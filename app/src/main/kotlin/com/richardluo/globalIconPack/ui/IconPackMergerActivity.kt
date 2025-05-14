@@ -78,8 +78,15 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.richardluo.globalIconPack.R
 import com.richardluo.globalIconPack.ui.components.AnimatedFab
+import com.richardluo.globalIconPack.ui.components.AnimatedNavHost
 import com.richardluo.globalIconPack.ui.components.AppFilterByType
 import com.richardluo.globalIconPack.ui.components.AppIcon
 import com.richardluo.globalIconPack.ui.components.AppbarSearchBar
@@ -97,24 +104,47 @@ import com.richardluo.globalIconPack.ui.components.ScrollIndicationBox
 import com.richardluo.globalIconPack.ui.components.WarnDialog
 import com.richardluo.globalIconPack.ui.components.getLabelByType
 import com.richardluo.globalIconPack.ui.components.myPreferenceTheme
+import com.richardluo.globalIconPack.ui.model.AppIconInfo
 import com.richardluo.globalIconPack.ui.model.IconEntryWithPack
 import com.richardluo.globalIconPack.ui.model.IconInfo
+import com.richardluo.globalIconPack.ui.model.ShortcutIconInfo
 import com.richardluo.globalIconPack.ui.model.VariantPackIcon
 import com.richardluo.globalIconPack.ui.viewModel.IconChooserVM
 import com.richardluo.globalIconPack.ui.viewModel.IconPackApps
 import com.richardluo.globalIconPack.ui.viewModel.MergerVM
+import com.richardluo.globalIconPack.ui.viewModel.emptyImageBitmap
 import com.richardluo.globalIconPack.utils.getValue
 import kotlinx.coroutines.launch
 import me.zhanghai.compose.preference.ProvidePreferenceLocals
 
+class MergerActivityVM : ViewModel() {
+  val expandSearchBar = mutableStateOf(false)
+
+  val iconOptionDialogState = mutableStateOf(false)
+  val warningDialogState = mutableStateOf(false)
+  val instructionDialogState = mutableStateOf(false)
+
+  var isCreatingApk by mutableStateOf(false)
+}
+
 class IconPackMergerActivity : ComponentActivity() {
-  private val viewModel: MergerVM by viewModels()
-  private val iconChooser: IconChooserVM by viewModels()
-  private val iconOptionDialogState = mutableStateOf(false)
+  private lateinit var navController: NavHostController
+  private val vm: MergerVM by viewModels()
+  private val avm: MergerActivityVM by viewModels()
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
-    setContent { SampleTheme { Screen() } }
+    setContent {
+      SampleTheme {
+        navController = rememberNavController()
+        AnimatedNavHost(navController = navController, startDestination = "Main") {
+          composable("Main") { Screen() }
+          composable("ActivityList") {
+            AppIconListPage({ navController.popBackStack() }, vm, vm.appIconListVM)
+          }
+        }
+      }
+    }
   }
 
   enum class Page {
@@ -180,16 +210,16 @@ class IconPackMergerActivity : ComponentActivity() {
             actions = {
               if (pagerState.currentPage == Page.IconList.ordinal) {
                 IconButtonWithTooltip(Icons.Outlined.Search, stringResource(R.string.search)) {
-                  viewModel.expandSearchBar.value = true
+                  avm.expandSearchBar.value = true
                 }
                 val expandFilter = rememberSaveable { mutableStateOf(false) }
                 IconButtonWithTooltip(
                   Icons.Outlined.FilterList,
-                  getLabelByType(viewModel.filterType.value),
+                  getLabelByType(vm.filterType.value),
                 ) {
                   expandFilter.value = true
                 }
-                AppFilterByType(expandFilter, viewModel.filterType)
+                AppFilterByType(expandFilter, vm.filterType)
               }
             },
             modifier = Modifier.fillMaxWidth(),
@@ -197,7 +227,7 @@ class IconPackMergerActivity : ComponentActivity() {
           )
 
           if (pagerState.currentPage == Page.IconList.ordinal)
-            AppbarSearchBar(viewModel.expandSearchBar, viewModel.searchText)
+            AppbarSearchBar(avm.expandSearchBar, vm.searchText)
         }
       },
       floatingActionButton = {
@@ -208,7 +238,7 @@ class IconPackMergerActivity : ComponentActivity() {
             exit = scaleOut() + fadeOut(),
             modifier = Modifier.align(Alignment.End).padding(bottom = 12.dp),
           ) {
-            FloatingActionButton(onClick = { iconOptionDialogState.value = true }) {
+            FloatingActionButton(onClick = { avm.iconOptionDialogState.value = true }) {
               Icon(Icons.Outlined.Settings, getString(R.string.options))
             }
           }
@@ -219,7 +249,9 @@ class IconPackMergerActivity : ComponentActivity() {
             }
           }
           val done = remember {
-            FabSnapshot(Icons.Outlined.Done, getString(R.string.done), viewModel::openWarningDialog)
+            FabSnapshot(Icons.Outlined.Done, getString(R.string.done)) {
+              if (vm.baseIconPack != null) avm.warningDialogState.value = true
+            }
           }
           AnimatedFab(
             remember {
@@ -241,10 +273,8 @@ class IconPackMergerActivity : ComponentActivity() {
         }
       }
 
-      IconChooserSheet(iconChooser) { viewModel.loadIcon(it to null) }
-
       WarnDialog(
-        viewModel.warningDialogState,
+        avm.warningDialogState,
         title = { Text(getString(R.string.warning)) },
         content = { Text(getString(R.string.mergerWarning)) },
       ) {
@@ -252,19 +282,25 @@ class IconPackMergerActivity : ComponentActivity() {
       }
 
       InfoDialog(
-        viewModel.instructionDialogState,
+        avm.instructionDialogState,
         icon = Icons.Outlined.Notifications,
         title = { Text(getString(R.string.notice)) },
         content = { Text(getString(R.string.mergerInstruction)) },
       )
 
-      if (viewModel.isCreatingApk) LoadingDialog()
+      if (avm.isCreatingApk) LoadingDialog()
     }
   }
 
   private val createIconPackLauncher =
     registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) {
-      if (it != null) viewModel.createIconPack(it)
+      it ?: return@registerForActivityResult
+      lifecycleScope.launch {
+        avm.isCreatingApk = true
+        runCatching { vm.createIconPack(it)?.await() }
+          .onSuccess { avm.instructionDialogState.value = true }
+        avm.isCreatingApk = false
+      }
     }
 
   @Composable
@@ -278,10 +314,10 @@ class IconPackMergerActivity : ComponentActivity() {
     else
       LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = contentPadding) {
         items(valueMap.toList()) { (key, value) ->
-          IconPackItem(key, value, viewModel.basePack ?: "") {
+          IconPackItem(key, value, vm.basePack ?: "") {
             coroutineScope.launch {
               pagerState.animateScrollToPage(Page.IconList.ordinal)
-              viewModel.basePack = key
+              vm.basePack = key
             }
           }
         }
@@ -290,28 +326,37 @@ class IconPackMergerActivity : ComponentActivity() {
 
   @Composable
   private fun IconList(contentPadding: PaddingValues) {
-    val icons = viewModel.filteredIcons.getValue(null)
+    val iconChooser: IconChooserVM = viewModel(key = "ShortcutIconChooser")
+
+    val icons = vm.filteredIcons.getValue(null)
     if (icons != null)
       LazyVerticalGrid(
         modifier = Modifier.fillMaxSize().padding(horizontal = 2.dp),
         contentPadding = contentPadding,
         columns = GridCells.Adaptive(minSize = 74.dp),
       ) {
-        items(icons, key = { it.first.componentName }) { pair ->
-          val (info, entry) = pair
+        items(icons, key = { it.first.componentName }) {
+          val (info, entry) = it
           AppIcon(
             info.label,
             key =
               if (entry != null) "${entry.pack.pack}/icon/${entry.entry.name}"
-              else "${viewModel.basePack}/fallback/${viewModel.iconCacheToken}",
-            loadImage = { viewModel.loadIcon(pair) },
+              else "${vm.basePack}/fallback/${vm.iconCacheToken}",
+            loadImage = { vm.loadIcon(it) },
           ) {
-            iconChooser.open(
-              info,
-              viewModel.baseIconPack ?: return@AppIcon,
-              entry?.entry?.name,
-              viewModel::saveNewIcon,
-            )
+            when (info) {
+              is AppIconInfo -> {
+                vm.setupActivityList(info)
+                navController.navigate("ActivityList")
+              }
+              is ShortcutIconInfo ->
+                iconChooser.open(
+                  info,
+                  vm.baseIconPack ?: return@AppIcon,
+                  entry?.entry?.name,
+                  vm::saveIcon,
+                )
+            }
           }
         }
       }
@@ -320,11 +365,13 @@ class IconPackMergerActivity : ComponentActivity() {
         CircularProgressIndicator(trackColor = MaterialTheme.colorScheme.surfaceVariant)
       }
 
+    IconChooserSheet(iconChooser) { vm.loadIcon(it to null) }
+
     val iconOptionScrollState = rememberLazyListState()
     LazyDialog(
-      iconOptionDialogState,
+      avm.iconOptionDialogState,
       title = { Text(getString(R.string.options)) },
-      value = viewModel.optionsFlow,
+      value = vm.optionsFlow,
     ) {
       ProvidePreferenceLocals(flow = it, myPreferenceTheme()) {
         ScrollIndicationBox(
@@ -337,10 +384,15 @@ class IconPackMergerActivity : ComponentActivity() {
     }
   }
 
-  private class FakeIconInfo(packageName: String) : IconInfo(ComponentName(packageName, ""), "")
-
   @Composable
   private fun PackInfoForm(contentPadding: PaddingValues) {
+    val iconChooser: IconChooserVM = viewModel(key = "newPackIconIconChooser")
+
+    val symDefAppIcon = remember {
+      getDrawable(android.R.drawable.sym_def_app_icon)?.toBitmap()?.asImageBitmap()
+        ?: emptyImageBitmap
+    }
+
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
     Box(
@@ -359,60 +411,54 @@ class IconPackMergerActivity : ComponentActivity() {
           modifier = Modifier.padding(12.dp),
           verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-          val info = remember(viewModel.basePack) { viewModel.basePack?.let { FakeIconInfo(it) } }
-          if (info != null)
-            LazyImage(
-              key = viewModel.newPackIcon,
-              contentDescription = "newPackIcon",
-              modifier =
-                Modifier.align(Alignment.CenterHorizontally)
-                  .clickable {
-                    val iconPack = viewModel.baseIconPack ?: return@clickable
-                    iconChooser.open(info, iconPack, viewModel.newPackIcon?.entry?.name) {
-                      info,
-                      icon ->
-                      viewModel.newPackIcon =
-                        if (icon is VariantPackIcon) IconEntryWithPack(icon.entry, icon.pack)
-                        else null
-                    }
+          LazyImage(
+            key = vm.newPackIcon,
+            contentDescription = "newPackIcon",
+            modifier =
+              Modifier.align(Alignment.CenterHorizontally)
+                .clickable {
+                  val iconPack = vm.baseIconPack ?: return@clickable
+                  val info = object : IconInfo(ComponentName(iconPack.pack, ""), "") {}
+                  iconChooser.open(info, iconPack, vm.newPackIcon?.entry?.name) { info, icon ->
+                    vm.newPackIcon =
+                      if (icon is VariantPackIcon) IconEntryWithPack(icon.entry, icon.pack)
+                      else null
                   }
-                  .padding(12.dp)
-                  .size(72.dp),
-              contentScale = ContentScale.Crop,
-              loadImage = {
-                viewModel.newPackIcon?.let { viewModel.loadIcon(info to it) }
-                  ?: getDrawable(android.R.drawable.sym_def_app_icon)!!.toBitmap().asImageBitmap()
-              },
-            )
+                }
+                .padding(12.dp)
+                .size(72.dp),
+            contentScale = ContentScale.Crop,
+            loadImage = { vm.newPackIcon?.let { vm.loadIcon(it) } ?: symDefAppIcon },
+          )
           OutlinedTextField(
-            value = viewModel.newPackName,
-            onValueChange = { viewModel.newPackName = it },
+            value = vm.newPackName,
+            onValueChange = { vm.newPackName = it },
             label = { Text(getString(R.string.newPackName)) },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
           )
           OutlinedTextField(
-            value = viewModel.newPackPackage,
-            onValueChange = { viewModel.newPackPackage = it },
+            value = vm.newPackPackage,
+            onValueChange = { vm.newPackPackage = it },
             label = { Text(getString(R.string.newPackPackage)) },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
           )
           Row(
             modifier =
-              Modifier.fillMaxWidth().clickable {
-                viewModel.installedAppsOnly = !viewModel.installedAppsOnly
-              },
+              Modifier.fillMaxWidth().clickable { vm.installedAppsOnly = !vm.installedAppsOnly },
             verticalAlignment = Alignment.CenterVertically,
           ) {
             Checkbox(
-              checked = viewModel.installedAppsOnly,
-              onCheckedChange = { viewModel.installedAppsOnly = it },
+              checked = vm.installedAppsOnly,
+              onCheckedChange = { vm.installedAppsOnly = it },
             )
             Text(text = getString(R.string.installedAppsOnly), modifier = Modifier.fillMaxWidth())
           }
         }
       }
     }
+
+    IconChooserSheet(iconChooser) { symDefAppIcon }
   }
 }

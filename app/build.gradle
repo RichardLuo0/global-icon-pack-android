@@ -93,6 +93,7 @@ dependencies {
     implementation libs.libsu
     implementation libs.documentfile
     implementation libs.hiddenapibypass
+    implementation libs.navigation
 }
 
 import com.github.jk1.license.render.*

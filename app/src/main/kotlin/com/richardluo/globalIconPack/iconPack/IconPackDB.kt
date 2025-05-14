@@ -21,7 +21,6 @@ import com.richardluo.globalIconPack.utils.AppPreference
 import com.richardluo.globalIconPack.utils.InstanceManager
 import com.richardluo.globalIconPack.utils.SQLiteOpenHelper
 import com.richardluo.globalIconPack.utils.flowTrigger
-import com.richardluo.globalIconPack.utils.ifNotEmpty
 import com.richardluo.globalIconPack.utils.log
 import com.richardluo.globalIconPack.utils.tryEmit
 import java.io.ByteArrayInputStream
@@ -150,7 +149,7 @@ class IconPackDB(
       .query("iconPack", arrayOf("modified"), "pack=?", arrayOf(pack), null, null, null, "1")
       .useFirstRow { it.getInt(0) != 0 } == true
 
-  enum class GetIconColumn {
+  enum class GetIconCol {
     Index,
     Entry,
     Pack,
@@ -183,6 +182,23 @@ class IconPackDB(
 
   fun getIcon(pack: String, cnList: List<ComponentName>, fallback: Boolean = false) =
     if (fallback) getIconFallback(pack, cnList) else getIconExact(pack, cnList)
+
+  enum class GetAllIconsCol {
+    Index,
+    PackageName,
+    ClassName,
+    Entry,
+    Pack,
+    Id,
+  }
+
+  fun getAllIcons(pack: String, packageNameList: List<String>) =
+    readableDatabase.rawQueryList(
+      "SELECT packageName, className, entry, pack, id FROM ${pt(pack)} WHERE packageName=?",
+      packageNameList,
+    ) {
+      add(it)
+    }
 
   private fun insertIcons(
     db: SQLiteDatabase,
@@ -252,31 +268,16 @@ class IconPackDB(
   ) {
     val entryPack = entryIconPack.pack
     val packTable = pt(pack)
-    val values =
-      ContentValues().apply {
-        put("entry", entry.toByteArray())
-        put("pack", if (entryPack == pack) "" else entryPack)
-        put("id", getId(entry.type, entry.name, entryIconPack) ?: return)
-      }
     writableDatabase.transaction {
-      if (!cn.packageName.endsWith("@")) {
-        update(packTable, values, "packageName=?", arrayOf(cn.packageName))
-        insertWithOnConflict(
-          packTable,
-          null,
-          values.apply {
-            put("packageName", cn.packageName)
-            put("className", "")
-          },
-          SQLiteDatabase.CONFLICT_REPLACE,
-        )
-      }
       insertWithOnConflict(
         packTable,
         null,
-        values.apply {
+        ContentValues().apply {
           put("packageName", cn.packageName)
           put("className", cn.className)
+          put("entry", entry.toByteArray())
+          put("pack", if (entryPack == pack) "" else entryPack)
+          put("id", getId(entry.type, entry.name, entryIconPack) ?: return)
         },
         SQLiteDatabase.CONFLICT_REPLACE,
       )
@@ -287,8 +288,7 @@ class IconPackDB(
 
   fun deleteIcon(pack: String, cn: ComponentName) {
     writableDatabase.transaction {
-      if (!cn.packageName.endsWith("@")) delete(pt(pack), "packageName=?", arrayOf(cn.packageName))
-      else delete(pt(pack), "packageName=? AND className=?", arrayOf(cn.packageName, cn.className))
+      delete(pt(pack), "packageName=? AND className=?", arrayOf(cn.packageName, cn.className))
       setPackModified(pack)
       iconsUpdateFlow.tryEmit()
     }
@@ -360,13 +360,14 @@ private fun <T> SQLiteDatabase.rawQueryList(
   indexColumn: String = "index",
   expandArg: MutableList<String>.(T) -> Unit,
 ): Cursor {
+  if (indexColumn.isEmpty()) throw Exception("Empty index column name!")
   if (argList.isEmpty()) return MatrixCursor(arrayOf())
   var i = 0
   val cursors =
     argList.chunked(500).map {
       val sql =
         it.fastJoinToString(" UNION ALL ") {
-          "SELECT${indexColumn.ifNotEmpty { " ${i++} AS '$it'," }} * FROM ($singleSql)"
+          "SELECT ${i++} AS '$indexColumn', * FROM ($singleSql)"
         }
       rawQuery(sql, buildList { for (item in it) expandArg(item) }.toTypedArray())
     }

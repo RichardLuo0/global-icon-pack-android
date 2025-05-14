@@ -9,6 +9,7 @@ import androidx.collection.LruCache
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.richardluo.globalIconPack.BuildConfig
+import kotlin.collections.filter
 import kotlin.collections.set
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
@@ -16,7 +17,10 @@ import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.combineTransform
+import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.withContext
 import org.xmlpull.v1.XmlPullParser
 
@@ -115,7 +119,7 @@ suspend inline fun <R> runCatchingToast(
   crossinline message: (Throwable) -> String = { it.toString() },
   block: () -> R,
 ) =
-  runCatching(block).getOrNull {
+  runCatching(block).onFailure {
     log(it)
     withContext(Dispatchers.Main) { Toast.makeText(context, message(it), Toast.LENGTH_LONG).show() }
   }
@@ -144,3 +148,15 @@ inline fun <K, reified V> MutableMap<K, V>.getOrPut(
     }
   return array.asList()
 }
+
+inline fun <T> Flow<List<T>?>.filter(
+  searchText: Flow<String>,
+  crossinline predicate: (T, String) -> Boolean,
+) =
+  combineTransform(searchText.debounceInput()) { items, text ->
+      emit(null)
+      items ?: return@combineTransform
+      emit(if (text.isEmpty()) items else items.filter { predicate(it, text) })
+    }
+    .conflate()
+    .flowOn(Dispatchers.Default)

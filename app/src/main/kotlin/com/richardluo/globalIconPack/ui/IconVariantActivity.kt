@@ -42,7 +42,11 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import com.richardluo.globalIconPack.R
+import com.richardluo.globalIconPack.ui.components.AnimatedNavHost
 import com.richardluo.globalIconPack.ui.components.AppFilterByType
 import com.richardluo.globalIconPack.ui.components.AppIcon
 import com.richardluo.globalIconPack.ui.components.AppbarSearchBar
@@ -52,6 +56,8 @@ import com.richardluo.globalIconPack.ui.components.MyDropdownMenu
 import com.richardluo.globalIconPack.ui.components.SampleTheme
 import com.richardluo.globalIconPack.ui.components.WarnDialog
 import com.richardluo.globalIconPack.ui.components.getLabelByType
+import com.richardluo.globalIconPack.ui.model.AppIconInfo
+import com.richardluo.globalIconPack.ui.model.ShortcutIconInfo
 import com.richardluo.globalIconPack.ui.viewModel.IconChooserVM
 import com.richardluo.globalIconPack.ui.viewModel.IconVariantVM
 import com.richardluo.globalIconPack.utils.getValue
@@ -59,26 +65,37 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class IconVariantActivity : ComponentActivity() {
-  private val viewModel: IconVariantVM by viewModels()
+  private lateinit var navController: NavHostController
+  private val vm: IconVariantVM by viewModels()
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
 
-    runCatching { viewModel.iconPack }
+    runCatching { vm.iconPack }
       .getOrElse {
         finish()
         return
       }
 
-    setContent { SampleTheme { Screen() } }
+    setContent {
+      SampleTheme {
+        navController = rememberNavController()
+        AnimatedNavHost(navController = navController, startDestination = "Main") {
+          composable("Main") { Screen() }
+          composable("ActivityList") {
+            AppIconListPage({ navController.popBackStack() }, vm, vm.appIconListVM)
+          }
+        }
+      }
+    }
   }
 
   @OptIn(ExperimentalMaterial3Api::class)
   @Composable
   private fun Screen() {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
+    val expandSearchBar = rememberSaveable { mutableStateOf(false) }
     val resetWarnDialogState = rememberSaveable { mutableStateOf(false) }
-    val iconChooser: IconChooserVM = viewModel()
 
     Scaffold(
       modifier = Modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -91,7 +108,7 @@ class IconVariantActivity : ComponentActivity() {
             title = { Text(stringResource(R.string.iconVariant)) },
             actions = {
               IconButtonWithTooltip(Icons.Outlined.Search, stringResource(R.string.search)) {
-                lifecycleScope.launch { viewModel.expandSearchBar.value = true }
+                expandSearchBar.value = true
               }
               var expand by rememberSaveable { mutableStateOf(false) }
               val expandFilter = rememberSaveable { mutableStateOf(false) }
@@ -101,7 +118,7 @@ class IconVariantActivity : ComponentActivity() {
               MyDropdownMenu(expanded = expand, onDismissRequest = { expand = false }) {
                 DropdownMenuItem(
                   leadingIcon = { Icon(Icons.Outlined.FilterList, "filter") },
-                  text = { Text(getLabelByType(viewModel.filterType.value)) },
+                  text = { Text(getLabelByType(vm.filterType.value)) },
                   onClick = {
                     expand = false
                     expandFilter.value = true
@@ -118,11 +135,11 @@ class IconVariantActivity : ComponentActivity() {
                   },
                 )
                 DropdownMenuItem(
-                  leadingIcon = { Checkbox(viewModel.modified.getValue(), onCheckedChange = null) },
+                  leadingIcon = { Checkbox(vm.modified.getValue(), onCheckedChange = null) },
                   text = { Text(stringResource(R.string.modified)) },
                   onClick = {
                     lifecycleScope.launch {
-                      viewModel.flipModified()
+                      vm.flipModified()
                       delay(100)
                       expand = false
                     }
@@ -134,7 +151,7 @@ class IconVariantActivity : ComponentActivity() {
                   },
                   text = { Text(stringResource(R.string.exportIconPack)) },
                   onClick = {
-                    exportLauncher.launch("${viewModel.iconPack.pack}.xml")
+                    exportLauncher.launch("${vm.pack}.xml")
                     expand = false
                   },
                 )
@@ -149,31 +166,36 @@ class IconVariantActivity : ComponentActivity() {
                   },
                 )
               }
-              AppFilterByType(expandFilter, viewModel.filterType)
+              AppFilterByType(expandFilter, vm.filterType)
             },
             modifier = Modifier.fillMaxWidth(),
             scrollBehavior = scrollBehavior,
           )
 
-          AppbarSearchBar(viewModel.expandSearchBar, viewModel.searchText)
+          AppbarSearchBar(expandSearchBar, vm.searchText)
         }
       },
     ) { contentPadding ->
-      val icons = viewModel.filteredIcons.getValue(null)
+      val iconChooser: IconChooserVM = viewModel(key = "ShortcutIconChooser")
+
+      val icons = vm.filteredIcons.getValue(null)
       if (icons != null)
         LazyVerticalGrid(
           contentPadding = contentPadding,
           modifier = Modifier.fillMaxSize().padding(horizontal = 2.dp),
           columns = GridCells.Adaptive(minSize = 74.dp),
         ) {
-          items(icons, key = { it.first.componentName }) { pair ->
-            val (info, entry) = pair
-            AppIcon(
-              info.label,
-              key = entry?.entry?.name,
-              loadImage = { viewModel.loadIcon(pair) },
-            ) {
-              iconChooser.open(info, viewModel.iconPack, entry?.entry?.name, viewModel::replaceIcon)
+          items(icons, key = { it.first.componentName }) {
+            val (info, entry) = it
+            AppIcon(info.label, key = entry?.entry?.name, loadImage = { vm.loadIcon(it) }) {
+              when (info) {
+                is AppIconInfo -> {
+                  vm.setupActivityList(info)
+                  navController.navigate("ActivityList")
+                }
+                is ShortcutIconInfo ->
+                  iconChooser.open(info, vm.iconPack, entry?.entry?.name, vm::saveIcon)
+              }
             }
           }
         }
@@ -181,26 +203,26 @@ class IconVariantActivity : ComponentActivity() {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
           CircularProgressIndicator(trackColor = MaterialTheme.colorScheme.surfaceVariant)
         }
-    }
 
-    IconChooserSheet(iconChooser) { viewModel.loadIcon(it to null) }
+      IconChooserSheet(iconChooser) { vm.loadIcon(it to null) }
 
-    WarnDialog(
-      resetWarnDialogState,
-      title = { Text(getString(R.string.restoreDefault)) },
-      content = { Text(getString(R.string.restoreDefaultWarning)) },
-    ) {
-      viewModel.restoreDefault()
+      WarnDialog(
+        resetWarnDialogState,
+        title = { Text(getString(R.string.restoreDefault)) },
+        content = { Text(getString(R.string.restoreDefaultWarning)) },
+      ) {
+        vm.restoreDefault()
+      }
     }
   }
 
   private val exportLauncher =
     registerForActivityResult(ActivityResultContracts.CreateDocument("text/xml")) { result ->
-      if (result != null) viewModel.export(result)
+      if (result != null) vm.export(result)
     }
 
   private val importLauncher =
     registerForActivityResult(ActivityResultContracts.OpenDocument()) { result ->
-      if (result != null) viewModel.import(result)
+      if (result != null) vm.import(result)
     }
 }

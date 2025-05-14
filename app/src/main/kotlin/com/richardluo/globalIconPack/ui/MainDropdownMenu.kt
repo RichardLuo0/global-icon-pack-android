@@ -1,4 +1,4 @@
-package com.richardluo.globalIconPack.ui.components
+package com.richardluo.globalIconPack.ui
 
 import android.content.Intent
 import androidx.compose.material.icons.Icons
@@ -20,6 +20,9 @@ import androidx.core.net.toUri
 import com.richardluo.globalIconPack.Pref
 import com.richardluo.globalIconPack.R
 import com.richardluo.globalIconPack.get
+import com.richardluo.globalIconPack.ui.components.IconButtonWithTooltip
+import com.richardluo.globalIconPack.ui.components.MyDropdownMenu
+import com.richardluo.globalIconPack.ui.components.SnackbarErrorVisuals
 import com.richardluo.globalIconPack.utils.WorldPreference
 import com.richardluo.globalIconPack.utils.log
 import com.topjohnwu.superuser.Shell
@@ -56,11 +59,9 @@ fun MainDropdownMenu(snackbarState: SnackbarHostState) {
     }
   }
 
-  fun runCommand(vararg cmd: String): () -> Unit {
-    return {
-      Shell.cmd("set -e", *cmd).submit(onShellResult)
-      expanded = false
-    }
+  fun runCommand(vararg cmd: String) {
+    Shell.cmd("set -e", *cmd).submit(onShellResult)
+    expanded = false
   }
 
   IconButtonWithTooltip(Icons.Outlined.MoreVert, stringResource(R.string.moreOptions)) {
@@ -70,25 +71,27 @@ fun MainDropdownMenu(snackbarState: SnackbarHostState) {
     DropdownMenuItem(
       leadingIcon = {},
       text = { Text(stringResource(R.string.restartSystemUI)) },
-      onClick = runCommand("killall com.android.systemui"),
+      onClick = { runCommand("killall com.android.systemui") },
     )
-    val launcher = WorldPreference.getPrefInApp(context).get(Pref.PIXEL_LAUNCHER_PACKAGE)
     DropdownMenuItem(
       leadingIcon = {},
       text = { Text(stringResource(R.string.restartPixelLauncher)) },
-      onClick =
-        runCommand("rm -f /data/data/$launcher/databases/app_icons.db && am force-stop $launcher"),
+      onClick = {
+        val launcher = WorldPreference.getPrefInApp(context).get(Pref.PIXEL_LAUNCHER_PACKAGE)
+        runCommand("rm -f /data/data/$launcher/databases/app_icons.db && am force-stop $launcher")
+      },
     )
     DropdownMenuItem(
       leadingIcon = {},
       text = { Text(stringResource(R.string.restartOthers)) },
-      onClick =
+      onClick = {
         runCommand(
           "am force-stop com.android.settings",
           "am force-stop com.google.android.settings.intelligence",
           "am force-stop com.android.intentresolver",
           "am force-stop com.android.permissioncontroller",
-        ),
+        )
+      },
     )
     DropdownMenuItem(
       leadingIcon = { Text("🌐") },

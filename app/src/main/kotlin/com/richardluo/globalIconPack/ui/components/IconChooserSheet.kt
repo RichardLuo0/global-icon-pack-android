@@ -59,7 +59,7 @@ import me.zhanghai.compose.preference.Preference
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun IconChooserSheet(
-  viewModel: IconChooserVM = viewModel(),
+  vm: IconChooserVM = viewModel(),
   loadOriginalIcon: suspend (IconInfo) -> ImageBitmap,
 ) {
   val context = LocalContext.current
@@ -67,18 +67,18 @@ fun IconChooserSheet(
   val scope = rememberCoroutineScope()
 
   fun onDismissRequest() {
-    viewModel.variantSheet = false
-    viewModel.searchText.value = ""
+    vm.variantSheet = false
+    vm.searchText.value = ""
   }
 
-  if (viewModel.variantSheet)
+  if (vm.variantSheet)
     ModalBottomSheet(sheetState = sheetState, onDismissRequest = ::onDismissRequest) {
       val packDialogState = rememberSaveable { mutableStateOf(false) }
       val optionDialogState = remember { mutableStateOf(false) }
       val selectedIcon = remember { mutableStateOf<VariantIcon?>(null) }
 
       fun replaceAsNormalIcon(icon: VariantIcon) {
-        viewModel.replaceIcon(viewModel.iconInfo ?: return, icon)
+        vm.replaceIcon(vm.iconInfo ?: return, icon)
         scope.launch {
           sheetState.hide()
           onDismissRequest()
@@ -87,7 +87,7 @@ fun IconChooserSheet(
 
       fun replaceAsCalendarIcon(icon: VariantIcon) {
         try {
-          viewModel.replaceIcon(viewModel.iconInfo ?: return, viewModel.asCalendarEntry(icon))
+          vm.replaceIcon(vm.iconInfo ?: return, vm.asCalendarEntry(icon))
           scope.launch {
             sheetState.hide()
             onDismissRequest()
@@ -99,7 +99,7 @@ fun IconChooserSheet(
       }
 
       RoundSearchBar(
-        viewModel.searchText,
+        vm.searchText,
         stringResource(R.string.search),
         modifier = Modifier.padding(bottom = 8.dp),
         trailingIcon = {
@@ -143,8 +143,8 @@ fun IconChooserSheet(
             },
             loadImage = {
               when (icon) {
-                is OriginalIcon -> viewModel.iconInfo?.let { loadOriginalIcon(it) }
-                is VariantPackIcon -> viewModel.loadIcon(icon)
+                is OriginalIcon -> vm.iconInfo?.let { loadOriginalIcon(it) }
+                is VariantPackIcon -> vm.loadIcon(icon)
                 else -> null
               } ?: emptyImageBitmap
             },
@@ -157,10 +157,10 @@ fun IconChooserSheet(
         }
       }
 
-      val suggestIcons = viewModel.suggestIcons.getValue(null)
+      val suggestIcons = vm.suggestIcons.getValue(null)
       if (suggestIcons != null)
-        if (viewModel.searchText.value.isEmpty()) {
-          val variantIcons = viewModel.icons.getValue(null) ?: setOf()
+        if (vm.searchText.value.isEmpty()) {
+          val variantIcons = vm.icons.getValue(null) ?: setOf()
           var expandState = rememberSaveable { mutableStateOf(false) }
           val gridState = rememberLazyGridState()
           LazyVerticalGrid(
@@ -199,10 +199,10 @@ fun IconChooserSheet(
         title = { Text(stringResource(R.string.iconPack)) },
         value = IconPackApps.flow.collectAsState(null).value?.toList(),
         key = { it.first },
-        focusItem = { it.first == viewModel.iconPack?.pack },
+        focusItem = { it.first == vm.iconPack?.pack },
       ) { item, dismiss ->
-        IconPackItem(item.first, item.second, viewModel.iconPack?.pack ?: "") {
-          viewModel.setPack(item.first)
+        IconPackItem(item.first, item.second, vm.iconPack?.pack ?: "") {
+          vm.setPack(item.first)
           dismiss()
         }
       }

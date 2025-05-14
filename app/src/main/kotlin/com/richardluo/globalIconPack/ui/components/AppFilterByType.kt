@@ -33,5 +33,4 @@ fun getLabelByType(type: Type) =
   when (type) {
     Type.User -> stringResource(R.string.userApps)
     Type.System -> stringResource(R.string.systemApps)
-    Type.Shortcut -> stringResource(R.string.shortcuts)
   }

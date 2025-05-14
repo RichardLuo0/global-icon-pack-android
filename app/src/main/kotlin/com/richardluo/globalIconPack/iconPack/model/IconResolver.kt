@@ -17,9 +17,9 @@ class IconResolver(val entry: IconEntry, private val id: Int, private val pack: 
 
   companion object {
     fun from(c: Cursor): IconResolver {
-      val entry = IconEntry.from(c.getBlob(IconPackDB.GetIconColumn.Entry))
-      val pack = c.getString(IconPackDB.GetIconColumn.Pack)
-      val id = c.getInt(IconPackDB.GetIconColumn.Id)
+      val entry = IconEntry.from(c.getBlob(IconPackDB.GetIconCol.Entry))
+      val pack = c.getString(IconPackDB.GetIconCol.Pack)
+      val id = c.getInt(IconPackDB.GetIconCol.Id)
       return IconResolver(entry, id, pack)
     }
   }
