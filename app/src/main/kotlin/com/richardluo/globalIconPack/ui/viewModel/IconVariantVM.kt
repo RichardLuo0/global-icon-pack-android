@@ -42,8 +42,10 @@ import com.richardluo.globalIconPack.utils.filter
 import com.richardluo.globalIconPack.utils.get
 import com.richardluo.globalIconPack.utils.ifNotEmpty
 import com.richardluo.globalIconPack.utils.runCatchingToast
+import com.richardluo.globalIconPack.utils.unflattenFromString
 import java.io.OutputStreamWriter
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
@@ -143,8 +145,8 @@ class IconVariantVM(context: Application) :
     }
   }
 
-  fun export(uri: Uri) {
-    viewModelScope.launch(Dispatchers.Default) {
+  fun export(uri: Uri) =
+    viewModelScope.async(Dispatchers.Default) {
       runCatchingToast(context) {
         val xml = StringBuilder("<?xml version=\"1.0\" encoding=\"UTF-8\"?><resources>\n")
         iconPackDB.getAllIcons(pack, getAllAppsAndShortcuts()).useEachRow { c ->
@@ -178,16 +180,13 @@ class IconVariantVM(context: Application) :
         }
       }
     }
-  }
 
-  fun import(uri: Uri) {
-    viewModelScope.launch(Dispatchers.IO) {
+  fun import(uri: Uri) =
+    viewModelScope.async(Dispatchers.IO) {
       runCatchingToast(context) {
         context.contentResolver.openInputStream(uri).use {
-          val parser =
-            XmlPullParserFactory.newInstance().newPullParser().apply {
-              setInput(it, Xml.Encoding.UTF_8.toString())
-            }
+          val parser = XmlPullParserFactory.newInstance().newPullParser()
+          parser.setInput(it, Xml.Encoding.UTF_8.toString())
           iconPackDB.transaction {
             while (parser.next() != XmlPullParser.END_DOCUMENT) {
               if (parser.eventType != XmlPullParser.START_TAG) continue
@@ -213,5 +212,4 @@ class IconVariantVM(context: Application) :
         }
       }
     }
-  }
 }

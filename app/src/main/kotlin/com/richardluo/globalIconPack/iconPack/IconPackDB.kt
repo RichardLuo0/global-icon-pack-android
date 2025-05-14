@@ -59,11 +59,11 @@ class IconPackDB(
       // Check update time
       val lastUpdateTime =
         runCatching { context.packageManager.getPackageInfo(pack, 0) }.getOrNull()?.lastUpdateTime
-          ?: return
+          ?: return@transaction
       val modified =
         rawQuery("select DISTINCT updateAt, modified from iconPack where pack=?", arrayOf(pack))
           .useFirstRow {
-            if (lastUpdateTime < it.getLong(0)) return
+            if (lastUpdateTime < it.getLong(0)) return@transaction
             it.getInt(1) != 0
           } == true
       // Create tables
@@ -250,11 +250,12 @@ class IconPackDB(
               if (pack.isNotEmpty()) iconPackCache[pack] else iconPack,
             )
             ?.let {
-              updateId.apply {
-                bindLong(1, it.toLong())
-                bindLong(2, rowId.toLong())
-                execute()
-              }
+              updateId
+                .apply {
+                  bindLong(1, it.toLong())
+                  bindLong(2, rowId.toLong())
+                }
+                .execute()
             }
         }
       }
@@ -277,7 +278,7 @@ class IconPackDB(
           put("className", cn.className)
           put("entry", entry.toByteArray())
           put("pack", if (entryPack == pack) "" else entryPack)
-          put("id", getId(entry.type, entry.name, entryIconPack) ?: return)
+          put("id", getId(entry.type, entry.name, entryIconPack) ?: return@transaction)
         },
         SQLiteDatabase.CONFLICT_REPLACE,
       )
@@ -311,7 +312,8 @@ class IconPackDB(
     }
   }
 
-  inline fun transaction(block: IconPackDB.() -> Unit) = writableDatabase.transaction { block() }
+  inline fun transaction(crossinline block: IconPackDB.() -> Unit) =
+    writableDatabase.transaction { block() }
 
   private fun pt(pack: String) = "'pack/$pack'"
 
@@ -342,7 +344,7 @@ class IconPackDB(
   }
 }
 
-inline fun SQLiteDatabase.transaction(block: SQLiteDatabase.() -> Unit) =
+inline fun SQLiteDatabase.transaction(crossinline block: SQLiteDatabase.() -> Unit) =
   try {
     beginTransaction()
     block()
