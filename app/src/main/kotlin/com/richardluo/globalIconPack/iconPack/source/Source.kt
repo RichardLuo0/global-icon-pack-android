@@ -49,8 +49,11 @@ fun genIconFrom(res: Resources, baseIcon: Drawable, iconFallback: IconFallback?)
 
 fun getComponentName(info: PackageItemInfo) =
   if (info is ApplicationInfo) getComponentName(info.packageName)
-  else ComponentName(info.packageName, info.name)
+  else ComponentName(info.packageName, info.fullClassName)
 
 fun getComponentName(packageName: String) = ComponentName(packageName, "")
 
 fun getComponentName(shortcut: ShortcutInfo) = ComponentName("${shortcut.`package`}@", shortcut.id)
+
+private val PackageItemInfo.fullClassName: String
+  get() = if (name == null) "" else if (name.startsWith(".") == true) packageName + name else name
