@@ -6,6 +6,7 @@ import android.graphics.drawable.Drawable
 import androidx.core.database.getIntOrNull
 import com.richardluo.globalIconPack.BuildConfig
 import com.richardluo.globalIconPack.iconPack.IconPackDB
+import com.richardluo.globalIconPack.iconPack.IconPackDB.GetIconCol
 import com.richardluo.globalIconPack.iconPack.model.FallbackSettings
 import com.richardluo.globalIconPack.iconPack.model.IconEntry
 import com.richardluo.globalIconPack.iconPack.model.IconFallback
@@ -45,21 +46,26 @@ class ShareSource(pack: String, config: IconPackConfig = defaultIconPackConfig) 
 
   override fun getId(cn: ComponentName) = getId(listOf(cn)).getOrNull(0)
 
-  override fun getId(cnList: List<ComponentName>): Array<Int?> =
+  override fun getId(cnList: List<ComponentName>) =
     synchronized(indexMap) {
       indexMap.getOrPut(cnList) { misses, getKey ->
         db
           .getIcon(pack, misses, iconPackAsFallback)
-          .useMapToArray(misses.size) { c ->
-            IconResolver.from(c) to (c.getIntOrNull(IconPackDB.GetIconColumn.Fallback.ordinal) == 1)
-          }
-          .mapIndexed { i, info ->
-            if (info != null) {
-              iconEntryList.add(info.first)
-              (iconEntryList.size - 1).also {
-                if (info.second) indexMap[getComponentName(getKey(i).packageName)] = it
+          .useMapToArray(misses.size) { it }
+          .mapIndexed { i, c ->
+            if (c == null) return@mapIndexed null
+            if (c.getIntOrNull(GetIconCol.Fallback.ordinal) == 1) {
+              // Is fallback
+              val cn = getComponentName(getKey(i).packageName)
+              if (indexMap.contains(cn)) return@mapIndexed indexMap[cn]
+              else {
+                iconEntryList.add(IconResolver.from(c))
+                (iconEntryList.size - 1).also { indexMap[cn] = it }
               }
-            } else null
+            } else {
+              iconEntryList.add(IconResolver.from(c))
+              iconEntryList.size - 1
+            }
           }
       }
     }

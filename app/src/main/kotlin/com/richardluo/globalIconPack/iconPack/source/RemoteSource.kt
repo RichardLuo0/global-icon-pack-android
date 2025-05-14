@@ -4,7 +4,7 @@ import android.app.AndroidAppHelper
 import android.content.ComponentName
 import android.graphics.drawable.Drawable
 import androidx.core.database.getIntOrNull
-import com.richardluo.globalIconPack.iconPack.IconPackDB.GetIconColumn
+import com.richardluo.globalIconPack.iconPack.IconPackDB.GetIconCol
 import com.richardluo.globalIconPack.iconPack.IconPackProvider
 import com.richardluo.globalIconPack.iconPack.model.FallbackSettings
 import com.richardluo.globalIconPack.iconPack.model.IconEntry
@@ -58,7 +58,7 @@ class RemoteSource(pack: String, config: IconPackConfig = defaultIconPackConfig)
           )
           ?.useFirstRow { c ->
             val entry = IconResolver.from(c)
-            val fallback = c.getIntOrNull(GetIconColumn.Fallback.ordinal) == 1
+            val fallback = c.getIntOrNull(GetIconCol.Fallback.ordinal) == 1
             iconEntryList.add(entry)
             (iconEntryList.size - 1).also {
               if (fallback) indexMap[getComponentName(cn.packageName)] = it
@@ -67,7 +67,7 @@ class RemoteSource(pack: String, config: IconPackConfig = defaultIconPackConfig)
       }
     }
 
-  override fun getId(cnList: List<ComponentName>): Array<Int?> =
+  override fun getId(cnList: List<ComponentName>) =
     synchronized(indexMap) {
       indexMap.getOrPut(cnList) { misses, getKey ->
         contentResolver
@@ -82,16 +82,21 @@ class RemoteSource(pack: String, config: IconPackConfig = defaultIconPackConfig)
             ),
             null,
           )
-          ?.useMapToArray(misses.size) { c ->
-            IconResolver.from(c) to (c.getIntOrNull(GetIconColumn.Fallback.ordinal) == 1)
-          }
-          ?.mapIndexed { i, info ->
-            if (info != null) {
-              iconEntryList.add(info.first)
-              (iconEntryList.size - 1).also {
-                if (info.second) indexMap[getComponentName(getKey(i).packageName)] = it
+          ?.useMapToArray(misses.size) { it }
+          ?.mapIndexed { i, c ->
+            if (c == null) return@mapIndexed null
+            if (c.getIntOrNull(GetIconCol.Fallback.ordinal) == 1) {
+              // Is fallback
+              val cn = getComponentName(getKey(i).packageName)
+              if (indexMap.contains(cn)) return@mapIndexed indexMap[cn]
+              else {
+                iconEntryList.add(IconResolver.from(c))
+                (iconEntryList.size - 1).also { indexMap[cn] = it }
               }
-            } else null
+            } else {
+              iconEntryList.add(IconResolver.from(c))
+              iconEntryList.size - 1
+            }
           } ?: arrayOfNulls(misses.size)
       }
     }

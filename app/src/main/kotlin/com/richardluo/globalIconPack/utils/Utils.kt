@@ -131,16 +131,16 @@ inline fun <T, reified R> Array<T>.mapIndexed(transform: (Int, T) -> R): Array<R
 inline fun <K, reified V> MutableMap<K, V>.getOrPut(
   keys: List<K>,
   fetch: (List<K>, getKey: (Int) -> K) -> Array<V>,
-): Array<V?> {
+): List<V?> {
   val (hits, misses) = keys.indices.partition { contains(keys[it]) }
   val array = arrayOfNulls<V>(keys.size)
   hits.forEach { array[it] = this[keys[it]] }
-  if (misses.isEmpty()) return array
+  if (misses.isEmpty()) return array.asList()
   fetch(misses.map { keys[it] }) { keys[misses[it]] }
     .forEachIndexed { i, value ->
       val index = misses[i]
       this[keys[index]] = value
       array[index] = value
     }
-  return array
+  return array.asList()
 }

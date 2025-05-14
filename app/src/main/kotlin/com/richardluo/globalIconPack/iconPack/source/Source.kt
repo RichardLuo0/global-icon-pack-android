@@ -13,7 +13,7 @@ import com.richardluo.globalIconPack.utils.IconHelper
 interface Source {
   fun getId(cn: ComponentName): Int?
 
-  fun getId(cnList: List<ComponentName>): Array<Int?>
+  fun getId(cnList: List<ComponentName>): List<Int?>
 
   fun getIconEntry(id: Int): IconEntry?
 

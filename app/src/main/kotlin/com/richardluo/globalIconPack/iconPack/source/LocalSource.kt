@@ -11,9 +11,9 @@ import com.richardluo.globalIconPack.iconPack.model.ClockIconEntry
 import com.richardluo.globalIconPack.iconPack.model.ClockMetadata
 import com.richardluo.globalIconPack.iconPack.model.FallbackSettings
 import com.richardluo.globalIconPack.iconPack.model.IconEntry
-import com.richardluo.globalIconPack.iconPack.model.NormalIconEntry
 import com.richardluo.globalIconPack.iconPack.model.IconFallback
 import com.richardluo.globalIconPack.iconPack.model.IconPackConfig
+import com.richardluo.globalIconPack.iconPack.model.NormalIconEntry
 import com.richardluo.globalIconPack.iconPack.model.ResourceOwner
 import com.richardluo.globalIconPack.iconPack.model.defaultIconPackConfig
 import com.richardluo.globalIconPack.utils.get
@@ -49,7 +49,7 @@ class LocalSource(pack: String, config: IconPackConfig = defaultIconPackConfig) 
   override fun getId(cn: ComponentName) =
     indexMap[cn] ?: if (iconPackAsFallback) indexMap[getComponentName(cn.packageName)] else null
 
-  override fun getId(cnList: List<ComponentName>) = cnList.map { getId(it) }.toTypedArray()
+  override fun getId(cnList: List<ComponentName>) = cnList.map { getId(it) }
 
   override fun getIconEntry(id: Int): IconEntry? = iconEntryList.getOrNull(id)
 
