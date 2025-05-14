@@ -59,6 +59,7 @@
     <string name="allIcons">所有图标</string>
     <string name="userApps">用户应用</string>
     <string name="systemApps">系统应用</string>
+    <string name="activities" comment="Activity is one of the four Android components">活动</string>
     <string name="shortcuts">快捷方式</string>
     <string name="requiresHookSystem">您必须 hook 系统框架才能获取快捷方式。</string>
     <string name="modified">已修改</string>
