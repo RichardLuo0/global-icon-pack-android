@@ -19,7 +19,6 @@ import com.richardluo.globalIconPack.utils.call
 import com.richardluo.globalIconPack.utils.classOf
 import com.richardluo.globalIconPack.utils.getOrPut
 import com.richardluo.globalIconPack.utils.getOrPutNullable
-import com.richardluo.globalIconPack.utils.mapIndexed
 import com.richardluo.globalIconPack.utils.method
 import java.util.Collections
 
@@ -82,13 +81,11 @@ class RemoteSource(pack: String, config: IconPackConfig = defaultIconPackConfig)
             ),
             null,
           )
-          ?.useMapToArray(misses.size) { it }
-          ?.mapIndexed { i, c ->
-            if (c == null) return@mapIndexed null
+          ?.useMapToArray(misses.size) { i, c ->
             if (c.getIntOrNull(GetIconCol.Fallback.ordinal) == 1) {
               // Is fallback
               val cn = getComponentName(getKey(i).packageName)
-              if (indexMap.contains(cn)) return@mapIndexed indexMap[cn]
+              if (indexMap.contains(cn)) return@useMapToArray indexMap[cn]
               else {
                 iconEntryList.add(IconResolver.from(c))
                 (iconEntryList.size - 1).also { indexMap[cn] = it }

@@ -404,8 +404,20 @@ inline fun <T> Cursor.useMap(block: (Cursor) -> T): List<T> = use {
   }
 }
 
-inline fun <reified T> Cursor.useMapToArray(size: Int, indexColumn: Int = 0, block: (Cursor) -> T) =
-  arrayOfNulls<T?>(size).apply { useEachRow { set(it.getInt(indexColumn), block(it)) } }
+inline fun <reified T> Cursor.useMapToArray(
+  size: Int,
+  indexColumn: Int = 0,
+  block: (Int, Cursor) -> T,
+) =
+  arrayOfNulls<T?>(size).apply {
+    useEachRow {
+      val id = it.getInt(indexColumn)
+      set(id, block(id, it))
+    }
+  }
 
-inline fun <reified T> Cursor.useMapToArray(size: Int, indexEnum: Enum<*>, block: (Cursor) -> T) =
-  useMapToArray(size, indexEnum.ordinal, block)
+inline fun <reified T> Cursor.useMapToArray(
+  size: Int,
+  indexEnum: Enum<*>,
+  block: (Int, Cursor) -> T,
+) = useMapToArray(size, indexEnum.ordinal, block)

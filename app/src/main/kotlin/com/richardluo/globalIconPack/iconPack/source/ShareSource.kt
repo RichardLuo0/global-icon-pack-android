@@ -17,7 +17,6 @@ import com.richardluo.globalIconPack.iconPack.model.defaultIconPackConfig
 import com.richardluo.globalIconPack.iconPack.useFirstRow
 import com.richardluo.globalIconPack.iconPack.useMapToArray
 import com.richardluo.globalIconPack.utils.getOrPut
-import com.richardluo.globalIconPack.utils.mapIndexed
 import java.util.Collections
 
 class ShareSource(pack: String, config: IconPackConfig = defaultIconPackConfig) :
@@ -49,24 +48,20 @@ class ShareSource(pack: String, config: IconPackConfig = defaultIconPackConfig) 
   override fun getId(cnList: List<ComponentName>) =
     synchronized(indexMap) {
       indexMap.getOrPut(cnList) { misses, getKey ->
-        db
-          .getIcon(pack, misses, iconPackAsFallback)
-          .useMapToArray(misses.size) { it }
-          .mapIndexed { i, c ->
-            if (c == null) return@mapIndexed null
-            if (c.getIntOrNull(GetIconCol.Fallback.ordinal) == 1) {
-              // Is fallback
-              val cn = getComponentName(getKey(i).packageName)
-              if (indexMap.contains(cn)) return@mapIndexed indexMap[cn]
-              else {
-                iconEntryList.add(IconResolver.from(c))
-                (iconEntryList.size - 1).also { indexMap[cn] = it }
-              }
-            } else {
+        db.getIcon(pack, misses, iconPackAsFallback).useMapToArray(misses.size) { i, c ->
+          if (c.getIntOrNull(GetIconCol.Fallback.ordinal) == 1) {
+            // Is fallback
+            val cn = getComponentName(getKey(i).packageName)
+            if (indexMap.contains(cn)) return@useMapToArray indexMap[cn]
+            else {
               iconEntryList.add(IconResolver.from(c))
-              iconEntryList.size - 1
+              (iconEntryList.size - 1).also { indexMap[cn] = it }
             }
+          } else {
+            iconEntryList.add(IconResolver.from(c))
+            iconEntryList.size - 1
           }
+        }
       }
     }
 
