@@ -59,6 +59,7 @@
     <string name="allIcons">Все иконки</string>
     <string name="userApps">Пользовательские приложения</string>
     <string name="systemApps">Системные приложения</string>
+    <string name="activities">Действия</string>
     <string name="shortcuts">Ярлыки</string>
     <string name="requiresHookSystem">Вы должны подключить system framework, чтобы получить ярлыки.</string>
     <string name="modified">Модифицированные</string>

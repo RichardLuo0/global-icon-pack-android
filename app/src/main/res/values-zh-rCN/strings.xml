@@ -24,15 +24,20 @@
     <string name="iconVariant">图标变体</string>
     <string name="iconVariantSummary">从图标包中选择不同的变体。</string>
     <string name="iconFallback">生成回退图标</string>
-    <string name="iconFallbackSummary">从图标包提取背景、遮罩和缩放应用到图标包中所没有的应用。</string>
+    <string name="iconFallbackSummary">将图标包中的回退配置应用于没有专用图标的应用。</string>
     <string name="scaleOnlyForeground">仅缩放自适应图标的前景</string>
     <string name="backAsAdaptiveBack">将回退背景作为自适应背景</string>
     <string name="nonAdaptiveScale">缩放非自适应图标</string>
     <string name="convertToAdaptive">转换为自适应图标</string>
     <string name="convertToAdaptiveSummary">移除某些应用添加到非自适应图标的白色形状。</string>
-    <string name="overrideIconFallback">覆盖回退选项</string>
-    <string name="overrideIconFallbackSummary">为回退选项使用新值。</string>
+    <string name="overrideIconFallback">覆盖回退配置</string>
+    <string name="overrideIconFallbackSummary">为回退配置使用新值。</string>
     <string name="iconPackScale">缩放</string>
+    <string name="iconPackShape">形状</string>
+    <string name="customize">自定义</string>
+    <string name="pathData">路径数据 100x100</string>
+    <string name="iconPackShapeColor">形状颜色</string>
+    <string name="iconPackEnableUpon">启用前景</string>
     <string name="pixelSettings">Pixel</string>
     <string name="pixelLauncherPackage">启动器包名</string>
     <string name="pixelLauncherPackageSummary">用于识别基于launcher 3的启动器，但以下功能不保证正常工作。</string>
@@ -59,7 +64,7 @@
     <string name="allIcons">所有图标</string>
     <string name="userApps">用户应用</string>
     <string name="systemApps">系统应用</string>
-    <string name="activities" comment="Activity is one of the four Android components">活动</string>
+    <string name="activities">活动</string>
     <string name="shortcuts">快捷方式</string>
     <string name="requiresHookSystem">您必须 hook 系统框架才能获取快捷方式。</string>
     <string name="modified">已修改</string>
