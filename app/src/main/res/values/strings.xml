@@ -32,8 +32,8 @@
     <string name="nonAdaptiveScale">Scale non-adaptive icons</string>
     <string name="convertToAdaptive">Convert to adaptive icons</string>
     <string name="convertToAdaptiveSummary">Removes the white shape that some apps add to non-adaptive icons.</string>
-    <string name="overrideIconFallback">Override fallback settings</string>
-    <string name="overrideIconFallbackSummary">Use new values for the fallback settings.</string>
+    <string name="overrideIconFallback">Override fallback configs</string>
+    <string name="overrideIconFallbackSummary">Use new values for the fallback configs.</string>
     <string name="iconPackScale">Scale</string>
     <string name="iconPackShape">Shape</string>
     <string name="customize">Customize</string>
