@@ -219,9 +219,9 @@ class IconVariantActivity : ComponentActivity() {
       WarnDialog(
         resetWarnDialogState,
         title = { Text(getString(R.string.restoreDefault)) },
-        content = { Text(getString(R.string.restoreDefaultWarning)) },
+        onOk = { vm.restoreDefault() },
       ) {
-        vm.restoreDefault()
+        Text(getString(R.string.restoreDefaultWarning))
       }
     }
   }

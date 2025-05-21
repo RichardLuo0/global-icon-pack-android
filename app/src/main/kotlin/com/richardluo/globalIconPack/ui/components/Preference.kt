@@ -5,18 +5,15 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Label
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
@@ -26,11 +23,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.TextFieldValue
 import com.richardluo.globalIconPack.utils.getValue
 import me.zhanghai.compose.preference.LocalPreferenceFlow
 import me.zhanghai.compose.preference.Preference
@@ -60,7 +53,7 @@ fun LazyListScope.myPreference(
   widgetContainer: @Composable (() -> Unit)? = null,
   onClick: (() -> Unit)? = null,
 ) {
-  item(key = key, contentType = "Preference") {
+  item(key = key, contentType = "MyPreference") {
     Preference(
       title = title,
       modifier = modifier,
@@ -87,52 +80,60 @@ inline fun <T, U> LazyListScope.mapListPreference(
   noinline summary: @Composable ((T, U?) -> Unit)? = null,
   noinline item: @Composable (key: T, value: U, currentKey: T, onClick: () -> Unit) -> Unit,
 ) {
-  item(key = key, contentType = "LazyListPreference") {
+  item(key = key, contentType = "MapListPreference") {
     val state = rememberState()
     val valueMap = getValueMap()
-    val valueKey by state
-    MyListPreference(
-      state = state,
+    var valueKey by state
+    val title = @Composable { title(valueKey) }
+    val openSelector = rememberSaveable { mutableStateOf(false) }
+    LazyListDialog(openSelector, title, valueMap?.keys?.toList(), focusItem = { it == valueKey }) {
+      key,
+      dismiss ->
+      item(key, valueMap!!.getValue(key), valueKey) {
+        valueKey = key
+        dismiss()
+      }
+    }
+    Preference(
+      title = title,
       modifier = modifier,
-      values = valueMap?.keys?.toList(),
-      title = { title(valueKey) },
       enabled = enabled(LocalPreferenceFlow.current.getValue()),
       icon = icon?.let { { it(valueKey) } },
       summary = summary?.let { { it(valueKey, valueMap?.get(valueKey)) } },
-      item = { key, currentKey, onClick ->
-        item(key, valueMap!!.getValue(key), currentKey, onClick)
-      },
-    )
+    ) {
+      openSelector.value = true
+    }
   }
 }
 
-@Composable
-fun <T> MyListPreference(
-  state: MutableState<T>,
-  values: List<T>?,
-  title: @Composable () -> Unit,
-  modifier: Modifier = Modifier,
-  enabled: Boolean = true,
-  icon: @Composable (() -> Unit)? = null,
-  summary: @Composable (() -> Unit)? = null,
-  item: @Composable (value: T, currentValue: T, onClick: () -> Unit) -> Unit,
+inline fun <T> LazyListScope.dialogPreference(
+  key: String,
+  defaultValue: T,
+  crossinline title: @Composable (T) -> Unit,
+  modifier: Modifier = Modifier.fillMaxWidth(),
+  crossinline rememberState: @Composable () -> MutableState<T> = {
+    rememberPreferenceState(key, defaultValue)
+  },
+  crossinline enabled: (Preferences) -> Boolean = { true },
+  noinline icon: @Composable ((T) -> Unit)? = null,
+  noinline summary: @Composable ((T) -> Unit)? = null,
+  noinline content: @Composable (MutableState<T>, dismiss: () -> Unit) -> Unit,
 ) {
-  var value by state
-  var openSelector = rememberSaveable { mutableStateOf(false) }
-  LazyListDialog(openSelector, title, values, focusItem = { it == value }) { v, dismiss ->
-    item(v, value) {
-      value = v
-      dismiss()
+  item(key = key, contentType = "DialogPreference") {
+    val state = rememberState()
+    val value by state
+    val title = @Composable { title(value) }
+    val openDialog = rememberSaveable { mutableStateOf(false) }
+    CustomDialog(openDialog, title = title) { content(state) { openDialog.value = false } }
+    Preference(
+      title = title,
+      modifier = modifier,
+      enabled = enabled(LocalPreferenceFlow.current.getValue()),
+      icon = icon?.let { { it(value) } },
+      summary = summary?.let { { it(value) } },
+    ) {
+      openDialog.value = true
     }
-  }
-  Preference(
-    title = title,
-    modifier = modifier,
-    enabled = enabled,
-    icon = icon,
-    summary = summary,
-  ) {
-    openSelector.value = true
   }
 }
 
@@ -247,30 +248,13 @@ fun MySliderPreference(
     },
   )
 
-  if (dialogState.value) {
-    var dialogText by
-      rememberSaveable(stateSaver = TextFieldValue.Saver) {
-        val text = valueToText(value)
-        mutableStateOf(TextFieldValue(text, TextRange(text.length)))
-      }
-    val onOk = { runCatching { onValueChange(textToValue(dialogText.text)) } }
-    InfoDialog(
-      dialogState,
-      title = { title() },
-      content = {
-        val focusRequester = remember { FocusRequester() }
-        OutlinedTextField(
-          value = dialogText,
-          onValueChange = { dialogText = it },
-          modifier = Modifier.fillMaxWidth().focusRequester(focusRequester),
-          keyboardActions = KeyboardActions { onOk() },
-          keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-          singleLine = true,
-        )
-        LaunchedEffect(focusRequester) { focusRequester.requestFocus() }
-      },
-      onOk = { onOk() },
-    )
+  TextFieldDialog(
+    dialogState,
+    title = title,
+    initValue = valueToText(value),
+    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+  ) {
+    onValueChange(textToValue(it))
   }
 }
 

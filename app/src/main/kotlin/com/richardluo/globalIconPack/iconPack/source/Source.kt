@@ -36,9 +36,9 @@ fun genIconFrom(res: Resources, baseIcon: Drawable, iconFallback: IconFallback?)
     IconHelper.processIcon(
       baseIcon,
       res,
-      iconBacks.randomOrNull(),
-      iconUpons.randomOrNull(),
-      iconMasks.randomOrNull(),
+      iconBacks.randomOrNull()?.newDrawable(),
+      iconUpons.randomOrNull()?.newDrawable(),
+      iconMasks.randomOrNull()?.newDrawable(),
       iconScale,
       scaleOnlyForeground,
       backAsAdaptiveBack,
@@ -46,6 +46,8 @@ fun genIconFrom(res: Resources, baseIcon: Drawable, iconFallback: IconFallback?)
       convertToAdaptive,
     )
   } ?: baseIcon
+
+private fun Drawable.newDrawable() = this.constantState?.newDrawable() ?: this
 
 fun getComponentName(info: PackageItemInfo) =
   if (info is ApplicationInfo) getComponentName(info.packageName)

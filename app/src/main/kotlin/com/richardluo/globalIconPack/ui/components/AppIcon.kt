@@ -33,7 +33,7 @@ fun AppIcon(
       Modifier.clip(MaterialTheme.shapes.medium)
         .combinedClickable(onClick = onClick, onLongClick = onLongClick)
         .fillMaxWidth()
-        .padding(vertical = 18.dp, horizontal = 4.dp)
+        .padding(vertical = 8.dp, horizontal = 4.dp)
   ) {
     LazyImage(
       key,

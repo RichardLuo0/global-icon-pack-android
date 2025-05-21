@@ -24,9 +24,9 @@ fun InfoDialog(
   icon: ImageVector? = null,
   iconColor: Color? = null,
   title: @Composable () -> Unit,
-  content: @Composable () -> Unit,
   onCancel: () -> Unit = {},
   onOk: () -> Unit = {},
+  content: @Composable () -> Unit,
 ) {
   var open by openState
   if (!open) return
@@ -70,16 +70,16 @@ fun InfoDialog(
 fun WarnDialog(
   openState: MutableState<Boolean>,
   title: @Composable () -> Unit,
-  content: @Composable () -> Unit,
   onCancel: () -> Unit = {},
   onOk: () -> Unit = {},
+  content: @Composable () -> Unit,
 ) {
   InfoDialog(
     openState,
     icon = Icons.Outlined.WarningAmber,
     title = title,
-    content = content,
     onCancel = onCancel,
     onOk = onOk,
+    content = content,
   )
 }

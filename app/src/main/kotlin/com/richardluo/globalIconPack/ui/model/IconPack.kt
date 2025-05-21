@@ -3,8 +3,6 @@ package com.richardluo.globalIconPack.ui.model
 import android.annotation.SuppressLint
 import android.content.ComponentName
 import android.content.res.Resources
-import android.graphics.Bitmap
-import android.graphics.Bitmap.CompressFormat
 import android.graphics.drawable.Drawable
 import com.richardluo.globalIconPack.iconPack.model.FallbackSettings
 import com.richardluo.globalIconPack.iconPack.model.IconEntry
@@ -19,8 +17,6 @@ import com.richardluo.globalIconPack.utils.IconHelper
 import com.richardluo.globalIconPack.utils.IconPackCreator.ApkBuilder
 import com.richardluo.globalIconPack.utils.get
 import com.richardluo.globalIconPack.utils.isHighTwoByte
-import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
 import org.xmlpull.v1.XmlPullParser
 
 private class IconEntryWithId(val entry: IconEntry, val id: Int) : IconEntry by entry
@@ -115,7 +111,7 @@ class IconPack(val pack: String, val res: Resources) {
   }
 
   fun copyFallbacks(name: String, xml: StringBuilder, apkBuilder: ApkBuilder) {
-    iconFallback?.apply {
+    info.apply {
       copyFallback(iconBacks, "iconback", "${name}_0", xml, apkBuilder)
       copyFallback(iconUpons, "iconupon", "${name}_1", xml, apkBuilder)
       copyFallback(iconMasks, "iconmask", "${name}_2", xml, apkBuilder)
@@ -124,20 +120,18 @@ class IconPack(val pack: String, val res: Resources) {
   }
 
   private fun copyFallback(
-    bitmapList: List<Bitmap>,
+    imgNameList: List<String>,
     tag: String,
     name: String,
     xml: StringBuilder,
     apkBuilder: ApkBuilder,
   ) {
-    if (bitmapList.isEmpty()) return
+    if (imgNameList.isEmpty()) return
     xml.append("<$tag")
-    bitmapList.forEachIndexed { i, bitmap ->
-      xml.append(" img$i=\"${name}_$i\" ")
-      ByteArrayOutputStream().use {
-        bitmap.compress(CompressFormat.PNG, 100, it)
-        apkBuilder.addDrawable(ByteArrayInputStream(it.toByteArray()), "${name}_$i")
-      }
+    imgNameList.forEachIndexed { i, imgName ->
+      val newName = "${name}_$i"
+      xml.append(" img$i=\"$newName\" ")
+      addAllFiles(getDrawableId(imgName), newName, apkBuilder)
     }
     xml.append("/>")
   }
@@ -153,22 +147,10 @@ class IconPack(val pack: String, val res: Resources) {
       iconFallback: IconFallback?,
       config: IconPackConfig,
     ) =
-      (if (config.iconFallback) {
-          iconFallback.withConfig(config).orNullIfEmpty()
-        } else null)
-        ?.run {
-          IconHelper.processIcon(
-            baseIcon,
-            res,
-            iconBacks.randomOrNull(),
-            iconUpons.randomOrNull(),
-            iconMasks.randomOrNull(),
-            iconScale,
-            scaleOnlyForeground,
-            backAsAdaptiveBack,
-            nonAdaptiveScale,
-            convertToAdaptive,
-          )
-        } ?: baseIcon
+      com.richardluo.globalIconPack.iconPack.source.genIconFrom(
+        res,
+        baseIcon,
+        iconFallback.withConfig(config)?.orNullIfEmpty(),
+      )
   }
 }

@@ -3,14 +3,14 @@ package com.richardluo.globalIconPack.utils
 import android.app.Application
 import android.content.ComponentName
 import android.content.Context
+import android.graphics.drawable.Drawable
+import android.graphics.drawable.Drawable.ConstantState
 import android.widget.Toast
 import androidx.annotation.CheckResult
 import androidx.collection.LruCache
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.richardluo.globalIconPack.BuildConfig
-import kotlin.collections.filter
-import kotlin.collections.set
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.BufferOverflow
@@ -117,11 +117,28 @@ inline fun <T, R> T.runSafe(crossinline block: T.() -> R) = run { block() }
 suspend inline fun <R> runCatchingToast(
   context: Context,
   crossinline message: (Throwable) -> String = { it.toString() },
+  block: suspend () -> R,
+) =
+  try {
+      Result.success(block())
+    } catch (e: Throwable) {
+      Result.failure(e)
+    }
+    .onFailure {
+      log(it)
+      withContext(Dispatchers.Main) {
+        Toast.makeText(context, message(it), Toast.LENGTH_LONG).show()
+      }
+    }
+
+inline fun <R> runCatchingToastOnMain(
+  context: Context,
+  crossinline message: (Throwable) -> String = { it.toString() },
   block: () -> R,
 ) =
   runCatching(block).onFailure {
     log(it)
-    withContext(Dispatchers.Main) { Toast.makeText(context, message(it), Toast.LENGTH_LONG).show() }
+    Toast.makeText(context, message(it), Toast.LENGTH_LONG).show()
   }
 
 inline fun <T, reified R> Array<T>.map(transform: (T) -> R): Array<R> {
@@ -160,3 +177,16 @@ inline fun <T> Flow<List<T>?>.filter(
     }
     .conflate()
     .flowOn(Dispatchers.Default)
+
+fun getChangingConfigurations(init: Int = 0, vararg css: ConstantState?): Int =
+  css.fold(init) { last, cs -> last or (cs?.changingConfigurations ?: 0) }
+
+abstract class CSSWrapper(protected val css: Array<ConstantState?>) : ConstantState() {
+  protected fun newDrawables() = css.map { it?.newDrawable() }
+
+  override fun getChangingConfigurations(): Int = getChangingConfigurations(css = css)
+}
+
+fun createCSS(vararg drawables: Drawable?): Array<ConstantState?>? {
+  return drawables.map { if (it == null) null else it.constantState ?: return@createCSS null }
+}

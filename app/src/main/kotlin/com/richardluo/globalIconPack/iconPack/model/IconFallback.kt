@@ -1,14 +1,14 @@
 package com.richardluo.globalIconPack.iconPack.model
 
-import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
-import androidx.core.graphics.drawable.toBitmap
+import com.richardluo.globalIconPack.utils.PathDrawable
+import kotlin.collections.orEmpty
 
 class IconFallback(
-  val iconBacks: List<Bitmap>,
-  val iconUpons: List<Bitmap>,
-  val iconMasks: List<Bitmap>,
-  val iconScale: Float = 1f,
+  val iconBacks: List<Drawable>,
+  val iconUpons: List<Drawable>,
+  val iconMasks: List<Drawable>,
+  val iconScale: Float,
   val scaleOnlyForeground: Boolean,
   val backAsAdaptiveBack: Boolean,
   val nonAdaptiveScale: Float,
@@ -19,9 +19,11 @@ class IconFallback(
     getIcon: (String) -> Drawable?,
     config: IconPackConfig,
   ) : this(
-    fs.iconBacks.mapNotNull { getIcon(it)?.toBitmap() },
-    fs.iconUpons.mapNotNull { getIcon(it)?.toBitmap() },
-    fs.iconMasks.mapNotNull { getIcon(it)?.toBitmap() },
+    config.shape?.let { listOf(PathDrawable(it, config.shapeColor)) }
+      ?: fs.iconBacks.mapNotNull { getIcon(it) },
+    if (config.enableUpon) fs.iconUpons.mapNotNull { getIcon(it) } else emptyList(),
+    config.shape?.let { listOf(PathDrawable(it, fill = -1)) }
+      ?: fs.iconMasks.mapNotNull { getIcon(it) },
     config.scale ?: fs.iconScale,
     config.scaleOnlyForeground,
     config.backAsAdaptiveBack,
@@ -42,13 +44,16 @@ class IconFallback(
 }
 
 fun IconFallback?.withConfig(config: IconPackConfig) =
-  IconFallback(
-    this?.iconBacks.orEmpty(),
-    this?.iconUpons.orEmpty(),
-    this?.iconMasks.orEmpty(),
-    config.scale ?: this?.iconScale ?: 1f,
-    config.scaleOnlyForeground,
-    config.backAsAdaptiveBack,
-    config.nonAdaptiveScale,
-    config.convertToAdaptive,
-  )
+  if (config.iconFallback)
+    IconFallback(
+      config.shape?.let { listOf(PathDrawable(it, config.shapeColor)) }
+        ?: this?.iconBacks.orEmpty(),
+      if (config.enableUpon) this?.iconUpons.orEmpty() else emptyList(),
+      config.shape?.let { listOf(PathDrawable(it, fill = -1)) } ?: this?.iconMasks.orEmpty(),
+      config.scale ?: this?.iconScale ?: 1f,
+      config.scaleOnlyForeground,
+      config.backAsAdaptiveBack,
+      config.nonAdaptiveScale,
+      config.convertToAdaptive,
+    )
+  else null

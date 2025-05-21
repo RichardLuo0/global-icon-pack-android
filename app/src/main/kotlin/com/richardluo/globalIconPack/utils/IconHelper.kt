@@ -24,9 +24,9 @@ object IconHelper {
   private class CustomAdaptiveIconDrawable(
     background: Drawable?,
     foreground: Drawable?,
-    private val back: Bitmap?,
-    private val upon: Bitmap?,
-    private val mask: Bitmap?,
+    private val back: Drawable?,
+    private val upon: Drawable?,
+    private val mask: Drawable?,
   ) : UnClipAdaptiveIconDrawable(background, foreground) {
     private val paint =
       Paint(Paint.ANTI_ALIAS_FLAG or Paint.DITHER_FLAG or Paint.FILTER_BITMAP_FLAG)
@@ -46,41 +46,31 @@ object IconHelper {
     override fun setAlpha(alpha: Int) {
       super.setAlpha(alpha)
       paint.alpha = alpha
+      invalidateSelf()
     }
 
     override fun setColorFilter(colorFilter: ColorFilter?) {
       super.setColorFilter(colorFilter)
       paint.colorFilter = colorFilter
+      invalidateSelf()
     }
 
     override val cState by lazy {
-      CState(background?.constantState, foreground?.constantState, back, upon, mask)
+      createCSS(background, foreground, back, upon, mask)?.let { CState(it) }
     }
 
-    private class CState(
-      backgroundCS: ConstantState?,
-      foregroundCS: ConstantState?,
-      private val back: Bitmap?,
-      private val upon: Bitmap?,
-      private val mask: Bitmap?,
-    ) : UnClipState(backgroundCS, foregroundCS) {
+    private class CState(css: Array<ConstantState?>) : CSSWrapper(css) {
       override fun newDrawable() =
-        CustomAdaptiveIconDrawable(
-          backgroundCS?.newDrawable(),
-          foregroundCS?.newDrawable(),
-          back,
-          upon,
-          mask,
-        )
+        newDrawables().let { CustomAdaptiveIconDrawable(it[0], it[1], it[2], it[3], it[4]) }
     }
   }
 
   private class CustomBitmapDrawable(
     res: Resources,
     drawable: Drawable,
-    back: Bitmap?,
-    upon: Bitmap?,
-    mask: Bitmap?,
+    back: Drawable?,
+    upon: Drawable?,
+    mask: Drawable?,
   ) :
     BitmapDrawable(
       res,
@@ -99,9 +89,9 @@ object IconHelper {
 
   private class CustomDrawable(
     drawable: Drawable,
-    private val back: Bitmap?,
-    private val upon: Bitmap?,
-    private val mask: Bitmap?,
+    private val back: Drawable?,
+    private val upon: Drawable?,
+    private val mask: Drawable?,
   ) : DrawableWrapper(drawable) {
     private val paint =
       Paint(Paint.ANTI_ALIAS_FLAG or Paint.DITHER_FLAG or Paint.FILTER_BITMAP_FLAG)
@@ -116,35 +106,31 @@ object IconHelper {
     override fun setAlpha(alpha: Int) {
       super.setAlpha(alpha)
       paint.alpha = alpha
+      invalidateSelf()
     }
 
     override fun setColorFilter(colorFilter: ColorFilter?) {
       super.setColorFilter(colorFilter)
       paint.colorFilter = colorFilter
+      invalidateSelf()
     }
 
-    val cState by lazy { drawable.constantState?.let { CState(it, back, upon, mask) } }
+    private val cState by lazy { createCSS(drawable, back, upon, mask)?.let { CState(it) } }
 
     override fun getConstantState(): ConstantState? = cState
 
-    private class CState(
-      private val cs: ConstantState,
-      private val back: Bitmap?,
-      private val upon: Bitmap?,
-      private val mask: Bitmap?,
-    ) : ConstantState() {
-      override fun newDrawable(): Drawable = CustomDrawable(cs.newDrawable(), back, upon, mask)
-
-      override fun getChangingConfigurations(): Int = cs.changingConfigurations
+    private class CState(css: Array<ConstantState?>) : CSSWrapper(css) {
+      override fun newDrawable() =
+        newDrawables().let { CustomDrawable(it[0]!!, it[1], it[2], it[3]) }
     }
   }
 
   fun processIcon(
     baseIcon: Drawable,
     res: Resources,
-    back: Bitmap?,
-    upon: Bitmap?,
-    mask: Bitmap?,
+    back: Drawable?,
+    upon: Drawable?,
+    mask: Drawable?,
     iconScale: Float,
     scaleOnlyForeground: Boolean,
     backAsAdaptiveBack: Boolean,
@@ -161,31 +147,30 @@ object IconHelper {
           mask,
         )
       else
-        makeAdaptiveBack(res, backAsAdaptiveBack, back) {
+        makeAdaptiveBack(backAsAdaptiveBack, back) {
           CustomDrawable(scale(baseIcon, iconScale), it, upon, mask)
         }
     else {
       val iconScale = iconScale * nonAdaptiveScale
-      fun makeIcon(back: Bitmap?) =
+      fun makeIcon(back: Drawable?) =
         scale(baseIcon, iconScale).let {
           if (baseIcon is BitmapDrawable) CustomBitmapDrawable(res, it, back, upon, mask)
           else CustomDrawable(it, back, upon, mask)
         }
-      if (mask != null) makeAdaptiveBack(res, backAsAdaptiveBack, back, ::makeIcon)
+      if (mask != null) makeAdaptiveBack(backAsAdaptiveBack, back, ::makeIcon)
       else {
-        if (convertToAdaptive) makeAdaptiveBack(res, backAsAdaptiveBack, back, ::makeIcon)
+        if (convertToAdaptive) makeAdaptiveBack(backAsAdaptiveBack, back, ::makeIcon)
         else makeIcon(back)
       }
     }
 
   private fun makeAdaptiveBack(
-    res: Resources,
     backAsAdaptiveBack: Boolean,
-    back: Bitmap?,
-    makeBaseIcon: (Bitmap?) -> Drawable,
+    back: Drawable?,
+    makeBaseIcon: (Drawable?) -> Drawable,
   ) =
     if (backAsAdaptiveBack && back != null)
-      UnClipAdaptiveIconDrawable(scale(back.toDrawable(res)), scale(makeBaseIcon(null)))
+      UnClipAdaptiveIconDrawable(scale(back), scale(makeBaseIcon(null)))
     else UnClipAdaptiveIconDrawable(Color.TRANSPARENT.toDrawable(), scale(makeBaseIcon(back)))
 
   fun makeAdaptive(
@@ -202,9 +187,9 @@ object IconHelper {
   fun Canvas.drawIcon(
     paint: Paint,
     bounds: Rect,
-    back: Bitmap?,
-    upon: Bitmap?,
-    mask: Bitmap?,
+    back: Drawable?,
+    upon: Drawable?,
+    mask: Drawable?,
     drawBaseIcon: Canvas.() -> Unit,
   ) {
     if (bounds.width() < 0) return
@@ -215,17 +200,22 @@ object IconHelper {
 
     mask?.let {
       paint.xfermode = PorterDuffXfermode(PorterDuff.Mode.DST_OUT)
-      drawBitmap(it, null, bounds, paint)
+      drawBitmap(
+        it.toBitmap(bounds.width(), bounds.height(), Bitmap.Config.ALPHA_8),
+        null,
+        bounds,
+        paint,
+      )
     }
 
     upon?.let {
       paint.xfermode = PorterDuffXfermode(PorterDuff.Mode.SRC_OVER)
-      drawBitmap(it, null, bounds, paint)
+      drawBitmap(it.toBitmap(bounds.width(), bounds.height()), null, bounds, paint)
     }
 
     back?.let {
       paint.xfermode = PorterDuffXfermode(PorterDuff.Mode.DST_OVER)
-      drawBitmap(it, null, bounds, paint)
+      drawBitmap(it.toBitmap(bounds.width(), bounds.height()), null, bounds, paint)
     }
 
     paint.xfermode = null

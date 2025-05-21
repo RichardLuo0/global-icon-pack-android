@@ -72,6 +72,7 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -85,6 +86,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.richardluo.globalIconPack.R
+import com.richardluo.globalIconPack.ui.MainPreference.fallback
 import com.richardluo.globalIconPack.ui.components.AnimatedFab
 import com.richardluo.globalIconPack.ui.components.AnimatedNavHost
 import com.richardluo.globalIconPack.ui.components.AppFilterByType
@@ -276,17 +278,18 @@ class IconPackMergerActivity : ComponentActivity() {
       WarnDialog(
         avm.warningDialogState,
         title = { Text(getString(R.string.warning)) },
-        content = { Text(getString(R.string.mergerWarning)) },
+        onOk = { createIconPackLauncher.launch(null) },
       ) {
-        createIconPackLauncher.launch(null)
+        Text(getString(R.string.mergerWarning))
       }
 
       InfoDialog(
         avm.instructionDialogState,
         icon = Icons.Outlined.Notifications,
         title = { Text(getString(R.string.notice)) },
-        content = { Text(getString(R.string.mergerInstruction)) },
-      )
+      ) {
+        Text(getString(R.string.mergerInstruction))
+      }
 
       if (avm.isCreatingApk) LoadingDialog()
     }
@@ -378,7 +381,8 @@ class IconPackMergerActivity : ComponentActivity() {
           modifier = Modifier.padding(top = 8.dp),
           state = iconOptionScrollState,
         ) {
-          MainPreference.IconPack(state = it, onlyOptions = true)
+          val context = LocalContext.current
+          LazyColumn(state = iconOptionScrollState) { fallback(context) }
         }
       }
     }

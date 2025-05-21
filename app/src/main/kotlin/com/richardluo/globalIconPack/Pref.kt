@@ -1,6 +1,7 @@
 package com.richardluo.globalIconPack
 
 import android.content.SharedPreferences
+import android.graphics.Color
 import me.zhanghai.compose.preference.Preferences
 
 data class PrefEntry<out V>(val key: String, val def: V)
@@ -24,6 +25,9 @@ object Pref {
   val CONVERT_TO_ADAPTIVE = "convertToAdaptive" defaultTo true
   val OVERRIDE_ICON_FALLBACK = "overrideIconFallback" defaultTo false
   val ICON_PACK_SCALE = "iconPackScale" defaultTo 1f
+  val ICON_PACK_SHAPE = "iconPackShapeMask" defaultTo ""
+  val ICON_PACK_SHAPE_COLOR = "iconPackShapeColor" defaultTo Color.WHITE
+  val ICON_PACK_ENABLE_UPON = "iconPackEnableUpon" defaultTo true
 
   val PIXEL_LAUNCHER_PACKAGE =
     "pixelLauncherPackage" defaultTo "com.google.android.apps.nexuslauncher"
