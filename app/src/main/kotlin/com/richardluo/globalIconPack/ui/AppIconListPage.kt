@@ -23,6 +23,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.LargeTopAppBar
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
@@ -50,6 +51,7 @@ import com.richardluo.globalIconPack.ui.components.IconChooserSheet
 import com.richardluo.globalIconPack.ui.components.LazyImage
 import com.richardluo.globalIconPack.ui.components.OneLineText
 import com.richardluo.globalIconPack.ui.components.TwoLineText
+import com.richardluo.globalIconPack.ui.components.sharedBounds
 import com.richardluo.globalIconPack.ui.model.IconEntryWithPack
 import com.richardluo.globalIconPack.ui.model.IconInfo
 import com.richardluo.globalIconPack.ui.model.IconPack
@@ -97,6 +99,8 @@ fun AppIconListPage(onBack: () -> Unit, iconsHolder: IconsHolder, vm: AppIconLis
     )
   }
 
+  val info = vm.appIconInfo ?: return
+
   Scaffold(
     modifier = Modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
     topBar = {
@@ -107,27 +111,50 @@ fun AppIconListPage(onBack: () -> Unit, iconsHolder: IconsHolder, vm: AppIconLis
               IconButtonWithTooltip(Icons.AutoMirrored.Outlined.ArrowBack, "Back", onBack)
             },
             title = {
-              Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(end = 18.dp),
-              ) {
-                val info = vm.appIconInfo
-                if (info != null) {
-                  val entry = vm.appIconEntry.getValue()
+              val expanded =
+                LocalTextStyle.current.fontSize == MaterialTheme.typography.headlineMedium.fontSize
+              val entry = vm.appIconEntry.getValue()
+              val packageName = info.componentName.packageName
+              if (expanded)
+                Row(
+                  verticalAlignment = Alignment.CenterVertically,
+                  modifier = Modifier.padding(end = 18.dp),
+                ) {
                   LazyImage(
                     entry?.entry?.name,
                     contentDescription = info.label,
                     modifier =
-                      Modifier.size(37.dp + 50.dp * (1 - scrollBehavior.state.collapsedFraction))
-                        .clickable { openChooser(info to entry) },
+                      Modifier.size(86.dp).sharedBounds("AppIcon/$packageName").clickable {
+                        openChooser(info to entry)
+                      },
+                    contentScale = ContentScale.Crop,
+                    loadImage = { iconsHolder.loadIcon(info to entry) },
+                  )
+                  Spacer(modifier = Modifier.width(16.dp))
+                  Column {
+                    TwoLineText(
+                      info.label,
+                      modifier = Modifier.sharedBounds("AppLabel/$packageName"),
+                    )
+                    OneLineText(
+                      info.componentName.packageName,
+                      color = MaterialTheme.colorScheme.onSurfaceVariant,
+                      style = MaterialTheme.typography.bodyMedium,
+                    )
+                  }
+                }
+              else
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                  LazyImage(
+                    entry?.entry?.name,
+                    contentDescription = info.label,
+                    modifier = Modifier.size(36.dp).clickable { openChooser(info to entry) },
                     contentScale = ContentScale.Crop,
                     loadImage = { iconsHolder.loadIcon(info to entry) },
                   )
                   Spacer(modifier = Modifier.width(12.dp))
-                  if (scrollBehavior.state.collapsedFraction > 0.5) OneLineText(info.label)
-                  else TwoLineText(info.label)
+                  OneLineText(info.label)
                 }
-              }
             },
             actions = {
               IconButtonWithTooltip(Icons.Outlined.Search, stringResource(R.string.search)) {

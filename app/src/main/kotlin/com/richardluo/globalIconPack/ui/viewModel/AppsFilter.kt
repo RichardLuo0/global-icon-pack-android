@@ -6,7 +6,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshotFlow
 import com.richardluo.globalIconPack.ui.MyApplication
 import com.richardluo.globalIconPack.ui.model.AppIconInfo
-import com.richardluo.globalIconPack.ui.model.IconInfo
 import com.richardluo.globalIconPack.ui.viewModel.IAppsFilter.Type
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
@@ -26,8 +25,8 @@ private val appsFlow =
     .map {
       val app = MyApplication.context
 
-      val userApps = mutableListOf<IconInfo>()
-      val systemApps = mutableListOf<IconInfo>()
+      val userApps = mutableListOf<AppIconInfo>()
+      val systemApps = mutableListOf<AppIconInfo>()
 
       app.packageManager.getInstalledApplications(0).forEach { info ->
         if ((info.flags and ApplicationInfo.FLAG_SYSTEM) == ApplicationInfo.FLAG_SYSTEM)
@@ -58,7 +57,7 @@ interface IAppsFilter {
   }
 
   val filterType: MutableState<Type>
-  val appsByType: Flow<List<IconInfo>>
+  val appsByType: Flow<List<AppIconInfo>>
 
   suspend fun getAllAppsAndShortcuts(): List<String>
 }

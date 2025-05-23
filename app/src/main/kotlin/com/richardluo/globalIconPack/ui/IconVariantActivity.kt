@@ -43,9 +43,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.richardluo.globalIconPack.R
 import com.richardluo.globalIconPack.ui.components.AnimatedNavHost
@@ -53,15 +51,12 @@ import com.richardluo.globalIconPack.ui.components.AppFilterByType
 import com.richardluo.globalIconPack.ui.components.AppIcon
 import com.richardluo.globalIconPack.ui.components.AppbarSearchBar
 import com.richardluo.globalIconPack.ui.components.IconButtonWithTooltip
-import com.richardluo.globalIconPack.ui.components.IconChooserSheet
 import com.richardluo.globalIconPack.ui.components.LoadingDialog
 import com.richardluo.globalIconPack.ui.components.MyDropdownMenu
 import com.richardluo.globalIconPack.ui.components.SampleTheme
 import com.richardluo.globalIconPack.ui.components.WarnDialog
 import com.richardluo.globalIconPack.ui.components.getLabelByType
-import com.richardluo.globalIconPack.ui.model.AppIconInfo
-import com.richardluo.globalIconPack.ui.model.ShortcutIconInfo
-import com.richardluo.globalIconPack.ui.viewModel.IconChooserVM
+import com.richardluo.globalIconPack.ui.components.navPage
 import com.richardluo.globalIconPack.ui.viewModel.IconVariantVM
 import com.richardluo.globalIconPack.utils.getValue
 import kotlinx.coroutines.delay
@@ -80,7 +75,7 @@ class IconVariantActivity : ComponentActivity() {
     super.onCreate(savedInstanceState)
 
     runCatching { vm.iconPack }
-      .getOrElse {
+      .onFailure {
         finish()
         return
       }
@@ -89,8 +84,8 @@ class IconVariantActivity : ComponentActivity() {
       SampleTheme {
         navController = rememberNavController()
         AnimatedNavHost(navController = navController, startDestination = "Main") {
-          composable("Main") { Screen() }
-          composable("ActivityList") {
+          navPage("Main") { Screen() }
+          navPage("AppIconList") {
             AppIconListPage({ navController.popBackStack() }, vm, vm.appIconListVM)
           }
         }
@@ -184,8 +179,6 @@ class IconVariantActivity : ComponentActivity() {
         }
       },
     ) { contentPadding ->
-      val iconChooser: IconChooserVM = viewModel(key = "ShortcutIconChooser")
-
       val icons = vm.filteredIcons.getValue(null)
       if (icons != null)
         LazyVerticalGrid(
@@ -195,15 +188,14 @@ class IconVariantActivity : ComponentActivity() {
         ) {
           items(icons, key = { it.first.componentName }) {
             val (info, entry) = it
-            AppIcon(info.label, key = entry?.entry?.name, loadImage = { vm.loadIcon(it) }) {
-              when (info) {
-                is AppIconInfo -> {
-                  vm.setupActivityList(info)
-                  navController.navigate("ActivityList")
-                }
-                is ShortcutIconInfo ->
-                  iconChooser.open(info, vm.iconPack, entry?.entry?.name, vm::saveIcon)
-              }
+            AppIcon(
+              info.label,
+              key = entry?.entry?.name,
+              loadImage = { vm.loadIcon(it) },
+              shareKey = info.componentName.packageName,
+            ) {
+              vm.setupActivityList(info)
+              navController.navigate("AppIconList")
             }
           }
         }
@@ -211,8 +203,6 @@ class IconVariantActivity : ComponentActivity() {
         Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
           CircularProgressIndicator(trackColor = MaterialTheme.colorScheme.surfaceVariant)
         }
-
-      IconChooserSheet(iconChooser) { vm.loadIcon(it to null) }
 
       if (avm.waiting > 0) LoadingDialog()
 

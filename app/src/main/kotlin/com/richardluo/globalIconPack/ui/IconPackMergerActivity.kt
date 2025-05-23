@@ -83,7 +83,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.richardluo.globalIconPack.R
 import com.richardluo.globalIconPack.ui.MainPreference.fallback
@@ -106,10 +105,9 @@ import com.richardluo.globalIconPack.ui.components.ScrollIndicationBox
 import com.richardluo.globalIconPack.ui.components.WarnDialog
 import com.richardluo.globalIconPack.ui.components.getLabelByType
 import com.richardluo.globalIconPack.ui.components.myPreferenceTheme
-import com.richardluo.globalIconPack.ui.model.AppIconInfo
+import com.richardluo.globalIconPack.ui.components.navPage
 import com.richardluo.globalIconPack.ui.model.IconEntryWithPack
 import com.richardluo.globalIconPack.ui.model.IconInfo
-import com.richardluo.globalIconPack.ui.model.ShortcutIconInfo
 import com.richardluo.globalIconPack.ui.model.VariantPackIcon
 import com.richardluo.globalIconPack.ui.viewModel.IconChooserVM
 import com.richardluo.globalIconPack.ui.viewModel.IconPackApps
@@ -140,8 +138,8 @@ class IconPackMergerActivity : ComponentActivity() {
       SampleTheme {
         navController = rememberNavController()
         AnimatedNavHost(navController = navController, startDestination = "Main") {
-          composable("Main") { Screen() }
-          composable("ActivityList") {
+          navPage("Main") { Screen() }
+          navPage("AppIconList") {
             AppIconListPage({ navController.popBackStack() }, vm, vm.appIconListVM)
           }
         }
@@ -329,8 +327,6 @@ class IconPackMergerActivity : ComponentActivity() {
 
   @Composable
   private fun IconList(contentPadding: PaddingValues) {
-    val iconChooser: IconChooserVM = viewModel(key = "ShortcutIconChooser")
-
     val icons = vm.filteredIcons.getValue(null)
     if (icons != null)
       LazyVerticalGrid(
@@ -346,20 +342,10 @@ class IconPackMergerActivity : ComponentActivity() {
               if (entry != null) "${entry.pack.pack}/icon/${entry.entry.name}"
               else "${vm.basePack}/fallback/${vm.iconCacheToken}",
             loadImage = { vm.loadIcon(it) },
+            shareKey = info.componentName.packageName,
           ) {
-            when (info) {
-              is AppIconInfo -> {
-                vm.setupActivityList(info)
-                navController.navigate("ActivityList")
-              }
-              is ShortcutIconInfo ->
-                iconChooser.open(
-                  info,
-                  vm.baseIconPack ?: return@AppIcon,
-                  entry?.entry?.name,
-                  vm::saveIcon,
-                )
-            }
+            vm.setupActivityList(info)
+            navController.navigate("AppIconList")
           }
         }
       }
@@ -367,8 +353,6 @@ class IconPackMergerActivity : ComponentActivity() {
       Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         CircularProgressIndicator(trackColor = MaterialTheme.colorScheme.surfaceVariant)
       }
-
-    IconChooserSheet(iconChooser) { vm.loadIcon(it to null) }
 
     val iconOptionScrollState = rememberLazyListState()
     LazyDialog(

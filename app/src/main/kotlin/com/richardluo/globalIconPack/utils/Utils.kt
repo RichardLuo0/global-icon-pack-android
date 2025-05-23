@@ -166,6 +166,8 @@ inline fun <K, reified V> MutableMap<K, V>.getOrPut(
   return array.asList()
 }
 
+inline fun <T> T.chain(block: T.() -> T?): T = block() ?: this
+
 inline fun <T> Flow<List<T>?>.filter(
   searchText: Flow<String>,
   crossinline predicate: (T, String) -> Boolean,

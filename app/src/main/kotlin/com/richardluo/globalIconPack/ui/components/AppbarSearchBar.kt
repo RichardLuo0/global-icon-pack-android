@@ -9,6 +9,7 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -33,7 +34,8 @@ fun BoxScope.AppbarSearchBar(
 ) {
   Box(
     modifier =
-      Modifier.align(Alignment.BottomCenter).height(TopAppBarDefaults.TopAppBarExpandedHeight)
+      Modifier.windowInsetsPadding(TopAppBarDefaults.windowInsets)
+        .height(TopAppBarDefaults.TopAppBarExpandedHeight)
   ) {
     AnimatedVisibility(
       expandSearchBar.value,
