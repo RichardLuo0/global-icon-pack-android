@@ -33,6 +33,11 @@
     <string name="overrideIconFallback">Переопределить резервные параметры</string>
     <string name="overrideIconFallbackSummary">Использовать новые значения для резервных параметров.</string>
     <string name="iconPackScale">Масштаб</string>
+    <string name="iconPackShape">Форма</string>
+    <string name="customize">Оформление</string>
+    <string name="pathData">Данные пути 100x100</string>
+    <string name="iconPackShapeColor">Цвет фигуры</string>
+    <string name="iconPackEnableUpon">Включить передний план</string>
     <string name="pixelSettings">Pixel</string>
     <string name="pixelLauncherPackage">Имя пакета лаунчера</string>
     <string name="pixelLauncherPackageSummary">Используется для идентификации лаунчера на базе лаунчер 3, но перечисленные ниже функции не гарантируются.</string>
