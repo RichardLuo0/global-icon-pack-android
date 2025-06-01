@@ -7,9 +7,9 @@ import com.richardluo.globalIconPack.Pref
 import com.richardluo.globalIconPack.get
 import com.richardluo.globalIconPack.iconPack.model.IconPackConfig
 import com.richardluo.globalIconPack.iconPack.source.LocalSource
+import com.richardluo.globalIconPack.iconPack.source.RemoteSource
 import com.richardluo.globalIconPack.iconPack.source.ShareSource
 import com.richardluo.globalIconPack.iconPack.source.Source
-import com.richardluo.globalIconPack.iconPack.source.createRemoteIconPack
 import com.richardluo.globalIconPack.utils.WorldPreference
 import com.richardluo.globalIconPack.utils.log
 
@@ -36,7 +36,7 @@ private fun initSC() {
       sc =
         when (pref.get(Pref.MODE)) {
           MODE_SHARE -> ShareSource(pack, config)
-          MODE_PROVIDER -> createRemoteIconPack(pack, config)
+          MODE_PROVIDER -> RemoteSource(pack, config)
           else -> LocalSource(pack, config)
         }
     }

@@ -69,6 +69,7 @@ import com.richardluo.globalIconPack.ui.components.myPreferenceTheme
 import com.richardluo.globalIconPack.ui.viewModel.MainVM
 import com.richardluo.globalIconPack.utils.AppPreference
 import com.topjohnwu.superuser.Shell
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
@@ -76,6 +77,7 @@ import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import me.zhanghai.compose.preference.LocalPreferenceFlow
+import me.zhanghai.compose.preference.Preferences
 import me.zhanghai.compose.preference.ProvidePreferenceLocals
 
 class MainActivity : ComponentActivity() {
@@ -94,22 +96,22 @@ class MainActivity : ComponentActivity() {
     applyIconPackIfNeeded(intent)
 
     setContent {
-      val needSetup = rememberSaveable {
-        mutableStateOf(AppPreference.get(this).get(AppPref.NEED_SETUP))
-      }
       SampleTheme {
-        if (needSetup.value) SetUpDialog(needSetup)
+        val prefFlow = vm.prefFlow
+        if (prefFlow == null)
+          WarnDialog(
+            openState = remember { mutableStateOf(true) },
+            title = { OneLineText(getString(R.string.warning)) },
+            onOk = { finish() },
+            onCancel = { finish() },
+          ) {
+            Text(getString(R.string.plzEnableModuleFirst))
+          }
         else {
-          val prefFlow = vm.prefFlow
-          if (prefFlow == null)
-            WarnDialog(
-              openState = remember { mutableStateOf(true) },
-              title = { OneLineText(getString(R.string.warning)) },
-              onOk = { finish() },
-              onCancel = { finish() },
-            ) {
-              Text(getString(R.string.plzEnableModuleFirst))
-            }
+          val setupDialogState = rememberSaveable {
+            mutableStateOf(AppPreference.get(this).get(AppPref.NEED_SETUP))
+          }
+          if (setupDialogState.value) SetUpDialog(setupDialogState, prefFlow)
           else ProvidePreferenceLocals(flow = prefFlow, myPreferenceTheme()) { SampleScreen() }
         }
       }
@@ -134,9 +136,9 @@ class MainActivity : ComponentActivity() {
   }
 
   @Composable
-  private fun SetUpDialog(needSetup: MutableState<Boolean>) {
+  private fun SetUpDialog(state: MutableState<Boolean>, prefFlow: MutableStateFlow<Preferences>) {
     LazyListDialog(
-      needSetup,
+      state,
       title = { OneLineText(stringResource(R.string.chooseMode)) },
       value = listOf(MODE_SHARE, MODE_PROVIDER, MODE_LOCAL),
       dismissible = false,
@@ -145,7 +147,7 @@ class MainActivity : ComponentActivity() {
         modifier =
           Modifier.fillMaxWidth()
             .clickable {
-              vm.prefFlow?.update { it.toMutablePreferences().apply { set(Pref.MODE.key, mode) } }
+              prefFlow.update { it.toMutablePreferences().apply { set(Pref.MODE.key, mode) } }
               AppPreference.get(this).edit { putBoolean(AppPref.NEED_SETUP.key, false) }
               dismiss()
             }

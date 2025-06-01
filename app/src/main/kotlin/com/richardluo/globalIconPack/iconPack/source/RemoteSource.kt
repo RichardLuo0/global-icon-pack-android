@@ -22,6 +22,12 @@ import com.richardluo.globalIconPack.utils.getOrPutNullable
 import com.richardluo.globalIconPack.utils.method
 import java.util.Collections
 
+private var waitingForBootCompleted = true
+
+private val getSystemProperty by lazy {
+  classOf("android.os.SystemProperties")?.method("get", String::class.java)
+}
+
 class RemoteSource(pack: String, config: IconPackConfig = defaultIconPackConfig) :
   Source, ResourceOwner(pack) {
   private val iconPackAsFallback = config.iconPackAsFallback
@@ -34,6 +40,12 @@ class RemoteSource(pack: String, config: IconPackConfig = defaultIconPackConfig)
   private val resourcesMap = mutableMapOf<String, ResourceOwner>()
 
   init {
+    if (
+      waitingForBootCompleted && getSystemProperty?.call<String?>(null, "sys.boot_completed") != "1"
+    )
+      throw Exception("Boot is not competed. The remote service isn't ready.")
+
+    waitingForBootCompleted = false
     iconFallback =
       if (config.iconFallback)
         contentResolver
@@ -110,24 +122,4 @@ class RemoteSource(pack: String, config: IconPackConfig = defaultIconPackConfig)
     if (pack.isEmpty()) this else resourcesMap.getOrPut(pack) { ResourceOwner(pack) }
 
   override fun genIconFrom(baseIcon: Drawable) = genIconFrom(res, baseIcon, iconFallback)
-}
-
-private var waitingForBootCompleted = true
-
-private val getSystemProperty by lazy {
-  classOf("android.os.SystemProperties")?.method("get", String::class.java)
-}
-
-fun createRemoteIconPack(
-  pack: String,
-  config: IconPackConfig = defaultIconPackConfig,
-): RemoteSource? {
-  return if (
-    waitingForBootCompleted && getSystemProperty?.call<String?>(null, "sys.boot_completed") != "1"
-  )
-    null
-  else {
-    waitingForBootCompleted = false
-    RemoteSource(pack, config)
-  }
 }

@@ -41,6 +41,8 @@ class ShareSource(pack: String, config: IconPackConfig = defaultIconPackConfig) 
           IconFallback(FallbackSettings.from(it.getBlob(0)), ::getIcon, config).orNullIfEmpty()
         }
       else null
+    // Keep this line to ensure that the db exists
+    db.readableDatabase
   }
 
   override fun getId(cn: ComponentName) = getId(listOf(cn)).getOrNull(0)
