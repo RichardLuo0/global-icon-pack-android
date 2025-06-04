@@ -58,7 +58,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -72,6 +71,7 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
@@ -170,9 +170,6 @@ class IconPackMergerActivity : ComponentActivity() {
       }
     }
 
-    var fabHeight by rememberSaveable { mutableIntStateOf(0) }
-    val fabHeightInDp = with(LocalDensity.current) { fabHeight.toDp() }
-
     PredictiveBackHandler(enabled = pagerState.settledPage > 0) { progress ->
       val oriPage = pagerState.currentPage
       val nextPage = oriPage - 1
@@ -187,9 +184,16 @@ class IconPackMergerActivity : ComponentActivity() {
       }
     }
 
+    val density = LocalDensity.current
+    var scaffoldBottom by remember { mutableStateOf(0.dp) }
+    var fabY by remember { mutableStateOf(0.dp) }
+
     Scaffold(
       modifier =
         Modifier.fillMaxSize()
+          .onGloballyPositioned {
+            scaffoldBottom = with(density) { (it.positionInRoot().y + it.size.height).toDp() }
+          }
           .nestedScroll(scrollBehavior.nestedScrollConnection)
           .nestedScroll(expandFabScrollConnection),
       topBar = {
@@ -231,7 +235,10 @@ class IconPackMergerActivity : ComponentActivity() {
         }
       },
       floatingActionButton = {
-        Column(modifier = Modifier.onGloballyPositioned { fabHeight = it.size.height }) {
+        Column(
+          modifier =
+            Modifier.onGloballyPositioned { fabY = with(density) { it.positionInRoot().y.toDp() } }
+        ) {
           AnimatedVisibility(
             pagerState.currentPage == Page.IconList.ordinal,
             enter = fadeIn() + scaleIn(),
@@ -264,8 +271,13 @@ class IconPackMergerActivity : ComponentActivity() {
         }
       },
     ) { contentPadding ->
-      HorizontalPager(pagerState, contentPadding = contentPadding, beyondViewportPageCount = 2) {
-        val contentPadding = PaddingValues(bottom = fabHeightInDp)
+      val contentPadding =
+        PaddingValues(
+          top = contentPadding.calculateTopPadding(),
+          bottom = scaffoldBottom - fabY + contentPadding.calculateBottomPadding(),
+        )
+
+      HorizontalPager(pagerState, beyondViewportPageCount = 2) {
         when (it) {
           Page.SelectBasePack.ordinal -> SelectBasePack(pagerState, contentPadding)
           Page.IconList.ordinal -> IconList(contentPadding)
