@@ -17,7 +17,7 @@ navigation = { group = "androidx.navigation", name = "navigation-compose", versi
 #espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
 
 [plugins]
-android-application = { id = "com.android.application", version = "8.10.0" }
+android-application = { id = "com.android.application", version = "8.10.1" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version = "2.1.20" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version = "2.1.20" }
 dependency-license-report = { id = "com.github.jk1.dependency-license-report", version = "1.17" }
