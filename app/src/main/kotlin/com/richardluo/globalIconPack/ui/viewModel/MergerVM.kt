@@ -3,7 +3,7 @@ package com.richardluo.globalIconPack.ui.viewModel
 import android.app.Application
 import android.content.ComponentName
 import android.net.Uri
-import android.widget.Toast
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateMapOf
@@ -24,14 +24,14 @@ import com.richardluo.globalIconPack.ui.model.VariantIcon
 import com.richardluo.globalIconPack.ui.model.VariantPackIcon
 import com.richardluo.globalIconPack.utils.ContextVM
 import com.richardluo.globalIconPack.utils.IconPackCreator
+import com.richardluo.globalIconPack.utils.IconPackCreator.Progress
 import com.richardluo.globalIconPack.utils.InstanceManager.get
 import com.richardluo.globalIconPack.utils.MapPreferences
 import com.richardluo.globalIconPack.utils.debounceInput
 import com.richardluo.globalIconPack.utils.filter
-import kotlinx.coroutines.Deferred
+import com.richardluo.globalIconPack.utils.runCatchingToast
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combineTransform
@@ -42,7 +42,7 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.launch
 import me.zhanghai.compose.preference.Preferences
 
 @OptIn(FlowPreview::class)
@@ -143,25 +143,34 @@ class MergerVM(context: Application) :
       }
   }
 
-  fun createIconPack(uri: Uri): Deferred<Unit>? {
-    val iconPack = baseIconPack ?: return null
+  fun createIconPack(uri: Uri, progress: MutableState<Progress?>, onSuccess: () -> Unit) {
+    val iconPack = baseIconPack ?: return
     val newPackName =
       newPackName.ifEmpty {
-        return null
+        return
       }
     val newPackPackage =
       newPackPackage.ifEmpty {
-        return null
+        return
       }
 
-    return viewModelScope.async(Dispatchers.Default) {
-      try {
+    viewModelScope.launch(Dispatchers.Default) {
+      progress.value = Progress(0, 0, "")
+      runCatchingToast(
+        context,
+        {
+          if (it is IconPackCreator.FolderNotEmptyException)
+            context.getString(R.string.requiresEmptyFolder)
+          else it.toString()
+        },
+      ) {
         val packageNames = getAllAppsAndShortcuts().toSet()
         val newIcons =
           iconPack.iconEntryMap
             .filter { it.key.packageName in packageNames }
             .mapValues { IconEntryWithPack(it.value, iconPack) } + changedIcons
 
+        @Suppress("UNCHECKED_CAST")
         IconPackCreator.createIconPack(
           context,
           uri,
@@ -171,13 +180,12 @@ class MergerVM(context: Application) :
           iconPack,
           newIcons,
           installedAppsOnly,
+          progress as MutableState<Progress>,
         )
-      } catch (e: IconPackCreator.FolderNotEmptyException) {
-        withContext(Dispatchers.Main) {
-          Toast.makeText(context, R.string.requiresEmptyFolder, Toast.LENGTH_LONG).show()
-        }
-        throw e
+
+        onSuccess()
       }
+      progress.value = null
     }
   }
 }

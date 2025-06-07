@@ -4,6 +4,7 @@ import android.content.ComponentName
 import android.content.ContentResolver
 import android.content.Context
 import android.net.Uri
+import androidx.compose.runtime.MutableState
 import androidx.documentfile.provider.DocumentFile
 import com.richardluo.globalIconPack.R
 import com.richardluo.globalIconPack.ui.model.IconEntryWithPack
@@ -82,7 +83,7 @@ object IconPackCreator {
       xml.createFileAndOpenStream(contentResolver, "text/xml", "appfilter.xml").writeText(content)
     }
 
-    fun build(label: String, icon: String? = null) {
+    fun build(label: String, icon: String = "@android:drawable/sym_def_app_icon") {
       colorMap.build()
       dimenMap.build()
       values
@@ -99,7 +100,7 @@ object IconPackCreator {
           workDir.createFileAndOpenStream(contentResolver, "text/xml", "AndroidManifest.xml"),
           packageName,
           label,
-          icon ?: "@android:drawable/sym_def_app_icon",
+          icon,
         )
       context.resources
         .openRawResource(R.raw.create_icon_pack)
@@ -115,6 +116,17 @@ object IconPackCreator {
 
   class FolderNotEmptyException : Exception()
 
+  class Progress(val current: Int, val total: Int, val info: String) {
+    val percentage: Float
+      get() = current.toFloat() / total
+
+    fun advance(info: String) = Progress(current + 1, total, info)
+
+    override fun equals(other: Any?) = other is Progress && other.current == current
+
+    override fun hashCode() = current
+  }
+
   fun createIconPack(
     context: Context,
     uri: Uri,
@@ -124,6 +136,7 @@ object IconPackCreator {
     baseIconPack: IconPack,
     newIcons: Map<ComponentName, IconEntryWithPack?>,
     installedAppsOnly: Boolean,
+    progress: MutableState<Progress>,
   ) {
     val workDir = fromTreeUri(context, uri)
     if (workDir.listFiles().isNotEmpty()) throw FolderNotEmptyException()
@@ -131,16 +144,26 @@ object IconPackCreator {
     val apkBuilder = IconPackApkBuilder(packageName, context, workDir)
 
     val appfilterXML = StringBuilder("<?xml version=\"1.0\" encoding=\"UTF-8\"?><resources>")
+    val total =
+      1 +
+        (if (installedAppsOnly) newIcons.entries.size else baseIconPack.iconEntryMap.size) +
+        (if (icon != null) 1 else 0) +
+        1
+
+    progress.value = Progress(1, total, "icon_fallback")
     baseIconPack.copyFallbacks("icon_fallback", appfilterXML, apkBuilder)
+
     var i = 0
     if (installedAppsOnly)
       newIcons.entries.forEach { (cn, entry) ->
+        progress.update { advance(cn.packageName) }
         if (entry == null) return@forEach
         val iconName = "icon_${i++}"
         entry.pack.copyIcon(entry.entry, cn.flattenToString(), iconName, appfilterXML, apkBuilder)
       }
     else
       baseIconPack.iconEntryMap.forEach { (cn, entry) ->
+        progress.update { advance(cn.packageName) }
         val iconName = "icon_${i++}"
         val newEntry = if (newIcons.containsKey(cn)) newIcons[cn] ?: return@forEach else null
         val entry = newEntry?.entry ?: entry
@@ -150,6 +173,7 @@ object IconPackCreator {
     apkBuilder.addXML(appfilterXML.append("</resources>").toString())
 
     if (icon != null) {
+      progress.update { advance("ic_launcher") }
       icon.pack.copyIcon(
         icon.entry,
         ComponentName(packageName, "").flattenToString(),
@@ -157,8 +181,12 @@ object IconPackCreator {
         appfilterXML,
         apkBuilder,
       )
+      progress.update { advance("building...") }
       apkBuilder.build(label, "@drawable/ic_launcher")
-    } else apkBuilder.build(label)
+    } else {
+      progress.update { advance("building...") }
+      apkBuilder.build(label)
+    }
   }
 
   private fun InputStream.writeTo(output: OutputStream) {

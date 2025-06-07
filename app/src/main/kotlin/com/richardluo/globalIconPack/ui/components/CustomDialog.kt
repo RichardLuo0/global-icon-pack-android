@@ -34,26 +34,21 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.DialogProperties
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CustomDialog(
-  openState: MutableState<Boolean>,
   modifier: Modifier = Modifier,
+  properties: DialogProperties = DialogProperties(),
   title: @Composable () -> Unit,
-  dismissible: Boolean = true,
+  onDismissRequest: () -> Unit,
   content: @Composable () -> Unit,
 ) {
-  if (!openState.value) return
-
   BasicAlertDialog(
     modifier = modifier.heightIn(max = 600.dp),
-    onDismissRequest =
-      if (dismissible)
-        fun() {
-          openState.value = false
-        }
-      else fun() {},
+    onDismissRequest = onDismissRequest,
+    properties = properties,
   ) {
     Surface(
       modifier = Modifier.fillMaxWidth(),
@@ -69,7 +64,7 @@ fun CustomDialog(
           Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp)) { title() }
         }
         ProvideContentColorTextStyle(
-          contentColor = MaterialTheme.colorScheme.primary,
+          contentColor = AlertDialogDefaults.textContentColor,
           textStyle = MaterialTheme.typography.labelLarge,
         ) {
           content()
@@ -77,6 +72,30 @@ fun CustomDialog(
       }
     }
   }
+}
+
+@Composable
+fun CustomDialog(
+  openState: MutableState<Boolean>,
+  modifier: Modifier = Modifier,
+  properties: DialogProperties = DialogProperties(),
+  title: @Composable () -> Unit,
+  dismissible: Boolean = true,
+  content: @Composable () -> Unit,
+) {
+  if (!openState.value) return
+
+  CustomDialog(
+    modifier,
+    properties,
+    title,
+    if (dismissible)
+      fun() {
+        openState.value = false
+      }
+    else fun() {},
+    content,
+  )
 }
 
 class DialogButton(val name: String, val onClick: () -> Unit)
@@ -94,7 +113,7 @@ fun DialogButtonRow(buttons: Array<DialogButton> = emptyArray()) {
 }
 
 @Composable
-private fun ProvideContentColorTextStyle(
+fun ProvideContentColorTextStyle(
   contentColor: Color,
   textStyle: TextStyle,
   content: @Composable () -> Unit,

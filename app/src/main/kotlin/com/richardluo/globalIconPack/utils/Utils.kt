@@ -9,6 +9,7 @@ import android.widget.Toast
 import androidx.annotation.CheckResult
 import androidx.collection.LruCache
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.richardluo.globalIconPack.BuildConfig
 import kotlinx.coroutines.Dispatchers
@@ -164,6 +165,10 @@ inline fun <K, reified V> MutableMap<K, V>.getOrPut(
       array[index] = value
     }
   return array.asList()
+}
+
+inline fun <T> MutableState<T>.update(crossinline transform: T.() -> T) {
+  value = value.transform()
 }
 
 inline fun <T> T.chain(block: T.() -> T?): T = block() ?: this

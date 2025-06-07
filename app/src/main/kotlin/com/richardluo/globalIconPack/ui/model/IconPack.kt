@@ -88,10 +88,11 @@ class IconPack(val pack: String, val res: Resources) {
     apkBuilder: ApkBuilder,
   ) =
     entry.copyTo(component, name, appfilterXML) { resName, newName ->
-      getDrawableId(resName).takeIf { it != 0 }?.let { addAllFiles(it, newName, apkBuilder) }
+      addAllFiles(getDrawableId(resName), newName, apkBuilder)
     }
 
   private fun addAllFiles(resId: Int, name: String, apkBuilder: ApkBuilder): Int {
+    if (resId == 0) return 0
     val stream = res.openRawResource(resId)
     return if (AXMLEditor.isAXML(stream)) {
       val editor = AXMLEditor(stream)

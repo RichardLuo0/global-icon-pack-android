@@ -80,7 +80,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
@@ -113,6 +112,7 @@ import com.richardluo.globalIconPack.ui.viewModel.IconChooserVM
 import com.richardluo.globalIconPack.ui.viewModel.IconPackApps
 import com.richardluo.globalIconPack.ui.viewModel.MergerVM
 import com.richardluo.globalIconPack.ui.viewModel.emptyImageBitmap
+import com.richardluo.globalIconPack.utils.IconPackCreator
 import com.richardluo.globalIconPack.utils.getValue
 import kotlinx.coroutines.launch
 import me.zhanghai.compose.preference.ProvidePreferenceLocals
@@ -124,7 +124,7 @@ class MergerActivityVM : ViewModel() {
   val warningDialogState = mutableStateOf(false)
   val instructionDialogState = mutableStateOf(false)
 
-  var isCreatingApk by mutableStateOf(false)
+  var creatingApkProgress = mutableStateOf<IconPackCreator.Progress?>(null)
 }
 
 class IconPackMergerActivity : ComponentActivity() {
@@ -301,19 +301,16 @@ class IconPackMergerActivity : ComponentActivity() {
         Text(getString(R.string.mergerInstruction))
       }
 
-      if (avm.isCreatingApk) LoadingDialog()
+      val progress = avm.creatingApkProgress.value
+      if (progress != null)
+        LoadingDialog(progress.percentage, "${progress.current}/${progress.total} ${progress.info}")
     }
   }
 
   private val createIconPackLauncher =
     registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) {
       it ?: return@registerForActivityResult
-      lifecycleScope.launch {
-        avm.isCreatingApk = true
-        runCatching { vm.createIconPack(it)?.await() }
-          .onSuccess { avm.instructionDialogState.value = true }
-        avm.isCreatingApk = false
-      }
+      vm.createIconPack(it, avm.creatingApkProgress) { avm.instructionDialogState.value = true }
     }
 
   @Composable
