@@ -1,17 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string-array name="xposedscope">>
+    <string-array name="xposedscope">
         <item>com.android.settings</item>
         <item>com.google.android.settings.intelligence</item>
         <item>com.google.android.apps.nexuslauncher</item>
-        <!--splash screen-->
+        <!-- splash screen -->
         <item>com.android.systemui</item>
-        <!--share menu-->
+        <!-- share menu -->
         <item>com.android.intentresolver</item>
-        <!--permission controller-->
+        <!-- permission controller -->
         <item>com.android.permissioncontroller</item>
-        <!--open with menu-->
+        <!-- open with menu -->
         <!--should be android but xposed api messed up-->
         <item>system</item>
+        <!-- wellbeing -->
+        <item>com.google.android.apps.wellbeing</item>
     </string-array>
 </resources>
