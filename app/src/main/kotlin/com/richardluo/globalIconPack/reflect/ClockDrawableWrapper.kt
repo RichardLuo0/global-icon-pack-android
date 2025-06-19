@@ -19,7 +19,9 @@ object ClockDrawableWrapper {
   fun initWithPixelLauncher(lpp: LoadPackageParam) {
     forExtras =
       classOf("com.android.launcher3.icons.ClockDrawableWrapper", lpp)
-        ?.method("forExtras", Bundle::class.java, IntFunction::class.java)
+        // The compiled code uses a intermediate class, I assume it is always compatible with
+        // IntFunction
+        ?.method("forExtras", Bundle::class.java)
   }
 
   fun from(drawable: Drawable, metadata: ClockMetadata): Drawable? {
