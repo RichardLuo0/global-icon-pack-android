@@ -3,9 +3,9 @@ api = { module = "de.robv.android.xposed:api", version = "82" }
 core-ktx = { group = "androidx.core", name = "core-ktx", version = "1.16.0" }
 activity = { group = "androidx.activity", name = "activity-compose", version = "1.10.1" }
 viewmodel = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose", version = "2.9.1" }
-compose-foundation = { group = "androidx.compose.foundation", name = "foundation", version = "1.8.2" }
+compose-foundation = { group = "androidx.compose.foundation", name = "foundation", version = "1.8.3" }
 preference = { group = "me.zhanghai.compose.preference", name = "library", version = "1.1.1" }
-material3 = { group = "androidx.compose.material3", name = "material3", version = "1.4.0-alpha15" }  # Fix https://issuetracker.google.com/issues/353304855
+material3 = { group = "androidx.compose.material3", name = "material3", version = "1.4.0-alpha16" }  # Fix https://issuetracker.google.com/issues/353304855
 material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended", version = "1.7.8" }
 libsu = { group = "com.github.topjohnwu.libsu", name = "core", version = "6.0.0" }
 documentfile = { group = "androidx.documentfile", name = "documentfile", version = "1.1.0" }
