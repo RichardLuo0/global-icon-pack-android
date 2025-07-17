@@ -9,9 +9,11 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asAndroidBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.core.graphics.drawable.toBitmap
+import com.richardluo.globalIconPack.R
 import com.richardluo.globalIconPack.iconPack.model.IconEntry
 import com.richardluo.globalIconPack.iconPack.model.IconFallback
 import com.richardluo.globalIconPack.iconPack.model.IconPackConfig
+import com.richardluo.globalIconPack.ui.MyApplication
 import com.richardluo.globalIconPack.ui.model.ActivityIconInfo
 import com.richardluo.globalIconPack.ui.model.AppIconInfo
 import com.richardluo.globalIconPack.ui.model.IconEntryWithPack
@@ -101,4 +103,7 @@ private fun Drawable.toSafeBitmap(maxWidth: Int = 192, maxHeight: Int = 192) =
     toBitmap(maxWidth, maxHeight)
   } else toBitmap()
 
-val emptyImageBitmap by lazy { ImageBitmap(1, 1) }
+val emptyImageBitmap by lazy {
+  MyApplication.context.getDrawable(R.drawable.broken_image)?.toSafeBitmap()?.asImageBitmap()
+    ?: ImageBitmap(1, 1)
+}
