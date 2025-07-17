@@ -6,6 +6,7 @@ import com.richardluo.globalIconPack.utils.allConstructors
 import com.richardluo.globalIconPack.utils.allMethods
 import com.richardluo.globalIconPack.utils.asType
 import com.richardluo.globalIconPack.utils.classOf
+import com.richardluo.globalIconPack.utils.deoptimize
 import com.richardluo.globalIconPack.utils.hook
 import com.richardluo.globalIconPack.utils.rGet
 import com.richardluo.globalIconPack.utils.rSet
@@ -23,9 +24,10 @@ class NoShadow : Hook {
 
   override fun onHookSystemUI(lpp: LoadPackageParam) {
     // Remove bubble shadow
-    classOf("com.android.wm.shell.bubbles.BadgedImageView", lpp)?.allConstructors()?.hook {
-      after { thisObject.asType<View>()?.outlineProvider = null }
-    }
+    classOf("com.android.wm.shell.bubbles.BadgedImageView", lpp)
+      ?.allConstructors()
+      ?.deoptimize()
+      ?.hook { after { thisObject.asType<View>()?.outlineProvider = null } }
     removeIconShadow(lpp)
   }
 

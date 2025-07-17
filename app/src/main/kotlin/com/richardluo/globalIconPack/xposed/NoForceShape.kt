@@ -9,6 +9,7 @@ import com.richardluo.globalIconPack.utils.allConstructors
 import com.richardluo.globalIconPack.utils.allMethods
 import com.richardluo.globalIconPack.utils.asType
 import com.richardluo.globalIconPack.utils.classOf
+import com.richardluo.globalIconPack.utils.deoptimize
 import com.richardluo.globalIconPack.utils.field
 import com.richardluo.globalIconPack.utils.hook
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
@@ -26,7 +27,7 @@ class NoForceShape(private val drawWholeIconForTransparentBackgroundInSplashScre
         )
       val mBgColorF = iconColor?.field("mBgColor") ?: return
       val mIsBgComplexF = iconColor.field("mIsBgComplex") ?: return
-      iconColor.allConstructors().hook {
+      iconColor.allConstructors().deoptimize().hook {
         after {
           val mBgColor = mBgColorF.get(thisObject).asType<Int>() ?: return@after
           val mIsBgComplex = mIsBgComplexF.get(thisObject).asType<Boolean>() ?: return@after

@@ -8,6 +8,7 @@ import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 import java.lang.reflect.Executable
 import java.lang.reflect.Field
 import java.lang.reflect.InvocationTargetException
+import java.lang.reflect.Member
 import java.lang.reflect.Method
 
 private fun Method.match(methodName: String, parameterTypes: Array<out Class<*>?>) =
@@ -86,3 +87,17 @@ inline fun Executable.hook(crossinline block: HookBuilder.() -> Unit) =
 inline fun List<Executable>.hook(crossinline block: HookBuilder.() -> Unit) =
   runCatching { map { XposedBridge.hookMethod(it, HookBuilder().apply { block() }) } }
     .getOrNull { log(it) }
+
+private val deoptimizeMethodM by lazy {
+  XposedBridge::class.java.method("deoptimizeMethod", Member::class.java)
+}
+
+fun Executable.deoptimize(): Executable {
+  deoptimizeMethodM?.invoke(null, this)
+  return this
+}
+
+fun List<Executable>.deoptimize(): List<Executable> {
+  forEach { deoptimizeMethodM?.invoke(null, it) }
+  return this
+}
