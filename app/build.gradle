@@ -1,3 +1,5 @@
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -7,7 +9,7 @@ plugins {
 
 android {
     namespace 'com.richardluo.globalIconPack'
-    compileSdk 35
+    compileSdk 36
 
     def versionProps = new Properties()
     versionProps.load(new FileInputStream("$project.rootDir/version.properties"))
@@ -18,7 +20,7 @@ android {
     defaultConfig {
         applicationId "com.richardluo.globalIconPack"
         minSdk 31
-        targetSdk 35
+        targetSdk 36
         versionCode major * 10000 + minor * 100 + patch
         versionName "${major}.${minor}.${patch}"
 
@@ -52,8 +54,10 @@ android {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
-    kotlinOptions {
-        jvmTarget = '17'
+    kotlin {
+        compilerOptions {
+            jvmTarget = JvmTarget.JVM_17
+        }
     }
 
     buildFeatures {
@@ -94,6 +98,7 @@ dependencies {
     implementation libs.documentfile
     implementation libs.hiddenapibypass
     implementation libs.navigation
+    implementation libs.reorderable
 }
 
 import com.github.jk1.license.render.*
