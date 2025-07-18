@@ -58,6 +58,7 @@
     <string name="notice">提示</string>
     <string name="search">搜索</string>
     <string name="options">选项</string>
+    <string name="empty">空</string>
     <string name="restoreDefault">恢复默认</string>
     <string name="restoreDefaultWarning">您确定要还原为默认图标吗？</string>
     <string name="suggestedIcons">推荐图标</string>
@@ -88,4 +89,7 @@
     <string name="asNormalIcon">作为普通图标</string>
     <string name="asCalendarIcon">作为日历图标</string>
     <string name="notCalendarIcon">不是有效的日历图标！</string>
+    <string name="autoFill">自动填充</string>
+    <string name="autoFillSummary">从其他图标包自动填充缺失的图标。</string>
+    <string name="autoFillAdd">添加图标包</string>
 </resources>
