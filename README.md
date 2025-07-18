@@ -59,11 +59,14 @@ The list may not be latest.
   - RichardLuo
 - German
   - elisenlebkuch
+  - Max
 - Russian
   - Кирилл Гук
-  - Alohaa666
+  - Artem Dreznel
 - Chinese Traditional
   - Jia-Bin
+- Turkish
+  - Holi
 
 ## Disclaimer
 > [!WARNING]
