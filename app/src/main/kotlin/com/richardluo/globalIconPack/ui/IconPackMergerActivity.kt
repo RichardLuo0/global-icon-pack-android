@@ -75,6 +75,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
@@ -88,7 +89,6 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.ViewModel
@@ -110,6 +110,7 @@ import com.richardluo.globalIconPack.ui.components.InfoDialog
 import com.richardluo.globalIconPack.ui.components.LazyDialog
 import com.richardluo.globalIconPack.ui.components.LazyImage
 import com.richardluo.globalIconPack.ui.components.LoadingDialog
+import com.richardluo.globalIconPack.ui.components.OneLineText
 import com.richardluo.globalIconPack.ui.components.SampleTheme
 import com.richardluo.globalIconPack.ui.components.ScrollIndicationBox
 import com.richardluo.globalIconPack.ui.components.WarnDialog
@@ -341,13 +342,15 @@ class IconPackMergerActivity : ComponentActivity() {
             modifier =
               Modifier.fillMaxWidth()
                 .height(IntrinsicSize.Min)
+                .padding(horizontal = 8.dp, vertical = 4.dp)
+                .clip(MaterialTheme.shapes.large)
                 .selectable(selected, true, Role.RadioButton) {
                   coroutineScope.launch {
                     pagerState.animateScrollToPage(Page.IconList.ordinal)
                     vm.basePack = pack
                   }
                 }
-                .padding(horizontal = 8.dp, vertical = 12.dp),
+                .padding(vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
           ) {
             RadioButton(
@@ -365,19 +368,15 @@ class IconPackMergerActivity : ComponentActivity() {
             }
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.fillMaxWidth()) {
-              Text(
+              OneLineText(
                 app.label,
                 color = MaterialTheme.colorScheme.onSurface,
                 style = MaterialTheme.typography.bodyLarge,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
               )
-              Text(
+              OneLineText(
                 pack,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 style = MaterialTheme.typography.bodySmall,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
               )
             }
           }
