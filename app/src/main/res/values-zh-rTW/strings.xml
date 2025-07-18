@@ -3,8 +3,11 @@
     <string name="appName">全域性圖示包</string>
     <string name="plzEnableModuleFirst">請先確認 Xposed 模組已啟用。</string>
     <string name="iconPackApplied">圖示包已應用。請手動點選「重啟 XXX」。</string>
+    <string name="chooseMode">選擇模式</string>
+    <string name="errorOnShareMode">開啟分享模式時發生錯誤，正在返回供給者模式。</string>
     <string name="general">總體</string>
     <string name="mode">模式</string>
+    <string name="shareMode">分享模式</string>
     <string name="providerMode">提供器模式</string>
     <string name="localMode">本地模式</string>
     <string name="localModeSummary">被 Hook 的應用在每次啟動時過載圖示包。</string>

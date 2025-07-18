@@ -1,2 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation"></resources>
+<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
+    <string name="appName">Pack d\'icônes global</string>
+    <string name="plzEnableModuleFirst">Assurez-vous que le module Xposed a été activé d\'abord.</string>
+    <string name="chooseMode">Choisir un mode</string>
+    <string name="general">Général</string>
+    <string name="mode">Mode</string>
+    <string name="iconPack">Pack d’icônes</string>
+    <string name="shortcut">Générer des icônes pour les raccourcis</string>
+    <string name="mergeIconPack">Fusionner le pack d\'icônes</string>
+    <string name="iconPackSettings">Pack d’icônes</string>
+    <string name="iconVariant">Variante d\'icône</string>
+    <string name="iconPackShape">Forme</string>
+    <string name="noShadow">Retirer l\'ombre en dessous</string>
+    <string name="moreOptions">Plus d\'options</string>
+    <string name="restartSystemUI">Redémarrez SystemUI</string>
+</resources>
