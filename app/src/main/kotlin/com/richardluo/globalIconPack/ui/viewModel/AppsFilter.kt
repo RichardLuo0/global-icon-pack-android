@@ -7,6 +7,8 @@ import androidx.compose.runtime.snapshotFlow
 import com.richardluo.globalIconPack.ui.MyApplication
 import com.richardluo.globalIconPack.ui.model.AppIconInfo
 import com.richardluo.globalIconPack.ui.viewModel.IAppsFilter.Type
+import com.richardluo.globalIconPack.utils.debounceInput
+import com.richardluo.globalIconPack.utils.filter
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -56,23 +58,32 @@ interface IAppsFilter {
     System,
   }
 
+  val searchText: MutableState<String>
   val filterType: MutableState<Type>
-  val appsByType: Flow<List<AppIconInfo>>
+  val apps: Flow<Array<List<AppIconInfo>>>
 
-  suspend fun getAllAppsAndShortcuts(): List<String>
+  fun <T> createFilteredIconsFlow(icons: Flow<Array<List<Pair<AppIconInfo, T>>>?>) =
+    snapshotFlow { filterType.value }
+      .combine(icons) { type, icons ->
+        icons ?: return@combine null
+        icons[type.ordinal]
+      }
+      .filter(snapshotFlow { searchText.value }.debounceInput()) { (info), text ->
+        info.label.contains(text, ignoreCase = true)
+      }
+
+  suspend fun getAllApps() =
+    withContext(Dispatchers.Default) {
+      val apps = appsFlow.first()
+      apps[0] + apps[1]
+    }
+
+  suspend fun getAllAppsAndShortcuts() =
+    getAllApps().map { it.componentName.packageName }.let { it + it.map { "$it@" } }
 }
 
 class AppsFilter : IAppsFilter {
+  override val searchText = mutableStateOf("")
   override val filterType = mutableStateOf(Type.User)
-
-  override suspend fun getAllAppsAndShortcuts(): List<String> =
-    withContext(Dispatchers.Default) {
-      val apps = appsFlow.first()
-      val packageNames = (apps[0] + apps[1]).map { it.componentName.packageName }
-      // Plus shortcuts
-      packageNames + packageNames.map { "$it@" }
-    }
-
-  override val appsByType =
-    snapshotFlow { filterType.value }.combine(appsFlow) { type, apps -> apps[type.ordinal] }
+  override val apps = appsFlow
 }

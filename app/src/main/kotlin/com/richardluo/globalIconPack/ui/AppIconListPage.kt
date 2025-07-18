@@ -78,7 +78,7 @@ fun AppIconListPage(onBack: () -> Unit, iconsHolder: IconsHolder, vm: AppIconLis
   val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
   val iconChooser: IconChooserVM = viewModel(key = "IconsListPageIconChooser")
 
-  val expandSearchBar = rememberSaveable { mutableStateOf<Boolean>(false) }
+  val expandSearchBar = rememberSaveable { mutableStateOf(false) }
 
   val tabs = remember {
     listOf(

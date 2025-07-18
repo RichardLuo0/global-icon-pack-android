@@ -71,166 +71,163 @@ fun IconChooserSheet(
     vm.searchText.value = ""
   }
 
-  if (vm.variantSheet)
-    ModalBottomSheet(sheetState = sheetState, onDismissRequest = ::onDismissRequest) {
-      val packDialogState = rememberSaveable { mutableStateOf(false) }
-      val optionDialogState = remember { mutableStateOf(false) }
-      val selectedIcon = remember { mutableStateOf<VariantIcon?>(null) }
+  if (!vm.variantSheet) return
 
-      fun replaceAsNormalIcon(icon: VariantIcon) {
-        vm.replaceIcon(vm.iconInfo ?: return, icon)
+  ModalBottomSheet(sheetState = sheetState, onDismissRequest = ::onDismissRequest) {
+    val packDialogState = rememberSaveable { mutableStateOf(false) }
+    val optionDialogState = remember { mutableStateOf(false) }
+    val selectedIcon = remember { mutableStateOf<VariantIcon?>(null) }
+
+    fun replaceAsNormalIcon(icon: VariantIcon) {
+      vm.replaceIcon(vm.iconInfo ?: return, icon)
+      scope.launch {
+        sheetState.hide()
+        onDismissRequest()
+      }
+    }
+
+    fun replaceAsCalendarIcon(icon: VariantIcon) {
+      try {
+        vm.replaceIcon(vm.iconInfo ?: return, vm.asCalendarEntry(icon))
         scope.launch {
           sheetState.hide()
           onDismissRequest()
         }
+      } catch (_: IconChooserVM.NotCalendarEntryException) {
+        Toast.makeText(context, context.getString(R.string.notCalendarIcon), Toast.LENGTH_LONG)
+          .show()
       }
+    }
 
-      fun replaceAsCalendarIcon(icon: VariantIcon) {
-        try {
-          vm.replaceIcon(vm.iconInfo ?: return, vm.asCalendarEntry(icon))
-          scope.launch {
-            sheetState.hide()
-            onDismissRequest()
-          }
-        } catch (_: IconChooserVM.NotCalendarEntryException) {
-          Toast.makeText(context, context.getString(R.string.notCalendarIcon), Toast.LENGTH_LONG)
-            .show()
-        }
-      }
+    RoundSearchBar(
+      vm.searchText,
+      stringResource(R.string.search),
+      modifier = Modifier.padding(bottom = 8.dp),
+      trailingIcon = {
+        IconButtonWithTooltip(Icons.Outlined.FilterList, "By pack") { packDialogState.value = true }
+      },
+    ) {
+      Icon(Icons.Outlined.Search, contentDescription = "Search")
+    }
 
-      RoundSearchBar(
-        vm.searchText,
-        stringResource(R.string.search),
-        modifier = Modifier.padding(bottom = 8.dp),
-        trailingIcon = {
-          IconButtonWithTooltip(Icons.Outlined.FilterList, "By pack") {
-            packDialogState.value = true
-          }
-        },
-      ) {
-        Icon(Icons.Outlined.Search, contentDescription = "Search")
-      }
-
-      fun LazyGridScope.variantIconTitle(text: String, expandState: MutableState<Boolean>? = null) {
-        item(span = { GridItemSpan(maxLineSpan) }, contentType = "Title") {
-          Row(horizontalArrangement = Arrangement.SpaceBetween) {
-            Text(
-              text,
-              style = MaterialTheme.typography.titleMedium,
-              modifier = Modifier.padding(top = 12.dp, start = 12.dp, end = 12.dp),
-            )
-            if (expandState != null) {
-              var isExpanded by expandState
-              IconButton(onClick = { isExpanded = !isExpanded }) {
-                Icon(
-                  imageVector =
-                    if (isExpanded) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore,
-                  contentDescription = "Expand",
-                )
-              }
-            }
-          }
-        }
-      }
-
-      fun LazyGridScope.variantIconItems(icons: List<VariantIcon>) {
-        items(icons) { icon ->
-          AppIcon(
-            when (icon) {
-              is OriginalIcon -> stringResource(R.string.originalIcon)
-              is VariantPackIcon -> icon.entry.name
-              else -> ""
-            },
-            loadImage = {
-              when (icon) {
-                is OriginalIcon -> vm.iconInfo?.let { loadOriginalIcon(it) }
-                is VariantPackIcon -> vm.loadIcon(icon)
-                else -> null
-              } ?: emptyImageBitmap
-            },
-            onLongClick = {
-              selectedIcon.value = icon
-              optionDialogState.value = true
-            },
-            onClick = { replaceAsNormalIcon(icon) },
+    fun LazyGridScope.variantIconTitle(text: String, expandState: MutableState<Boolean>? = null) {
+      item(span = { GridItemSpan(maxLineSpan) }, contentType = "Title") {
+        Row(horizontalArrangement = Arrangement.SpaceBetween) {
+          Text(
+            text,
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier.padding(top = 12.dp, start = 12.dp, end = 12.dp),
           )
-        }
-      }
-
-      val suggestIcons = vm.suggestIcons.getValue(null)
-      if (suggestIcons != null)
-        if (vm.searchText.value.isEmpty()) {
-          val variantIcons = vm.icons.getValue(null) ?: setOf()
-          val expandState = rememberSaveable { mutableStateOf(false) }
-          val gridState = rememberLazyGridState()
-          LazyVerticalGrid(
-            state = gridState,
-            modifier = Modifier.fillMaxSize().padding(horizontal = 2.dp),
-            columns = GridCells.Adaptive(minSize = 74.dp),
-          ) {
-            val shrinkSize = gridState.layoutInfo.maxSpan * 2
-            if (suggestIcons.size > shrinkSize) {
-              variantIconTitle(context.getString(R.string.suggestedIcons), expandState)
-              variantIconItems(
-                if (expandState.value) suggestIcons else suggestIcons.take(shrinkSize)
+          if (expandState != null) {
+            var isExpanded by expandState
+            IconButton(onClick = { isExpanded = !isExpanded }) {
+              Icon(
+                imageVector =
+                  if (isExpanded) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore,
+                contentDescription = "Expand",
               )
-            } else {
-              variantIconTitle(context.getString(R.string.suggestedIcons))
-              variantIconItems(suggestIcons)
             }
-
-            variantIconTitle(context.getString(R.string.allIcons))
-            variantIconItems(variantIcons.toList())
-          }
-        } else
-          LazyVerticalGrid(
-            modifier = Modifier.fillMaxSize().padding(horizontal = 2.dp),
-            columns = GridCells.Adaptive(minSize = 74.dp),
-          ) {
-            variantIconItems(suggestIcons)
-          }
-      else
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
-          LinearProgressIndicator(modifier = Modifier.fillMaxWidth().padding(24.dp))
-        }
-
-      LazyListDialog(
-        packDialogState,
-        title = { Text(stringResource(R.string.iconPack)) },
-        value = IconPackApps.flow.collectAsState(null).value?.toList(),
-        key = { it.first },
-        focusItem = { it.first == vm.iconPack?.pack },
-      ) { item, dismiss ->
-        IconPackItem(item.first, item.second, item.first == vm.iconPack?.pack) {
-          vm.setPack(item.first)
-          dismiss()
-        }
-      }
-
-      class Option(val icon: ImageVector?, val name: String, val onClick: (VariantIcon) -> Unit)
-
-      ProvideMyPreferenceTheme {
-        LazyListDialog(
-          optionDialogState,
-          title = { Text(stringResource(R.string.options)) },
-          value =
-            listOf(
-              Option(null, stringResource(R.string.asNormalIcon), ::replaceAsNormalIcon),
-              Option(
-                Icons.Outlined.CalendarMonth,
-                stringResource(R.string.asCalendarIcon),
-                ::replaceAsCalendarIcon,
-              ),
-            ),
-        ) { option, dismiss ->
-          Preference(
-            icon = { option.icon?.let { Icon(it, option.name) } },
-            title = { Text(option.name) },
-          ) {
-            option.onClick(selectedIcon.value ?: return@Preference)
-            dismiss()
           }
         }
       }
     }
+
+    fun LazyGridScope.variantIconItems(icons: List<VariantIcon>) {
+      items(icons) { icon ->
+        AppIcon(
+          when (icon) {
+            is OriginalIcon -> stringResource(R.string.originalIcon)
+            is VariantPackIcon -> icon.entry.name
+            else -> ""
+          },
+          loadImage = {
+            when (icon) {
+              is OriginalIcon -> vm.iconInfo?.let { loadOriginalIcon(it) }
+              is VariantPackIcon -> vm.loadIcon(icon)
+              else -> null
+            } ?: emptyImageBitmap
+          },
+          onLongClick = {
+            selectedIcon.value = icon
+            optionDialogState.value = true
+          },
+          onClick = { replaceAsNormalIcon(icon) },
+        )
+      }
+    }
+
+    val suggestIcons = vm.suggestIcons.getValue(null)
+    if (suggestIcons != null)
+      if (vm.searchText.value.isEmpty()) {
+        val variantIcons = vm.icons.getValue(null) ?: setOf()
+        val expandState = rememberSaveable { mutableStateOf(false) }
+        val gridState = rememberLazyGridState()
+        LazyVerticalGrid(
+          state = gridState,
+          modifier = Modifier.fillMaxSize().padding(horizontal = 2.dp),
+          columns = GridCells.Adaptive(minSize = 74.dp),
+        ) {
+          val shrinkSize = gridState.layoutInfo.maxSpan * 2
+          if (suggestIcons.size > shrinkSize) {
+            variantIconTitle(context.getString(R.string.suggestedIcons), expandState)
+            variantIconItems(if (expandState.value) suggestIcons else suggestIcons.take(shrinkSize))
+          } else {
+            variantIconTitle(context.getString(R.string.suggestedIcons))
+            variantIconItems(suggestIcons)
+          }
+
+          variantIconTitle(context.getString(R.string.allIcons))
+          variantIconItems(variantIcons.toList())
+        }
+      } else
+        LazyVerticalGrid(
+          modifier = Modifier.fillMaxSize().padding(horizontal = 2.dp),
+          columns = GridCells.Adaptive(minSize = 74.dp),
+        ) {
+          variantIconItems(suggestIcons)
+        }
+    else
+      Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
+        LinearProgressIndicator(modifier = Modifier.fillMaxWidth().padding(24.dp))
+      }
+
+    LazyListDialog(
+      packDialogState,
+      title = { Text(stringResource(R.string.iconPack)) },
+      value = IconPackApps.flow.collectAsState(null).value?.toList(),
+      key = { it.first },
+      focusItem = { it.first == vm.iconPack?.pack },
+    ) { item, dismiss ->
+      IconPackItem(item.first, item.second, item.first == vm.iconPack?.pack) {
+        vm.setPack(item.first)
+        dismiss()
+      }
+    }
+
+    class Option(val icon: ImageVector?, val name: String, val onClick: (VariantIcon) -> Unit)
+
+    ProvideMyPreferenceTheme {
+      LazyListDialog(
+        optionDialogState,
+        title = { Text(stringResource(R.string.options)) },
+        value =
+          listOf(
+            Option(null, stringResource(R.string.asNormalIcon), ::replaceAsNormalIcon),
+            Option(
+              Icons.Outlined.CalendarMonth,
+              stringResource(R.string.asCalendarIcon),
+              ::replaceAsCalendarIcon,
+            ),
+          ),
+      ) { option, dismiss ->
+        Preference(
+          icon = { option.icon?.let { Icon(it, option.name) } },
+          title = { Text(option.name) },
+        ) {
+          option.onClick(selectedIcon.value ?: return@Preference)
+          dismiss()
+        }
+      }
+    }
+  }
 }

@@ -5,8 +5,6 @@ import android.content.ComponentName
 import android.net.Uri
 import android.util.Xml
 import android.widget.Toast
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.viewModelScope
 import com.richardluo.globalIconPack.Pref
 import com.richardluo.globalIconPack.R
@@ -37,10 +35,9 @@ import com.richardluo.globalIconPack.ui.model.VariantPackIcon
 import com.richardluo.globalIconPack.utils.ContextVM
 import com.richardluo.globalIconPack.utils.InstanceManager.get
 import com.richardluo.globalIconPack.utils.WorldPreference
-import com.richardluo.globalIconPack.utils.debounceInput
-import com.richardluo.globalIconPack.utils.filter
 import com.richardluo.globalIconPack.utils.get
 import com.richardluo.globalIconPack.utils.ifNotEmpty
+import com.richardluo.globalIconPack.utils.map
 import com.richardluo.globalIconPack.utils.runCatchingToast
 import com.richardluo.globalIconPack.utils.unflattenFromString
 import java.io.OutputStreamWriter
@@ -48,6 +45,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -75,21 +73,15 @@ class IconVariantVM(context: Application) :
       ?.orNullIfEmpty()
   private val iconPackConfig = IconPackConfig(WorldPreference.getPrefInApp(context))
 
-  val searchText = mutableStateOf("")
-
-  private val iconsByType =
-    combine(appsByType, iconPackDB.iconsUpdateFlow) { apps, _ ->
-        apps.zip(getIconEntry(apps.map { it.componentName }))
+  private val icons =
+    combine(apps, iconPackDB.iconsUpdateFlow) { apps, _ ->
+        apps.map { it.zip(getIconEntry(it.map { it.componentName })) }
       }
       .flowOn(Dispatchers.IO)
       .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
   val filteredIcons =
-    iconsByType
-      .filter(snapshotFlow { searchText.value }.debounceInput()) { (info), text ->
-        info.label.contains(text, ignoreCase = true)
-      }
-      .stateIn(viewModelScope, SharingStarted.Eagerly, null)
+    createFilteredIconsFlow(icons).stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
   val appIconListVM =
     AppIconListVM(context, viewModelScope, iconPackDB.iconsUpdateFlow, ::getIconEntry)
@@ -133,13 +125,30 @@ class IconVariantVM(context: Application) :
     }
 
   override fun saveIcon(info: IconInfo, icon: VariantIcon) {
-    val pack = pack
     val cn = info.componentName
     viewModelScope.launch(Dispatchers.IO) {
       runCatchingToast(context) {
         when (icon) {
           is OriginalIcon -> iconPackDB.deleteIcon(pack, cn)
           is VariantPackIcon -> iconPackDB.insertOrUpdateIcon(pack, cn, icon.entry, icon.pack)
+        }
+      }
+    }
+  }
+
+  suspend fun autoFill(packs: List<String>) {
+    packs.ifEmpty {
+      return
+    }
+    val iconPacks = packs.map { iconPackCache[it] }
+    icons.first()?.forEach { icons ->
+      icons.forEach { (info, entry) ->
+        if (entry != null) return@forEach
+        val cn = info.componentName
+        iconPacks.firstNotNullOfOrNull { iconPack ->
+          iconPack.getIconEntry(cn, iconPackConfig)?.also {
+            iconPackDB.insertOrUpdateIcon(pack, cn, it, iconPack)
+          }
         }
       }
     }
@@ -190,7 +199,7 @@ class IconVariantVM(context: Application) :
           iconPackDB.transaction {
             while (parser.next() != XmlPullParser.END_DOCUMENT) {
               if (parser.eventType != XmlPullParser.START_TAG) continue
-              var cn = parser["component"]?.let { unflattenFromString(it) } ?: continue
+              val cn = parser["component"]?.let { unflattenFromString(it) } ?: continue
               val entry =
                 when (parser.name) {
                   "item" -> NormalIconEntry(parser["drawable"] ?: continue)

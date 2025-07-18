@@ -14,21 +14,16 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -48,12 +43,15 @@ import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.ArrowForward
 import androidx.compose.material.icons.outlined.Done
 import androidx.compose.material.icons.outlined.FilterList
+import androidx.compose.material.icons.outlined.FormatColorFill
+import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.Notifications
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -68,6 +66,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -92,6 +91,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
@@ -102,15 +102,17 @@ import com.richardluo.globalIconPack.ui.components.AnimatedNavHost
 import com.richardluo.globalIconPack.ui.components.AppFilterByType
 import com.richardluo.globalIconPack.ui.components.AppIcon
 import com.richardluo.globalIconPack.ui.components.AppbarSearchBar
+import com.richardluo.globalIconPack.ui.components.AutoFillDialog
 import com.richardluo.globalIconPack.ui.components.ExpandFabScrollConnection
 import com.richardluo.globalIconPack.ui.components.FabSnapshot
 import com.richardluo.globalIconPack.ui.components.IconButtonWithTooltip
 import com.richardluo.globalIconPack.ui.components.IconChooserSheet
+import com.richardluo.globalIconPack.ui.components.IconPackItemContent
 import com.richardluo.globalIconPack.ui.components.InfoDialog
 import com.richardluo.globalIconPack.ui.components.LazyDialog
 import com.richardluo.globalIconPack.ui.components.LazyImage
 import com.richardluo.globalIconPack.ui.components.LoadingDialog
-import com.richardluo.globalIconPack.ui.components.OneLineText
+import com.richardluo.globalIconPack.ui.components.MyDropdownMenu
 import com.richardluo.globalIconPack.ui.components.SampleTheme
 import com.richardluo.globalIconPack.ui.components.ScrollIndicationBox
 import com.richardluo.globalIconPack.ui.components.WarnDialog
@@ -120,6 +122,7 @@ import com.richardluo.globalIconPack.ui.components.navPage
 import com.richardluo.globalIconPack.ui.model.IconEntryWithPack
 import com.richardluo.globalIconPack.ui.model.IconInfo
 import com.richardluo.globalIconPack.ui.model.VariantPackIcon
+import com.richardluo.globalIconPack.ui.viewModel.AutoFillVM
 import com.richardluo.globalIconPack.ui.viewModel.IconChooserVM
 import com.richardluo.globalIconPack.ui.viewModel.IconPackApps
 import com.richardluo.globalIconPack.ui.viewModel.MergerVM
@@ -136,6 +139,7 @@ class MergerActivityVM : ViewModel() {
   val warningDialogState = mutableStateOf(false)
   val instructionDialogState = mutableStateOf(false)
 
+  var waiting by mutableIntStateOf(0)
   var creatingApkProgress = mutableStateOf<IconPackCreator.Progress?>(null)
 }
 
@@ -229,14 +233,41 @@ class IconPackMergerActivity : ComponentActivity() {
                 IconButtonWithTooltip(Icons.Outlined.Search, stringResource(R.string.search)) {
                   avm.expandSearchBar.value = true
                 }
+                var expand by rememberSaveable { mutableStateOf(false) }
                 val expandFilter = rememberSaveable { mutableStateOf(false) }
+                val autoFillVM: AutoFillVM = viewModel()
                 IconButtonWithTooltip(
-                  Icons.Outlined.FilterList,
-                  getLabelByType(vm.filterType.value),
+                  Icons.Outlined.MoreVert,
+                  stringResource(R.string.moreOptions),
                 ) {
-                  expandFilter.value = true
+                  expand = true
+                }
+                MyDropdownMenu(expanded = expand, onDismissRequest = { expand = false }) {
+                  DropdownMenuItem(
+                    leadingIcon = { Icon(Icons.Outlined.FilterList, "filter") },
+                    text = { Text(getLabelByType(vm.filterType.value)) },
+                    onClick = {
+                      expand = false
+                      expandFilter.value = true
+                    },
+                  )
+                  DropdownMenuItem(
+                    leadingIcon = { Icon(Icons.Outlined.FormatColorFill, "auto fill") },
+                    text = { Text(stringResource(R.string.autoFill)) },
+                    onClick = {
+                      autoFillVM.open(vm.basePack ?: return@DropdownMenuItem)
+                      expand = false
+                    },
+                  )
                 }
                 AppFilterByType(expandFilter, vm.filterType)
+                AutoFillDialog(autoFillVM) {
+                  lifecycleScope.launch {
+                    avm.waiting++
+                    vm.autoFill(it)
+                    avm.waiting--
+                  }
+                }
               }
             },
             modifier = Modifier.fillMaxWidth(),
@@ -314,6 +345,8 @@ class IconPackMergerActivity : ComponentActivity() {
         Text(getString(R.string.mergerInstruction))
       }
 
+      if (avm.waiting > 0) LoadingDialog()
+
       val progress = avm.creatingApkProgress.value
       if (progress != null)
         LoadingDialog(progress.percentage, "${progress.current}/${progress.total} ${progress.info}")
@@ -341,8 +374,7 @@ class IconPackMergerActivity : ComponentActivity() {
           Row(
             modifier =
               Modifier.fillMaxWidth()
-                .height(IntrinsicSize.Min)
-                .padding(horizontal = 8.dp, vertical = 4.dp)
+                .padding(horizontal = 12.dp, vertical = 2.dp)
                 .clip(MaterialTheme.shapes.large)
                 .selectable(selected, true, Role.RadioButton) {
                   coroutineScope.launch {
@@ -350,35 +382,16 @@ class IconPackMergerActivity : ComponentActivity() {
                     vm.basePack = pack
                   }
                 }
-                .padding(vertical = 8.dp),
+                .padding(horizontal = 4.dp, vertical = 14.dp),
             verticalAlignment = Alignment.CenterVertically,
           ) {
             RadioButton(
-              modifier = Modifier.padding(horizontal = 16.dp),
+              modifier = Modifier.padding(horizontal = 8.dp),
               selected = selected,
               onClick = null,
             )
-            Box(modifier = Modifier.fillMaxHeight().aspectRatio(1f)) {
-              Image(
-                bitmap = app.icon.toBitmap().asImageBitmap(),
-                contentDescription = pack,
-                modifier = Modifier.matchParentSize(),
-                contentScale = ContentScale.Crop,
-              )
-            }
-            Spacer(modifier = Modifier.width(12.dp))
-            Column(modifier = Modifier.fillMaxWidth()) {
-              OneLineText(
-                app.label,
-                color = MaterialTheme.colorScheme.onSurface,
-                style = MaterialTheme.typography.bodyLarge,
-              )
-              OneLineText(
-                pack,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                style = MaterialTheme.typography.bodySmall,
-              )
-            }
+            Spacer(modifier = Modifier.width(8.dp))
+            IconPackItemContent(pack, app)
           }
         }
       }
@@ -386,7 +399,7 @@ class IconPackMergerActivity : ComponentActivity() {
 
   @Composable
   private fun IconList(contentPadding: PaddingValues) {
-    val icons = vm.filteredIcons.getValue(null)
+    val icons = vm.filteredIconsFlow.getValue(null)
     if (icons != null)
       LazyVerticalGrid(
         modifier = Modifier.fillMaxSize().padding(horizontal = 2.dp),

@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -29,17 +28,22 @@ import com.richardluo.globalIconPack.ui.viewModel.IconPackApp
 
 @Composable
 fun IconPackItem(pack: String, app: IconPackApp, selected: Boolean, onClick: () -> Unit) {
-  Row(
+  Box(
     modifier =
       Modifier.fillMaxWidth()
-        .height(IntrinsicSize.Min)
-        .padding(horizontal = 16.dp)
+        .padding(horizontal = 16.dp, vertical = 2.dp)
         .clip(MaterialTheme.shapes.extraLarge)
         .background(if (selected) MaterialTheme.colorScheme.primary else Color.Transparent)
         .selectable(selected, true, Role.RadioButton, onClick)
-        .padding(horizontal = 8.dp, vertical = 12.dp),
-    verticalAlignment = Alignment.CenterVertically,
+        .padding(horizontal = 8.dp, vertical = 10.dp)
   ) {
+    IconPackItemContent(pack, app, selected)
+  }
+}
+
+@Composable
+fun IconPackItemContent(pack: String, app: IconPackApp, selected: Boolean = false) {
+  Row(modifier = Modifier.height(IntrinsicSize.Min)) {
     Box(modifier = Modifier.fillMaxHeight().aspectRatio(1f)) {
       Image(
         bitmap = app.icon.toBitmap().asImageBitmap(),
@@ -49,7 +53,7 @@ fun IconPackItem(pack: String, app: IconPackApp, selected: Boolean, onClick: () 
       )
     }
     Spacer(modifier = Modifier.width(12.dp))
-    Column(modifier = Modifier.fillMaxWidth()) {
+    Column {
       OneLineText(
         app.label,
         color =

@@ -43,7 +43,7 @@ class RemoteSource(pack: String, config: IconPackConfig = defaultIconPackConfig)
     if (
       waitingForBootCompleted && getSystemProperty?.call<String?>(null, "sys.boot_completed") != "1"
     )
-      throw Exception("Boot is not competed. The remote service isn't ready.")
+      throw Exception("Boot is not completed. The remote service isn't ready.")
 
     waitingForBootCompleted = false
     iconFallback =

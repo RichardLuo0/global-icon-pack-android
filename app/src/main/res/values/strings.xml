@@ -63,6 +63,7 @@
     <string name="notice">Notice</string>
     <string name="search">Search</string>
     <string name="options">Options</string>
+    <string name="empty">Empty</string>
 
     <string name="restoreDefault">Restore default</string>
     <string name="restoreDefaultWarning">Are you sure you want to restore to the default icons?</string>
@@ -96,4 +97,8 @@
     <string name="asNormalIcon">As normal icon</string>
     <string name="asCalendarIcon">As calendar icon</string>
     <string name="notCalendarIcon">Not a valid calendar icon!</string>
+
+    <string name="autoFill">Auto fill</string>
+    <string name="autoFillSummary">Auto fill missing icons from other icon packs.</string>
+    <string name="autoFillAdd">Add pack</string>
 </resources>

@@ -15,7 +15,7 @@ import kotlinx.coroutines.flow.shareIn
 object InstalledAppsMonitor {
   @OptIn(DelicateCoroutinesApi::class)
   val flow =
-    callbackFlow<Unit> {
+    callbackFlow {
         val app = MyApplication.context
         val packageChangeReceiver =
           object : BroadcastReceiver() {

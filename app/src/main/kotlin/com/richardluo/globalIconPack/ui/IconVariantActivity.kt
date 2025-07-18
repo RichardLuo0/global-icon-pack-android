@@ -17,6 +17,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Download
 import androidx.compose.material.icons.outlined.FilterList
+import androidx.compose.material.icons.outlined.FormatColorFill
 import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.Restore
 import androidx.compose.material.icons.outlined.Search
@@ -44,6 +45,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.richardluo.globalIconPack.R
@@ -51,6 +53,7 @@ import com.richardluo.globalIconPack.ui.components.AnimatedNavHost
 import com.richardluo.globalIconPack.ui.components.AppFilterByType
 import com.richardluo.globalIconPack.ui.components.AppIcon
 import com.richardluo.globalIconPack.ui.components.AppbarSearchBar
+import com.richardluo.globalIconPack.ui.components.AutoFillDialog
 import com.richardluo.globalIconPack.ui.components.IconButtonWithTooltip
 import com.richardluo.globalIconPack.ui.components.LoadingDialog
 import com.richardluo.globalIconPack.ui.components.MyDropdownMenu
@@ -58,6 +61,7 @@ import com.richardluo.globalIconPack.ui.components.SampleTheme
 import com.richardluo.globalIconPack.ui.components.WarnDialog
 import com.richardluo.globalIconPack.ui.components.getLabelByType
 import com.richardluo.globalIconPack.ui.components.navPage
+import com.richardluo.globalIconPack.ui.viewModel.AutoFillVM
 import com.richardluo.globalIconPack.ui.viewModel.IconVariantVM
 import com.richardluo.globalIconPack.utils.getValue
 import kotlinx.coroutines.delay
@@ -117,6 +121,7 @@ class IconVariantActivity : ComponentActivity() {
               }
               var expand by rememberSaveable { mutableStateOf(false) }
               val expandFilter = rememberSaveable { mutableStateOf(false) }
+              val autoFillVM: AutoFillVM = viewModel()
               IconButtonWithTooltip(Icons.Outlined.MoreVert, stringResource(R.string.moreOptions)) {
                 expand = true
               }
@@ -127,6 +132,14 @@ class IconVariantActivity : ComponentActivity() {
                   onClick = {
                     expand = false
                     expandFilter.value = true
+                  },
+                )
+                DropdownMenuItem(
+                  leadingIcon = { Icon(Icons.Outlined.FormatColorFill, "auto fill") },
+                  text = { Text(stringResource(R.string.autoFill)) },
+                  onClick = {
+                    autoFillVM.open(vm.pack)
+                    expand = false
                   },
                 )
                 DropdownMenuItem(
@@ -172,6 +185,13 @@ class IconVariantActivity : ComponentActivity() {
                 )
               }
               AppFilterByType(expandFilter, vm.filterType)
+              AutoFillDialog(autoFillVM) {
+                lifecycleScope.launch {
+                  avm.waiting++
+                  vm.autoFill(it)
+                  avm.waiting--
+                }
+              }
             },
             modifier = Modifier.fillMaxWidth(),
             scrollBehavior = scrollBehavior,
