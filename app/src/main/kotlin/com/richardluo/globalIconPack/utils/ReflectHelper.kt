@@ -92,12 +92,6 @@ private val deoptimizeMethodM by lazy {
   XposedBridge::class.java.method("deoptimizeMethod", Member::class.java)
 }
 
-fun Executable.deoptimize(): Executable {
-  deoptimizeMethodM?.invoke(null, this)
-  return this
-}
+fun Executable.deoptimize() = apply { deoptimizeMethodM?.invoke(null, this) }
 
-fun List<Executable>.deoptimize(): List<Executable> {
-  forEach { deoptimizeMethodM?.invoke(null, it) }
-  return this
-}
+fun List<Executable>.deoptimize() = apply { forEach { deoptimizeMethodM?.invoke(null, it) } }

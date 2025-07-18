@@ -112,7 +112,9 @@ object MainPreference {
         key = Pref.ICON_PACK.key,
         defaultValue = Pref.ICON_PACK.def,
         getValueMap = { IconPackApps.flow.collectAsState(null).value },
-        item = { key, value, currentKey, onClick -> IconPackItem(key, value, currentKey, onClick) },
+        item = { key, value, currentKey, onClick ->
+          IconPackItem(key, value, key == currentKey, onClick)
+        },
         title = { TwoLineText(stringResource(R.string.iconPack)) },
         summary = { key, value ->
           Text(

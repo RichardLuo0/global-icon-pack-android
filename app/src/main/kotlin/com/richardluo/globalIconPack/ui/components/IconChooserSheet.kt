@@ -161,7 +161,7 @@ fun IconChooserSheet(
       if (suggestIcons != null)
         if (vm.searchText.value.isEmpty()) {
           val variantIcons = vm.icons.getValue(null) ?: setOf()
-          var expandState = rememberSaveable { mutableStateOf(false) }
+          val expandState = rememberSaveable { mutableStateOf(false) }
           val gridState = rememberLazyGridState()
           LazyVerticalGrid(
             state = gridState,
@@ -201,7 +201,7 @@ fun IconChooserSheet(
         key = { it.first },
         focusItem = { it.first == vm.iconPack?.pack },
       ) { item, dismiss ->
-        IconPackItem(item.first, item.second, vm.iconPack?.pack ?: "") {
+        IconPackItem(item.first, item.second, item.first == vm.iconPack?.pack) {
           vm.setPack(item.first)
           dismiss()
         }

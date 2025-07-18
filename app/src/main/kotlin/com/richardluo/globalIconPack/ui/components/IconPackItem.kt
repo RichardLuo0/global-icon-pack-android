@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -24,14 +23,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
 import com.richardluo.globalIconPack.ui.viewModel.IconPackApp
 
 @Composable
-fun IconPackItem(pack: String, app: IconPackApp, currentKey: String, onClick: () -> Unit) {
-  val selected = pack == currentKey
+fun IconPackItem(pack: String, app: IconPackApp, selected: Boolean, onClick: () -> Unit) {
   Row(
     modifier =
       Modifier.fillMaxWidth()
@@ -53,23 +50,19 @@ fun IconPackItem(pack: String, app: IconPackApp, currentKey: String, onClick: ()
     }
     Spacer(modifier = Modifier.width(12.dp))
     Column(modifier = Modifier.fillMaxWidth()) {
-      Text(
+      OneLineText(
         app.label,
         color =
           if (selected) MaterialTheme.colorScheme.onPrimary
           else MaterialTheme.colorScheme.onSurface,
         style = MaterialTheme.typography.bodyLarge,
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis,
       )
-      Text(
+      OneLineText(
         pack,
         color =
           if (selected) MaterialTheme.colorScheme.onPrimary
           else MaterialTheme.colorScheme.onSurfaceVariant,
         style = MaterialTheme.typography.bodySmall,
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis,
       )
     }
   }
