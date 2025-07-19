@@ -39,8 +39,7 @@ class IconChooserVM(context: Application) : ContextVM(context) {
 
   val icons =
     snapshotFlow { iconPack }
-      .transform { pack ->
-        val iconPack = iconPack
+      .transform { iconPack ->
         iconPack ?: return@transform
         emit(null)
         emit(iconPack.drawables.map { VariantPackIcon(iconPack, NormalIconEntry(it)) })
