@@ -93,8 +93,7 @@ fun AutoFillDialog(vm: AutoFillVM = viewModel(), onOk: (List<String>) -> Unit) {
               )
             Surface(
               modifier =
-                Modifier.draggableHandle()
-                  .onSizeChanged { width = it.width }
+                Modifier.onSizeChanged { width = it.width }
                   .offset { IntOffset(offsetX.value.roundToInt(), 0) }
                   .draggable(
                     rememberDraggableState {
@@ -123,7 +122,7 @@ fun AutoFillDialog(vm: AutoFillVM = viewModel(), onOk: (List<String>) -> Unit) {
                   IconPackItemContent(it, apps[it] ?: return@Row)
                 }
                 Icon(
-                  modifier = Modifier.fillMaxHeight(),
+                  modifier = Modifier.fillMaxHeight().draggableHandle(),
                   imageVector = Icons.Outlined.DragIndicator,
                   contentDescription = "reorder",
                 )
