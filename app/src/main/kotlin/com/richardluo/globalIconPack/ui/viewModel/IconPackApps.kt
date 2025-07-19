@@ -7,6 +7,7 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.shareIn
 import kotlinx.coroutines.withContext
@@ -15,12 +16,20 @@ data class IconPackApp(val label: String, val icon: Drawable)
 
 object IconPackApps {
   @OptIn(DelicateCoroutinesApi::class)
-  var flow =
+  val flow =
     InstalledAppsMonitor.flow
       .map { getIconAppMap() }
-      .shareIn(GlobalScope, started = SharingStarted.WhileSubscribed(), replay = 1)
+      .shareIn(
+        GlobalScope,
+        started =
+          SharingStarted.WhileSubscribed(
+            stopTimeoutMillis = 60 * 1000,
+            replayExpirationMillis = 60 * 1000,
+          ),
+        replay = 1,
+      )
 
-  suspend fun get() = flow.replayCache.getOrElse(0) { getIconAppMap() }
+  suspend fun get() = flow.first()
 
   private suspend fun getIconAppMap() =
     withContext(Dispatchers.IO) {
