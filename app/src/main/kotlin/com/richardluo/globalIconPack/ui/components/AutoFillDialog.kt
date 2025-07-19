@@ -150,10 +150,7 @@ fun AutoFillDialog(vm: AutoFillVM = viewModel(), onOk: (List<String>) -> Unit) {
     LazyListDialog(
       addPackDialog,
       { OneLineText(stringResource(R.string.autoFillAdd)) },
-      remember {
-          derivedStateOf { apps.filterKeys { it != vm.basePack && it !in vm.packs }.toList() }
-        }
-        .value,
+      remember { derivedStateOf { (apps - vm.packs - vm.basePack).toList() } }.value,
     ) { (pack, app), dismiss ->
       IconPackItem(pack, app, false) {
         vm.addPack(pack)
