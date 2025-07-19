@@ -88,7 +88,7 @@ class MergerVM(context: Application) :
   }
 
   private val icons =
-    combine(snapshotFlow { baseIconPack }, apps, snapshotFlow { changedIcons.toMap() }) {
+    combine(snapshotFlow { baseIconPack }, Apps.flow, snapshotFlow { changedIcons.toMap() }) {
         iconPack,
         apps,
         _ ->
@@ -175,7 +175,7 @@ class MergerVM(context: Application) :
           else it.toString()
         },
       ) {
-        val packageNames = getAllAppsAndShortcuts().toSet()
+        val packageNames = Apps.getAllWithShortcuts().toSet()
         val newIcons =
           iconPack.iconEntryMap
             .filter { it.key.packageName in packageNames }

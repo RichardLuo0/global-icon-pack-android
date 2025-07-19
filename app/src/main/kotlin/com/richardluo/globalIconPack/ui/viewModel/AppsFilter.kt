@@ -19,38 +19,44 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.shareIn
-import kotlinx.coroutines.withContext
 
-@OptIn(DelicateCoroutinesApi::class)
-private val appsFlow =
-  InstalledAppsMonitor.flow
-    .map {
-      val app = MyApplication.context
+object Apps {
+  @OptIn(DelicateCoroutinesApi::class)
+  val flow =
+    InstalledAppsMonitor.flow
+      .map {
+        val app = MyApplication.context
 
-      val userApps = mutableListOf<AppIconInfo>()
-      val systemApps = mutableListOf<AppIconInfo>()
+        val userApps = mutableListOf<AppIconInfo>()
+        val systemApps = mutableListOf<AppIconInfo>()
 
-      app.packageManager.getInstalledApplications(0).forEach { info ->
-        if ((info.flags and ApplicationInfo.FLAG_SYSTEM) == ApplicationInfo.FLAG_SYSTEM)
-          systemApps.add(AppIconInfo(app, info))
-        else userApps.add(AppIconInfo(app, info))
+        app.packageManager.getInstalledApplications(0).forEach { info ->
+          if ((info.flags and ApplicationInfo.FLAG_SYSTEM) == ApplicationInfo.FLAG_SYSTEM)
+            systemApps.add(AppIconInfo(app, info))
+          else userApps.add(AppIconInfo(app, info))
+        }
+
+        arrayOf(
+          userApps.distinct().sortedBy { it.label },
+          systemApps.distinct().sortedBy { it.label },
+        )
       }
-
-      arrayOf(
-        userApps.distinct().sortedBy { it.label },
-        systemApps.distinct().sortedBy { it.label },
+      .flowOn(Dispatchers.IO)
+      .shareIn(
+        GlobalScope,
+        started =
+          SharingStarted.WhileSubscribed(
+            stopTimeoutMillis = 60 * 1000,
+            replayExpirationMillis = 60 * 1000,
+          ),
+        replay = 1,
       )
-    }
-    .flowOn(Dispatchers.IO)
-    .shareIn(
-      GlobalScope,
-      started =
-        SharingStarted.WhileSubscribed(
-          stopTimeoutMillis = 60 * 1000,
-          replayExpirationMillis = 60 * 1000,
-        ),
-      replay = 1,
-    )
+
+  suspend fun getAll() = flow.first().let { it[0] + it[1] }
+
+  suspend fun getAllWithShortcuts() =
+    getAll().map { it.componentName.packageName }.let { it + it.map { "$it@" } }
+}
 
 interface IAppsFilter {
   enum class Type {
@@ -60,7 +66,6 @@ interface IAppsFilter {
 
   val searchText: MutableState<String>
   val filterType: MutableState<Type>
-  val apps: Flow<Array<List<AppIconInfo>>>
 
   fun <T> createFilteredIconsFlow(icons: Flow<Array<List<Pair<AppIconInfo, T>>>?>) =
     snapshotFlow { filterType.value }
@@ -71,19 +76,9 @@ interface IAppsFilter {
       .filter(snapshotFlow { searchText.value }.debounceInput()) { (info), text ->
         info.label.contains(text, ignoreCase = true)
       }
-
-  suspend fun getAllApps() =
-    withContext(Dispatchers.Default) {
-      val apps = appsFlow.first()
-      apps[0] + apps[1]
-    }
-
-  suspend fun getAllAppsAndShortcuts() =
-    getAllApps().map { it.componentName.packageName }.let { it + it.map { "$it@" } }
 }
 
 class AppsFilter : IAppsFilter {
   override val searchText = mutableStateOf("")
   override val filterType = mutableStateOf(Type.User)
-  override val apps = appsFlow
 }

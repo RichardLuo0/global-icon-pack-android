@@ -74,7 +74,7 @@ class IconVariantVM(context: Application) :
   private val iconPackConfig = IconPackConfig(WorldPreference.getPrefInApp(context))
 
   private val icons =
-    combine(apps, iconPackDB.iconsUpdateFlow) { apps, _ ->
+    combine(Apps.flow, iconPackDB.iconsUpdateFlow) { apps, _ ->
         apps.map { it.zip(getIconEntry(it.map { it.componentName })) }
       }
       .flowOn(Dispatchers.IO)
@@ -158,7 +158,7 @@ class IconVariantVM(context: Application) :
     viewModelScope.async(Dispatchers.Default) {
       runCatchingToast(context) {
         val xml = StringBuilder("<?xml version=\"1.0\" encoding=\"UTF-8\"?><resources>\n")
-        iconPackDB.getAllIcons(pack, getAllAppsAndShortcuts()).useEachRow { c ->
+        iconPackDB.getAllIcons(pack, Apps.getAllWithShortcuts()).useEachRow { c ->
           val entry = IconEntry.from(c.getBlob(GetAllIconsCol.Entry))
           val cn =
             ComponentName(
@@ -177,7 +177,7 @@ class IconVariantVM(context: Application) :
               xml.append(
                 "<calendar component=\"$cn\" prefix=\"$name\"${pack.ifNotEmpty { " pack=\"$it\"" }}/>\n"
               )
-            // Can not handle entries of other type
+            // Can not handle entries of other types
             else -> {}
           }
         }
