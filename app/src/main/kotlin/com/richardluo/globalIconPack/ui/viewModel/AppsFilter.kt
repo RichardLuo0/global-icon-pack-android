@@ -7,7 +7,6 @@ import androidx.compose.runtime.snapshotFlow
 import com.richardluo.globalIconPack.ui.MyApplication
 import com.richardluo.globalIconPack.ui.model.AppIconInfo
 import com.richardluo.globalIconPack.ui.viewModel.IAppsFilter.Type
-import com.richardluo.globalIconPack.utils.debounceInput
 import com.richardluo.globalIconPack.utils.filter
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
@@ -73,7 +72,7 @@ interface IAppsFilter {
         icons ?: return@combine null
         icons[type.ordinal]
       }
-      .filter(snapshotFlow { searchText.value }.debounceInput()) { (info), text ->
+      .filter(snapshotFlow { searchText.value }) { (info), text ->
         info.label.contains(text, ignoreCase = true)
       }
 }
