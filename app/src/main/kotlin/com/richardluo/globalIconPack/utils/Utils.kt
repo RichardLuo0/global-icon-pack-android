@@ -1,10 +1,12 @@
 package com.richardluo.globalIconPack.utils
 
+import android.app.ActivityManager
 import android.app.Application
 import android.content.ComponentName
 import android.content.Context
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.Drawable.ConstantState
+import android.os.Build
 import android.widget.Toast
 import androidx.annotation.CheckResult
 import androidx.collection.LruCache
@@ -12,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.richardluo.globalIconPack.BuildConfig
+import com.richardluo.globalIconPack.ui.MyApplication.Companion.context
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.BufferOverflow
@@ -74,10 +77,16 @@ inline fun <K, V> MutableMap<K, V?>.getOrPutNullable(key: K, defaultValue: () ->
   if (containsKey(key)) get(key) else defaultValue().also { put(key, it) }
 
 val isInMod by lazy {
-  when (Application.getProcessName()) {
-    BuildConfig.APPLICATION_ID -> false
-    else -> true
-  }
+  val currentProcessName =
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) Application.getProcessName()
+    else {
+      // Fallback for API < 28
+      val pid = android.os.Process.myPid()
+      val manager = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+      manager.runningAppProcesses?.firstOrNull { it.pid == pid }?.processName ?: ""
+    }
+
+  currentProcessName != BuildConfig.APPLICATION_ID
 }
 
 fun String.ifNotEmpty(block: (String) -> String) = if (isNotEmpty()) block(this) else this
