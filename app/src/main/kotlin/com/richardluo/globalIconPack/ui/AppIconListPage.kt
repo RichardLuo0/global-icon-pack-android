@@ -99,7 +99,7 @@ fun AppIconListPage(onBack: () -> Unit, iconsHolder: IconsHolder, vm: AppIconLis
     )
   }
 
-  val info = vm.appIconInfo ?: return
+  val (info, entry) = vm.appIcon ?: return
 
   Scaffold(
     modifier = Modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -113,7 +113,6 @@ fun AppIconListPage(onBack: () -> Unit, iconsHolder: IconsHolder, vm: AppIconLis
             title = {
               val expanded =
                 LocalTextStyle.current.fontSize == MaterialTheme.typography.headlineMedium.fontSize
-              val entry = vm.appIconEntry.getValue()
               val packageName = info.componentName.packageName
               if (expanded)
                 Row(

@@ -16,7 +16,6 @@ import com.richardluo.globalIconPack.R
 import com.richardluo.globalIconPack.iconPack.model.IconPackConfig
 import com.richardluo.globalIconPack.iconPack.model.defaultIconPackConfig
 import com.richardluo.globalIconPack.ui.IconsHolder
-import com.richardluo.globalIconPack.ui.model.AppIconInfo
 import com.richardluo.globalIconPack.ui.model.IconEntryWithPack
 import com.richardluo.globalIconPack.ui.model.IconInfo
 import com.richardluo.globalIconPack.ui.model.IconPack
@@ -107,10 +106,6 @@ class MergerVM(context: Application) :
     }
 
   override fun getCurrentIconPack() = baseIconPack
-
-  fun setupActivityList(appIconInfo: AppIconInfo) {
-    appIconListVM.setup(appIconInfo)
-  }
 
   var newPackIcon by mutableStateOf<IconEntryWithPack?>(null)
   var newPackName by mutableStateOf("Merged Icon Pack")

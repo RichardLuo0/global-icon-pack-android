@@ -88,10 +88,6 @@ class IconVariantVM(context: Application) :
 
   override fun getCurrentIconPack() = iconPack
 
-  fun setupActivityList(appIconInfo: AppIconInfo) {
-    appIconListVM.setup(appIconInfo)
-  }
-
   val modified =
     iconPackDB.modifiedUpdateFlow
       .map { iconPackDB.isPackModified(pack) }

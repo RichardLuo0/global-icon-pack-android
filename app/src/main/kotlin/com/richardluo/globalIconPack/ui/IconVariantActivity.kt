@@ -216,7 +216,7 @@ class IconVariantActivity : ComponentActivity() {
               loadImage = { vm.loadIcon(it) },
               shareKey = info.componentName.packageName,
             ) {
-              vm.setupActivityList(info)
+              vm.appIconListVM.setup(it)
               navController.navigate("AppIconList")
             }
           }

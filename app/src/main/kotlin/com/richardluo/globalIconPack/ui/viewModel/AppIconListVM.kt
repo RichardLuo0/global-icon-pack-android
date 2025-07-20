@@ -18,38 +18,46 @@ import com.richardluo.globalIconPack.ui.model.IconEntryWithPack
 import com.richardluo.globalIconPack.ui.model.IconInfo
 import com.richardluo.globalIconPack.ui.model.ShortcutIconInfo
 import com.richardluo.globalIconPack.utils.asType
-import com.richardluo.globalIconPack.utils.debounceInput
+import com.richardluo.globalIconPack.utils.emit
 import com.richardluo.globalIconPack.utils.filter
 import com.richardluo.globalIconPack.utils.runCatchingToast
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharingCommand
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.transform
+import kotlinx.coroutines.launch
 
 class AppIconListVM(
   context: Application,
-  scope: CoroutineScope,
+  val scope: CoroutineScope,
   updateFlow: Flow<*>,
   getIconEntry: (cnList: List<ComponentName>) -> List<IconEntryWithPack?>,
 ) {
-  var appIconInfo by mutableStateOf<AppIconInfo?>(null)
+  var appIcon by mutableStateOf<Pair<AppIconInfo, IconEntryWithPack?>?>(null)
     private set
 
   val searchText = mutableStateOf("")
 
+  private val startedRestartable = StartedRestartable()
+
   val activityIcons =
-    createFilteredIconsFlow(scope, SharingStarted.Lazily, updateFlow, getIconEntry) {
+    createFilteredIconsFlow(updateFlow, getIconEntry) {
       context.packageManager.getPackageInfo(it, PackageManager.GET_ACTIVITIES).activities?.map {
         ActivityIconInfo(context, it)
       } ?: listOf()
     }
 
   val shortcutIcons =
-    createFilteredIconsFlow(scope, SharingStarted.WhileSubscribed(), updateFlow, getIconEntry) {
+    createFilteredIconsFlow(updateFlow, getIconEntry) {
       runCatchingToast(context, { context.getString(R.string.requiresHookSystem) }) {
           context
             .getSystemService(Context.LAUNCHER_APPS_SERVICE)
@@ -69,45 +77,55 @@ class AppIconListVM(
         ?.map { info -> ShortcutIconInfo(info) } ?: listOf()
     }
 
-  fun setup(appIconInfo: AppIconInfo) {
-    this.appIconInfo = appIconInfo
+  fun setup(appIcon: Pair<AppIconInfo, IconEntryWithPack?>) {
+    scope.launch {
+      startedRestartable.restart()
+      this@AppIconListVM.appIcon = appIcon
+    }
   }
 
-  val appIconEntry =
-    snapshotFlow { appIconInfo }
-      .combine(updateFlow) { info, _ ->
-        info ?: return@combine null
-        return@combine getIconEntry(listOf(info.componentName)).getOrNull(0)
-      }
-      .stateIn(scope, SharingStarted.Lazily, null)
-
   private fun createFilteredIconsFlow(
-    scope: CoroutineScope,
-    started: SharingStarted,
     updateFlow: Flow<*>,
     getIconEntry: (cnList: List<ComponentName>) -> List<IconEntryWithPack?>,
     getIconInfos: suspend (String) -> List<IconInfo>,
-  ): Flow<List<Pair<IconInfo, IconEntryWithPack?>>?> {
-    val iconInfoList =
-      snapshotFlow { appIconInfo?.componentName?.packageName }
-        .transform { packageName ->
-          emit(null)
-          emit(getIconInfos(packageName ?: return@transform))
-        }
-        .flowOn(Dispatchers.IO)
-        .stateIn(scope, started, null)
-    val icons =
-      iconInfoList
-        .combine(updateFlow) { activityList, _ ->
-          activityList?.let { it.zip(getIconEntry(it.map { it.componentName })) }
-        }
-        .flowOn(Dispatchers.Default)
-        .stateIn(scope, SharingStarted.WhileSubscribed(), null)
-    return icons
-      .filter(snapshotFlow { searchText.value }.debounceInput()) { (info), text ->
+  ) =
+    snapshotFlow { appIcon?.first?.componentName?.packageName }
+      .transform {
+        emit(null)
+        emit(getIconInfos(it ?: return@transform))
+      }
+      .flowOn(Dispatchers.IO)
+      .stateIn(scope, SharingStarted.WhileSubscribed(), null)
+      .combine(updateFlow) { iconInfos, _ ->
+        iconInfos?.let { it.zip(getIconEntry(it.map { it.componentName })) }
+      }
+      .flowOn(Dispatchers.Default)
+      .stateIn(scope, SharingStarted.WhileSubscribed(), null)
+      .filter(snapshotFlow { searchText.value }) { (info), text ->
         info.componentName.className.contains(text, ignoreCase = true) ||
           info.label.contains(text, ignoreCase = true)
       }
-      .stateIn(scope, SharingStarted.WhileSubscribed(), null)
+      .stateIn(scope, startedRestartable, null)
+}
+
+private class StartedRestartable() : SharingStarted {
+  private val restartFlow = MutableSharedFlow<Unit>()
+
+  override fun command(subscriptionCount: StateFlow<Int>) = flow {
+    var started = false
+    restartFlow.collect {
+      if (started) {
+        if (subscriptionCount.value > 0) return@collect
+        // Stop first
+        started = false
+        emit(SharingCommand.STOP)
+      }
+      // Lazy start
+      subscriptionCount.first { it > 0 }
+      started = true
+      emit(SharingCommand.START)
+    }
   }
+
+  suspend fun restart() = restartFlow.emit()
 }
