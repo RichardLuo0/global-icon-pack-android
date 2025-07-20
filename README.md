@@ -22,7 +22,7 @@ This module is designed to extend the icon packs throughout the entire system.
 
 ## Requirements
 * LSPosed
-* Android 12+ (I tested on android 14, 15)
+* Android 8+ (I tested on Android 10, 12L, 14, 15)
 * Some features require AOSP-like OS
 
 ## Installation
