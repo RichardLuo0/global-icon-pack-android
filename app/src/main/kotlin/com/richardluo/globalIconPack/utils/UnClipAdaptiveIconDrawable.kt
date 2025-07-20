@@ -9,6 +9,7 @@ import android.graphics.RectF
 import android.graphics.Shader
 import android.graphics.drawable.AdaptiveIconDrawable
 import android.graphics.drawable.Drawable
+import android.os.Build
 
 private val mLayersBitmapF by lazy { AdaptiveIconDrawable::class.java.field("mLayersBitmap") }
 private val mLayersShaderF by lazy { AdaptiveIconDrawable::class.java.field("mLayersShader") }
@@ -40,7 +41,11 @@ open class UnClipAdaptiveIconDrawable(background: Drawable?, foreground: Drawabl
       mCanvas.setBitmap(mLayersBitmap)
       background?.draw(mCanvas)
       foreground?.draw(mCanvas)
-      val shader = BitmapShader(mLayersBitmap, Shader.TileMode.DECAL, Shader.TileMode.DECAL)
+      val shader = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        BitmapShader(mLayersBitmap, Shader.TileMode.DECAL, Shader.TileMode.DECAL)
+      } else {
+        BitmapShader(mLayersBitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP)
+      }
       mLayersShaderF.set(this, shader)
       mPaint.setShader(shader)
     }
