@@ -17,6 +17,7 @@ import android.graphics.Bitmap
 import android.graphics.Color
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
+import android.os.Build
 import android.os.Parcel
 import android.os.Parcelable
 import androidx.core.graphics.drawable.toDrawable
@@ -283,14 +284,16 @@ private val batchReplacerMap = run {
       defaultReplacer(piList.mapNotNull { it.applicationInfo }, sc)
       piList.forEach { pi -> pi.activities?.let { componentInfoReplacer(it.toList(), sc) } }
     }
-    runSafe {
-      val topActivityInfoF = TaskInfo::class.java.field("topActivityInfo") ?: return@runSafe
-      val taskInfoReplacer: BatchReplacer = { list, sc ->
-        defaultReplacer(list.mapNotNull { it?.let { topActivityInfoF.get(it) } }, sc)
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+          runSafe {
+              val topActivityInfoF = TaskInfo::class.java.field("topActivityInfo") ?: return@runSafe
+              val taskInfoReplacer: BatchReplacer = { list, sc ->
+                  defaultReplacer(list.mapNotNull { it?.let { topActivityInfoF.get(it) } }, sc)
+              }
+              setCreator(RunningTaskInfo::class.java, taskInfoReplacer)
+              setCreator(RecentTaskInfo::class.java, taskInfoReplacer)
+          }
       }
-      setCreator(RunningTaskInfo::class.java, taskInfoReplacer)
-      setCreator(RecentTaskInfo::class.java, taskInfoReplacer)
-    }
     runSafe {
       val launcherActivityInfo =
         classOf("android.content.pm.LauncherActivityInfoInternal") ?: return@runSafe
