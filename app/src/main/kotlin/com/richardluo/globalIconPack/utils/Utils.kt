@@ -77,18 +77,17 @@ inline fun <K, V> MutableMap<K, V?>.getOrPutNullable(key: K, defaultValue: () ->
   if (containsKey(key)) get(key) else defaultValue().also { put(key, it) }
 
 val isInMod by lazy {
-  val currentProcessName = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-      Application.getProcessName()
-  } else {
-    // Fallback for API < 28
-    val pid = android.os.Process.myPid()
-    val manager = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
-    manager.runningAppProcesses?.firstOrNull { it.pid == pid }?.processName ?: ""
-  }
+  val currentProcessName =
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) Application.getProcessName()
+    else {
+      // Fallback for API < 28
+      val pid = android.os.Process.myPid()
+      val manager = context.getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
+      manager.runningAppProcesses?.firstOrNull { it.pid == pid }?.processName ?: ""
+    }
 
   currentProcessName != BuildConfig.APPLICATION_ID
 }
-
 
 fun String.ifNotEmpty(block: (String) -> String) = if (isNotEmpty()) block(this) else this
 

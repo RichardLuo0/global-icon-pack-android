@@ -6,8 +6,6 @@ import org.lsposed.hiddenapibypass.HiddenApiBypass
 
 object BypassReflectRestrictions {
   fun onHookSelf(@Suppress("UNUSED") lpp: LoadPackageParam) {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-      HiddenApiBypass.addHiddenApiExemptions("")
-    }
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) HiddenApiBypass.addHiddenApiExemptions("")
   }
 }

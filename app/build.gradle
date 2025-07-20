@@ -19,7 +19,7 @@ android {
 
     defaultConfig {
         applicationId "com.richardluo.globalIconPack"
-        minSdk 31
+        minSdk 26
         targetSdk 36
         versionCode major * 10000 + minor * 100 + patch
         versionName "${major}.${minor}.${patch}"
@@ -48,6 +48,7 @@ android {
         debugApp {
             debuggable true
             signingConfig signingConfigs.debug
+            isDefault true
         }
     }
     compileOptions {

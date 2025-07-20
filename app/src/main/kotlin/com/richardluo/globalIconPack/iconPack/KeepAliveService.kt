@@ -8,8 +8,6 @@ import android.app.Service
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
-import android.content.pm.ServiceInfo
-import android.os.Build
 import com.richardluo.globalIconPack.R
 import com.richardluo.globalIconPack.utils.log
 
@@ -39,11 +37,7 @@ class KeepAliveService : Service() {
         .setSmallIcon(R.drawable.ic_notification)
         .setContentTitle("Providing icon pack to hooked apps")
         .setAutoCancel(true)
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-      startForeground(1, builder.build(), ServiceInfo.FOREGROUND_SERVICE_TYPE_MANIFEST)
-    } else {
-      startForeground(1, builder.build())
-    }
+    startForeground(1, builder.build())
     return START_STICKY
   }
 

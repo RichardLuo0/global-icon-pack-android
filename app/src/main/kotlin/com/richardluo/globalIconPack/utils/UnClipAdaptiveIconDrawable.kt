@@ -41,11 +41,10 @@ open class UnClipAdaptiveIconDrawable(background: Drawable?, foreground: Drawabl
       mCanvas.setBitmap(mLayersBitmap)
       background?.draw(mCanvas)
       foreground?.draw(mCanvas)
-      val shader = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-        BitmapShader(mLayersBitmap, Shader.TileMode.DECAL, Shader.TileMode.DECAL)
-      } else {
-        BitmapShader(mLayersBitmap, Shader.TileMode.CLAMP, Shader.TileMode.CLAMP)
-      }
+      val tileMode =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) Shader.TileMode.DECAL
+        else Shader.TileMode.CLAMP
+      val shader = BitmapShader(mLayersBitmap, tileMode, tileMode)
       mLayersShaderF.set(this, shader)
       mPaint.setShader(shader)
     }

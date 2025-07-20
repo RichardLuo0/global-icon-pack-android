@@ -284,15 +284,14 @@ private val batchReplacerMap = run {
       defaultReplacer(piList.mapNotNull { it.applicationInfo }, sc)
       piList.forEach { pi -> pi.activities?.let { componentInfoReplacer(it.toList(), sc) } }
     }
-      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-          runSafe {
-              val topActivityInfoF = TaskInfo::class.java.field("topActivityInfo") ?: return@runSafe
-              val taskInfoReplacer: BatchReplacer = { list, sc ->
-                  defaultReplacer(list.mapNotNull { it?.let { topActivityInfoF.get(it) } }, sc)
-              }
-              setCreator(RunningTaskInfo::class.java, taskInfoReplacer)
-              setCreator(RecentTaskInfo::class.java, taskInfoReplacer)
-          }
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
+      runSafe {
+        val topActivityInfoF = TaskInfo::class.java.field("topActivityInfo") ?: return@runSafe
+        val taskInfoReplacer: BatchReplacer = { list, sc ->
+          defaultReplacer(list.mapNotNull { it?.let { topActivityInfoF.get(it) } }, sc)
+        }
+        setCreator(RunningTaskInfo::class.java, taskInfoReplacer)
+        setCreator(RecentTaskInfo::class.java, taskInfoReplacer)
       }
     runSafe {
       val launcherActivityInfo =
