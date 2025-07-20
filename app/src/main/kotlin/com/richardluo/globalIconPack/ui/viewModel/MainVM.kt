@@ -3,7 +3,6 @@ package com.richardluo.globalIconPack.ui.viewModel
 import android.app.Application
 import android.content.ComponentName
 import android.content.pm.PackageManager
-import android.widget.Toast
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
@@ -25,8 +24,8 @@ import com.richardluo.globalIconPack.utils.InstanceManager.get
 import com.richardluo.globalIconPack.utils.InstanceManager.update
 import com.richardluo.globalIconPack.utils.WorldPreference
 import com.richardluo.globalIconPack.utils.getPreferenceFlow
-import com.richardluo.globalIconPack.utils.log
 import com.richardluo.globalIconPack.utils.runCatchingToast
+import com.richardluo.globalIconPack.utils.throwOnFail
 import com.topjohnwu.superuser.Shell
 import java.io.File
 import kotlinx.coroutines.Dispatchers
@@ -37,7 +36,6 @@ import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.withContext
 
 class MainVM(context: Application) : ContextVM(context) {
   private var iconPackDBLazy = get { IconPackDB(context) }
@@ -61,11 +59,22 @@ class MainVM(context: Application) : ContextVM(context) {
               MODE_SHARE -> {
                 KeepAliveService.stopForeground(context)
                 startOnBoot(false)
-                enableShareMode(pack)
+                runCatchingToast(
+                  context,
+                  { context.getString(R.string.errorOnShareMode) },
+                  {
+                    update { it.toMutablePreferences().apply { set(Pref.MODE.key, MODE_PROVIDER) } }
+                  },
+                ) {
+                  createShareDB()
+                  resetDBPermission()
+                  updateDB(pack)
+                }
               }
               MODE_PROVIDER -> {
                 KeepAliveService.startForeground(context)
                 startOnBoot(true)
+                runCatchingToast(context) { resetDBPermission() }
                 updateDB(pack)
               }
               else -> {
@@ -79,56 +88,48 @@ class MainVM(context: Application) : ContextVM(context) {
           .launchIn(viewModelScope)
       }
 
-  private suspend fun enableShareMode(pack: String) {
-    try {
-      val shareDB = ShareSource.DATABASE_PATH
-      val shareDBFile = File(shareDB)
-      val parent = shareDBFile.parent
-      val uid = android.os.Process.myUid()
-      if (!shareDBFile.exists()) {
-        if (iconPackDBLazy.isInitialized()) {
-          iconPackDBLazy.value.close()
-          iconPackDBLazy = update { IconPackDB(context) }
-        }
-        val oldDB =
-          context.createDeviceProtectedStorageContext().getDatabasePath(AppPref.PATH.def).path
-        Shell.cmd(
-            "set -e",
-            "mkdir -p $parent",
-            "chown $uid:$uid $parent && chmod 0775 $parent && chcon u:object_r:magisk_file:s0 $parent",
-            "if [ -f $oldDB ]; then cp $oldDB $shareDB; fi",
-            "if ! [ -f $shareDB ]; then touch $shareDB; fi",
-            "if [ -f $oldDB ]; then rm $oldDB; fi",
-          )
-          .exec()
-          .run {
-            if (!isSuccess)
-              throw Exception(
-                "Shared database creation failed: code: $code err: ${err.joinToString("\n")} out: ${out.joinToString("\n")}"
-              )
-          }
+  private fun createShareDB() {
+    val shareDB = ShareSource.DATABASE_PATH
+    val shareDBFile = File(shareDB)
+    val parent = shareDBFile.parent
+    val uid = android.os.Process.myUid()
+    if (!shareDBFile.exists()) {
+      if (iconPackDBLazy.isInitialized()) {
+        iconPackDBLazy.value.close()
+        iconPackDBLazy = update { IconPackDB(context) }
       }
+      val oldDB =
+        context.createDeviceProtectedStorageContext().getDatabasePath(AppPref.PATH.def).path
       Shell.cmd(
           "set -e",
+          "mkdir -p $parent",
           "chown $uid:$uid $parent && chmod 0775 $parent && chcon u:object_r:magisk_file:s0 $parent",
-          "chown $uid:$uid $shareDB && chmod 0666 $shareDB && chcon u:object_r:magisk_file:s0 $shareDB",
+          "if [ -f $oldDB ]; then cp $oldDB $shareDB; fi",
+          "if ! [ -f $shareDB ]; then touch $shareDB; fi",
+          "if [ -f $oldDB ]; then rm $oldDB; fi",
         )
         .exec()
-        .run {
-          if (!isSuccess)
-            throw Exception(
-              "Database permission setting failed: code: $code err: ${err.joinToString("\n")} out: ${out.joinToString("\n")}"
-            )
-        }
-      AppPreference.get(context).edit { putString(AppPref.PATH.key, shareDB) }
-      updateDB(pack)
-    } catch (t: Throwable) {
-      log(t)
-      withContext(Dispatchers.Main) {
-        Toast.makeText(context, R.string.errorOnShareMode, Toast.LENGTH_LONG).show()
-      }
-      prefFlow?.update { it.toMutablePreferences().apply { set(Pref.MODE.key, MODE_PROVIDER) } }
+        .throwOnFail()
     }
+    AppPreference.get(context).edit { putString(AppPref.PATH.key, shareDB) }
+  }
+
+  private fun resetDBPermission() {
+    val shareDB = AppPreference.get(context).get(AppPref.PATH)
+    if (!shareDB.startsWith(File.separatorChar)) return
+
+    val shareDBFile = File(shareDB)
+    if (shareDBFile.canRead() && shareDBFile.canWrite()) return
+    val parent = shareDBFile.parent
+
+    val uid = android.os.Process.myUid()
+    Shell.cmd(
+        "set -e",
+        "chown $uid:$uid $parent && chmod 0775 $parent && chcon u:object_r:magisk_file:s0 $parent",
+        "chown $uid:$uid $shareDB && chmod 0666 $shareDB && chcon u:object_r:magisk_file:s0 $shareDB",
+      )
+      .exec()
+      .throwOnFail()
   }
 
   private fun startOnBoot(enable: Boolean = true) {

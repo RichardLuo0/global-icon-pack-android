@@ -25,6 +25,7 @@ import com.richardluo.globalIconPack.ui.components.MyDropdownMenu
 import com.richardluo.globalIconPack.ui.components.SnackbarErrorVisuals
 import com.richardluo.globalIconPack.utils.WorldPreference
 import com.richardluo.globalIconPack.utils.log
+import com.richardluo.globalIconPack.utils.msg
 import com.topjohnwu.superuser.Shell
 import kotlinx.coroutines.launch
 
@@ -44,8 +45,7 @@ fun MainDropdownMenu(snackbarState: SnackbarHostState) {
             duration = SnackbarDuration.Long,
           )
         else {
-          val error =
-            "code: ${result.code} err: ${result.err.joinToString("\n")} out: ${result.out.joinToString("\n")}"
+          val error = result.msg
           log(error)
           snackbarState.showSnackbar(
             SnackbarErrorVisuals(

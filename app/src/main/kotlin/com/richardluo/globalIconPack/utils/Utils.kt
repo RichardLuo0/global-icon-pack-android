@@ -14,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.richardluo.globalIconPack.BuildConfig
+import com.topjohnwu.superuser.Shell
 import com.richardluo.globalIconPack.ui.MyApplication.Companion.context
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
@@ -127,6 +128,7 @@ inline fun <T, R> T.runSafe(crossinline block: T.() -> R) = run { block() }
 suspend inline fun <R> runCatchingToast(
   context: Context,
   crossinline message: (Throwable) -> String = { it.toString() },
+  onFailure: (Throwable) -> Unit = {},
   block: suspend () -> R,
 ) =
   try {
@@ -139,6 +141,7 @@ suspend inline fun <R> runCatchingToast(
       withContext(Dispatchers.Main) {
         Toast.makeText(context, message(it), Toast.LENGTH_LONG).show()
       }
+      onFailure(it)
     }
 
 inline fun <R> runCatchingToastOnMain(
@@ -205,4 +208,11 @@ abstract class CSSWrapper(protected val css: Array<ConstantState?>) : ConstantSt
 
 fun createCSS(vararg drawables: Drawable?): Array<ConstantState?>? {
   return drawables.map { if (it == null) null else it.constantState ?: return@createCSS null }
+}
+
+val Shell.Result.msg: String
+  get() = "code: $code err: ${err.joinToString("\n")} out: ${out.joinToString("\n")}"
+
+fun Shell.Result.throwOnFail() {
+  if (!isSuccess) throw Exception("Database permission setting failed: $msg")
 }
