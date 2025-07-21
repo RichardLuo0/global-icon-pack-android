@@ -31,9 +31,8 @@ private class BitmapLruCache<K : Any>(bytes: Long) :
     value.asAndroidBitmap().allocationByteCount / 1024
 }
 
-class IconCache(private val context: Context, factor: Double = 1.0 / 8) {
-  private val bitmapCache =
-    BitmapLruCache<String>((Runtime.getRuntime().maxMemory() * factor).toLong())
+class IconCache(private val context: Context, factor: Int = 4) {
+  private val bitmapCache = BitmapLruCache<String>(Runtime.getRuntime().maxMemory() / factor)
 
   suspend fun loadIcon(
     info: IconInfo,

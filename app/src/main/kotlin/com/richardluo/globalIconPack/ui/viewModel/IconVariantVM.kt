@@ -26,7 +26,6 @@ import com.richardluo.globalIconPack.iconPack.useEachRow
 import com.richardluo.globalIconPack.iconPack.useFirstRow
 import com.richardluo.globalIconPack.iconPack.useMapToArray
 import com.richardluo.globalIconPack.ui.IconsHolder
-import com.richardluo.globalIconPack.ui.model.AppIconInfo
 import com.richardluo.globalIconPack.ui.model.IconEntryWithPack
 import com.richardluo.globalIconPack.ui.model.IconInfo
 import com.richardluo.globalIconPack.ui.model.OriginalIcon
@@ -58,7 +57,7 @@ class IconVariantVM(context: Application) :
   ContextVM(context), IAppsFilter by AppsFilter(), IconsHolder {
   private val iconPackCache by get { IconPackCache(context) }
   private val iconCache by get { IconCache(context) }
-  private val fallbackIconCache = IconCache(context, 1.0 / 16)
+  private val fallbackIconCache = IconCache(context)
   private val iconPackDB by get { IconPackDB(context) }
 
   val iconPack = iconPackCache[WorldPreference.getPrefInApp(context).get(Pref.ICON_PACK)]

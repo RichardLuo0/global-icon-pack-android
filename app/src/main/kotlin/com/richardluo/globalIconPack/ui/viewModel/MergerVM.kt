@@ -49,7 +49,7 @@ class MergerVM(context: Application) :
   ContextVM(context), IAppsFilter by AppsFilter(), IconsHolder {
   private val iconPackCache by get { IconPackCache(context) }
   private val iconCache by get { IconCache(context) }
-  private val fallbackIconCache = IconCache(context, 1.0 / 16)
+  private val fallbackIconCache = IconCache(context)
 
   var baseIconPack by mutableStateOf<IconPack?>(null)
     private set
