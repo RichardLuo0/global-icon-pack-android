@@ -22,6 +22,8 @@ import com.richardluo.globalIconPack.utils.asType
 import com.richardluo.globalIconPack.utils.emit
 import com.richardluo.globalIconPack.utils.filter
 import com.richardluo.globalIconPack.utils.runCatchingToast
+import kotlin.concurrent.atomics.AtomicBoolean
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -35,8 +37,6 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.transform
 import kotlinx.coroutines.launch
-import kotlin.concurrent.atomics.AtomicBoolean
-import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
 class AppIconListVM(
   context: Application,
@@ -101,7 +101,10 @@ class AppIconListVM(
       .flowOn(Dispatchers.IO)
       .stateIn(scope, SharingStarted.WhileSubscribed(), null)
       .combine(updateFlow) { iconInfos, _ ->
-        iconInfos?.let { it.zip(getIconEntry(it.map { it.componentName })) }
+        iconInfos
+          ?.distinctBy { it.componentName.className }
+          ?.let { it.zip(getIconEntry(it.map { it.componentName })) }
+          ?.sortedBy { it.second == null }
       }
       .flowOn(Dispatchers.Default)
       .stateIn(scope, SharingStarted.WhileSubscribed(), null)
