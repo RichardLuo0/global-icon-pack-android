@@ -122,11 +122,13 @@ class MainVM(context: Application) : ContextVM(context) {
     if (shareDBFile.canRead() && shareDBFile.canWrite()) return
     val parent = shareDBFile.parent
 
+    val prefPath = WorldPreference.getPathInApp(context) ?: ""
     val uid = android.os.Process.myUid()
     Shell.cmd(
         "set -e",
-        "chown $uid:$uid $parent && chmod 0775 $parent && chcon u:object_r:magisk_file:s0 $parent",
-        "chown $uid:$uid $shareDB && chmod 0666 $shareDB && chcon u:object_r:magisk_file:s0 $shareDB",
+        "[ -n \"$prefPath\" ] && context=$(ls -Z $prefPath | cut -d: -f1-4) || context=\"u:object_r:magisk_file:s0\"",
+        "chown $uid:$uid $parent && chmod 0775 $parent && chcon \$context $parent",
+        "chown $uid:$uid $shareDB && chmod 0666 $shareDB && chcon \$context $shareDB",
       )
       .exec()
       .throwOnFail()

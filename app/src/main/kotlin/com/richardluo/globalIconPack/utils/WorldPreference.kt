@@ -8,6 +8,7 @@ import android.content.SharedPreferences
 import android.preference.PreferenceManager
 import com.richardluo.globalIconPack.BuildConfig
 import de.robv.android.xposed.XSharedPreferences
+import java.io.File
 
 object WorldPreference {
   private lateinit var pref: SharedPreferences
@@ -36,4 +37,13 @@ object WorldPreference {
         )
     return pref
   }
+
+  private val getSharedPreferencesPath by lazy {
+    Context::class.java.method("getSharedPreferencesPath", String::class.java)
+  }
+
+  fun getPathInApp(context: Context) =
+    getSharedPreferencesPath
+      ?.call<File>(context, PreferenceManager.getDefaultSharedPreferencesName(context))
+      ?.path
 }
