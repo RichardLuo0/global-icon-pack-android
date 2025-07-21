@@ -80,7 +80,7 @@ jobs:
               ],
               "label_extractor": [
                 {
-                  "pattern": "^(build|chore|ci|docs|feat|fix|perf|refactor|revert)(\\([^()]+\\))?:.*",
+                  "pattern": "^(build|chore|ci|docs|feat|fix|perf|refactor|revert)(\\([^()]+\\))?:(.|\n)*",
                   "target": "$1"
                 }
               ]
