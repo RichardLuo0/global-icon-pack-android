@@ -29,13 +29,14 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharingCommand
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.transform
 import kotlinx.coroutines.launch
+import kotlin.concurrent.atomics.AtomicBoolean
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
 class AppIconListVM(
   context: Application,
@@ -114,19 +115,24 @@ class AppIconListVM(
 private class StartedRestartable() : SharingStarted {
   private val restartFlow = MutableSharedFlow<Unit>()
 
-  override fun command(subscriptionCount: StateFlow<Int>) = flow {
-    var started = false
-    restartFlow.collect {
-      if (started) {
-        if (subscriptionCount.value > 0) return@collect
-        // Stop first
-        started = false
-        emit(SharingCommand.STOP)
+  @OptIn(ExperimentalAtomicApi::class)
+  override fun command(subscriptionCount: StateFlow<Int>) = channelFlow {
+    val started = AtomicBoolean(false)
+
+    launch {
+      restartFlow.collect {
+        if (subscriptionCount.value == 0) {
+          if (started.compareAndSet(expectedValue = true, newValue = false))
+            send(SharingCommand.STOP)
+        }
       }
-      // Lazy start
-      subscriptionCount.first { it > 0 }
-      started = true
-      emit(SharingCommand.START)
+    }
+
+    subscriptionCount.collect {
+      if (it > 0) {
+        if (started.compareAndSet(expectedValue = false, newValue = true))
+          send(SharingCommand.START)
+      }
     }
   }
 
