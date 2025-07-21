@@ -4,6 +4,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -179,8 +180,14 @@ fun AppIconListPage(onBack: () -> Unit, iconsHolder: IconsHolder, vm: AppIconLis
       }
     },
   ) { contentPadding ->
-    HorizontalPager(pagerState, contentPadding = contentPadding, beyondViewportPageCount = 0) {
-      IconList(tabs[it].flow.getValue(null), ::openChooser, iconsHolder::loadIcon)
+    val pagePadding = PaddingValues(bottom = contentPadding.calculateBottomPadding())
+
+    HorizontalPager(
+      pagerState,
+      contentPadding = PaddingValues(top = contentPadding.calculateTopPadding()),
+      beyondViewportPageCount = 0,
+    ) {
+      IconList(tabs[it].flow.getValue(null), ::openChooser, iconsHolder::loadIcon, pagePadding)
     }
 
     IconChooserSheet(iconChooser) { iconsHolder.loadIcon(it to null) }
@@ -192,10 +199,11 @@ private fun IconList(
   icons: List<Pair<IconInfo, IconEntryWithPack?>>?,
   onClick: (pair: Pair<IconInfo, IconEntryWithPack?>) -> Unit,
   loadIcon: suspend (pair: Pair<IconInfo, IconEntryWithPack?>) -> ImageBitmap,
+  contentPadding: PaddingValues,
 ) {
   if (icons != null)
-    LazyColumn(modifier = Modifier.fillMaxSize()) {
-      itemsIndexed(icons, key = { _, it -> it.first.componentName }) { index, it ->
+    LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = contentPadding) {
+      itemsIndexed(icons, key = { _, it -> it.first.componentName.className }) { index, it ->
         val (info) = it
         Row(
           modifier =
