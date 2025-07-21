@@ -203,7 +203,7 @@ fun MySliderPreference(
       lastValue = value
     }
   }
-  var dialogState = remember { mutableStateOf(false) }
+    val dialogState = remember { mutableStateOf(false) }
 
   Preference(
     title = title,

@@ -64,18 +64,25 @@ fun AutoFillDialog(vm: AutoFillVM = viewModel(), onOk: (List<String>) -> Unit) {
     val addPackDialog = rememberSaveable { mutableStateOf(false) }
 
     TwoLineText(
-      modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 4.dp),
+      modifier = Modifier
+          .fillMaxWidth()
+          .padding(horizontal = 24.dp, vertical = 4.dp),
       text = stringResource(R.string.autoFillSummary),
       color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
 
     ScrollIndicationBox(
-      modifier = Modifier.fillMaxWidth().weight(1f, false).padding(vertical = 8.dp),
+      modifier = Modifier
+          .fillMaxWidth()
+          .weight(1f, false)
+          .padding(vertical = 8.dp),
       state = lazyListState,
     ) {
       LazyColumn(state = it) {
         item {
-          Row(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 6.dp)) {
+          Row(modifier = Modifier
+              .fillMaxWidth()
+              .padding(horizontal = 24.dp, vertical = 6.dp)) {
             IconPackItemContent(vm.basePack, baseApp)
           }
         }
@@ -84,7 +91,9 @@ fun AutoFillDialog(vm: AutoFillVM = viewModel(), onOk: (List<String>) -> Unit) {
           val offsetX = remember { Animatable(0f) }
           ReorderableItem(
             reorderableLazyListState,
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
             key = it,
           ) { isDragging ->
             val elevation by
@@ -93,36 +102,41 @@ fun AutoFillDialog(vm: AutoFillVM = viewModel(), onOk: (List<String>) -> Unit) {
               )
             Surface(
               modifier =
-                Modifier.onSizeChanged { width = it.width }
-                  .offset { IntOffset(offsetX.value.roundToInt(), 0) }
-                  .draggable(
-                    rememberDraggableState {
-                      scope.launch {
-                        if (!offsetX.isRunning)
-                          offsetX.snapTo((offsetX.value + it).coerceAtMost(0f))
-                      }
-                    },
-                    Orientation.Horizontal,
-                    onDragStopped = {
-                      if (offsetX.value <= -width / 3f) {
-                        offsetX.animateTo(-width.toFloat())
-                        vm.removePack(i)
-                      } else offsetX.animateTo(0f)
-                    },
-                  ),
+                  Modifier
+                      .onSizeChanged { it -> width = it.width }
+                      .offset { IntOffset(offsetX.value.roundToInt(), 0) }
+                      .draggable(
+                          rememberDraggableState { it ->
+                              scope.launch {
+                                  if (!offsetX.isRunning)
+                                      offsetX.snapTo((offsetX.value + it).coerceAtMost(0f))
+                              }
+                          },
+                          Orientation.Horizontal,
+                          onDragStopped = {
+                              if (offsetX.value <= -width / 3f) {
+                                  offsetX.animateTo(-width.toFloat())
+                                  vm.removePack(i)
+                              } else offsetX.animateTo(0f)
+                          },
+                      ),
               color = AlertDialogDefaults.containerColor,
               shape = MaterialTheme.shapes.medium,
               shadowElevation = elevation,
             ) {
               Row(
                 modifier =
-                  Modifier.height(IntrinsicSize.Min).padding(horizontal = 8.dp, vertical = 8.dp)
+                  Modifier
+                      .height(IntrinsicSize.Min)
+                      .padding(horizontal = 8.dp, vertical = 8.dp)
               ) {
                 Box(modifier = Modifier.weight(1f)) {
                   IconPackItemContent(it, apps[it] ?: return@Row)
                 }
                 Icon(
-                  modifier = Modifier.fillMaxHeight().draggableHandle(),
+                  modifier = Modifier
+                      .fillMaxHeight()
+                      .draggableHandle(),
                   imageVector = Icons.Outlined.DragIndicator,
                   contentDescription = "reorder",
                 )
