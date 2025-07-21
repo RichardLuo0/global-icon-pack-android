@@ -58,6 +58,7 @@
     <string name="notice">Bildirim</string>
     <string name="search">Ara</string>
     <string name="options">Seçenekler</string>
+    <string name="empty">Boş</string>
     <string name="restoreDefault">Varsayılana geri yükle</string>
     <string name="restoreDefaultWarning">Varsayılan simgelere geri yüklemek istediğinizden emin misiniz?</string>
     <string name="suggestedIcons">Önerilen simgeler</string>
@@ -88,4 +89,7 @@
     <string name="asNormalIcon">Normal simge olarak</string>
     <string name="asCalendarIcon">Takvim simgesi olarak</string>
     <string name="notCalendarIcon">Geçerli bir takvim simgesi değil!</string>
+    <string name="autoFill">Otomatik doldurma</string>
+    <string name="autoFillSummary">Eksik simgeleri diğer simge paketlerinden otomatik olarak doldur.</string>
+    <string name="autoFillAdd">Paket ekle</string>
 </resources>
