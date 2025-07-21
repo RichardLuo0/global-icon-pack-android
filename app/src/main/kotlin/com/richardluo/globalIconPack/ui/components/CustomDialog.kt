@@ -185,10 +185,10 @@ fun TextFieldDialog(
   CustomDialog(openState, title = title) {
     TextFieldDialogContent(
       initValue,
-      keyboardOptions,
-      trailingIcon,
-      { openState.value = false },
-      onOk,
+      keyboardOptions = keyboardOptions,
+      trailingIcon = trailingIcon,
+      dismiss = { openState.value = false },
+      onOk = onOk,
     )
   }
 }
@@ -196,8 +196,16 @@ fun TextFieldDialog(
 @Composable
 fun TextFieldDialogContent(
   initValue: String = "",
-  keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+  textStyle: TextStyle = LocalTextStyle.current,
+  placeholder: @Composable (() -> Unit)? = null,
+  leadingIcon: @Composable ((MutableState<String>) -> Unit)? = null,
   trailingIcon: @Composable ((MutableState<String>) -> Unit)? = null,
+  prefix: @Composable ((MutableState<String>) -> Unit)? = null,
+  suffix: @Composable ((MutableState<String>) -> Unit)? = null,
+  keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+  singleLine: Boolean = true,
+  maxLines: Int = if (singleLine) 1 else Int.MAX_VALUE,
+  minLines: Int = 1,
   dismiss: () -> Unit,
   onOk: (String) -> Unit,
 ) {
@@ -210,14 +218,21 @@ fun TextFieldDialogContent(
       Modifier.fillMaxWidth()
         .padding(horizontal = 24.dp, vertical = 8.dp)
         .focusRequester(focusRequester),
-    singleLine = true,
+    textStyle = textStyle,
+    placeholder = placeholder,
+    leadingIcon = leadingIcon?.let { { it(state) } },
+    trailingIcon = trailingIcon?.let { { it(state) } },
+    prefix = prefix?.let { { it(state) } },
+    suffix = suffix?.let { { it(state) } },
+    singleLine = singleLine,
+    maxLines = maxLines,
+    minLines = minLines,
     keyboardOptions = keyboardOptions.copy(imeAction = ImeAction.Done),
     keyboardActions =
       KeyboardActions {
         onOk(state.value)
         dismiss()
       },
-    trailingIcon = trailingIcon?.let { { it(state) } },
   )
   LaunchedEffect(focusRequester) { focusRequester.requestFocus() }
 

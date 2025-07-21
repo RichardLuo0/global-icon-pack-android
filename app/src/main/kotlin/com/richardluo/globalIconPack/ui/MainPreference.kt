@@ -18,8 +18,6 @@ import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Shortcut
 import androidx.compose.material.icons.outlined.Apps
@@ -40,7 +38,6 @@ import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.Typography
@@ -57,8 +54,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
@@ -90,7 +85,6 @@ import me.zhanghai.compose.preference.LocalPreferenceTheme
 import me.zhanghai.compose.preference.listPreference
 import me.zhanghai.compose.preference.preference
 import me.zhanghai.compose.preference.switchPreference
-import me.zhanghai.compose.preference.textFieldPreference
 
 object MainPreference {
   @Composable
@@ -338,7 +332,8 @@ object MainPreference {
       summary = { OneLineText("#" + it.toHexString()) },
     ) { state, dismiss ->
       TextFieldDialogContent(
-        initValue = "#" + state.value.toHexString(),
+        initValue = state.value.toHexString(),
+        prefix = { Text("#") },
         trailingIcon = { IconButtonWithTooltip(Icons.Outlined.Clear, "Clear") { it.value = "" } },
         dismiss = dismiss,
       ) {
@@ -360,26 +355,10 @@ object MainPreference {
   @Composable
   fun Pixel(modifier: Modifier = Modifier) {
     LazyColumn(modifier = modifier) {
-      textFieldPreference(
+      dialogPreference(
         icon = { Icon(Icons.Outlined.Apps, Pref.PIXEL_LAUNCHER_PACKAGE.key) },
         key = Pref.PIXEL_LAUNCHER_PACKAGE.key,
         defaultValue = Pref.PIXEL_LAUNCHER_PACKAGE.def,
-        textToValue = { it },
-        textField = { value, onValueChange, onOk ->
-          OutlinedTextField(
-            value = value,
-            onValueChange = onValueChange,
-            modifier = Modifier.fillMaxWidth(),
-            maxLines = 2,
-            keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
-            keyboardActions = KeyboardActions { onOk() },
-            trailingIcon = {
-              IconButtonWithTooltip(Icons.Outlined.Restore, "Restore") {
-                onValueChange(TextFieldValue(Pref.PIXEL_LAUNCHER_PACKAGE.def))
-              }
-            },
-          )
-        },
         title = { TwoLineText(stringResource(R.string.pixelLauncherPackage)) },
         summary = {
           TwoLineText(
@@ -388,7 +367,22 @@ object MainPreference {
             else it
           )
         },
-      )
+      ) { state, dismiss ->
+        TextFieldDialogContent(
+          initValue = state.value,
+          singleLine = false,
+          maxLines = 2,
+          dismiss = dismiss,
+          trailingIcon = {
+            IconButtonWithTooltip(Icons.Outlined.Restore, "Restore") {
+              it.value = Pref.PIXEL_LAUNCHER_PACKAGE.def
+            }
+          },
+        ) {
+          state.value = it
+          dismiss()
+        }
+      }
       switchPreference(
         icon = {},
         key = Pref.NO_SHADOW.key,
