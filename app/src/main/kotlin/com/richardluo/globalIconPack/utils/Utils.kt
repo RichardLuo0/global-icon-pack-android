@@ -10,8 +10,14 @@ import android.os.Build
 import android.widget.Toast
 import androidx.annotation.CheckResult
 import androidx.collection.LruCache
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.LayoutDirection
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.richardluo.globalIconPack.BuildConfig
 import com.richardluo.globalIconPack.ui.MyApplication.Companion.context
@@ -216,3 +222,34 @@ val Shell.Result.msg: String
 fun Shell.Result.throwOnFail() {
   if (!isSuccess) throw Exception("Database permission setting failed: $msg")
 }
+
+class ConsumablePadding(
+  var start: Dp = 0.dp,
+  var top: Dp = 0.dp,
+  var end: Dp = 0.dp,
+  var bottom: Dp = 0.dp,
+) {
+  fun consumeTop() = PaddingValues(top = top).also { top = 0.dp }
+
+  fun consumeTopValue() = top.also { top = 0.dp }
+
+  fun consumeBottom() = PaddingValues(bottom = bottom).also { bottom = 0.dp }
+
+  fun consumeBottomValue() = bottom.also { bottom = 0.dp }
+
+  fun consume() =
+    PaddingValues(start, top, end, bottom).also {
+      start = 0.dp
+      top = 0.dp
+      end = 0.dp
+      bottom = 0.dp
+    }
+}
+
+fun PaddingValues.consumable() =
+  ConsumablePadding(
+    start = calculateStartPadding(LayoutDirection.Ltr),
+    top = calculateTopPadding(),
+    end = calculateEndPadding(LayoutDirection.Ltr),
+    bottom = calculateBottomPadding(),
+  )

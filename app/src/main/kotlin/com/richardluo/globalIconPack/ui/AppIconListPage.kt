@@ -182,11 +182,12 @@ fun AppIconListPage(onBack: () -> Unit, iconsHolder: IconsHolder, vm: AppIconLis
       }
     },
   ) { contentPadding ->
-    val pagePadding = PaddingValues(bottom = contentPadding.calculateBottomPadding())
+    val consumablePadding = contentPadding.consumable()
+    val pagePadding = consumablePadding.consumeBottom()
 
     HorizontalPager(
       pagerState,
-      contentPadding = PaddingValues(top = contentPadding.calculateTopPadding()),
+      contentPadding = consumablePadding.consume(),
       beyondViewportPageCount = 0,
     ) {
       IconList(tabs[it].flow.getValue(null), ::openChooser, iconsHolder::loadIcon, pagePadding)
