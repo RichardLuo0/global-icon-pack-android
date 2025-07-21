@@ -110,13 +110,12 @@ class AppIconListVM(
     snapshotFlow { appIcon?.first?.componentName?.packageName }
       .transform {
         emit(null)
-        emit(getIconInfos(it ?: return@transform))
+        emit(getIconInfos(it ?: return@transform).distinctBy { it.componentName.className })
       }
       .flowOn(Dispatchers.IO)
       .stateIn(scope, SharingStarted.WhileSubscribed(), null)
       .combine(updateFlow) { iconInfos, _ ->
         iconInfos
-          ?.distinctBy { it.componentName.className }
           ?.let { it.zip(getIconEntry(it.map { it.componentName })) }
           ?.sortedBy { it.second == null }
       }
