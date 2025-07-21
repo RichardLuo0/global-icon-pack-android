@@ -128,6 +128,7 @@ import com.richardluo.globalIconPack.ui.viewModel.IconPackApps
 import com.richardluo.globalIconPack.ui.viewModel.MergerVM
 import com.richardluo.globalIconPack.ui.viewModel.emptyImageBitmap
 import com.richardluo.globalIconPack.utils.IconPackCreator
+import com.richardluo.globalIconPack.utils.consumable
 import com.richardluo.globalIconPack.utils.getValue
 import kotlinx.coroutines.launch
 import me.zhanghai.compose.preference.ProvidePreferenceLocals
@@ -315,17 +316,19 @@ class IconPackMergerActivity : ComponentActivity() {
         }
       },
     ) { contentPadding ->
-      val contentPadding =
-        PaddingValues(
-          top = contentPadding.calculateTopPadding(),
-          bottom = scaffoldBottom - fabY + contentPadding.calculateBottomPadding(),
-        )
+      val consumablePadding = contentPadding.consumable()
+      val pagePadding =
+        PaddingValues(bottom = scaffoldBottom - fabY + consumablePadding.consumeBottomValue())
 
-      HorizontalPager(pagerState, beyondViewportPageCount = 2) {
+      HorizontalPager(
+        pagerState,
+        contentPadding = consumablePadding.consume(),
+        beyondViewportPageCount = 2,
+      ) {
         when (it) {
-          Page.SelectBasePack.ordinal -> SelectBasePack(pagerState, contentPadding)
-          Page.IconList.ordinal -> IconList(contentPadding)
-          Page.PackInfoForm.ordinal -> PackInfoForm(contentPadding)
+          Page.SelectBasePack.ordinal -> SelectBasePack(pagerState, pagePadding)
+          Page.IconList.ordinal -> IconList(pagePadding)
+          Page.PackInfoForm.ordinal -> PackInfoForm(pagePadding)
         }
       }
 

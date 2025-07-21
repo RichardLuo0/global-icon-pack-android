@@ -4,6 +4,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -58,6 +59,7 @@ import com.richardluo.globalIconPack.ui.model.IconPack
 import com.richardluo.globalIconPack.ui.model.VariantIcon
 import com.richardluo.globalIconPack.ui.viewModel.AppIconListVM
 import com.richardluo.globalIconPack.ui.viewModel.IconChooserVM
+import com.richardluo.globalIconPack.utils.consumable
 import com.richardluo.globalIconPack.utils.getValue
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
@@ -99,7 +101,7 @@ fun AppIconListPage(onBack: () -> Unit, iconsHolder: IconsHolder, vm: AppIconLis
     )
   }
 
-  val (info, entry) = vm.appIcon ?: return
+  val info = vm.appIcon?.first ?: return
 
   Scaffold(
     modifier = Modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -113,6 +115,7 @@ fun AppIconListPage(onBack: () -> Unit, iconsHolder: IconsHolder, vm: AppIconLis
             title = {
               val expanded =
                 LocalTextStyle.current.fontSize == MaterialTheme.typography.headlineMedium.fontSize
+              val entry = vm.appIconEntry.getValue()
               val packageName = info.componentName.packageName
               if (expanded)
                 Row(
@@ -179,8 +182,15 @@ fun AppIconListPage(onBack: () -> Unit, iconsHolder: IconsHolder, vm: AppIconLis
       }
     },
   ) { contentPadding ->
-    HorizontalPager(pagerState, contentPadding = contentPadding, beyondViewportPageCount = 0) {
-      IconList(tabs[it].flow.getValue(null), ::openChooser, iconsHolder::loadIcon)
+    val consumablePadding = contentPadding.consumable()
+    val pagePadding = consumablePadding.consumeBottom()
+
+    HorizontalPager(
+      pagerState,
+      contentPadding = consumablePadding.consume(),
+      beyondViewportPageCount = 0,
+    ) {
+      IconList(tabs[it].flow.getValue(null), ::openChooser, iconsHolder::loadIcon, pagePadding)
     }
 
     IconChooserSheet(iconChooser) { iconsHolder.loadIcon(it to null) }
@@ -192,10 +202,11 @@ private fun IconList(
   icons: List<Pair<IconInfo, IconEntryWithPack?>>?,
   onClick: (pair: Pair<IconInfo, IconEntryWithPack?>) -> Unit,
   loadIcon: suspend (pair: Pair<IconInfo, IconEntryWithPack?>) -> ImageBitmap,
+  contentPadding: PaddingValues,
 ) {
   if (icons != null)
-    LazyColumn(modifier = Modifier.fillMaxSize()) {
-      itemsIndexed(icons, key = { _, it -> it.first.componentName }) { index, it ->
+    LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = contentPadding) {
+      itemsIndexed(icons, key = { _, it -> it.first.componentName.className }) { index, it ->
         val (info) = it
         Row(
           modifier =

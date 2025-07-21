@@ -22,6 +22,8 @@ import com.richardluo.globalIconPack.utils.asType
 import com.richardluo.globalIconPack.utils.emit
 import com.richardluo.globalIconPack.utils.filter
 import com.richardluo.globalIconPack.utils.runCatchingToast
+import kotlin.concurrent.atomics.AtomicBoolean
+import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -32,11 +34,11 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.transform
 import kotlinx.coroutines.launch
-import kotlin.concurrent.atomics.AtomicBoolean
-import kotlin.concurrent.atomics.ExperimentalAtomicApi
 
 class AppIconListVM(
   context: Application,
@@ -46,6 +48,18 @@ class AppIconListVM(
 ) {
   var appIcon by mutableStateOf<Pair<AppIconInfo, IconEntryWithPack?>?>(null)
     private set
+
+  val appIconEntry =
+    merge(
+        snapshotFlow { appIcon?.second },
+        updateFlow
+          .map {
+            val info = appIcon?.first ?: return@map null
+            return@map getIconEntry(listOf(info.componentName)).getOrNull(0)
+          }
+          .flowOn(Dispatchers.IO),
+      )
+      .stateIn(scope, SharingStarted.Lazily, null)
 
   val searchText = mutableStateOf("")
 
@@ -96,12 +110,14 @@ class AppIconListVM(
     snapshotFlow { appIcon?.first?.componentName?.packageName }
       .transform {
         emit(null)
-        emit(getIconInfos(it ?: return@transform))
+        emit(getIconInfos(it ?: return@transform).distinctBy { it.componentName.className })
       }
       .flowOn(Dispatchers.IO)
       .stateIn(scope, SharingStarted.WhileSubscribed(), null)
       .combine(updateFlow) { iconInfos, _ ->
-        iconInfos?.let { it.zip(getIconEntry(it.map { it.componentName })) }
+        iconInfos
+          ?.let { it.zip(getIconEntry(it.map { it.componentName })) }
+          ?.sortedBy { it.second == null }
       }
       .flowOn(Dispatchers.Default)
       .stateIn(scope, SharingStarted.WhileSubscribed(), null)
