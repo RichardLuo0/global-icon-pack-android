@@ -180,7 +180,7 @@ private constructor(
    * @throws IllegalStateException if the database is already open
    */
   fun setOpenParams(openParams: OpenParams) {
-    Objects.requireNonNull<OpenParams?>(openParams)
+    Objects.requireNonNull(openParams)
     synchronized(this) {
       check(!(mDatabase != null && mDatabase!!.isOpen)) {
         "OpenParams cannot be set after opening the database"

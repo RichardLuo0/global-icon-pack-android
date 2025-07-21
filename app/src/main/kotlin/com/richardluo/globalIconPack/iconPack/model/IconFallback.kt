@@ -36,9 +36,9 @@ class IconFallback(
       iconUpons.isEmpty() &&
       iconMasks.isEmpty() &&
       iconScale == 1f &&
-      backAsAdaptiveBack == false &&
+      !backAsAdaptiveBack &&
       nonAdaptiveScale == 1f &&
-      convertToAdaptive == false
+      !convertToAdaptive
 
   fun orNullIfEmpty() = if (isEmpty()) null else this
 }

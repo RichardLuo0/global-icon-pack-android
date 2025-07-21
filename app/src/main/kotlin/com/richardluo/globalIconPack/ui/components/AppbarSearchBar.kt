@@ -7,7 +7,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
@@ -27,7 +26,7 @@ import com.richardluo.globalIconPack.R
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BoxScope.AppbarSearchBar(
+fun AppbarSearchBar(
   expandSearchBar: MutableState<Boolean>,
   searchText: MutableState<String>,
   placeHolder: String = stringResource(R.string.search),

@@ -11,6 +11,7 @@ import android.content.pm.ApplicationInfo
 import android.content.pm.LauncherActivityInfo
 import android.content.pm.PackageItemInfo
 import android.graphics.drawable.Drawable
+import android.os.Build
 import android.os.Process
 import android.os.UserManager
 import com.richardluo.globalIconPack.iconPack.getSC
@@ -80,10 +81,11 @@ class CalendarAndClockHook : Hook {
       }
       iconProvider.allMethods("getIcon", LauncherActivityInfo::class.java).hook {
         replace {
-          collectCCHook(
-            args[0].asType<LauncherActivityInfo>()?.activityInfo,
-            args.getOrNull(1).asType(),
-          )
+          val activityInfo = args[0].asType<LauncherActivityInfo>()
+          val info =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) activityInfo?.activityInfo
+            else activityInfo?.applicationInfo
+          collectCCHook(info, args.getOrNull(1).asType())
         }
       }
     }

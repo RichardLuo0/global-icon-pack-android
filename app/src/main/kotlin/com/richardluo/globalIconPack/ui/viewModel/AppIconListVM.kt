@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.pm.LauncherApps
 import android.content.pm.LauncherApps.ShortcutQuery
 import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Process
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -66,9 +67,11 @@ class AppIconListVM(
               ShortcutQuery()
                 .setPackage(it)
                 .setQueryFlags(
-                  ShortcutQuery.FLAG_MATCH_MANIFEST or
-                    ShortcutQuery.FLAG_MATCH_PINNED_BY_ANY_LAUNCHER or
-                    ShortcutQuery.FLAG_MATCH_DYNAMIC
+                  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P)
+                    ShortcutQuery.FLAG_MATCH_MANIFEST or
+                      ShortcutQuery.FLAG_MATCH_PINNED_BY_ANY_LAUNCHER or
+                      ShortcutQuery.FLAG_MATCH_DYNAMIC
+                  else ShortcutQuery.FLAG_MATCH_MANIFEST or ShortcutQuery.FLAG_MATCH_DYNAMIC
                 ),
               Process.myUserHandle(),
             )
