@@ -34,6 +34,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.transform
 import kotlinx.coroutines.launch
@@ -46,6 +48,18 @@ class AppIconListVM(
 ) {
   var appIcon by mutableStateOf<Pair<AppIconInfo, IconEntryWithPack?>?>(null)
     private set
+
+  val appIconEntry =
+    merge(
+        snapshotFlow { appIcon?.second },
+        updateFlow
+          .map {
+            val info = appIcon?.first ?: return@map null
+            return@map getIconEntry(listOf(info.componentName)).getOrNull(0)
+          }
+          .flowOn(Dispatchers.IO),
+      )
+      .stateIn(scope, SharingStarted.Lazily, null)
 
   val searchText = mutableStateOf("")
 

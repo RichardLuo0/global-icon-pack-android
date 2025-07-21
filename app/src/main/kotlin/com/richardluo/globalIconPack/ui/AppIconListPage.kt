@@ -59,6 +59,7 @@ import com.richardluo.globalIconPack.ui.model.IconPack
 import com.richardluo.globalIconPack.ui.model.VariantIcon
 import com.richardluo.globalIconPack.ui.viewModel.AppIconListVM
 import com.richardluo.globalIconPack.ui.viewModel.IconChooserVM
+import com.richardluo.globalIconPack.utils.consumable
 import com.richardluo.globalIconPack.utils.getValue
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
@@ -100,7 +101,7 @@ fun AppIconListPage(onBack: () -> Unit, iconsHolder: IconsHolder, vm: AppIconLis
     )
   }
 
-  val (info, entry) = vm.appIcon ?: return
+  val info = vm.appIcon?.first ?: return
 
   Scaffold(
     modifier = Modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -114,6 +115,7 @@ fun AppIconListPage(onBack: () -> Unit, iconsHolder: IconsHolder, vm: AppIconLis
             title = {
               val expanded =
                 LocalTextStyle.current.fontSize == MaterialTheme.typography.headlineMedium.fontSize
+              val entry = vm.appIconEntry.getValue()
               val packageName = info.componentName.packageName
               if (expanded)
                 Row(
