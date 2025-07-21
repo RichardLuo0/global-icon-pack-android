@@ -67,6 +67,9 @@ The list may not be latest.
   - Jia-Bin
 - Turkish
   - Holi
+- French
+  - MickMick21
+  - Jules
 
 ## Disclaimer
 > [!WARNING]
