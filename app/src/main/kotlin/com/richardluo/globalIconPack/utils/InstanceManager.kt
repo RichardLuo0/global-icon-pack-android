@@ -8,9 +8,8 @@ object InstanceManager {
   private val cache = WeakHashMap<Class<*>, SoftReference<Any>>()
 
   @Suppress("UNCHECKED_CAST")
-  fun <T> get(clazz: Class<T>, create: () -> T) = lazy {
-    cache[clazz]?.get() as T? ?: create().also { cache[clazz] = SoftReference(it) }
-  }
+  fun <T> get(clazz: Class<T>, create: () -> T) =
+    lazy(cache) { cache[clazz]?.get() as T? ?: create().also { cache[clazz] = SoftReference(it) } }
 
   inline fun <reified T> get() = get(T::class.java) { T::class.java.getConstructor().newInstance() }
 
