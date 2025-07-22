@@ -60,7 +60,7 @@ class IconVariantVM(context: Application) :
   private val fallbackIconCache = IconCache(context)
   private val iconPackDB by get { IconPackDB(context) }
 
-  val iconPack = iconPackCache[WorldPreference.getPrefInApp(context).get(Pref.ICON_PACK)]
+  val iconPack = iconPackCache[WorldPreference.get().get(Pref.ICON_PACK)]
   val pack
     get() = iconPack.pack
 
@@ -70,7 +70,7 @@ class IconVariantVM(context: Application) :
       .useFirstRow { FallbackSettings.from(it.getBlob(0)) }
       ?.let { IconFallback(it, iconPack::getIcon, defaultIconPackConfig) }
       ?.orNullIfEmpty()
-  private val iconPackConfig = IconPackConfig(WorldPreference.getPrefInApp(context))
+  private val iconPackConfig = IconPackConfig(WorldPreference.get())
 
   private val icons =
     combine(Apps.flow, iconPackDB.iconsUpdateFlow) { apps, _ ->

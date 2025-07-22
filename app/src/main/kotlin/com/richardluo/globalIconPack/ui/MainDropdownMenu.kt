@@ -77,7 +77,7 @@ fun MainDropdownMenu(snackbarState: SnackbarHostState) {
       leadingIcon = {},
       text = { Text(stringResource(R.string.restartPixelLauncher)) },
       onClick = {
-        val launcher = WorldPreference.getPrefInApp(context).get(Pref.PIXEL_LAUNCHER_PACKAGE)
+        val launcher = WorldPreference.get().get(Pref.PIXEL_LAUNCHER_PACKAGE)
         runCommand("rm -f /data/data/$launcher/databases/app_icons.db && am force-stop $launcher")
       },
     )

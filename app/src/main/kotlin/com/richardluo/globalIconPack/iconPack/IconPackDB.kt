@@ -38,10 +38,14 @@ class DBContext(context: Context) : ContextWrapper(context) {
 
 class IconPackDB(
   private val context: Context,
-  path: String = AppPreference.get(context).get(AppPref.PATH),
+  path: String = AppPreference.get().get(AppPref.PATH),
 ) : SQLiteOpenHelper(DBContext(context.createDeviceProtectedStorageContext()), path, null, 8) {
   val iconsUpdateFlow = flowTrigger()
   val modifiedUpdateFlow = flowTrigger()
+
+  init {
+    if (!usable()) throw Exception("DB file can not be read and write: $path")
+  }
 
   override fun onCreate(db: SQLiteDatabase) {}
 

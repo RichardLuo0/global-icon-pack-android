@@ -46,7 +46,7 @@ class MainVM(context: Application) : ContextVM(context) {
     private set
 
   val prefFlow =
-    runCatching { WorldPreference.getPrefInApp(context) }
+    runCatching { WorldPreference.get() }
       .getOrNull()
       ?.getPreferenceFlow()
       ?.apply {
@@ -92,6 +92,7 @@ class MainVM(context: Application) : ContextVM(context) {
     val shareDB = ShareSource.DATABASE_PATH
     val shareDBFile = File(shareDB)
     val parent = shareDBFile.parent
+
     val uid = android.os.Process.myUid()
     if (!shareDBFile.exists()) {
       if (iconPackDBLazy.isInitialized()) {
@@ -111,18 +112,19 @@ class MainVM(context: Application) : ContextVM(context) {
         .exec()
         .throwOnFail()
     }
-    AppPreference.get(context).edit { putString(AppPref.PATH.key, shareDB) }
+
+    AppPreference.get().edit { putString(AppPref.PATH.key, shareDB) }
   }
 
   private fun resetDBPermission() {
-    val shareDB = AppPreference.get(context).get(AppPref.PATH)
-    if (!shareDB.startsWith(File.separatorChar)) return
+    val shareDB =
+      AppPreference.get().get(AppPref.PATH).also { if (!it.startsWith(File.separatorChar)) return }
 
     val shareDBFile = File(shareDB)
     if (shareDBFile.canRead() && shareDBFile.canWrite()) return
     val parent = shareDBFile.parent
 
-    val prefPath = WorldPreference.getPathInApp(context) ?: ""
+    val prefPath = WorldPreference.getFile()?.path ?: ""
     val uid = android.os.Process.myUid()
     Shell.cmd(
         "set -e",

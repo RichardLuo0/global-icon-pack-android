@@ -104,7 +104,7 @@ class MainActivity : ComponentActivity() {
           }
         else {
           val setupDialogState = rememberSaveable {
-            mutableStateOf(AppPreference.get(this).get(AppPref.NEED_SETUP))
+            mutableStateOf(AppPreference.get().get(AppPref.NEED_SETUP))
           }
           if (setupDialogState.value) SetUpDialog(setupDialogState, prefFlow)
           else ProvidePreferenceLocals(flow = prefFlow, myPreferenceTheme()) { SampleScreen() }
@@ -143,7 +143,7 @@ class MainActivity : ComponentActivity() {
           Modifier.fillMaxWidth()
             .clickable {
               prefFlow.update { it.toMutablePreferences().apply { set(Pref.MODE.key, mode) } }
-              AppPreference.get(this).edit { putBoolean(AppPref.NEED_SETUP.key, false) }
+              AppPreference.get().edit { putBoolean(AppPref.NEED_SETUP.key, false) }
               dismiss()
             }
             .padding(horizontal = 16.dp, vertical = 8.dp),

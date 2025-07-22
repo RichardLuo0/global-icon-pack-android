@@ -3,7 +3,7 @@ package com.richardluo.globalIconPack.xposed
 import com.richardluo.globalIconPack.BuildConfig
 import com.richardluo.globalIconPack.Pref
 import com.richardluo.globalIconPack.get
-import com.richardluo.globalIconPack.utils.WorldPreference.getPrefInMod
+import com.richardluo.globalIconPack.utils.WorldPreference
 import de.robv.android.xposed.IXposedHookLoadPackage
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 
@@ -21,7 +21,7 @@ class XposedMain : IXposedHookLoadPackage {
       return
     }
 
-    val pref = getPrefInMod()
+    val pref = WorldPreference.get()
     val hookList =
       listOfNotNull(
         ReplaceIcon(

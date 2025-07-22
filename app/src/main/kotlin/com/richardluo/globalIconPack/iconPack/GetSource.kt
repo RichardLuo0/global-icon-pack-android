@@ -29,7 +29,7 @@ fun getSC(): Source? {
 private fun initSC() {
   AndroidAppHelper.currentApplication() ?: return
   runCatching {
-      val pref = WorldPreference.getPrefInMod()
+      val pref = WorldPreference.get()
       val pack =
         pref.get(Pref.ICON_PACK).takeIf { it.isNotEmpty() } ?: throw Exception("No icon pack set")
       val config = IconPackConfig(pref)
