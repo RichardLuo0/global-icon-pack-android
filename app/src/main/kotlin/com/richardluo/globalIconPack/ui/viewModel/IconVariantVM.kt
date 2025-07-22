@@ -74,7 +74,7 @@ class IconVariantVM(context: Application) :
 
   private val icons =
     combine(Apps.flow, iconPackDB.iconsUpdateFlow) { apps, _ ->
-        apps.map { it.zip(getIconEntry(it.map { it.componentName })) }
+        apps.map { it.zip(getIconEntry(it.map { it -> it.componentName })) }
       }
       .flowOn(Dispatchers.IO)
       .stateIn(viewModelScope, SharingStarted.Eagerly, null)
@@ -168,6 +168,7 @@ class IconVariantVM(context: Application) :
               xml.append(
                 "<item component=\"$cn\" drawable=\"$name\"${pack.ifNotEmpty { " pack=\"$it\"" }}/>\n"
               )
+
             IconEntry.Type.Calendar ->
               xml.append(
                 "<calendar component=\"$cn\" prefix=\"$name\"${pack.ifNotEmpty { " pack=\"$it\"" }}/>\n"
@@ -194,7 +195,7 @@ class IconVariantVM(context: Application) :
           iconPackDB.transaction {
             while (parser.next() != XmlPullParser.END_DOCUMENT) {
               if (parser.eventType != XmlPullParser.START_TAG) continue
-              val cn = parser["component"]?.let { unflattenFromString(it) } ?: continue
+              val cn = parser["component"]?.let { it -> unflattenFromString(it) } ?: continue
               val entry =
                 when (parser.name) {
                   "item" -> NormalIconEntry(parser["drawable"] ?: continue)
@@ -205,7 +206,7 @@ class IconVariantVM(context: Application) :
                 pack,
                 cn,
                 entry,
-                parser["pack"]?.let { iconPackCache[it] } ?: iconPack,
+                parser["pack"]?.let { it -> iconPackCache[it] } ?: iconPack,
               )
             }
           }

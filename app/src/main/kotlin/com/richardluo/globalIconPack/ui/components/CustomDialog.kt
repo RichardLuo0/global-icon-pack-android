@@ -152,6 +152,7 @@ private fun DialogButton(button: DialogButton) {
       Button(contentPadding = borderButtonPadding, onClick = button.onClick) {
         Text(text = button.name)
       }
+
     ButtonType.Outlined ->
       OutlinedButton(contentPadding = borderButtonPadding, onClick = button.onClick) {
         Text(text = button.name)

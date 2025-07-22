@@ -17,5 +17,6 @@
   -->
 
 <resources>
+
     <style name="Theme.Material.DayNight.NoActionBar" parent="android:Theme.Material.NoActionBar" />
 </resources>

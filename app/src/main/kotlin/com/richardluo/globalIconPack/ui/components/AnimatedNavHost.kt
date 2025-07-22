@@ -28,7 +28,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 
 @OptIn(ExperimentalSharedTransitionApi::class)
-val LocalSharedTransitionScope = compositionLocalOf<SharedTransitionScope?> { null }
+val LocalSharedTransitionScope: ProvidableCompositionLocal<SharedTransitionScope?> =
+  compositionLocalOf<SharedTransitionScope?> { null }
 val LocalAnimatedContentScope = compositionLocalOf<AnimatedContentScope?> { null }
 
 @OptIn(ExperimentalSharedTransitionApi::class)

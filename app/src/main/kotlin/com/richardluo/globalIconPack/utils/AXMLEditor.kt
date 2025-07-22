@@ -58,6 +58,7 @@ class AXMLEditor(input: InputStream) {
         WORD_RES_TABLE -> parserOffset += getLEWord(parserOffset + 1 * WORD_SIZE)
         WORD_START_NS,
         WORD_END_NS -> parserOffset += 6 * WORD_SIZE
+
         WORD_START_TAG -> {
           val attrCount = getLEShort(parserOffset + 7 * WORD_SIZE)
           parserOffset += 9 * WORD_SIZE
@@ -69,6 +70,7 @@ class AXMLEditor(input: InputStream) {
             parserOffset += 5 * WORD_SIZE
           }
         }
+
         WORD_END_TAG -> parserOffset += 6 * WORD_SIZE
         WORD_TEXT -> parserOffset += 7 * WORD_SIZE
         WORD_EOS -> break

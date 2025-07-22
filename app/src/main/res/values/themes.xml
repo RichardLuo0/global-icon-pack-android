@@ -17,10 +17,14 @@
   -->
 
 <resources>
+
     <style name="Theme.Material.DayNight.NoActionBar" parent="android:Theme.Material.Light.NoActionBar" />
 
     <style name="Platform.Theme.Sample.V21" parent="Theme.Material.DayNight.NoActionBar" />
+
     <style name="Platform.Theme.Sample" parent="Platform.Theme.Sample.V21" />
+
     <style name="Base.Theme.Sample" parent="Platform.Theme.Sample" />
+
     <style name="Theme.Sample" parent="Base.Theme.Sample" />
 </resources>

@@ -20,9 +20,9 @@ data class FallbackSettings(
     ByteArrayOutputStream()
       .also {
         DataOutputStream(it).apply {
-          writeList(iconBacks) { writeUTF(it) }
-          writeList(iconUpons) { writeUTF(it) }
-          writeList(iconMasks) { writeUTF(it) }
+          writeList(iconBacks) { it -> writeUTF(it) }
+          writeList(iconUpons) { it -> writeUTF(it) }
+          writeList(iconMasks) { it -> writeUTF(it) }
           writeFloat(iconScale)
         }
       }

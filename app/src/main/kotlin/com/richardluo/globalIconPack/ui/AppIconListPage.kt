@@ -88,7 +88,7 @@ fun AppIconListPage(onBack: () -> Unit, iconsHolder: IconsHolder, vm: AppIconLis
       TabItem(R.string.shortcuts, vm.shortcutIcons),
     )
   }
-  val pagerState = rememberPagerState(pageCount = { tabs.count() })
+  val pagerState = rememberPagerState(pageCount = { tabs.size })
   val coroutineScope = rememberCoroutineScope()
 
   fun openChooser(pair: Pair<IconInfo, IconEntryWithPack?>) {

@@ -59,7 +59,7 @@ class NormalIconEntry(override val name: String) : IconEntry {
   override fun toByteArray(): ByteArray =
     ByteArrayOutputStream()
       .also {
-        DataOutputStream(it).use {
+        DataOutputStream(it).use { it, it ->
           it.writeByte(type.ordinal)
           it.writeUTF(name)
         }
@@ -94,7 +94,7 @@ class CalendarIconEntry(override val name: String) : IconEntry {
   override fun toByteArray(): ByteArray =
     ByteArrayOutputStream()
       .also {
-        DataOutputStream(it).use {
+        DataOutputStream(it).use { it, it ->
           it.writeByte(type.ordinal)
           it.writeUTF(name)
         }
@@ -147,7 +147,7 @@ class ClockIconEntry(override val name: String, private val metadata: ClockMetad
   override fun toByteArray(): ByteArray =
     ByteArrayOutputStream()
       .also {
-        DataOutputStream(it).use {
+        DataOutputStream(it).use { it, it, it, it, it, it, it, it ->
           it.writeByte(type.ordinal)
           it.writeUTF(name)
           it.writeInt(metadata.hourLayerIndex)

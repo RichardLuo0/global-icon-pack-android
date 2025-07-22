@@ -42,7 +42,7 @@ import kotlinx.coroutines.launch
 
 class AppIconListVM(
   context: Application,
-  val scope: CoroutineScope,
+  private val scope: CoroutineScope,
   updateFlow: Flow<*>,
   getIconEntry: (cnList: List<ComponentName>) -> List<IconEntryWithPack?>,
 ) {
@@ -66,8 +66,9 @@ class AppIconListVM(
   private val startedRestartable = StartedRestartable()
 
   val activityIcons =
-    createFilteredIconsFlow(updateFlow, getIconEntry) {
-      context.packageManager.getPackageInfo(it, PackageManager.GET_ACTIVITIES).activities?.map {
+    createFilteredIconsFlow(updateFlow, getIconEntry) { it ->
+      context.packageManager.getPackageInfo(it, PackageManager.GET_ACTIVITIES).activities?.map { it
+        ->
         ActivityIconInfo(context, it)
       } ?: listOf()
     }
@@ -108,15 +109,15 @@ class AppIconListVM(
     getIconInfos: suspend (String) -> List<IconInfo>,
   ) =
     snapshotFlow { appIcon?.first?.componentName?.packageName }
-      .transform {
+      .transform { it ->
         emit(null)
-        emit(getIconInfos(it ?: return@transform).distinctBy { it.componentName.className })
+        emit(getIconInfos(it ?: return@transform).distinctBy { it -> it.componentName.className })
       }
       .flowOn(Dispatchers.IO)
       .stateIn(scope, SharingStarted.WhileSubscribed(), null)
       .combine(updateFlow) { iconInfos, _ ->
         iconInfos
-          ?.let { it.zip(getIconEntry(it.map { it.componentName })) }
+          ?.let { it -> it.zip(getIconEntry(it.map { it -> it.componentName })) }
           ?.sortedBy { it.second == null }
       }
       .flowOn(Dispatchers.Default)

@@ -93,7 +93,7 @@ object MainPreference {
     val typography = MaterialTheme.typography
     LazyColumn(modifier = modifier) {
       listPreference(
-        icon = { AnimatedContent(it) { ModeToIcon(it) } },
+        icon = { AnimatedContent(it) { it -> ModeToIcon(it) } },
         key = Pref.MODE.key,
         defaultValue = Pref.MODE.def,
         values = listOf(MODE_SHARE, MODE_PROVIDER, MODE_LOCAL),
@@ -245,7 +245,7 @@ object MainPreference {
       title = { TwoLineText(stringResource(R.string.iconPackShape)) },
       summary = {
         val iconColor = LocalPreferenceTheme.current.iconColor
-        AnimatedContent(it) {
+        AnimatedContent(it) { it, it ->
           if (it.isNotEmpty())
             Icon(
               DrawablePainter(PathDrawable(it, iconColor)),

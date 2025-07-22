@@ -14,7 +14,7 @@ import com.richardluo.globalIconPack.utils.unflattenFromString
 
 class IconPackProvider : ContentProvider() {
   companion object {
-    const val AUTHORITIES = "${BuildConfig.APPLICATION_ID}.IconPackProvider"
+    var AUTHORITIES = "${BuildConfig.APPLICATION_ID}.IconPackProvider"
     val ICON = "content://$AUTHORITIES/ICON".toUri()
     val FALLBACK = "content://$AUTHORITIES/FALLBACK".toUri()
   }
@@ -40,6 +40,7 @@ class IconPackProvider : ContentProvider() {
           FALLBACK ->
             if (selectionArgs.isNotEmpty()) iconPackDB.getFallbackSettings(selectionArgs[0])
             else null
+
           ICON ->
             if (selectionArgs.size >= 3) {
               iconPackDB.getIcon(
@@ -48,6 +49,7 @@ class IconPackProvider : ContentProvider() {
                 selectionArgs[1].toBoolean(),
               )
             } else null
+
           else -> null
         }
       }

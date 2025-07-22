@@ -93,10 +93,10 @@ fun AutoFillDialog(vm: AutoFillVM = viewModel(), onOk: (List<String>) -> Unit) {
               )
             Surface(
               modifier =
-                Modifier.onSizeChanged { width = it.width }
+                Modifier.onSizeChanged { it -> width = it.width }
                   .offset { IntOffset(offsetX.value.roundToInt(), 0) }
                   .draggable(
-                    rememberDraggableState {
+                    rememberDraggableState { it ->
                       scope.launch {
                         if (!offsetX.isRunning)
                           offsetX.snapTo((offsetX.value + it).coerceAtMost(0f))

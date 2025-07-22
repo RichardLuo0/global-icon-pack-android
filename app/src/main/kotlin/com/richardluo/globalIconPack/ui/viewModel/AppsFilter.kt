@@ -54,7 +54,7 @@ object Apps {
   suspend fun getAll() = flow.first().let { it[0] + it[1] }
 
   suspend fun getAllWithShortcuts() =
-    getAll().map { it.componentName.packageName }.let { it + it.map { "$it@" } }
+    getAll().map { it.componentName.packageName }.let { it + it.map { it -> "$it@" } }
 }
 
 interface IAppsFilter {

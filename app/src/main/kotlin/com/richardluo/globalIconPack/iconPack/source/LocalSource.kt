@@ -121,6 +121,7 @@ internal fun loadIconPack(resources: Resources, pack: String): IconPackInfo {
         "iconupon" -> addFallback(parser, info.iconUpons)
         "iconmask" -> addFallback(parser, info.iconMasks)
         "scale" -> info.iconScale = parser.getAttributeValue(null, "factor")?.toFloatOrNull() ?: 1f
+
         "item" -> addIcon(parser, NormalIconEntry(parser["drawable"] ?: continue))
         "calendar" -> addIcon(parser, CalendarIconEntry(parser["prefix"] ?: continue))
         "dynamic-clock" -> {

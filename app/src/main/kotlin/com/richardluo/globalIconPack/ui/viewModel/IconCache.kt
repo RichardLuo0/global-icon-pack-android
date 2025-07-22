@@ -88,6 +88,7 @@ class IconCache(private val context: Context, factor: Int = 4) {
             .getSystemService(Context.LAUNCHER_APPS_SERVICE)
             .asType<LauncherApps>()
             ?.getShortcutIconDrawable(info.info, 0)
+
         else -> null
       }
     }

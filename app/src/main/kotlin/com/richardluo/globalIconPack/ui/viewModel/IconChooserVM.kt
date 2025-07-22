@@ -63,7 +63,7 @@ class IconChooserVM(context: Application) : ContextVM(context) {
               text.ifEmpty {
                 suggestHint?.substringBeforeLast("_")
                   ?: appInfo.componentName.packageName.let {
-                    it.substringAfterLast(".").takeIf { it.length > 3 } ?: it
+                    it.substringAfterLast(".").takeIf { it -> it.length > 3 } ?: it
                   }
               }
             addAll(icons.filter { it.entry.name.contains(keyword, ignoreCase = true) })

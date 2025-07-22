@@ -40,6 +40,7 @@ class CalendarAndClockHook : Hook {
     val iconProvider = classOf("com.android.launcher3.icons.IconProvider", lpp) ?: return
     val mCalendar = iconProvider.field("mCalendar")
     val mClock = iconProvider.field("mClock")
+
     // Collect calendar and clock packages
     fun MethodHookParam.collectCCHook(pi: PackageItemInfo?, density: Int?): Drawable? {
       val pi = pi ?: return callOriginalMethod()
@@ -53,6 +54,7 @@ class CalendarAndClockHook : Hook {
         // Not in icon pack, update the original package
         when (packageName) {
           mCalendar?.getAs<ComponentName>(thisObject)?.packageName -> calendars.add(packageName)
+
           mClock?.getAs<ComponentName>(thisObject)?.packageName -> clocks.add(packageName)
         }
         return callOriginalMethod()
@@ -148,11 +150,13 @@ class CalendarAndClockHook : Hook {
             changeCalendarIcon(context, mCallback)
             result = null
           }
+
           ACTION_DATE_CHANGED,
           ACTION_TIME_CHANGED -> {
             changeCalendarIcon(context, mCallback)
             result = null
           }
+
           else -> return@before
         }
       }

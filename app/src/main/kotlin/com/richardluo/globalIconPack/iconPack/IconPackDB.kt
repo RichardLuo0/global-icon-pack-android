@@ -227,6 +227,7 @@ class IconPackDB(
         when (type) {
           Type.Normal,
           Type.Clock -> name
+
           else -> return 0
         }
       )
@@ -249,7 +250,7 @@ class IconPackDB(
               it.readUTF(),
               if (pack.isNotEmpty()) iconPackCache[pack] else iconPack,
             )
-            ?.let {
+            ?.let { it ->
               updateId
                 .apply {
                   bindLong(1, it.toLong())

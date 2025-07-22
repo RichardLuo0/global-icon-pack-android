@@ -71,7 +71,7 @@ object IconPackCreator {
       return id
     }
 
-    private val colorMap = RefMap<Int>("color", 0x7f020000) { "#${ it.toHexString()}" }
+    private val colorMap = RefMap<Int>("color", 0x7f020000) { "#${it.toHexString()}" }
 
     override fun addColor(color: Int) = colorMap.getOrPut(color).id
 

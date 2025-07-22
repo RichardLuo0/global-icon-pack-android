@@ -39,6 +39,7 @@ import kotlinx.coroutines.flow.update
 
 class MainVM(context: Application) : ContextVM(context) {
   private var iconPackDBLazy = get { IconPackDB(context) }
+
   // Hold a strong reference to icon pack cache so it never gets recycled before MainVM is destroyed
   private val iconPackCache = get { IconPackCache(context) }.value
 
@@ -71,12 +72,14 @@ class MainVM(context: Application) : ContextVM(context) {
                   updateDB(pack)
                 }
               }
+
               MODE_PROVIDER -> {
                 KeepAliveService.startForeground(context)
-                startOnBoot(true)
+                startOnBoot()
                 runCatchingToast(context) { resetDBPermission() }
                 updateDB(pack)
               }
+
               else -> {
                 KeepAliveService.stopForeground(context)
                 startOnBoot(false)

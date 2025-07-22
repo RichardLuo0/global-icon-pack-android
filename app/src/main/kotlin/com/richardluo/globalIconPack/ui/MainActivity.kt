@@ -186,7 +186,7 @@ class MainActivity : ComponentActivity() {
         TopAppBar(
           title = {
             AnimatedContent(targetState = pagerState.currentPage, label = "Title text change") {
-              pages.getOrNull(it)?.let { OneLineText(it.name) }
+              pages.getOrNull(it)?.let { it -> OneLineText(it.name) }
             }
           },
           modifier = Modifier.fillMaxWidth(),

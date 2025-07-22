@@ -45,6 +45,7 @@ class IconPack(val pack: String, val res: Resources) {
       when (entry.type) {
         IconEntry.Type.Normal,
         IconEntry.Type.Clock -> getDrawableId(entry.name).takeIf { it != 0 } ?: return null
+
         else -> 0
       }
     return if (expectId == null || id == expectId) {
@@ -55,6 +56,7 @@ class IconPack(val pack: String, val res: Resources) {
   fun getIcon(entry: IconEntry, iconDpi: Int) =
     when (entry) {
       is IconEntryWithId -> entry.getIcon { res.getDrawableForDensity(entry.id, iconDpi, null) }
+
       else -> entry.getIcon { getIcon(it, iconDpi) }
     }?.let { IconHelper.makeAdaptive(it) }
 
@@ -102,6 +104,7 @@ class IconPack(val pack: String, val res: Resources) {
         when (res.getResourceTypeName(id)) {
           "drawable",
           "mipmap" -> addAllFiles(id, "${name}_${i++}", apkBuilder)
+
           "color" -> apkBuilder.addColor(res.getColor(id, null))
           "dimen" -> apkBuilder.addDimen(res.getDimension(id))
           else -> null

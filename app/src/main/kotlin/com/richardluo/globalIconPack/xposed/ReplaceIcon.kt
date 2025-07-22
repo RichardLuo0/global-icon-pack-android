@@ -125,12 +125,15 @@ class ReplaceIcon(
           when {
             isHighTwoByte(resId, IN_SC) ->
               getSC()?.getIcon(withHighByteSet(resId, SC_DEFAULT), density)
+
             isHighTwoByte(resId, NOT_IN_SC) -> {
               args[0] = withHighByteSet(resId, ANDROID_DEFAULT)
               callOriginalMethod<Drawable?>()?.let { getSC()?.genIconFrom(it) ?: it }
             }
+
             resId == android.R.drawable.sym_def_app_icon ->
               callOriginalMethod<Drawable?>()?.let { getSC()?.genIconFrom(it) ?: it }
+
             else -> return@before
           }
       }
@@ -260,10 +263,12 @@ private val batchReplacerMap = run {
   fun defaultReplacer(list: Iterable<Any?>, sc: Source) {
     replaceIconInItemInfoList(list.mapNotNull { it.asType<PackageItemInfo>() }, sc)
   }
+
   fun componentInfoReplacer(list: Iterable<Any?>, sc: Source) {
     defaultReplacer(list, sc)
     replaceIconInItemInfoList(list.mapNotNull { it.asType<ComponentInfo>()?.applicationInfo }, sc)
   }
+
   fun resolveInfoReplacer(list: Iterable<Any?>, sc: Source) {
     val riList = list.mapNotNull { it.asType<ResolveInfo>() }
     componentInfoReplacer(riList.map { it.getComponentInfo() }, sc)
