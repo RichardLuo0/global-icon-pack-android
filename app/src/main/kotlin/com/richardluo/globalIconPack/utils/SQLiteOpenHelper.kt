@@ -145,6 +145,8 @@ private constructor(
     mOpenParamsBuilder.addOpenFlags(SQLiteDatabase.CREATE_IF_NECESSARY)
   }
 
+  fun usable() = context.getDatabasePath(databaseName).let { it.canRead() && it.canWrite() }
+
   /**
    * Configures [lookaside memory allocator](https://sqlite.org/malloc.html#lookaside)
    *

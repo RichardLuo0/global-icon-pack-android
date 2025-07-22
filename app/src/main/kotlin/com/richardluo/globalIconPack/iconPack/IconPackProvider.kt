@@ -19,10 +19,10 @@ class IconPackProvider : ContentProvider() {
     val FALLBACK = "content://$AUTHORITIES/FALLBACK".toUri()
   }
 
-  private lateinit var iconPackDB: IconPackDB
+  private var iconPackDB: IconPackDB? = null
 
   override fun onCreate(): Boolean {
-    iconPackDB = get { IconPackDB(context!!) }.value
+    runCatching { iconPackDB = get { IconPackDB(context!!) }.value }
     return true
   }
 
@@ -33,6 +33,7 @@ class IconPackProvider : ContentProvider() {
     selectionArgs: Array<out String>?,
     sortOrder: String?,
   ): Cursor? {
+    val iconPackDB = iconPackDB ?: return null
     val oldPolicy = StrictMode.allowThreadDiskReads()
     selectionArgs ?: return null
     return runCatching {

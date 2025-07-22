@@ -4,7 +4,9 @@ import android.app.AndroidAppHelper
 import android.content.ComponentName
 import android.graphics.drawable.Drawable
 import androidx.core.database.getIntOrNull
+import com.richardluo.globalIconPack.AppPref
 import com.richardluo.globalIconPack.BuildConfig
+import com.richardluo.globalIconPack.get
 import com.richardluo.globalIconPack.iconPack.IconPackDB
 import com.richardluo.globalIconPack.iconPack.IconPackDB.GetIconCol
 import com.richardluo.globalIconPack.iconPack.model.FallbackSettings
@@ -16,6 +18,7 @@ import com.richardluo.globalIconPack.iconPack.model.ResourceOwner
 import com.richardluo.globalIconPack.iconPack.model.defaultIconPackConfig
 import com.richardluo.globalIconPack.iconPack.useFirstRow
 import com.richardluo.globalIconPack.iconPack.useMapToArray
+import com.richardluo.globalIconPack.utils.AppPreference
 import com.richardluo.globalIconPack.utils.getOrPut
 import java.util.Collections
 
@@ -31,7 +34,11 @@ class ShareSource(pack: String, config: IconPackConfig = defaultIconPackConfig) 
   private val indexMap = mutableMapOf<ComponentName, Int?>()
   private val iconEntryList = Collections.synchronizedList(mutableListOf<IconResolver>())
 
-  private val db: IconPackDB = IconPackDB(AndroidAppHelper.currentApplication(), DATABASE_PATH)
+  private val db =
+    IconPackDB(
+      AndroidAppHelper.currentApplication(),
+      AppPreference.get().getString(AppPref.PATH.key, DATABASE_PATH)!!,
+    )
   private val resourcesMap = mutableMapOf<String, ResourceOwner>()
 
   init {
@@ -41,8 +48,6 @@ class ShareSource(pack: String, config: IconPackConfig = defaultIconPackConfig) 
           IconFallback(FallbackSettings.from(it.getBlob(0)), ::getIcon, config).orNullIfEmpty()
         }
       else null
-    // Keep this line to ensure that the db exists
-    db.readableDatabase
   }
 
   override fun getId(cn: ComponentName) = getId(listOf(cn)).getOrNull(0)
