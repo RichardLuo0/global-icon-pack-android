@@ -93,7 +93,6 @@ class MainVM(context: Application) : ContextVM(context) {
     val shareDBFile = File(shareDB)
     val parent = shareDBFile.parent
 
-    val uid = android.os.Process.myUid()
     if (!shareDBFile.exists()) {
       if (iconPackDBLazy.isInitialized()) {
         iconPackDBLazy.value.close()
@@ -104,7 +103,6 @@ class MainVM(context: Application) : ContextVM(context) {
       Shell.cmd(
           "set -e",
           "mkdir -p $parent",
-          "chown $uid:$uid $parent && chmod 0775 $parent && chcon u:object_r:magisk_file:s0 $parent",
           "if [ -f $oldDB ]; then cp $oldDB $shareDB; fi",
           "if ! [ -f $shareDB ]; then touch $shareDB; fi",
           "if [ -f $oldDB ]; then rm $oldDB; fi",
@@ -129,7 +127,7 @@ class MainVM(context: Application) : ContextVM(context) {
     Shell.cmd(
         "set -e",
         "[ -n \"$prefPath\" ] && context=$(ls -Z $prefPath | cut -d: -f1-4) || context=\"u:object_r:magisk_file:s0\"",
-        "chown $uid:$uid $parent && chmod 0775 $parent && chcon \$context $parent",
+        "chown $uid:$uid $parent && chmod 0777 $parent && chcon \$context $parent",
         "chown $uid:$uid $shareDB && chmod 0666 $shareDB && chcon \$context $shareDB",
       )
       .exec()
