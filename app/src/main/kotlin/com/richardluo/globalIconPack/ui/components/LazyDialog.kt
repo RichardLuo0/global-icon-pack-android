@@ -31,7 +31,7 @@ import com.richardluo.globalIconPack.R
 @Composable
 fun <T> LazyDialog(
   openState: MutableState<Boolean>,
-  title: @Composable () -> Unit,
+  title: (@Composable () -> Unit)? = null,
   value: T?,
   dismissible: Boolean = true,
   content: @Composable (T) -> Unit,

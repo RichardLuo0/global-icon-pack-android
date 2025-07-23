@@ -48,8 +48,8 @@ import androidx.compose.ui.window.DialogProperties
 fun CustomDialog(
   modifier: Modifier = Modifier,
   properties: DialogProperties = DialogProperties(),
-  title: @Composable () -> Unit,
   onDismissRequest: () -> Unit,
+  title: (@Composable () -> Unit)? = null,
   content: @Composable ColumnScope.() -> Unit,
 ) {
   BasicAlertDialog(
@@ -64,14 +64,15 @@ fun CustomDialog(
       tonalElevation = AlertDialogDefaults.TonalElevation,
     ) {
       Column(modifier = Modifier.padding(vertical = 12.dp)) {
-        ProvideContentColorTextStyle(
-          contentColor = AlertDialogDefaults.titleContentColor,
-          textStyle = MaterialTheme.typography.headlineSmall,
-        ) {
-          Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 8.dp)) {
-            title()
+        if (title != null)
+          ProvideContentColorTextStyle(
+            contentColor = AlertDialogDefaults.titleContentColor,
+            textStyle = MaterialTheme.typography.headlineSmall,
+          ) {
+            Box(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 8.dp)) {
+              title()
+            }
           }
-        }
         ProvideContentColorTextStyle(
           contentColor = AlertDialogDefaults.textContentColor,
           textStyle = MaterialTheme.typography.labelLarge,
@@ -88,8 +89,8 @@ fun CustomDialog(
   openState: MutableState<Boolean>,
   modifier: Modifier = Modifier,
   properties: DialogProperties = DialogProperties(),
-  title: @Composable () -> Unit,
   dismissible: Boolean = true,
+  title: (@Composable () -> Unit)? = null,
   content: @Composable ColumnScope.() -> Unit,
 ) {
   if (!openState.value) return
@@ -97,12 +98,12 @@ fun CustomDialog(
   CustomDialog(
     modifier,
     properties,
-    title,
     if (dismissible)
       fun() {
         openState.value = false
       }
     else fun() {},
+    title,
     content,
   )
 }
@@ -176,7 +177,7 @@ fun ProvideContentColorTextStyle(
 @Composable
 fun TextFieldDialog(
   openState: MutableState<Boolean>,
-  title: @Composable () -> Unit,
+  title: (@Composable () -> Unit)? = null,
   initValue: String = "",
   keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
   trailingIcon: @Composable ((MutableState<String>) -> Unit)? = null,

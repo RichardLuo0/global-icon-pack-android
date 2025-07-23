@@ -19,9 +19,8 @@ fun LoadingDialog(progress: Float? = null, text: String? = null) {
   CustomDialog(
     onDismissRequest = {},
     properties = DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false),
-    title = {},
   ) {
-    Column(Modifier.fillMaxWidth().padding(horizontal = 24.dp)) {
+    Column(Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 6.dp)) {
       if (progress != null)
         LinearProgressIndicator(modifier = Modifier.fillMaxWidth(), progress = { progress })
       else LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
