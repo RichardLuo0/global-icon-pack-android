@@ -58,6 +58,7 @@
     <string name="notice">Hinweis</string>
     <string name="search">Suche</string>
     <string name="options">Einstellungen</string>
+    <string name="empty">Leer</string>
     <string name="restoreDefault">Standardeinstellungen wiederherstellen</string>
     <string name="restoreDefaultWarning">Sind Sie sicher, dass Sie die Standard-Symbole wiederherstellen möchten?</string>
     <string name="suggestedIcons">Empfohlene Symbole</string>
@@ -88,4 +89,7 @@
     <string name="asNormalIcon">Als normales Symbol</string>
     <string name="asCalendarIcon">Als Kalendersymbol</string>
     <string name="notCalendarIcon">Kein gültiges Kalender-Symbol!</string>
+    <string name="autoFill">Automatisch ausfüllen</string>
+    <string name="autoFillSummary">Fehlende Symbole aus anderen Symbolpaketen automatisch ausfüllen.</string>
+    <string name="autoFillAdd">Paket hinzufügen</string>
 </resources>
