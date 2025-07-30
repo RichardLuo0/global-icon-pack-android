@@ -38,6 +38,12 @@ fun Class<*>.method(name: String, vararg parameterTypes: Class<*>?) =
     ?.apply { isAccessible = true }
     .also { if (it == null) log("No method $name is found on class ${this.name}") }
 
+fun Class<*>.constructor(vararg parameterTypes: Class<*>?) =
+  (runCatching { getDeclaredConstructor(*parameterTypes) }.getOrNull()
+      ?: declaredConstructors.firstOrNull { it.match(parameterTypes) })
+    ?.apply { isAccessible = true }
+    .also { if (it == null) log("No constructor is found on class ${this.name}") }
+
 fun Class<*>.allMethods(methodName: String, vararg parameterTypes: Class<*>?) =
   declaredMethods
     .filter { it.match(methodName, parameterTypes) }
