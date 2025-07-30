@@ -34,26 +34,26 @@ class IconPackProvider : ContentProvider() {
     sortOrder: String?,
   ): Cursor? {
     val iconPackDB = iconPackDB ?: return null
-    val oldPolicy = StrictMode.allowThreadDiskReads()
     selectionArgs ?: return null
-    return runCatching {
-        when (uri) {
-          FALLBACK ->
-            if (selectionArgs.isNotEmpty()) iconPackDB.getFallbackSettings(selectionArgs[0])
-            else null
-          ICON ->
-            if (selectionArgs.size >= 3) {
-              iconPackDB.getIcon(
-                selectionArgs[0],
-                selectionArgs.drop(2).mapNotNull { unflattenFromString(it) },
-                selectionArgs[1].toBoolean(),
-              )
-            } else null
-          else -> null
+    return strictModeAllowThreadDiskReads {
+      runCatching {
+          when (uri) {
+            FALLBACK ->
+              if (selectionArgs.isNotEmpty()) iconPackDB.getFallbackSettings(selectionArgs[0])
+              else null
+            ICON ->
+              if (selectionArgs.size >= 3) {
+                iconPackDB.getIcon(
+                  selectionArgs[0],
+                  selectionArgs.drop(2).mapNotNull { unflattenFromString(it) },
+                  selectionArgs[1].toBoolean(),
+                )
+              } else null
+            else -> null
+          }
         }
-      }
-      .getOrNull { log(it) }
-      .also { StrictMode.setThreadPolicy(oldPolicy) }
+        .getOrNull { log(it) }
+    }
   }
 
   override fun getType(uri: Uri): String? = null
@@ -68,4 +68,11 @@ class IconPackProvider : ContentProvider() {
     selection: String?,
     selectionArgs: Array<out String>?,
   ): Int = 0
+}
+
+private inline fun <T> strictModeAllowThreadDiskReads(crossinline block: () -> T): T {
+  val oldPolicy = StrictMode.allowThreadDiskReads()
+  val result = block()
+  StrictMode.setThreadPolicy(oldPolicy)
+  return result
 }
