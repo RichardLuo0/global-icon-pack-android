@@ -6,12 +6,16 @@ import android.graphics.drawable.Drawable
 import android.graphics.drawable.LayerDrawable
 import android.os.Build
 import androidx.core.graphics.drawable.toDrawable
+import com.richardluo.globalIconPack.Pref
+import com.richardluo.globalIconPack.get
 import com.richardluo.globalIconPack.iconPack.model.ClockMetadata
+import com.richardluo.globalIconPack.utils.WorldPreference
 import com.richardluo.globalIconPack.utils.asType
 import com.richardluo.globalIconPack.utils.call
 import com.richardluo.globalIconPack.utils.classOf
 import com.richardluo.globalIconPack.utils.constructor
 import com.richardluo.globalIconPack.utils.field
+import com.richardluo.globalIconPack.utils.getAs
 import com.richardluo.globalIconPack.utils.method
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 import java.lang.reflect.Constructor
@@ -46,7 +50,7 @@ object ClockDrawableWrapper {
     val animationInfo = mAnimationInfo?.get(wrapper) ?: return null
     val foreground = wrapper.foreground.asType<LayerDrawable>() ?: return null
 
-    AnimationInfo.setup(animationInfo, drawable.constantState, metadata, foreground.numberOfLayers)
+    AnimationInfo.setup(animationInfo, drawable.constantState, metadata, foreground)
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
       val monochrome = drawable.monochrome
@@ -92,7 +96,12 @@ object ClockDrawableWrapper {
       }
     }
 
-    fun setup(info: Any, cs: Drawable.ConstantState?, metadata: ClockMetadata, layerCount: Int) {
+    fun setup(
+      info: Any,
+      cs: Drawable.ConstantState?,
+      metadata: ClockMetadata,
+      foreground: LayerDrawable,
+    ) {
       baseDrawableState?.set(info, cs)
       hourLayerIndex?.set(info, metadata.hourLayerIndex)
       minuteLayerIndex?.set(info, metadata.minuteLayerIndex)
@@ -101,11 +110,16 @@ object ClockDrawableWrapper {
       defaultMinute?.set(info, metadata.defaultMinute)
       defaultSecond?.set(info, metadata.defaultSecond)
 
+      val layerCount = foreground.numberOfLayers
       if (hourLayerIndex?.get(info) !in 0 until layerCount) hourLayerIndex?.set(info, INVALID_VALUE)
       if (minuteLayerIndex?.get(info) !in 0 until layerCount)
         minuteLayerIndex?.set(info, INVALID_VALUE)
       if (secondLayerIndex?.get(info) !in 0 until layerCount)
         secondLayerIndex?.set(info, INVALID_VALUE)
+      else if (WorldPreference.get().get(Pref.DISABLE_CLOCK_SECONDS)) {
+        foreground.setDrawable(secondLayerIndex?.getAs(info)!!, null)
+        secondLayerIndex?.set(info, INVALID_VALUE)
+      }
     }
 
     fun copyForIcon(animationInfo: Any, icon: Drawable) =

@@ -404,6 +404,13 @@ object MainPreference {
         defaultValue = Pref.CLOCK_USE_FALLBACK_MASK.def,
         title = { TwoLineText(stringResource(R.string.clockUseFallbackMask)) },
       )
+      mySwitchPreference(
+        icon = {},
+        enabled = { it.get(Pref.FORCE_LOAD_CLOCK_AND_CALENDAR) },
+        key = Pref.DISABLE_CLOCK_SECONDS.key,
+        defaultValue = Pref.DISABLE_CLOCK_SECONDS.def,
+        title = { TwoLineText(stringResource(R.string.disableClockSeconds)) },
+      )
       switchPreference(
         icon = {},
         key = Pref.FORCE_ACTIVITY_ICON_FOR_TASK.key,
