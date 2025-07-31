@@ -19,10 +19,15 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.outlined.ClearAll
+import androidx.compose.material.icons.outlined.MoreVert
+import androidx.compose.material.icons.outlined.Restore
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
@@ -32,10 +37,12 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
@@ -50,9 +57,11 @@ import com.richardluo.globalIconPack.ui.components.AppbarSearchBar
 import com.richardluo.globalIconPack.ui.components.IconButtonWithTooltip
 import com.richardluo.globalIconPack.ui.components.IconChooserSheet
 import com.richardluo.globalIconPack.ui.components.LazyImage
+import com.richardluo.globalIconPack.ui.components.MyDropdownMenu
 import com.richardluo.globalIconPack.ui.components.OneLineText
 import com.richardluo.globalIconPack.ui.components.TwoLineText
 import com.richardluo.globalIconPack.ui.components.sharedBounds
+import com.richardluo.globalIconPack.ui.model.AppIconInfo
 import com.richardluo.globalIconPack.ui.model.IconEntryWithPack
 import com.richardluo.globalIconPack.ui.model.IconInfo
 import com.richardluo.globalIconPack.ui.model.IconPack
@@ -70,6 +79,10 @@ interface IconsHolder {
   suspend fun loadIcon(pair: Pair<IconInfo, IconEntryWithPack?>): ImageBitmap
 
   fun saveIcon(info: IconInfo, icon: VariantIcon)
+
+  fun restoreDefault(info: AppIconInfo)
+
+  fun clearAll(info: AppIconInfo)
 }
 
 private class TabItem(val name: Int, val flow: Flow<List<Pair<IconInfo, IconEntryWithPack?>>?>)
@@ -161,6 +174,29 @@ fun AppIconListPage(onBack: () -> Unit, iconsHolder: IconsHolder, vm: AppIconLis
             actions = {
               IconButtonWithTooltip(Icons.Outlined.Search, stringResource(R.string.search)) {
                 expandSearchBar.value = true
+              }
+
+              var expand by rememberSaveable { mutableStateOf(false) }
+              IconButtonWithTooltip(Icons.Outlined.MoreVert, stringResource(R.string.moreOptions)) {
+                expand = !expand
+              }
+              MyDropdownMenu(expanded = expand, onDismissRequest = { expand = false }) {
+                DropdownMenuItem(
+                  leadingIcon = { Icon(Icons.Outlined.Restore, "restore default") },
+                  text = { Text(stringResource(R.string.restoreDefault)) },
+                  onClick = {
+                    iconsHolder.restoreDefault(info)
+                    expand = false
+                  },
+                )
+                DropdownMenuItem(
+                  leadingIcon = { Icon(Icons.Outlined.ClearAll, "clear all") },
+                  text = { Text(stringResource(R.string.clearAll)) },
+                  onClick = {
+                    iconsHolder.clearAll(info)
+                    expand = false
+                  },
+                )
               }
             },
             modifier = Modifier.fillMaxWidth(),

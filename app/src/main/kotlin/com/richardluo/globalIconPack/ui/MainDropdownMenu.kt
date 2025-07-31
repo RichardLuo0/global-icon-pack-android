@@ -33,7 +33,7 @@ import kotlinx.coroutines.launch
 fun MainDropdownMenu(snackbarState: SnackbarHostState) {
   val context = LocalContext.current
   val scope = rememberCoroutineScope()
-  var expanded by rememberSaveable { mutableStateOf(false) }
+  var expand by rememberSaveable { mutableStateOf(false) }
 
   val onShellResult = remember {
     Shell.ResultCallback { result ->
@@ -61,13 +61,13 @@ fun MainDropdownMenu(snackbarState: SnackbarHostState) {
 
   fun runCommand(vararg cmd: String) {
     Shell.cmd("set -e", *cmd).submit(onShellResult)
-    expanded = false
+    expand = false
   }
 
   IconButtonWithTooltip(Icons.Outlined.MoreVert, stringResource(R.string.moreOptions)) {
-    expanded = !expanded
+    expand = !expand
   }
-  MyDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+  MyDropdownMenu(expanded = expand, onDismissRequest = { expand = false }) {
     DropdownMenuItem(
       leadingIcon = {},
       text = { Text(stringResource(R.string.restartSystemUI)) },
@@ -100,7 +100,7 @@ fun MainDropdownMenu(snackbarState: SnackbarHostState) {
         context.startActivity(
           Intent(Intent.ACTION_VIEW, "https://crowdin.com/project/global-icon-pack-android".toUri())
         )
-        expanded = false
+        expand = false
       },
     )
     DropdownMenuItem(
@@ -113,7 +113,7 @@ fun MainDropdownMenu(snackbarState: SnackbarHostState) {
             "https://github.com/RichardLuo0/global-icon-pack-android".toUri(),
           )
         )
-        expanded = false
+        expand = false
       },
     )
     DropdownMenuItem(
@@ -121,7 +121,7 @@ fun MainDropdownMenu(snackbarState: SnackbarHostState) {
       text = { Text(stringResource(R.string.buyMeACoffee)) },
       onClick = {
         context.startActivity(Intent(Intent.ACTION_VIEW, "https://ko-fi.com/richardluo".toUri()))
-        expanded = false
+        expand = false
       },
     )
   }

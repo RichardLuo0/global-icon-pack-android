@@ -81,7 +81,7 @@ class IconPackDB(
       // If not modified, delete everything
       if (!modified) delete(pt(pack), null, null)
       // Insert icons
-      insertIcons(this, pack, iconPack.iconEntryMap.toList())
+      insertIcons(this, pack, iconPack.iconEntryMap.asIterable())
       // Update id
       updateIconId(this, iconPack)
       // Insert fallback
@@ -207,7 +207,7 @@ class IconPackDB(
   private fun insertIcons(
     db: SQLiteDatabase,
     pack: String,
-    icons: List<Pair<ComponentName, IconEntry>>,
+    icons: Iterable<Map.Entry<ComponentName, IconEntry>>,
   ) {
     val insertIcon =
       db.compileStatement(
@@ -215,11 +215,11 @@ class IconPackDB(
       )
     icons.forEach { icon ->
       insertIcon.apply {
+        val cn = icon.key
         clearBindings()
-        val cn = icon.first
         bindString(1, cn.packageName)
         bindString(2, cn.className)
-        bindBlob(3, icon.second.toByteArray())
+        bindBlob(3, icon.value.toByteArray())
         execute()
       }
     }
@@ -237,30 +237,38 @@ class IconPackDB(
       .takeIf { it != 0 }
   }
 
-  private fun updateIconId(db: SQLiteDatabase, iconPack: IconPack) {
+  private fun updateIconId(db: SQLiteDatabase, iconPack: IconPack, packageName: String? = null) {
     val iconPackCache = InstanceManager.get { IconPackCache(context) }.value
     val packTable = pt(iconPack.pack)
     val updateId = db.compileStatement("UPDATE $packTable SET id=? WHERE ROWID=?")
     db
-      .query(packTable, arrayOf("ROWID", "entry", "pack"), null, null, null, null, null)
+      .query(
+        packTable,
+        arrayOf("ROWID", "entry", "pack"),
+        packageName?.let { "packageName=?" },
+        packageName?.let { arrayOf(it) },
+        null,
+        null,
+        null,
+      )
       .useEachRow { c ->
         val rowId = c.getInt(0)
         val entry = c.getBlob(1)
         val pack = c.getString(2)
         DataInputStream(ByteArrayInputStream(entry)).use {
-          getId(
+          val id =
+            getId(
               Type.entries[it.readByte().toInt()],
               it.readUTF(),
               if (pack.isNotEmpty()) iconPackCache[pack] else iconPack,
-            )
-            ?.let {
-              updateId
-                .apply {
-                  bindLong(1, it.toLong())
-                  bindLong(2, rowId.toLong())
-                }
-                .execute()
+            ) ?: return@use
+          updateId
+            .apply {
+              clearBindings()
+              bindLong(1, id.toLong())
+              bindLong(2, rowId.toLong())
             }
+            .execute()
         }
       }
   }
@@ -299,20 +307,36 @@ class IconPackDB(
     }
   }
 
-  fun resetPack(iconPack: IconPack, installedPacks: Set<String>) {
+  fun restorePack(iconPack: IconPack) {
     writableDatabase.transaction {
-      update(
-        "iconPack",
-        ContentValues().apply {
-          put("updateAt", 0)
-          put("modified", false)
-        },
-        "pack=?",
-        arrayOf(iconPack.pack),
-      )
-      update(iconPack, installedPacks)
+      val pack = iconPack.pack
+      delete(pt(pack), null, null)
+      insertIcons(this, pack, iconPack.iconEntryMap.asIterable())
+      updateIconId(this, iconPack)
+      setPackModified(pack, false)
       iconsUpdateFlow.tryEmit()
       modifiedUpdateFlow.tryEmit()
+    }
+  }
+
+  fun restorePackForPackage(iconPack: IconPack, packageName: String) {
+    writableDatabase.transaction {
+      val pack = iconPack.pack
+      delete(pt(pack), "packageName=?", arrayOf(packageName))
+      insertIcons(
+        this,
+        pack,
+        iconPack.iconEntryMap.filter { it.key.packageName == packageName }.asIterable(),
+      )
+      updateIconId(this, iconPack, packageName)
+      iconsUpdateFlow.tryEmit()
+    }
+  }
+
+  fun clearPackage(iconPack: IconPack, packageName: String) {
+    writableDatabase.transaction {
+      delete(pt(iconPack.pack), "packageName=?", arrayOf(packageName))
+      iconsUpdateFlow.tryEmit()
     }
   }
 

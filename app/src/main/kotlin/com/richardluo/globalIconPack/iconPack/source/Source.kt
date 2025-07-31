@@ -75,5 +75,8 @@ fun getComponentName(packageName: String) = ComponentName(packageName, "")
 
 fun getComponentName(shortcut: ShortcutInfo) = ComponentName("${shortcut.`package`}@", shortcut.id)
 
+fun ComponentName.isSamePackage(cn: ComponentName) =
+  packageName.removeSuffix("@") == cn.packageName.removeSuffix("@")
+
 private val PackageItemInfo.fullClassName: String
   get() = if (name == null) "" else if (name.startsWith(".")) packageName + name else name

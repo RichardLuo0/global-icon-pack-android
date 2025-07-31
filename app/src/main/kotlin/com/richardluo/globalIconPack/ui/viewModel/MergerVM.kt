@@ -15,7 +15,9 @@ import androidx.lifecycle.viewModelScope
 import com.richardluo.globalIconPack.R
 import com.richardluo.globalIconPack.iconPack.model.IconPackConfig
 import com.richardluo.globalIconPack.iconPack.model.defaultIconPackConfig
+import com.richardluo.globalIconPack.iconPack.source.isSamePackage
 import com.richardluo.globalIconPack.ui.IconsHolder
+import com.richardluo.globalIconPack.ui.model.AppIconInfo
 import com.richardluo.globalIconPack.ui.model.IconEntryWithPack
 import com.richardluo.globalIconPack.ui.model.IconInfo
 import com.richardluo.globalIconPack.ui.model.IconPack
@@ -129,6 +131,20 @@ class MergerVM(context: Application) :
         is VariantPackIcon -> IconEntryWithPack(icon.entry, icon.pack)
         else -> null
       }
+  }
+
+  fun restoreDefault() {
+    changedIcons.clear()
+  }
+
+  override fun restoreDefault(info: AppIconInfo) {
+    changedIcons.entries.removeIf { it.key.isSamePackage(info.componentName) }
+  }
+
+  override fun clearAll(info: AppIconInfo) {
+    baseIconPack?.iconEntryMap?.forEach {
+      if (it.key.isSamePackage(info.componentName)) changedIcons[it.key] = null
+    }
   }
 
   suspend fun autoFill(packs: List<String>) {

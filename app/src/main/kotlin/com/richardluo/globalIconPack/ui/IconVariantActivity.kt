@@ -143,9 +143,7 @@ class IconVariantActivity : ComponentActivity() {
                   },
                 )
                 DropdownMenuItem(
-                  leadingIcon = {
-                    Icon(Icons.Outlined.Restore, stringResource(R.string.restoreDefault))
-                  },
+                  leadingIcon = { Icon(Icons.Outlined.Restore, "restore default") },
                   text = { Text(stringResource(R.string.restoreDefault)) },
                   onClick = {
                     resetWarnDialogState.value = true

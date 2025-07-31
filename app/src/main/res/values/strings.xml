@@ -68,6 +68,7 @@
     <string name="empty">Empty</string>
 
     <string name="restoreDefault">Restore default</string>
+    <string name="clearAll">Clear all</string>
     <string name="restoreDefaultWarning">Are you sure you want to restore to the default icons?</string>
     <string name="suggestedIcons">Suggested icons</string>
     <string name="allIcons">All icons</string>
@@ -76,6 +77,7 @@
     <string name="activities">Activities</string>
     <string name="shortcuts">Shortcuts</string>
     <string name="requiresHookSystem">You must hook system framework to get shortcuts.</string>
+
     <string name="modified">Modified</string>
     <string name="exportIconPack">Export</string>
     <string name="exportedIconPack">Icon pack has been exported.</string>

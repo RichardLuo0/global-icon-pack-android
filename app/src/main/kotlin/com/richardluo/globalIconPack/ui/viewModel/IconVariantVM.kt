@@ -26,6 +26,7 @@ import com.richardluo.globalIconPack.iconPack.useEachRow
 import com.richardluo.globalIconPack.iconPack.useFirstRow
 import com.richardluo.globalIconPack.iconPack.useMapToArray
 import com.richardluo.globalIconPack.ui.IconsHolder
+import com.richardluo.globalIconPack.ui.model.AppIconInfo
 import com.richardluo.globalIconPack.ui.model.IconEntryWithPack
 import com.richardluo.globalIconPack.ui.model.IconInfo
 import com.richardluo.globalIconPack.ui.model.OriginalIcon
@@ -109,15 +110,39 @@ class IconVariantVM(context: Application) :
     if (pair.second != null) iconCache.loadIcon(pair.first, pair.second, iconPack, iconPackConfig)
     else fallbackIconCache.loadIcon(pair.first, iconFallback, iconPack, iconPackConfig)
 
-  fun restoreDefault() =
+  fun restoreDefault() {
     viewModelScope.launch(Dispatchers.IO) {
-      runCatchingToast(context) { iconPackDB.resetPack(iconPack, IconPackApps.get().keys) }
+      runCatchingToast(context) { iconPackDB.restorePack(iconPack) }
     }
+  }
 
-  fun flipModified() =
+  override fun restoreDefault(info: AppIconInfo) {
+    viewModelScope.launch(Dispatchers.IO) {
+      runCatchingToast(context) {
+        val packageName = info.componentName.packageName
+        iconPackDB.restorePackForPackage(iconPack, packageName)
+        // Shortcuts
+        iconPackDB.restorePackForPackage(iconPack, "$packageName@")
+      }
+    }
+  }
+
+  override fun clearAll(info: AppIconInfo) {
+    viewModelScope.launch(Dispatchers.IO) {
+      runCatchingToast(context) {
+        val packageName = info.componentName.packageName
+        iconPackDB.clearPackage(iconPack, packageName)
+        // Shortcuts
+        iconPackDB.clearPackage(iconPack, "$packageName@")
+      }
+    }
+  }
+
+  fun flipModified() {
     viewModelScope.launch(Dispatchers.IO) {
       runCatchingToast(context) { iconPackDB.setPackModified(pack, !modified.value) }
     }
+  }
 
   override fun saveIcon(info: IconInfo, icon: VariantIcon) {
     val cn = info.componentName
