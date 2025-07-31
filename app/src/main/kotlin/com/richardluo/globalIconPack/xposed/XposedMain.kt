@@ -31,7 +31,9 @@ class XposedMain : IXposedHookLoadPackage {
         ),
         NoForceShape(true),
         if (pref.get(Pref.NO_SHADOW)) NoShadow() else null,
-        if (pref.get(Pref.FORCE_LOAD_CLOCK_AND_CALENDAR)) CalendarAndClockHook() else null,
+        if (pref.get(Pref.FORCE_LOAD_CLOCK_AND_CALENDAR))
+          CalendarAndClockHook(pref.get(Pref.CLOCK_USE_FALLBACK_MASK))
+        else null,
       )
 
     hookList.forEach { it.onHookApp(lpp) }

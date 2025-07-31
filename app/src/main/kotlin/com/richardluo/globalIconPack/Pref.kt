@@ -33,6 +33,7 @@ object Pref {
     "pixelLauncherPackage" defaultTo "com.google.android.apps.nexuslauncher"
   val NO_SHADOW = "noShadow" defaultTo false
   val FORCE_LOAD_CLOCK_AND_CALENDAR = "forceLoadClockAndCalendar" defaultTo true
+  val CLOCK_USE_FALLBACK_MASK = "clockUseFallbackMask" defaultTo false
   val FORCE_ACTIVITY_ICON_FOR_TASK = "forceActivityIconForTask" defaultTo false
 }
 

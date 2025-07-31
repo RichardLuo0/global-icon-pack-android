@@ -122,4 +122,7 @@ class RemoteSource(pack: String, config: IconPackConfig = defaultIconPackConfig)
     if (pack.isEmpty()) this else resourcesMap.getOrPut(pack) { ResourceOwner(pack) }
 
   override fun genIconFrom(baseIcon: Drawable) = genIconFrom(res, baseIcon, iconFallback)
+
+  override fun maskIconFrom(baseIcon: Drawable) =
+    maskIconFrom(res, baseIcon, iconFallback?.iconMasks)
 }

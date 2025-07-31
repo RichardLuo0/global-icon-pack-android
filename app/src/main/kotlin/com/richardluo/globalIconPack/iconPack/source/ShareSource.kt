@@ -6,7 +6,6 @@ import android.graphics.drawable.Drawable
 import androidx.core.database.getIntOrNull
 import com.richardluo.globalIconPack.AppPref
 import com.richardluo.globalIconPack.BuildConfig
-import com.richardluo.globalIconPack.get
 import com.richardluo.globalIconPack.iconPack.IconPackDB
 import com.richardluo.globalIconPack.iconPack.IconPackDB.GetIconCol
 import com.richardluo.globalIconPack.iconPack.model.FallbackSettings
@@ -84,4 +83,7 @@ class ShareSource(pack: String, config: IconPackConfig = defaultIconPackConfig) 
     if (pack.isEmpty()) this else resourcesMap.getOrPut(pack) { ResourceOwner(pack) }
 
   override fun genIconFrom(baseIcon: Drawable) = genIconFrom(res, baseIcon, iconFallback)
+
+  override fun maskIconFrom(baseIcon: Drawable) =
+    maskIconFrom(res, baseIcon, iconFallback?.iconMasks)
 }

@@ -22,6 +22,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Shortcut
 import androidx.compose.material.icons.outlined.Apps
 import androidx.compose.material.icons.outlined.Backpack
+import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.Clear
 import androidx.compose.material.icons.outlined.ColorLens
 import androidx.compose.material.icons.outlined.CropOriginal
@@ -391,10 +392,17 @@ object MainPreference {
         summary = { TwoLineText(stringResource(R.string.noShadowSummary)) },
       )
       switchPreference(
-        icon = {},
+        icon = { Icon(Icons.Outlined.CalendarMonth, Pref.FORCE_LOAD_CLOCK_AND_CALENDAR.key) },
         key = Pref.FORCE_LOAD_CLOCK_AND_CALENDAR.key,
         defaultValue = Pref.FORCE_LOAD_CLOCK_AND_CALENDAR.def,
         title = { TwoLineText(stringResource(R.string.forceLoadClockAndCalendar)) },
+      )
+      mySwitchPreference(
+        icon = {},
+        enabled = { it.get(Pref.FORCE_LOAD_CLOCK_AND_CALENDAR) },
+        key = Pref.CLOCK_USE_FALLBACK_MASK.key,
+        defaultValue = Pref.CLOCK_USE_FALLBACK_MASK.def,
+        title = { TwoLineText(stringResource(R.string.clockUseFallbackMask)) },
       )
       switchPreference(
         icon = {},

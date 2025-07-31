@@ -61,6 +61,9 @@ class LocalSource(pack: String, config: IconPackConfig = defaultIconPackConfig) 
   private fun getDrawableId(name: String) = getIdByName(name)
 
   override fun genIconFrom(baseIcon: Drawable) = genIconFrom(res, baseIcon, iconFallback)
+
+  override fun maskIconFrom(baseIcon: Drawable) =
+    maskIconFrom(res, baseIcon, iconFallback?.iconMasks)
 }
 
 interface IconPackInfo {

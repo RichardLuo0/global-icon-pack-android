@@ -32,7 +32,7 @@ import de.robv.android.xposed.XC_MethodHook.MethodHookParam
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 import java.util.Calendar
 
-class CalendarAndClockHook : Hook {
+class CalendarAndClockHook(private val clockUseFallbackMask: Boolean) : Hook {
   override fun onHookPixelLauncher(lpp: LoadPackageParam) {
     val calendars = mutableSetOf<String>()
     val clocks = mutableSetOf<String>()
@@ -63,7 +63,12 @@ class CalendarAndClockHook : Hook {
         IconEntry.Type.Clock -> clocks.add(packageName)
         else -> {}
       }
-      return sc.getIcon(entry, density ?: 0)
+
+      return sc.getIcon(entry, density ?: 0).let {
+        if (clockUseFallbackMask && it != null && entry.type == IconEntry.Type.Clock)
+          sc.maskIconFrom(it)
+        else it
+      }
     }
 
     val getIconHook =

@@ -29,6 +29,8 @@ interface Source {
   fun getIcon(name: String, iconDpi: Int = 0): Drawable?
 
   fun genIconFrom(baseIcon: Drawable): Drawable
+
+  fun maskIconFrom(baseIcon: Drawable): Drawable
 }
 
 fun genIconFrom(res: Resources, baseIcon: Drawable, iconFallback: IconFallback?) =
@@ -44,6 +46,22 @@ fun genIconFrom(res: Resources, baseIcon: Drawable, iconFallback: IconFallback?)
       backAsAdaptiveBack,
       nonAdaptiveScale,
       convertToAdaptive,
+    )
+  } ?: baseIcon
+
+fun maskIconFrom(res: Resources, baseIcon: Drawable, iconMasks: List<Drawable>?) =
+  iconMasks?.run {
+    IconHelper.processIcon(
+      baseIcon,
+      res,
+      null,
+      null,
+      iconMasks.randomOrNull()?.newDrawable(),
+      1f,
+      scaleOnlyForeground = true,
+      backAsAdaptiveBack = true,
+      nonAdaptiveScale = 1f,
+      convertToAdaptive = true,
     )
   } ?: baseIcon
 
