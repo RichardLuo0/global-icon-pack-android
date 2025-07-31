@@ -20,6 +20,8 @@ import java.lang.reflect.Method
 import java.util.Calendar
 
 object ClockDrawableWrapper {
+  private const val INVALID_VALUE: Int = -1
+
   private var constructor: Constructor<*>? = null
   private var mAnimationInfo: Field? = null
   private var mThemeInfo: Field? = null
@@ -36,13 +38,15 @@ object ClockDrawableWrapper {
   fun from(drawable: Drawable, metadata: ClockMetadata): Drawable? {
     // https://cs.android.com/android/_/android/platform/frameworks/libs/systemui/+/main:iconloaderlib/src/com/android/launcher3/icons/ClockDrawableWrapper.java;l=123
     val drawable =
-      (drawable as? AdaptiveIconDrawable
-          ?: AdaptiveIconDrawable(Color.WHITE.toDrawable(), drawable))
-        .mutate() as? AdaptiveIconDrawable ?: return null
+      drawable.mutate().let {
+        it as? AdaptiveIconDrawable ?: AdaptiveIconDrawable(Color.WHITE.toDrawable(), it)
+      }
 
     val wrapper = constructor?.newInstance(drawable)?.asType<AdaptiveIconDrawable>() ?: return null
     val animationInfo = mAnimationInfo?.get(wrapper) ?: return null
-    AnimationInfo.setup(animationInfo, drawable.constantState, metadata)
+    val foreground = wrapper.foreground.asType<LayerDrawable>() ?: return null
+
+    AnimationInfo.setup(animationInfo, drawable.constantState, metadata, foreground.numberOfLayers)
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
       val monochrome = drawable.monochrome
@@ -56,9 +60,7 @@ object ClockDrawableWrapper {
         )
     }
 
-    wrapper.foreground.asType<LayerDrawable>()?.let {
-      AnimationInfo.applyTime(animationInfo, Calendar.getInstance(), it)
-    }
+    AnimationInfo.applyTime(animationInfo, Calendar.getInstance(), foreground)
 
     return wrapper.asType()
   }
@@ -90,20 +92,26 @@ object ClockDrawableWrapper {
       }
     }
 
-    fun setup(animationInfo: Any, cs: Drawable.ConstantState?, metadata: ClockMetadata) {
-      baseDrawableState?.set(animationInfo, cs)
-      hourLayerIndex?.set(animationInfo, metadata.hourLayerIndex)
-      minuteLayerIndex?.set(animationInfo, metadata.minuteLayerIndex)
-      secondLayerIndex?.set(animationInfo, metadata.secondLayerIndex)
-      defaultHour?.set(animationInfo, metadata.defaultHour)
-      defaultMinute?.set(animationInfo, metadata.defaultMinute)
-      defaultSecond?.set(animationInfo, metadata.defaultSecond)
+    fun setup(info: Any, cs: Drawable.ConstantState?, metadata: ClockMetadata, layerCount: Int) {
+      baseDrawableState?.set(info, cs)
+      hourLayerIndex?.set(info, metadata.hourLayerIndex)
+      minuteLayerIndex?.set(info, metadata.minuteLayerIndex)
+      secondLayerIndex?.set(info, metadata.secondLayerIndex)
+      defaultHour?.set(info, metadata.defaultHour)
+      defaultMinute?.set(info, metadata.defaultMinute)
+      defaultSecond?.set(info, metadata.defaultSecond)
+
+      if (hourLayerIndex?.get(info) !in 0 until layerCount) hourLayerIndex?.set(info, INVALID_VALUE)
+      if (minuteLayerIndex?.get(info) !in 0 until layerCount)
+        minuteLayerIndex?.set(info, INVALID_VALUE)
+      if (secondLayerIndex?.get(info) !in 0 until layerCount)
+        secondLayerIndex?.set(info, INVALID_VALUE)
     }
 
     fun copyForIcon(animationInfo: Any, icon: Drawable) =
       copyForIconM?.call<Any>(animationInfo, icon)
 
-    fun applyTime(animationInfo: Any, time: Calendar, foregroundDrawable: LayerDrawable) =
-      applyTimeM?.call<Boolean>(animationInfo, time, foregroundDrawable)
+    fun applyTime(animationInfo: Any, time: Calendar, foreground: LayerDrawable) =
+      applyTimeM?.call<Boolean>(animationInfo, time, foreground)
   }
 }
