@@ -96,7 +96,7 @@ class IconVariantVM(context: Application) :
 
   fun getIconEntry(cnList: List<ComponentName>) =
     iconPackDB
-      .getIcon(pack, cnList, iconPackConfig.iconPackAsFallback)
+      .getIcon(pack, cnList, false)
       .useMapToArray(cnList.size) { _, c ->
         val entry = IconEntry.from(c.getBlob(GetIconCol.Entry))
         val pack = c.getString(GetIconCol.Pack)
@@ -166,9 +166,7 @@ class IconVariantVM(context: Application) :
         if (entry != null) return@forEach
         val cn = info.componentName
         iconPacks.firstNotNullOfOrNull { iconPack ->
-          iconPack.getIconEntry(cn, iconPackConfig)?.also {
-            iconPackDB.insertOrUpdateIcon(pack, cn, it, iconPack)
-          }
+          iconPack.getIconEntry(cn)?.also { iconPackDB.insertOrUpdateIcon(pack, cn, it, iconPack) }
         }
       }
     }

@@ -84,7 +84,7 @@ class MergerVM(context: Application) :
     return if (changedIcons.containsKey(cn)) changedIcons[cn]
     else {
       val iconPack = baseIconPack ?: return null
-      iconPack.getIconEntry(cn, iconPackConfigFlow.value)?.let { IconEntryWithPack(it, iconPack) }
+      iconPack.getIconEntry(cn)?.let { IconEntryWithPack(it, iconPack) }
     }
   }
 
@@ -157,9 +157,7 @@ class MergerVM(context: Application) :
         if (entry != null) return@forEach
         val cn = info.componentName
         iconPacks.firstNotNullOfOrNull { iconPack ->
-          iconPack.getIconEntry(cn, iconPackConfigFlow.value)?.also {
-            changedIcons[cn] = IconEntryWithPack(it, iconPack)
-          }
+          iconPack.getIconEntry(cn)?.also { changedIcons[cn] = IconEntryWithPack(it, iconPack) }
         }
       }
     }

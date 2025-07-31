@@ -30,10 +30,7 @@ class IconPack(val pack: String, val res: Resources) {
 
   private val idCache = mutableMapOf<String, Int>()
 
-  fun getIconEntry(cn: ComponentName, config: IconPackConfig) =
-    getIconEntry(cn, config.iconPackAsFallback)
-
-  fun getIconEntry(cn: ComponentName, iconPackAsFallback: Boolean) =
+  fun getIconEntry(cn: ComponentName, iconPackAsFallback: Boolean = false) =
     (iconEntryMap[cn]
         ?: if (iconPackAsFallback) iconEntryMap[getComponentName(cn.packageName)] else null)
       ?.let { entry -> makeValidEntry(entry) }
