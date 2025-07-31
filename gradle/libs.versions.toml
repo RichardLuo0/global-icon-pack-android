@@ -5,12 +5,12 @@ activity = { group = "androidx.activity", name = "activity-compose", version = "
 viewmodel = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose", version = "2.9.2" }
 compose-foundation = { group = "androidx.compose.foundation", name = "foundation", version = "1.8.3" }
 preference = { group = "me.zhanghai.compose.preference", name = "library", version = "1.1.1" }
-material3 = { group = "androidx.compose.material3", name = "material3", version = "1.4.0-alpha18" }  # Fix https://issuetracker.google.com/issues/353304855
+material3 = { group = "androidx.compose.material3", name = "material3", version = "1.4.0-beta01" }  # Fix https://issuetracker.google.com/issues/353304855
 material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended", version = "1.7.8" }
 libsu = { group = "com.github.topjohnwu.libsu", name = "core", version = "6.0.0" }
 documentfile = { group = "androidx.documentfile", name = "documentfile", version = "1.1.0" }
 hiddenapibypass = { group = "org.lsposed.hiddenapibypass", name = "hiddenapibypass", version = "+" }
-navigation = { group = "androidx.navigation", name = "navigation-compose", version = "2.9.2" }
+navigation = { group = "androidx.navigation", name = "navigation-compose", version = "2.9.3" }
 reorderable = { module = "sh.calvin.reorderable:reorderable", version = "2.5.1" }
 
 #junit = { group = "junit", name = "junit", version.ref = "junit" }
