@@ -46,6 +46,7 @@ import androidx.compose.material.icons.outlined.FilterList
 import androidx.compose.material.icons.outlined.FormatColorFill
 import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.Notifications
+import androidx.compose.material.icons.outlined.Restore
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Card
@@ -257,6 +258,14 @@ class IconPackMergerActivity : ComponentActivity() {
                     text = { Text(stringResource(R.string.autoFill)) },
                     onClick = {
                       autoFillVM.open(vm.basePack ?: return@DropdownMenuItem)
+                      expand = false
+                    },
+                  )
+                  DropdownMenuItem(
+                    leadingIcon = { Icon(Icons.Outlined.Restore, "restore default") },
+                    text = { Text(stringResource(R.string.restoreDefault)) },
+                    onClick = {
+                      vm.restoreDefault()
                       expand = false
                     },
                   )
