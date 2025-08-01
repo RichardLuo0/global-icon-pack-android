@@ -339,7 +339,7 @@ object MainPreference {
         onCancel = dismiss,
       ) {
         runCatchingToastOnMain(context) {
-          state.value = it.toColorInt()
+          state.value = "#$it".toColorInt()
           dismiss()
         }
       }
