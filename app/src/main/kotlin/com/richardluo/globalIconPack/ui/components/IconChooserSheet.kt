@@ -157,12 +157,13 @@ fun IconChooserSheet(
       }
     }
 
-    val suggestIcons = vm.suggestIcons.getValue(null)
-    if (suggestIcons != null)
-      if (vm.searchText.value.isEmpty()) {
-        val variantIcons = vm.icons.getValue(null) ?: setOf()
-        val expandState = rememberSaveable { mutableStateOf(false) }
-        val gridState = rememberLazyGridState()
+    if (vm.searchText.value.isEmpty()) {
+      val icons = vm.icons.getValue()
+      val suggestIcons = vm.suggestIcons.getValue()
+      val expandState = rememberSaveable { mutableStateOf(false) }
+      val gridState = rememberLazyGridState()
+
+      if (icons != null && suggestIcons != null)
         LazyVerticalGrid(
           state = gridState,
           modifier = Modifier.fillMaxSize().padding(horizontal = 2.dp),
@@ -178,19 +179,21 @@ fun IconChooserSheet(
           }
 
           variantIconTitle(context.getString(R.string.allIcons))
-          variantIconItems(variantIcons.toList())
+          variantIconItems(icons)
         }
-      } else
+      else ProgressBar()
+    } else {
+      val filteredIcons = vm.filteredIcons.getValue()
+
+      if (filteredIcons != null)
         LazyVerticalGrid(
           modifier = Modifier.fillMaxSize().padding(horizontal = 2.dp),
           columns = GridCells.Adaptive(minSize = 74.dp),
         ) {
-          variantIconItems(suggestIcons)
+          variantIconItems(filteredIcons)
         }
-    else
-      Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
-        LinearProgressIndicator(modifier = Modifier.fillMaxWidth().padding(24.dp))
-      }
+      else ProgressBar()
+    }
 
     LazyListDialog(
       packDialogState,
@@ -230,5 +233,12 @@ fun IconChooserSheet(
         }
       }
     }
+  }
+}
+
+@Composable
+private fun ProgressBar() {
+  Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
+    LinearProgressIndicator(modifier = Modifier.fillMaxWidth().padding(24.dp))
   }
 }

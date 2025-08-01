@@ -491,7 +491,7 @@ class IconPackMergerActivity : ComponentActivity() {
                 .clickable {
                   val iconPack = vm.baseIconPack ?: return@clickable
                   val info = object : IconInfo(ComponentName(iconPack.pack, ""), "") {}
-                  iconChooser.open(info, iconPack, vm.newPackIcon?.entry?.name)
+                  iconChooser.open(info, iconPack)
                 }
                 .padding(12.dp)
                 .size(72.dp),

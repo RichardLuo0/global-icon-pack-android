@@ -15,11 +15,10 @@ import com.richardluo.globalIconPack.ui.model.VariantIcon
 import com.richardluo.globalIconPack.ui.model.VariantPackIcon
 import com.richardluo.globalIconPack.utils.ContextVM
 import com.richardluo.globalIconPack.utils.InstanceManager.get
-import com.richardluo.globalIconPack.utils.debounceInput
+import com.richardluo.globalIconPack.utils.filter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combineTransform
-import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.transform
@@ -45,35 +44,35 @@ class IconChooserVM(context: Application) : ContextVM(context) {
       .flowOn(Dispatchers.IO)
       .stateIn(viewModelScope, SharingStarted.Lazily, null)
 
-  val searchText = mutableStateOf("")
   val suggestIcons =
-    combineTransform(
-        icons,
-        snapshotFlow { iconInfo },
-        snapshotFlow { searchText.value }.debounceInput(),
-      ) { icons, iconInfo, text ->
+    combineTransform(icons, snapshotFlow { iconInfo }) { icons, iconInfo ->
         emit(null)
         icons ?: return@combineTransform
         iconInfo ?: return@combineTransform
 
         val keyword =
-          text.ifEmpty {
-            suggestHint?.substringBeforeLast("_")
-              ?: iconInfo.componentName.packageName.let {
-                it.substringAfterLast(".").takeIf { it.length > 3 } ?: it
-              }
-          }
+          suggestHint?.substringBeforeLast("_")
+            ?: iconInfo.componentName.packageName.let {
+              it.substringAfterLast(".").takeIf { it.length > 3 } ?: it
+            }
 
         emit(
           buildList {
-            if (text.isEmpty()) add(OriginalIcon())
+            add(OriginalIcon())
             icons.filterTo(this) { it.entry.name.contains(keyword, ignoreCase = true) }
           }
         )
       }
-      .conflate()
       .flowOn(Dispatchers.Default)
       .stateIn(viewModelScope, SharingStarted.Lazily, null)
+
+  val searchText = mutableStateOf("")
+  val filteredIcons =
+    icons
+      .filter(snapshotFlow { searchText.value }) { icon, text ->
+        icon.entry.name.contains(text, ignoreCase = true)
+      }
+      .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
 
   suspend fun loadIcon(icon: VariantPackIcon) = iconCache.loadIcon(icon.entry, icon.pack)
 
