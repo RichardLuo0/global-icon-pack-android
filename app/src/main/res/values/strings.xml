@@ -47,7 +47,7 @@
     <string name="noShadow">Remove shadow underneath</string>
     <string name="noShadowSummary">Remove the shadow generated for system icon mask.</string>
     <string name="forceLoadClockAndCalendar">Force load clock and calendar icon</string>
-    <string name="clockUseFallbackMask">Clock use fallback mask</string>
+    <string name="clockUseFallbackMask">Clock uses fallback mask</string>
     <string name="disableClockSeconds">Disable clock seconds</string>
     <string name="forceActivityIconForTask">Force load activity icon for task</string>
     <string name="forceActivityIconForTaskSummary">Some apps set an task icon when running. Force load activity icon no matter what.</string>
