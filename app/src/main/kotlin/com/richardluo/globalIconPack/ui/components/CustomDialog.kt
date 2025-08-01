@@ -31,15 +31,16 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 
@@ -210,8 +211,24 @@ fun TextFieldDialogContent(
   dismiss: () -> Unit,
   onOk: (String) -> Unit,
 ) {
-  val state = rememberSaveable { mutableStateOf(initValue) }
+  val state = remember {
+    mutableStateOf(TextFieldValue(initValue, selection = TextRange(initValue.length)))
+  }
+  val textState = remember {
+    object : MutableState<String> {
+      override var value: String
+        get() = state.value.text
+        set(value) {
+          state.value = TextFieldValue(value, selection = TextRange(value.length))
+        }
+
+      override fun component1() = value
+
+      override fun component2(): (String) -> Unit = { value = it }
+    }
+  }
   val focusRequester = remember { FocusRequester() }
+
   OutlinedTextField(
     value = state.value,
     onValueChange = { state.value = it },
@@ -221,27 +238,28 @@ fun TextFieldDialogContent(
         .focusRequester(focusRequester),
     textStyle = textStyle,
     placeholder = placeholder,
-    leadingIcon = leadingIcon?.let { { it(state) } },
-    trailingIcon = trailingIcon?.let { { it(state) } },
-    prefix = prefix?.let { { it(state) } },
-    suffix = suffix?.let { { it(state) } },
+    leadingIcon = leadingIcon?.let { { it(textState) } },
+    trailingIcon = trailingIcon?.let { { it(textState) } },
+    prefix = prefix?.let { { it(textState) } },
+    suffix = suffix?.let { { it(textState) } },
     singleLine = singleLine,
     maxLines = maxLines,
     minLines = minLines,
     keyboardOptions = keyboardOptions.copy(imeAction = ImeAction.Done),
     keyboardActions =
       KeyboardActions {
-        onOk(state.value)
+        onOk(textState.value)
         dismiss()
       },
   )
+
   LaunchedEffect(focusRequester) { focusRequester.requestFocus() }
 
   DialogButtonRow(
     arrayOf(
       CancelDialogButton(LocalContext.current) { dismiss() },
       OkDialogButton(LocalContext.current) {
-        onOk(state.value)
+        onOk(textState.value)
         dismiss()
       },
     )
