@@ -34,8 +34,6 @@ class IconChooserVM(context: Application) : ContextVM(context) {
     private set
 
   private var suggestHint: String? = null
-  var replaceIcon: (IconInfo, VariantIcon) -> Unit = { info, icon -> }
-    private set
 
   val icons =
     snapshotFlow { iconPack }
@@ -80,16 +78,10 @@ class IconChooserVM(context: Application) : ContextVM(context) {
     this.iconPack = iconPackCache[pack]
   }
 
-  fun open(
-    iconInfo: IconInfo,
-    iconPack: IconPack,
-    suggestHint: String? = null,
-    replaceIcon: (IconInfo, VariantIcon) -> Unit,
-  ) {
+  fun open(iconInfo: IconInfo, iconPack: IconPack, suggestHint: String? = null) {
     this.iconInfo = iconInfo
     this.iconPack = iconPack
     this.suggestHint = suggestHint
-    this.replaceIcon = replaceIcon
     variantSheet = true
   }
 

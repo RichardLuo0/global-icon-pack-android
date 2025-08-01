@@ -106,12 +106,7 @@ fun AppIconListPage(onBack: () -> Unit, iconsHolder: IconsHolder, vm: AppIconLis
 
   fun openChooser(pair: Pair<IconInfo, IconEntryWithPack?>) {
     val (info, entry) = pair
-    iconChooser.open(
-      info,
-      iconsHolder.getCurrentIconPack() ?: return,
-      entry?.entry?.name,
-      iconsHolder::saveIcon,
-    )
+    iconChooser.open(info, iconsHolder.getCurrentIconPack() ?: return, entry?.entry?.name)
   }
 
   val info = vm.appIcon?.first ?: return
@@ -229,7 +224,7 @@ fun AppIconListPage(onBack: () -> Unit, iconsHolder: IconsHolder, vm: AppIconLis
       IconList(tabs[it].flow.getValue(null), ::openChooser, iconsHolder::loadIcon, pagePadding)
     }
 
-    IconChooserSheet(iconChooser) { iconsHolder.loadIcon(it to null) }
+    IconChooserSheet(iconChooser, { iconsHolder.loadIcon(it to null) }, iconsHolder::saveIcon)
   }
 }
 

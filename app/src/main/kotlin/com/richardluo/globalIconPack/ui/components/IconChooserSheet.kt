@@ -61,6 +61,7 @@ import me.zhanghai.compose.preference.Preference
 fun IconChooserSheet(
   vm: IconChooserVM = viewModel(),
   loadOriginalIcon: suspend (IconInfo) -> ImageBitmap,
+  replaceIcon: (IconInfo, VariantIcon) -> Unit,
 ) {
   val context = LocalContext.current
   val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
@@ -79,7 +80,7 @@ fun IconChooserSheet(
     val selectedIcon = remember { mutableStateOf<VariantIcon?>(null) }
 
     fun replaceAsNormalIcon(icon: VariantIcon) {
-      vm.replaceIcon(vm.iconInfo ?: return, icon)
+      replaceIcon(vm.iconInfo ?: return, icon)
       scope.launch {
         sheetState.hide()
         onDismissRequest()
@@ -88,7 +89,7 @@ fun IconChooserSheet(
 
     fun replaceAsCalendarIcon(icon: VariantIcon) {
       try {
-        vm.replaceIcon(vm.iconInfo ?: return, vm.asCalendarEntry(icon))
+        replaceIcon(vm.iconInfo ?: return, vm.asCalendarEntry(icon))
         scope.launch {
           sheetState.hide()
           onDismissRequest()

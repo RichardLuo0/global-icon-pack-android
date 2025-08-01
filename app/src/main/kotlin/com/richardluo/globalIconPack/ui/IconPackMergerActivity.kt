@@ -491,11 +491,7 @@ class IconPackMergerActivity : ComponentActivity() {
                 .clickable {
                   val iconPack = vm.baseIconPack ?: return@clickable
                   val info = object : IconInfo(ComponentName(iconPack.pack, ""), "") {}
-                  iconChooser.open(info, iconPack, vm.newPackIcon?.entry?.name) { info, icon ->
-                    vm.newPackIcon =
-                      if (icon is VariantPackIcon) IconEntryWithPack(icon.entry, icon.pack)
-                      else null
-                  }
+                  iconChooser.open(info, iconPack, vm.newPackIcon?.entry?.name)
                 }
                 .padding(12.dp)
                 .size(72.dp),
@@ -531,6 +527,9 @@ class IconPackMergerActivity : ComponentActivity() {
       }
     }
 
-    IconChooserSheet(iconChooser) { symDefAppIcon }
+    IconChooserSheet(iconChooser, { symDefAppIcon }) { info, icon ->
+      vm.newPackIcon =
+        if (icon is VariantPackIcon) IconEntryWithPack(icon.entry, icon.pack) else null
+    }
   }
 }
