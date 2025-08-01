@@ -30,6 +30,7 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.drawscope.DrawScope.Companion.DefaultFilterQuality
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.unit.dp
 
 @Composable
 fun LazyImage(
@@ -85,5 +86,7 @@ fun Modifier.shimmer(): Modifier {
       tileMode = TileMode.Mirror,
     )
 
-  return drawBehind { drawRoundRect(brush, cornerRadius = CornerRadius(12f, 12f)) }
+  return drawBehind {
+    drawRoundRect(brush, cornerRadius = CornerRadius(12.dp.toPx(), 12.dp.toPx()))
+  }
 }

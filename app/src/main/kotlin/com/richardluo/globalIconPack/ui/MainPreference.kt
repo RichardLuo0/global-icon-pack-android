@@ -5,7 +5,9 @@ import android.content.Intent
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -49,8 +51,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -330,7 +336,19 @@ object MainPreference {
       key = Pref.ICON_PACK_SHAPE_COLOR.key,
       defaultValue = Pref.ICON_PACK_SHAPE_COLOR.def,
       title = { TwoLineText(stringResource(R.string.iconPackShapeColor)) },
-      summary = { OneLineText("#" + it.toHexString()) },
+      summary = { value ->
+        AnimatedContent(Color(value)) {
+          Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+              modifier =
+                Modifier.size(26.dp).padding(4.dp).drawBehind {
+                  drawRoundRect(it, cornerRadius = CornerRadius(6.dp.toPx(), 6.dp.toPx()))
+                }
+            )
+            OneLineText("#" + value.toHexString())
+          }
+        }
+      },
     ) { state, dismiss ->
       TextFieldDialogContent(
         initValue = state.value.toHexString(),
