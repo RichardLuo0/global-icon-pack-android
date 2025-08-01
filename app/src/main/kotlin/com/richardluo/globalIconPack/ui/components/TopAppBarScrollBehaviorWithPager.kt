@@ -21,14 +21,13 @@ fun pinnedScrollBehaviorWithPager(
   pagerState: PagerState,
   topAppBarState: TopAppBarState = rememberTopAppBarState(),
 ) =
-  remember(topAppBarState) {
+  remember(pagerState, topAppBarState) {
       object : TopAppBarScrollBehavior {
         override val state = topAppBarState
         override val isPinned: Boolean = true
         override val snapAnimationSpec: AnimationSpec<Float>? = null
         override val flingAnimationSpec: DecayAnimationSpec<Float>? = null
-        private val pageContentOffsets =
-          arrayOf(state.contentOffset, state.contentOffset, state.contentOffset)
+        private val pageContentOffsets = Array(pagerState.pageCount) { state.contentOffset }
 
         fun onPageChange() {
           state.contentOffset = pageContentOffsets[pagerState.currentPage]
