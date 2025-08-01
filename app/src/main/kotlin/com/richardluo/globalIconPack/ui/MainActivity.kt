@@ -36,7 +36,6 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
@@ -67,6 +66,7 @@ import com.richardluo.globalIconPack.ui.components.SampleTheme
 import com.richardluo.globalIconPack.ui.components.SnackbarErrorVisuals
 import com.richardluo.globalIconPack.ui.components.WarnDialog
 import com.richardluo.globalIconPack.ui.components.myPreferenceTheme
+import com.richardluo.globalIconPack.ui.components.pinnedScrollBehaviorWithPager
 import com.richardluo.globalIconPack.ui.viewModel.MainVM
 import com.richardluo.globalIconPack.utils.AppPreference
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -178,8 +178,9 @@ class MainActivity : ComponentActivity() {
       )
     }
     val pagerState = rememberPagerState(pageCount = { pages.size })
-    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
+    val scrollBehavior = pinnedScrollBehaviorWithPager(pagerState)
     val snackbarState = remember { SnackbarHostState() }
+
     Scaffold(
       modifier = Modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
       topBar = {

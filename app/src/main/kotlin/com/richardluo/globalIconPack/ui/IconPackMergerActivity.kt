@@ -62,7 +62,6 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
@@ -120,6 +119,7 @@ import com.richardluo.globalIconPack.ui.components.WarnDialog
 import com.richardluo.globalIconPack.ui.components.getLabelByType
 import com.richardluo.globalIconPack.ui.components.myPreferenceTheme
 import com.richardluo.globalIconPack.ui.components.navPage
+import com.richardluo.globalIconPack.ui.components.pinnedScrollBehaviorWithPager
 import com.richardluo.globalIconPack.ui.model.IconEntryWithPack
 import com.richardluo.globalIconPack.ui.model.IconInfo
 import com.richardluo.globalIconPack.ui.model.VariantPackIcon
@@ -176,8 +176,8 @@ class IconPackMergerActivity : ComponentActivity() {
   @OptIn(ExperimentalMaterial3Api::class)
   @Composable
   private fun Screen() {
-    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     val pagerState = rememberPagerState(pageCount = { Page.Count.ordinal })
+    val scrollBehavior = pinnedScrollBehaviorWithPager(pagerState)
     val coroutineScope = rememberCoroutineScope()
 
     val expandFabScrollConnection = remember {
