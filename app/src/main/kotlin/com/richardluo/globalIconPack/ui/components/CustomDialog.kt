@@ -189,8 +189,11 @@ fun TextFieldDialog(
       initValue,
       keyboardOptions = keyboardOptions,
       trailingIcon = trailingIcon,
-      dismiss = { openState.value = false },
-      onOk = onOk,
+      onCancel = { openState.value = false },
+      onOk = {
+        onOk(it)
+        openState.value = false
+      },
     )
   }
 }
@@ -208,7 +211,7 @@ fun TextFieldDialogContent(
   singleLine: Boolean = true,
   maxLines: Int = if (singleLine) 1 else Int.MAX_VALUE,
   minLines: Int = 1,
-  dismiss: () -> Unit,
+  onCancel: () -> Unit,
   onOk: (String) -> Unit,
 ) {
   val state = remember {
@@ -246,22 +249,15 @@ fun TextFieldDialogContent(
     maxLines = maxLines,
     minLines = minLines,
     keyboardOptions = keyboardOptions.copy(imeAction = ImeAction.Done),
-    keyboardActions =
-      KeyboardActions {
-        onOk(textState.value)
-        dismiss()
-      },
+    keyboardActions = KeyboardActions { onOk(textState.value) },
   )
 
   LaunchedEffect(focusRequester) { focusRequester.requestFocus() }
 
   DialogButtonRow(
     arrayOf(
-      CancelDialogButton(LocalContext.current) { dismiss() },
-      OkDialogButton(LocalContext.current) {
-        onOk(textState.value)
-        dismiss()
-      },
+      CancelDialogButton(LocalContext.current) { onCancel() },
+      OkDialogButton(LocalContext.current) { onOk(textState.value) },
     )
   )
 }

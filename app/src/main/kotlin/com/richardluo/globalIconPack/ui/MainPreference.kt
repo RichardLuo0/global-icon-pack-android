@@ -336,7 +336,7 @@ object MainPreference {
         initValue = state.value.toHexString(),
         prefix = { Text("#") },
         trailingIcon = { IconButtonWithTooltip(Icons.Outlined.Clear, "Clear") { it.value = "" } },
-        dismiss = dismiss,
+        onCancel = dismiss,
       ) {
         runCatchingToastOnMain(context) {
           state.value = it.toColorInt()
@@ -373,7 +373,7 @@ object MainPreference {
           initValue = state.value,
           singleLine = false,
           maxLines = 2,
-          dismiss = dismiss,
+          onCancel = dismiss,
           trailingIcon = {
             IconButtonWithTooltip(Icons.Outlined.Restore, "Restore") {
               it.value = Pref.PIXEL_LAUNCHER_PACKAGE.def
