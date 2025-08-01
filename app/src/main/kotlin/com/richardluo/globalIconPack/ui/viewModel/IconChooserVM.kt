@@ -51,20 +51,23 @@ class IconChooserVM(context: Application) : ContextVM(context) {
         icons,
         snapshotFlow { iconInfo },
         snapshotFlow { searchText.value }.debounceInput(),
-      ) { icons, appInfo, text ->
+      ) { icons, iconInfo, text ->
         emit(null)
         icons ?: return@combineTransform
-        appInfo ?: return@combineTransform
-        emit(
-          mutableListOf<VariantIcon>(OriginalIcon()).apply {
-            val keyword =
-              text.ifEmpty {
-                suggestHint?.substringBeforeLast("_")
-                  ?: appInfo.componentName.packageName.let {
-                    it.substringAfterLast(".").takeIf { it.length > 3 } ?: it
-                  }
+        iconInfo ?: return@combineTransform
+
+        val keyword =
+          text.ifEmpty {
+            suggestHint?.substringBeforeLast("_")
+              ?: iconInfo.componentName.packageName.let {
+                it.substringAfterLast(".").takeIf { it.length > 3 } ?: it
               }
-            addAll(icons.filter { it.entry.name.contains(keyword, ignoreCase = true) })
+          }
+
+        emit(
+          buildList {
+            if (text.isEmpty()) add(OriginalIcon())
+            icons.filterTo(this) { it.entry.name.contains(keyword, ignoreCase = true) }
           }
         )
       }
