@@ -39,11 +39,11 @@ import kotlinx.coroutines.flow.update
 
 class MainVM(context: Application) : ContextVM(context) {
   private var iconPackDBLazy = get { IconPackDB(context) }
+  private val iconPackDB by get { IconPackDB(context) }
   // Hold a strong reference to icon pack cache so it never gets recycled before MainVM is destroyed
   private val iconPackCache = get { IconPackCache(context) }.value
 
-  var waiting by mutableIntStateOf(0)
-    private set
+  val prefFlow = runCatching { WorldPreference.get() }.getOrNull()?.getPreferenceFlow()
 
   val prefFlow =
     runCatching { WorldPreference.get() }
@@ -94,21 +94,19 @@ class MainVM(context: Application) : ContextVM(context) {
     val parent = shareDBFile.parent
 
     if (!shareDBFile.exists()) {
-      if (iconPackDBLazy.isInitialized()) {
-        iconPackDBLazy.value.close()
-        iconPackDBLazy = update { IconPackDB(context) }
+      iconPackDB.migrate(shareDB) {
+        val oldDB =
+          context.createDeviceProtectedStorageContext().getDatabasePath(AppPref.PATH.def).path
+        Shell.cmd(
+            "set -e",
+            "mkdir -p $parent",
+            "if [ -f $oldDB ]; then cp $oldDB $shareDB; fi",
+            "if ! [ -f $shareDB ]; then touch $shareDB; fi",
+            "if [ -f $oldDB ]; then rm $oldDB; fi",
+          )
+          .exec()
+          .throwOnFail()
       }
-      val oldDB =
-        context.createDeviceProtectedStorageContext().getDatabasePath(AppPref.PATH.def).path
-      Shell.cmd(
-          "set -e",
-          "mkdir -p $parent",
-          "if [ -f $oldDB ]; then cp $oldDB $shareDB; fi",
-          "if ! [ -f $shareDB ]; then touch $shareDB; fi",
-          "if [ -f $oldDB ]; then rm $oldDB; fi",
-        )
-        .exec()
-        .throwOnFail()
     }
 
     AppPreference.get().edit { putString(AppPref.PATH.key, shareDB) }
@@ -117,15 +115,16 @@ class MainVM(context: Application) : ContextVM(context) {
   private fun resetDBPermission() {
     val shareDB =
       AppPreference.get().get(AppPref.PATH).also { if (!it.startsWith(File.separatorChar)) return }
-
     val shareDBFile = File(shareDB)
     if (shareDBFile.canRead() && shareDBFile.canWrite()) return
+
     val parent = shareDBFile.parent
 
     val prefPath = WorldPreference.getFile()?.path ?: ""
     val uid = android.os.Process.myUid()
     Shell.cmd(
         "set -e",
+        "if ! [ -f $shareDB ]; then touch $shareDB; fi",
         "[ -n \"$prefPath\" ] && context=$(ls -Z $prefPath | cut -d: -f1-4) || context=\"u:object_r:magisk_file:s0\"",
         "chown $uid:$uid $parent && chmod 0777 $parent && chcon \$context $parent",
         "chown $uid:$uid $shareDB && chmod 0666 $shareDB && chcon \$context $shareDB",
@@ -147,7 +146,7 @@ class MainVM(context: Application) : ContextVM(context) {
     runCatchingToast(context) {
       if (pack.isEmpty()) return
       iconPackCache.delete(pack)
-      iconPackDBLazy.value.onIconPackChange(iconPackCache[pack], IconPackApps.get().keys)
+      iconPackDB.onIconPackChange(iconPackCache[pack], IconPackApps.get().keys)
     }
   }
 }

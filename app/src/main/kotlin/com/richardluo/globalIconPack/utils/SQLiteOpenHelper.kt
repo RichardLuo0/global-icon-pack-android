@@ -68,7 +68,7 @@ private constructor(
   private var mOpenParamsBuilder: OpenParams.Builder,
 ) : AutoCloseable {
   /** Return the name of the SQLite database being opened, as given to the constructor. */
-  val databaseName: String?
+  var databaseName: String?
   private val mNewVersion: Int
   private val mMinimumSupportedVersion: Int
 
@@ -145,7 +145,23 @@ private constructor(
     mOpenParamsBuilder.addOpenFlags(SQLiteDatabase.CREATE_IF_NECESSARY)
   }
 
-  fun usable() = context.getDatabasePath(databaseName).let { it.canRead() && it.canWrite() }
+  private fun getDatabaseFile() =
+    databaseName?.let {
+      if (it.getOrNull(0) == File.separatorChar) File(it) else context.getDatabasePath(it)
+    }
+
+  fun usable() = getDatabaseFile()?.let { !it.exists() || (it.canRead() && it.canWrite()) } == true
+
+  fun migrate(name: String, block: () -> Unit) {
+    synchronized(this) {
+      if (mDatabase != null && mDatabase!!.isOpen) {
+        mDatabase!!.close()
+        mDatabase = null
+      }
+      block()
+      databaseName = name
+    }
+  }
 
   /**
    * Configures [lookaside memory allocator](https://sqlite.org/malloc.html#lookaside)
@@ -259,23 +275,24 @@ private constructor(
           db.close()
           db = SQLiteDatabase.openDatabase(db.path, null, SQLiteDatabase.OPEN_READWRITE)
         }
-      } else if (databaseName == null) {
-        db = SQLiteDatabase.createInMemory(mOpenParamsBuilder.build())
       } else {
-        val filePath = context.getDatabasePath(databaseName)
-        val params = mOpenParamsBuilder.build()
-        try {
-          db = SQLiteDatabase.openDatabase(filePath, params)
-        } catch (ex: SQLException) {
-          if (writable) {
-            throw ex
+        val filePath = getDatabaseFile()
+        if (filePath == null) db = SQLiteDatabase.createInMemory(mOpenParamsBuilder.build())
+        else {
+          val params = mOpenParamsBuilder.build()
+          try {
+            db = SQLiteDatabase.openDatabase(filePath, params)
+          } catch (ex: SQLException) {
+            if (writable) {
+              throw ex
+            }
+            Log.e(TAG, "Couldn't open database for writing (will try read-only):", ex)
+            db =
+              SQLiteDatabase.openDatabase(
+                filePath,
+                OpenParams.Builder(params).addOpenFlags(SQLiteDatabase.OPEN_READONLY).build(),
+              )
           }
-          Log.e(TAG, "Couldn't open database for writing (will try read-only):", ex)
-          db =
-            SQLiteDatabase.openDatabase(
-              filePath,
-              OpenParams.Builder(params).addOpenFlags(SQLiteDatabase.OPEN_READONLY).build(),
-            )
         }
       }
 

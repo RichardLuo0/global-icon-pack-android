@@ -3,7 +3,6 @@ package com.richardluo.globalIconPack.iconPack
 import android.content.ComponentName
 import android.content.ContentValues
 import android.content.Context
-import android.content.ContextWrapper
 import android.database.Cursor
 import android.database.MatrixCursor
 import android.database.MergeCursor
@@ -18,28 +17,21 @@ import com.richardluo.globalIconPack.iconPack.model.IconEntry.Type
 import com.richardluo.globalIconPack.ui.model.IconPack
 import com.richardluo.globalIconPack.ui.viewModel.IconPackCache
 import com.richardluo.globalIconPack.utils.AppPreference
-import com.richardluo.globalIconPack.utils.InstanceManager
 import com.richardluo.globalIconPack.utils.SQLiteOpenHelper
+import com.richardluo.globalIconPack.utils.SingletonManager
 import com.richardluo.globalIconPack.utils.flowTrigger
 import com.richardluo.globalIconPack.utils.log
 import com.richardluo.globalIconPack.utils.tryEmit
 import java.io.ByteArrayInputStream
 import java.io.DataInputStream
-import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 
-// To bypass the permission reset
-class DBContext(context: Context) : ContextWrapper(context) {
-  override fun getDatabasePath(name: String): File? =
-    if (name.getOrNull(0) == File.separatorChar) File(name) else super.getDatabasePath(name)
-}
-
 class IconPackDB(
   private val context: Context,
   path: String = AppPreference.get().get(AppPref.PATH),
-) : SQLiteOpenHelper(DBContext(context.createDeviceProtectedStorageContext()), path, null, 8) {
+) : SQLiteOpenHelper(context.createDeviceProtectedStorageContext(), path, null, 8) {
   val iconsUpdateFlow = flowTrigger()
   val modifiedUpdateFlow = flowTrigger()
 
@@ -238,7 +230,7 @@ class IconPackDB(
   }
 
   private fun updateIconId(db: SQLiteDatabase, iconPack: IconPack, packageName: String? = null) {
-    val iconPackCache = InstanceManager.get { IconPackCache(context) }.value
+    val iconPackCache = SingletonManager.get { IconPackCache(context) }.value
     val packTable = pt(iconPack.pack)
     val updateId = db.compileStatement("UPDATE $packTable SET id=? WHERE ROWID=?")
     db
@@ -363,7 +355,7 @@ class IconPackDB(
       }
       throw Exception("Old version < 7!")
     } else if (oldVersion < 8) {
-      val iconPackCache = InstanceManager.get { IconPackCache(context) }.value
+      val iconPackCache = SingletonManager.get { IconPackCache(context) }.value
       db.foreachPackTable {
         db.execSQL("ALTER TABLE '$it' ADD COLUMN id INTEGER NOT NULL DEFAULT 0")
         updateIconId(db, iconPackCache[it.removePrefix("pack/")])
