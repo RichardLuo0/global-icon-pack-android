@@ -217,7 +217,6 @@ object MainPreference {
       summary = { OneLineText("%.2f".format(it)) },
       valueToText = { "%.2f".format(it) },
     )
-    item { HorizontalDivider() }
     mySwitchPreference(
       icon = {},
       enabled = { it.get(Pref.ICON_FALLBACK) },
@@ -226,6 +225,7 @@ object MainPreference {
       title = { TwoLineText(stringResource(R.string.convertToAdaptive)) },
       summary = { TwoLineText(stringResource(R.string.convertToAdaptiveSummary)) },
     )
+    item { HorizontalDivider() }
     mySwitchPreference(
       icon = {},
       enabled = { it.get(Pref.ICON_FALLBACK) },
