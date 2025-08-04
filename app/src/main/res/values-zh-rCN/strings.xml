@@ -44,6 +44,8 @@
     <string name="noShadow">移除下方的阴影</string>
     <string name="noShadowSummary">删除系统图标遮罩生成的阴影。</string>
     <string name="forceLoadClockAndCalendar">强制加载时钟和日历图标</string>
+    <string name="clockUseFallbackMask">时钟使用回退遮罩</string>
+    <string name="disableClockSeconds">禁用时钟秒数</string>
     <string name="forceActivityIconForTask">强制为任务加载 activity 图标</string>
     <string name="forceActivityIconForTaskSummary">某些应用在运行时设置任务图标。无论怎样强制加载 activity 图标。</string>
     <string name="moreOptions">更多选项</string>
@@ -60,6 +62,7 @@
     <string name="options">选项</string>
     <string name="empty">空</string>
     <string name="restoreDefault">恢复默认</string>
+    <string name="clearAll">清除所有</string>
     <string name="restoreDefaultWarning">您确定要还原为默认图标吗？</string>
     <string name="suggestedIcons">推荐图标</string>
     <string name="allIcons">所有图标</string>
@@ -73,11 +76,11 @@
     <string name="exportedIconPack">图标包已导出。</string>
     <string name="importIconPack">导入</string>
     <string name="importedIconPack">图标包已导入。</string>
-    <string name="chooseBasePack">选择基本图标包</string>
-    <string name="chooseIconToReplace">选择要替换的图标</string>
+    <string name="chooseBasePack">基础图标包</string>
+    <string name="chooseIconToReplace">替换图标</string>
     <string name="chooseNewIcon">选择一个新图标</string>
     <string name="originalIcon">原始图标</string>
-    <string name="fillNewPackInfo">填写新包的信息</string>
+    <string name="fillNewPackInfo">新包信息</string>
     <string name="newPackName">新图标包名称</string>
     <string name="newPackPackage">新图标包包名</string>
     <string name="installedAppsOnly">仅为已安装应用生成图标</string>
