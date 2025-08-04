@@ -52,24 +52,27 @@ class ShareSource(pack: String, config: IconPackConfig = defaultIconPackConfig) 
   override fun getId(cn: ComponentName) = getId(listOf(cn)).getOrNull(0)
 
   override fun getId(cnList: List<ComponentName>) =
-    synchronized(indexMap) {
-      indexMap.getOrPut(cnList) { misses, getKey ->
-        db.getIcon(pack, misses, iconPackAsFallback).useMapToArray(misses.size) { i, c ->
-          if (c.getIntOrNull(GetIconCol.Fallback.ordinal) == 1) {
-            // Is fallback
-            val cn = getComponentName(getKey(i).packageName)
-            if (indexMap.contains(cn)) return@useMapToArray indexMap[cn]
-            else {
-              iconEntryList.add(IconResolver.from(c))
-              (iconEntryList.size - 1).also { indexMap[cn] = it }
+    runCatching {
+        synchronized(indexMap) {
+          indexMap.getOrPut(cnList) { misses, getKey ->
+            db.getIcon(pack, misses, iconPackAsFallback).useMapToArray(misses.size) { i, c ->
+              if (c.getIntOrNull(GetIconCol.Fallback.ordinal) == 1) {
+                // Is fallback
+                val cn = getComponentName(getKey(i).packageName)
+                if (indexMap.contains(cn)) return@useMapToArray indexMap[cn]
+                else {
+                  iconEntryList.add(IconResolver.from(c))
+                  (iconEntryList.size - 1).also { indexMap[cn] = it }
+                }
+              } else {
+                iconEntryList.add(IconResolver.from(c))
+                iconEntryList.size - 1
+              }
             }
-          } else {
-            iconEntryList.add(IconResolver.from(c))
-            iconEntryList.size - 1
           }
         }
       }
-    }
+      .getOrElse { List(cnList.size) { null } }
 
   override fun getIconEntry(id: Int): IconEntry? = iconEntryList.getOrNull(id)
 
