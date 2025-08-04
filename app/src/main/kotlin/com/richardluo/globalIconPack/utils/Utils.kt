@@ -284,7 +284,6 @@ fun <T, K, V> mapSaver(
     },
   )
 
-@Suppress("UNCHECKED_CAST")
 fun <K, V, M : Map<K, V>> mapSaver(toOriginal: (Map<K, V>) -> M) =
   mapSaver(save = { it }, restore = { toOriginal(it) })
 
