@@ -50,9 +50,11 @@ class NoForceShape(private val drawWholeIconForTransparentBackgroundInSplashScre
     }
     classOf("com.android.settings.accessibility.AccessibilityActivityPreference", lpp)
       ?.allMethods("getA11yActivityIcon")
+      ?.deoptimize()
       ?.hook(HookBuilder::extractOriIcon)
     classOf("com.android.settings.accessibility.AccessibilityServicePreference", lpp)
       ?.allMethods("getA11yServiceIcon")
+      ?.deoptimize()
       ?.hook(HookBuilder::extractOriIcon)
   }
 }
