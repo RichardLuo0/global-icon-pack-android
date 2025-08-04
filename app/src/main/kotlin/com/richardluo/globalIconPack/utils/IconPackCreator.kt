@@ -121,7 +121,8 @@ object IconPackCreator {
 
     fun advance(info: String) = Progress(current + 1, total, info)
 
-    override fun equals(other: Any?) = other is Progress && other.current == current
+    override fun equals(other: Any?) =
+      other is Progress && other.current == current && other.total == total
 
     override fun hashCode() = current
   }
@@ -149,21 +150,20 @@ object IconPackCreator {
         (if (icon != null) 1 else 0) +
         1
 
-    val progress = Progress(1, total, "icon_fallback")
-    onProgress(progress)
+    var progress = Progress(1, total, "icon_fallback").also { onProgress(it) }
     baseIconPack.copyFallbacks("icon_fallback", appfilterXML, apkBuilder)
 
     var i = 0
     if (installedAppsOnly)
       newIcons.entries.forEach { (cn, entry) ->
-        onProgress(progress.advance(cn.packageName))
+        progress = progress.advance(cn.packageName).also { onProgress(it) }
         if (entry == null) return@forEach
         val iconName = "icon_${i++}"
         entry.pack.copyIcon(entry.entry, cn.flattenToString(), iconName, appfilterXML, apkBuilder)
       }
     else
       baseIconPack.iconEntryMap.forEach { (cn, entry) ->
-        onProgress(progress.advance(cn.packageName))
+        progress.advance(cn.packageName).also { onProgress(it) }
         val iconName = "icon_${i++}"
         val newEntry = if (newIcons.containsKey(cn)) newIcons[cn] ?: return@forEach else null
         val entry = newEntry?.entry ?: entry
@@ -173,7 +173,7 @@ object IconPackCreator {
     apkBuilder.addXML(appfilterXML.append("</resources>").toString())
 
     if (icon != null) {
-      onProgress(progress.advance("ic_launcher"))
+      progress.advance("ic_launcher").also { onProgress(it) }
       icon.pack.copyIcon(
         icon.entry,
         ComponentName(packageName, "").flattenToString(),
@@ -181,10 +181,10 @@ object IconPackCreator {
         appfilterXML,
         apkBuilder,
       )
-      onProgress(progress.advance("building..."))
+      progress.advance("building...").also { onProgress(it) }
       apkBuilder.build(label, "@drawable/ic_launcher")
     } else {
-      onProgress(progress.advance("building..."))
+      progress.advance("building...").also { onProgress(it) }
       apkBuilder.build(label)
     }
   }

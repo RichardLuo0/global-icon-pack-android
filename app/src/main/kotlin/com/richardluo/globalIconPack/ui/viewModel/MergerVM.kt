@@ -189,7 +189,7 @@ class MergerVM(context: Application, savedStateHandle: SavedStateHandle) :
       }
 
     viewModelScope.launch(Dispatchers.Default) {
-      creatingApkProgress = Progress(0, 0, "")
+      creatingApkProgress = Progress(0, 0, "preparing")
       runCatchingToast(
         context,
         {
@@ -204,7 +204,6 @@ class MergerVM(context: Application, savedStateHandle: SavedStateHandle) :
             .filter { it.key.packageName in packageNames }
             .mapValues { IconEntryWithPack(it.value, iconPack) } + changedIcons
 
-        @Suppress("UNCHECKED_CAST")
         IconPackCreator.createIconPack(
           context,
           uri,
