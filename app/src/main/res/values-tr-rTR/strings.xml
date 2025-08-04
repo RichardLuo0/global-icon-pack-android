@@ -76,11 +76,11 @@
     <string name="exportedIconPack">Simge paketi dışa aktarıldı.</string>
     <string name="importIconPack">İçe Aktar</string>
     <string name="importedIconPack">Simge paketi içe aktarıldı.</string>
-    <string name="chooseBasePack">Temel bir simge paketi seçin</string>
-    <string name="chooseIconToReplace">Değiştirilecek simgeyi seçin</string>
+    <string name="chooseBasePack">Temel simge paketi</string>
+    <string name="chooseIconToReplace">Simgeleri değiştir</string>
     <string name="chooseNewIcon">Yeni bir simge seçin</string>
     <string name="originalIcon">Orijinal simge</string>
-    <string name="fillNewPackInfo">Yeni paket bilgilerini doldurun</string>
+    <string name="fillNewPackInfo">Yeni paket bilgisi</string>
     <string name="newPackName">Yeni paket adı</string>
     <string name="newPackPackage">Yeni paket yolu</string>
     <string name="installedAppsOnly">Yalnızca yüklü uygulamalar için simge oluştur</string>
