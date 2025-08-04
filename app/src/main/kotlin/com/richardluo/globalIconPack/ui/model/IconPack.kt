@@ -4,6 +4,8 @@ import android.annotation.SuppressLint
 import android.content.ComponentName
 import android.content.res.Resources
 import android.graphics.drawable.Drawable
+import android.os.Parcel
+import android.os.Parcelable
 import com.richardluo.globalIconPack.iconPack.model.FallbackSettings
 import com.richardluo.globalIconPack.iconPack.model.IconEntry
 import com.richardluo.globalIconPack.iconPack.model.IconFallback
@@ -12,16 +14,23 @@ import com.richardluo.globalIconPack.iconPack.model.defaultIconPackConfig
 import com.richardluo.globalIconPack.iconPack.model.withConfig
 import com.richardluo.globalIconPack.iconPack.source.getComponentName
 import com.richardluo.globalIconPack.iconPack.source.loadIconPack
+import com.richardluo.globalIconPack.ui.MyApplication
+import com.richardluo.globalIconPack.ui.viewModel.IconPackCache
 import com.richardluo.globalIconPack.utils.AXMLEditor
 import com.richardluo.globalIconPack.utils.IconHelper
 import com.richardluo.globalIconPack.utils.IconPackCreator.ApkBuilder
+import com.richardluo.globalIconPack.utils.SingletonManager.get
 import com.richardluo.globalIconPack.utils.get
 import com.richardluo.globalIconPack.utils.isHighTwoByte
+import kotlin.getValue
+import kotlinx.parcelize.Parceler
+import kotlinx.parcelize.Parcelize
 import org.xmlpull.v1.XmlPullParser
 
 private class IconEntryWithId(val entry: IconEntry, val id: Int) : IconEntry by entry
 
-class IconPack(val pack: String, val res: Resources) {
+@Parcelize
+class IconPack(val pack: String, val res: Resources) : Parcelable {
   val info by lazy { loadIconPack(res, pack) }
   val iconFallback by lazy {
     IconFallback(FallbackSettings(info), ::getIcon, defaultIconPackConfig).orNullIfEmpty()
@@ -138,7 +147,7 @@ class IconPack(val pack: String, val res: Resources) {
 
   override fun hashCode() = pack.hashCode()
 
-  companion object {
+  companion object : Parceler<IconPack> {
     fun genIconFrom(
       res: Resources,
       baseIcon: Drawable,
@@ -150,5 +159,13 @@ class IconPack(val pack: String, val res: Resources) {
         baseIcon,
         iconFallback.withConfig(config)?.orNullIfEmpty(),
       )
+
+    private val iconPackCache by get { IconPackCache(MyApplication.context) }
+
+    override fun IconPack.write(parcel: Parcel, flags: Int) {
+      parcel.writeString(pack)
+    }
+
+    override fun create(parcel: Parcel) = iconPackCache[parcel.readString()!!]
   }
 }

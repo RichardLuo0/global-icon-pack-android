@@ -3,9 +3,6 @@ package com.richardluo.globalIconPack.ui.viewModel
 import android.app.Application
 import android.content.ComponentName
 import android.content.pm.PackageManager
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.setValue
 import androidx.core.content.edit
 import androidx.lifecycle.viewModelScope
 import com.richardluo.globalIconPack.AppPref
@@ -18,10 +15,12 @@ import com.richardluo.globalIconPack.iconPack.BootReceiver
 import com.richardluo.globalIconPack.iconPack.IconPackDB
 import com.richardluo.globalIconPack.iconPack.KeepAliveService
 import com.richardluo.globalIconPack.iconPack.source.ShareSource
+import com.richardluo.globalIconPack.ui.repo.IconPackApps
 import com.richardluo.globalIconPack.utils.AppPreference
 import com.richardluo.globalIconPack.utils.ContextVM
-import com.richardluo.globalIconPack.utils.InstanceManager.get
-import com.richardluo.globalIconPack.utils.InstanceManager.update
+import com.richardluo.globalIconPack.utils.ILoadable
+import com.richardluo.globalIconPack.utils.Loadable
+import com.richardluo.globalIconPack.utils.SingletonManager.get
 import com.richardluo.globalIconPack.utils.WorldPreference
 import com.richardluo.globalIconPack.utils.getPreferenceFlow
 import com.richardluo.globalIconPack.utils.runCatchingToast
@@ -29,7 +28,6 @@ import com.richardluo.globalIconPack.utils.throwOnFail
 import com.topjohnwu.superuser.Shell
 import java.io.File
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
@@ -37,24 +35,19 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.update
 
-class MainVM(context: Application) : ContextVM(context) {
-  private var iconPackDBLazy = get { IconPackDB(context) }
+class MainVM(context: Application) : ContextVM(context), ILoadable by Loadable() {
   private val iconPackDB by get { IconPackDB(context) }
   // Hold a strong reference to icon pack cache so it never gets recycled before MainVM is destroyed
   private val iconPackCache = get { IconPackCache(context) }.value
 
   val prefFlow = runCatching { WorldPreference.get() }.getOrNull()?.getPreferenceFlow()
 
-  val prefFlow =
-    runCatching { WorldPreference.get() }
-      .getOrNull()
-      ?.getPreferenceFlow()
-      ?.apply {
-        @OptIn(ExperimentalCoroutinesApi::class)
-        map { Pair(it.get(Pref.MODE), it.get(Pref.ICON_PACK)) }
-          .distinctUntilChanged()
-          .onEach { (mode, pack) ->
-            waiting++
+  init {
+    prefFlow?.run {
+      map { Pair(it.get(Pref.MODE), it.get(Pref.ICON_PACK)) }
+        .distinctUntilChanged()
+        .onEach { (mode, pack) ->
+          runLoading {
             when (mode) {
               MODE_SHARE -> {
                 KeepAliveService.stopForeground(context)
@@ -82,11 +75,12 @@ class MainVM(context: Application) : ContextVM(context) {
                 startOnBoot(false)
               }
             }
-            waiting--
           }
-          .flowOn(Dispatchers.IO)
-          .launchIn(viewModelScope)
-      }
+        }
+        .flowOn(Dispatchers.IO)
+        .launchIn(viewModelScope)
+    }
+  }
 
   private fun createShareDB() {
     val shareDB = ShareSource.DATABASE_PATH

@@ -45,12 +45,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.richardluo.globalIconPack.R
-import com.richardluo.globalIconPack.ui.model.IconInfo
+import com.richardluo.globalIconPack.ui.model.CompInfo
 import com.richardluo.globalIconPack.ui.model.OriginalIcon
 import com.richardluo.globalIconPack.ui.model.VariantIcon
 import com.richardluo.globalIconPack.ui.model.VariantPackIcon
 import com.richardluo.globalIconPack.ui.viewModel.IconChooserVM
-import com.richardluo.globalIconPack.ui.viewModel.IconPackApps
+import com.richardluo.globalIconPack.ui.repo.IconPackApps
 import com.richardluo.globalIconPack.ui.viewModel.emptyImageBitmap
 import com.richardluo.globalIconPack.utils.getValue
 import kotlinx.coroutines.launch
@@ -60,8 +60,8 @@ import me.zhanghai.compose.preference.Preference
 @Composable
 fun IconChooserSheet(
   vm: IconChooserVM = viewModel(),
-  loadOriginalIcon: suspend (IconInfo) -> ImageBitmap,
-  replaceIcon: (IconInfo, VariantIcon) -> Unit,
+  loadOriginalIcon: suspend (CompInfo) -> ImageBitmap,
+  replaceIcon: (CompInfo, VariantIcon) -> Unit,
 ) {
   val context = LocalContext.current
   val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
@@ -80,7 +80,7 @@ fun IconChooserSheet(
     val selectedIcon = remember { mutableStateOf<VariantIcon?>(null) }
 
     fun replaceAsNormalIcon(icon: VariantIcon) {
-      replaceIcon(vm.iconInfo ?: return, icon)
+      replaceIcon(vm.compInfo ?: return, icon)
       scope.launch {
         sheetState.hide()
         onDismissRequest()
@@ -89,7 +89,7 @@ fun IconChooserSheet(
 
     fun replaceAsCalendarIcon(icon: VariantIcon) {
       try {
-        replaceIcon(vm.iconInfo ?: return, vm.asCalendarEntry(icon))
+        replaceIcon(vm.compInfo ?: return, vm.asCalendarEntry(icon))
         scope.launch {
           sheetState.hide()
           onDismissRequest()
@@ -143,7 +143,7 @@ fun IconChooserSheet(
           },
           loadImage = {
             when (icon) {
-              is OriginalIcon -> vm.iconInfo?.let { loadOriginalIcon(it) }
+              is OriginalIcon -> vm.compInfo?.let { loadOriginalIcon(it) }
               is VariantPackIcon -> vm.loadIcon(icon)
               else -> null
             } ?: emptyImageBitmap

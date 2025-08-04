@@ -84,7 +84,7 @@ import com.richardluo.globalIconPack.ui.components.mapListPreference
 import com.richardluo.globalIconPack.ui.components.myPreference
 import com.richardluo.globalIconPack.ui.components.mySliderPreference
 import com.richardluo.globalIconPack.ui.components.mySwitchPreference
-import com.richardluo.globalIconPack.ui.viewModel.IconPackApps
+import com.richardluo.globalIconPack.ui.repo.IconPackApps
 import com.richardluo.globalIconPack.utils.DrawablePainter
 import com.richardluo.globalIconPack.utils.PathDrawable
 import com.richardluo.globalIconPack.utils.runCatchingToastOnMain
@@ -160,6 +160,7 @@ object MainPreference {
         title = { TwoLineText(stringResource(R.string.iconVariant)) },
         summary = { TwoLineText(stringResource(R.string.iconVariantSummary)) },
       )
+      item { HorizontalDivider() }
       fallback(context)
     }
   }
@@ -216,6 +217,7 @@ object MainPreference {
       summary = { OneLineText("%.2f".format(it)) },
       valueToText = { "%.2f".format(it) },
     )
+    item { HorizontalDivider() }
     mySwitchPreference(
       icon = {},
       enabled = { it.get(Pref.ICON_FALLBACK) },
@@ -224,7 +226,6 @@ object MainPreference {
       title = { TwoLineText(stringResource(R.string.convertToAdaptive)) },
       summary = { TwoLineText(stringResource(R.string.convertToAdaptiveSummary)) },
     )
-    item { HorizontalDivider() }
     mySwitchPreference(
       icon = {},
       enabled = { it.get(Pref.ICON_FALLBACK) },
@@ -409,6 +410,7 @@ object MainPreference {
         title = { TwoLineText(stringResource(R.string.noShadow)) },
         summary = { TwoLineText(stringResource(R.string.noShadowSummary)) },
       )
+      item { HorizontalDivider() }
       switchPreference(
         icon = { Icon(Icons.Outlined.CalendarMonth, Pref.FORCE_LOAD_CLOCK_AND_CALENDAR.key) },
         key = Pref.FORCE_LOAD_CLOCK_AND_CALENDAR.key,
@@ -429,6 +431,7 @@ object MainPreference {
         defaultValue = Pref.DISABLE_CLOCK_SECONDS.def,
         title = { TwoLineText(stringResource(R.string.disableClockSeconds)) },
       )
+      item { HorizontalDivider() }
       switchPreference(
         icon = {},
         key = Pref.FORCE_ACTIVITY_ICON_FOR_TASK.key,

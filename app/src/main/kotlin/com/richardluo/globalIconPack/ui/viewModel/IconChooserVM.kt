@@ -5,16 +5,20 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
+import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.serialization.saved
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.SavedStateHandleSaveableApi
+import androidx.lifecycle.viewmodel.compose.saveable
 import com.richardluo.globalIconPack.iconPack.model.CalendarIconEntry
 import com.richardluo.globalIconPack.iconPack.model.NormalIconEntry
-import com.richardluo.globalIconPack.ui.model.IconInfo
+import com.richardluo.globalIconPack.ui.model.CompInfo
 import com.richardluo.globalIconPack.ui.model.IconPack
 import com.richardluo.globalIconPack.ui.model.OriginalIcon
 import com.richardluo.globalIconPack.ui.model.VariantIcon
 import com.richardluo.globalIconPack.ui.model.VariantPackIcon
 import com.richardluo.globalIconPack.utils.ContextVM
-import com.richardluo.globalIconPack.utils.InstanceManager.get
+import com.richardluo.globalIconPack.utils.SingletonManager.get
 import com.richardluo.globalIconPack.utils.filter
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.SharingStarted
@@ -23,16 +27,19 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.transform
 
-class IconChooserVM(context: Application) : ContextVM(context) {
+@OptIn(SavedStateHandleSaveableApi::class)
+class IconChooserVM(context: Application, savedStateHandle: SavedStateHandle) : ContextVM(context) {
   private val iconPackCache by get { IconPackCache(context) }
   private val iconCache by get { IconCache(context) }
 
-  var variantSheet by mutableStateOf(false)
-  var iconPack by mutableStateOf<IconPack?>(null)
-  var iconInfo by mutableStateOf<IconInfo?>(null)
+  var variantSheet by savedStateHandle.saveable { mutableStateOf(false) }
+  var iconPack by savedStateHandle.saveable { mutableStateOf<IconPack?>(null) }
     private set
 
-  private var suggestHint: String? = null
+  var compInfo by savedStateHandle.saveable { mutableStateOf<CompInfo?>(null) }
+    private set
+
+  private var suggestHint by savedStateHandle.saved { "" }
 
   val icons =
     snapshotFlow { iconPack }
@@ -45,13 +52,13 @@ class IconChooserVM(context: Application) : ContextVM(context) {
       .stateIn(viewModelScope, SharingStarted.Lazily, null)
 
   val suggestIcons =
-    combineTransform(icons, snapshotFlow { iconInfo }) { icons, iconInfo ->
+    combineTransform(icons, snapshotFlow { compInfo }) { icons, iconInfo ->
         emit(null)
         icons ?: return@combineTransform
         iconInfo ?: return@combineTransform
 
         val keyword =
-          suggestHint?.substringBeforeLast("_")
+          suggestHint.takeIf { it.isNotEmpty() }?.substringBeforeLast("_")
             ?: iconInfo.componentName.packageName.let {
               it.substringAfterLast(".").takeIf { it.length > 3 } ?: it
             }
@@ -80,10 +87,10 @@ class IconChooserVM(context: Application) : ContextVM(context) {
     this.iconPack = iconPackCache[pack]
   }
 
-  fun open(iconInfo: IconInfo, iconPack: IconPack, suggestHint: String? = null) {
-    this.iconInfo = iconInfo
+  fun open(compInfo: CompInfo, iconPack: IconPack, suggestHint: String? = null) {
+    this.compInfo = compInfo
     this.iconPack = iconPack
-    this.suggestHint = suggestHint
+    this.suggestHint = suggestHint.orEmpty()
     variantSheet = true
   }
 

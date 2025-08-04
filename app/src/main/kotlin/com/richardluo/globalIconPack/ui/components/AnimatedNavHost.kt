@@ -15,34 +15,117 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NamedNavArgument
-import androidx.navigation.NavBackStackEntry
-import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import com.richardluo.globalIconPack.utils.asType
+import com.richardluo.globalIconPack.utils.mapSaver
+
+typealias RouteArgs = MutableMap<String, Any>
+
+@Composable
+fun rememberRouteArgs(saverMap: Map<String, Saver<*, out Any>> = emptyMap()): RouteArgs =
+  rememberSaveable(
+    saver =
+      remember {
+        mapSaver(
+          save = {
+            buildMap {
+              it.forEach { (key, value) ->
+                val saver = saverMap[key].asType<Saver<Any, *>>()
+                val newValue = if (saver == null) value else with(saver) { save(value) }
+                newValue?.let { set(key, it) }
+              }
+            }
+          },
+          restore = {
+            mutableMapOf<String, Any>().apply {
+              it.forEach { (key, value) ->
+                val saver = saverMap[key].asType<Saver<Any, Any>>()
+                val oldValue = if (saver == null) value else saver.restore(value)
+                oldValue?.let { set(key, it) }
+              }
+            }
+          },
+        )
+      }
+  ) {
+    mutableMapOf()
+  }
+
+class NavControllerWithArgs(val navController: NavHostController, val routeArgs: RouteArgs) {
+
+  fun navigate(route: String, arg: Any) {
+    routeArgs[route] = arg
+    navController.navigate(route)
+  }
+
+  fun getArg(route: String) = routeArgs[route]
+
+  fun popBackStack() = navController.popBackStack()
+}
+
+val LocalNavControllerWithArgs = compositionLocalOf<NavControllerWithArgs?> { null }
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 val LocalSharedTransitionScope = compositionLocalOf<SharedTransitionScope?> { null }
 val LocalAnimatedContentScope = compositionLocalOf<AnimatedContentScope?> { null }
 
+open class NavPage(
+  val route: String,
+  val arguments: List<NamedNavArgument> = emptyList(),
+  val argSaver: Saver<*, out Any>? = null,
+  val content: @Composable (AnimatedContentScope.() -> Unit),
+)
+
+inline fun <reified Arg> navPage(
+  route: String,
+  arguments: List<NamedNavArgument> = emptyList(),
+  argSaver: Saver<Arg, out Any>? = null,
+  crossinline content: @Composable (AnimatedContentScope.(Arg) -> Unit),
+) =
+  NavPage(route, arguments, argSaver) {
+    val arg = LocalNavControllerWithArgs.current?.getArg(route)
+    if (arg !is Arg) throw Exception("Incorrect route arg type! Route: $route")
+    content(arg)
+  }
+
+fun navPage(
+  route: String,
+  arguments: List<NamedNavArgument> = emptyList(),
+  content: @Composable (AnimatedContentScope.() -> Unit),
+) = NavPage(route, arguments, content = content)
+
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun AnimatedNavHost(
-  navController: NavHostController,
-  startDestination: String,
   modifier: Modifier = Modifier,
+  startDestination: String,
+  pages: Array<NavPage>,
+  navController: NavHostController = rememberNavController(),
+  routeArgs: RouteArgs =
+    rememberRouteArgs(
+      buildMap { pages.forEach { if (it.argSaver != null) set(it.route, it.argSaver) } }
+    ),
   contentAlignment: Alignment = Alignment.TopStart,
   route: String? = null,
-  builder: NavGraphBuilder.() -> Unit,
 ) {
   SharedTransitionLayout {
-    CompositionLocalProvider(LocalSharedTransitionScope provides this) {
+    CompositionLocalProvider(
+      LocalNavControllerWithArgs provides
+        remember(navController, routeArgs) { NavControllerWithArgs(navController, routeArgs) },
+      LocalSharedTransitionScope provides this,
+    ) {
       NavHost(
         navController = navController,
         startDestination = startDestination,
@@ -53,8 +136,25 @@ fun AnimatedNavHost(
         exitTransition = { slideOut { it / 4 } },
         popEnterTransition = { slideInto(SlideDirection.End) { it / 4 } },
         popExitTransition = { slideOut(SlideDirection.End) },
-        builder = builder,
-      )
+      ) {
+        pages.forEach { page ->
+          composable(page.route, page.arguments) {
+            CompositionLocalProvider(LocalAnimatedContentScope provides this) {
+              Box(
+                modifier =
+                  Modifier.fillMaxSize()
+                    .shadow(
+                      elevation = 16.dp,
+                      shape = MaterialTheme.shapes.large,
+                      clip = transition.isRunning,
+                    )
+              ) {
+                with(page) { content() }
+              }
+            }
+          }
+        }
+      }
     }
   }
 }
@@ -84,28 +184,6 @@ private fun AnimatedContentTransitionScope<*>.slideOut(
     ),
     targetOffset,
   )
-
-fun NavGraphBuilder.navPage(
-  route: String,
-  arguments: List<NamedNavArgument> = emptyList(),
-  content: @Composable (AnimatedContentScope.(NavBackStackEntry) -> Unit),
-) {
-  composable(route, arguments) {
-    CompositionLocalProvider(LocalAnimatedContentScope provides this) {
-      Box(
-        modifier =
-          Modifier.fillMaxSize()
-            .shadow(
-              elevation = 16.dp,
-              shape = MaterialTheme.shapes.large,
-              clip = transition.isRunning,
-            )
-      ) {
-        content(it)
-      }
-    }
-  }
-}
 
 @Composable
 @OptIn(ExperimentalSharedTransitionApi::class)

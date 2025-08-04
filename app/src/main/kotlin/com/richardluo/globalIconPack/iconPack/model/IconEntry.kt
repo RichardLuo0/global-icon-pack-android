@@ -1,6 +1,7 @@
 package com.richardluo.globalIconPack.iconPack.model
 
 import android.graphics.drawable.Drawable
+import android.os.Parcel
 import com.richardluo.globalIconPack.iconPack.model.IconEntry.Type
 import com.richardluo.globalIconPack.reflect.ClockDrawableWrapper
 import java.io.ByteArrayInputStream
@@ -8,6 +9,7 @@ import java.io.ByteArrayOutputStream
 import java.io.DataInputStream
 import java.io.DataOutputStream
 import java.util.Calendar
+import kotlinx.parcelize.Parceler
 
 interface IconEntry {
   enum class Type {
@@ -177,4 +179,18 @@ class ClockIconEntry(override val name: String, private val metadata: ClockMetad
         )
       }
   }
+}
+
+object IconEntryParceler : Parceler<IconEntry> {
+  override fun IconEntry.write(parcel: Parcel, flags: Int) =
+    toByteArray().let {
+      parcel.writeInt(it.size)
+      parcel.writeByteArray(it)
+    }
+
+  override fun create(parcel: Parcel) =
+    ByteArray(parcel.readInt()).let {
+      parcel.readByteArray(it)
+      IconEntry.from(it)
+    }
 }

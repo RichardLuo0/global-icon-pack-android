@@ -34,7 +34,6 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -43,11 +42,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
 import com.richardluo.globalIconPack.R
 import com.richardluo.globalIconPack.ui.components.AnimatedNavHost
 import com.richardluo.globalIconPack.ui.components.AppFilterByType
@@ -56,25 +51,21 @@ import com.richardluo.globalIconPack.ui.components.AppbarSearchBar
 import com.richardluo.globalIconPack.ui.components.AutoFillDialog
 import com.richardluo.globalIconPack.ui.components.IconButtonWithTooltip
 import com.richardluo.globalIconPack.ui.components.LoadingDialog
+import com.richardluo.globalIconPack.ui.components.LocalNavControllerWithArgs
 import com.richardluo.globalIconPack.ui.components.MyDropdownMenu
 import com.richardluo.globalIconPack.ui.components.SampleTheme
 import com.richardluo.globalIconPack.ui.components.WarnDialog
 import com.richardluo.globalIconPack.ui.components.getLabelByType
 import com.richardluo.globalIconPack.ui.components.navPage
-import com.richardluo.globalIconPack.ui.viewModel.AutoFillVM
+import com.richardluo.globalIconPack.ui.model.AppCompIcon
+import com.richardluo.globalIconPack.ui.state.rememberAutoFillState
 import com.richardluo.globalIconPack.ui.viewModel.IconVariantVM
 import com.richardluo.globalIconPack.utils.getValue
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-class IconVariantAVM : ViewModel() {
-  var waiting by mutableIntStateOf(0)
-}
-
 class IconVariantActivity : ComponentActivity() {
-  private lateinit var navController: NavHostController
   private val vm: IconVariantVM by viewModels()
-  private val avm: IconVariantAVM by viewModels()
 
   override fun onCreate(savedInstanceState: Bundle?) {
     enableEdgeToEdge()
@@ -88,13 +79,17 @@ class IconVariantActivity : ComponentActivity() {
 
     setContent {
       SampleTheme {
-        navController = rememberNavController()
-        AnimatedNavHost(navController = navController, startDestination = "Main") {
-          navPage("Main") { Screen() }
-          navPage("AppIconList") {
-            AppIconListPage({ navController.popBackStack() }, vm, vm.appIconListVM)
-          }
-        }
+        AnimatedNavHost(
+          startDestination = "Main",
+          pages =
+            arrayOf(
+              navPage("Main") { Screen() },
+              navPage<AppCompIcon>("AppIconList") {
+                val navController = LocalNavControllerWithArgs.current!!
+                AppIconListPage({ navController.popBackStack() }, vm, it)
+              },
+            ),
+        )
       }
     }
   }
@@ -121,7 +116,7 @@ class IconVariantActivity : ComponentActivity() {
               }
               var expand by rememberSaveable { mutableStateOf(false) }
               val expandFilter = rememberSaveable { mutableStateOf(false) }
-              val autoFillVM: AutoFillVM = viewModel()
+              val autoFillState = rememberAutoFillState()
               IconButtonWithTooltip(Icons.Outlined.MoreVert, stringResource(R.string.moreOptions)) {
                 expand = true
               }
@@ -138,7 +133,7 @@ class IconVariantActivity : ComponentActivity() {
                   leadingIcon = { Icon(Icons.Outlined.FormatColorFill, "auto fill") },
                   text = { Text(stringResource(R.string.autoFill)) },
                   onClick = {
-                    autoFillVM.open(vm.pack)
+                    autoFillState.open(vm.pack)
                     expand = false
                   },
                 )
@@ -183,13 +178,7 @@ class IconVariantActivity : ComponentActivity() {
                 )
               }
               AppFilterByType(expandFilter, vm.filterType)
-              AutoFillDialog(autoFillVM) {
-                lifecycleScope.launch {
-                  avm.waiting++
-                  vm.autoFill(it)
-                  avm.waiting--
-                }
-              }
+              AutoFillDialog(autoFillState) { vm.autoFill(it) }
             },
             modifier = Modifier.fillMaxWidth(),
             scrollBehavior = scrollBehavior,
@@ -199,14 +188,16 @@ class IconVariantActivity : ComponentActivity() {
         }
       },
     ) { contentPadding ->
-      val icons = vm.filteredIcons.getValue(null)
+      val navController = LocalNavControllerWithArgs.current!!
+
+      val icons = vm.filteredIcons.getValue()
       if (icons != null)
         LazyVerticalGrid(
           contentPadding = contentPadding,
           modifier = Modifier.fillMaxSize().padding(horizontal = 2.dp),
           columns = GridCells.Adaptive(minSize = 74.dp),
         ) {
-          items(icons, key = { it.first.componentName }) {
+          items(icons, key = { it.info.componentName }) {
             val (info, entry) = it
             AppIcon(
               info.label,
@@ -214,8 +205,7 @@ class IconVariantActivity : ComponentActivity() {
               loadImage = { vm.loadIcon(it) },
               shareKey = info.componentName.packageName,
             ) {
-              vm.appIconListVM.setup(it)
-              navController.navigate("AppIconList")
+              navController.navigate("AppIconList", it)
             }
           }
         }
@@ -224,7 +214,7 @@ class IconVariantActivity : ComponentActivity() {
           CircularProgressIndicator(trackColor = MaterialTheme.colorScheme.surfaceVariant)
         }
 
-      if (avm.waiting > 0) LoadingDialog()
+      if (vm.loading > 0) LoadingDialog()
 
       WarnDialog(
         resetWarnDialogState,
@@ -239,20 +229,12 @@ class IconVariantActivity : ComponentActivity() {
   private val exportLauncher =
     registerForActivityResult(ActivityResultContracts.CreateDocument("text/xml")) { result ->
       result ?: return@registerForActivityResult
-      lifecycleScope.launch {
-        avm.waiting++
-        runCatching { vm.export(result).await() }
-        avm.waiting--
-      }
+      vm.export(result)
     }
 
   private val importLauncher =
     registerForActivityResult(ActivityResultContracts.OpenDocument()) { result ->
       result ?: return@registerForActivityResult
-      lifecycleScope.launch {
-        avm.waiting++
-        runCatching { vm.import(result).await() }
-        avm.waiting--
-      }
+      vm.import(result)
     }
 }

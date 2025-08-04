@@ -1,4 +1,4 @@
-package com.richardluo.globalIconPack.ui.viewModel
+package com.richardluo.globalIconPack.ui.repo
 
 import android.content.Intent
 import android.graphics.drawable.Drawable

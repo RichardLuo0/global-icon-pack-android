@@ -14,7 +14,10 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.SaverScope
+import androidx.compose.runtime.saveable.listSaver
+import androidx.compose.runtime.snapshots.SnapshotStateMap
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
@@ -185,10 +188,6 @@ inline fun <K, reified V> MutableMap<K, V>.getOrPut(
   return array.asList()
 }
 
-inline fun <T> MutableState<T>.update(crossinline transform: T.() -> T) {
-  value = value.transform()
-}
-
 inline fun <T> T.chain(block: T.() -> T?): T = block() ?: this
 
 inline fun <T> Flow<List<T>?>.filter(
@@ -253,3 +252,40 @@ fun PaddingValues.consumable() =
     end = calculateEndPadding(LayoutDirection.Ltr),
     bottom = calculateBottomPadding(),
   )
+
+fun <Original, Saveable : Any> Saver<Original, Saveable>.nullable() =
+  Saver<Original?, Saveable>(save = { it?.let { this.save(it) } }, restore = { this.restore(it) })
+
+fun <T, K, V> mapSaver(
+  save: SaverScope.(value: T) -> Map<K, V>,
+  restore: (Map<K, V>) -> T?,
+): Saver<T, out Any> =
+  @Suppress("UNCHECKED_CAST")
+  listSaver(
+    save = {
+      mutableListOf<Any?>().apply {
+        save(it).forEach { entry ->
+          add(entry.key)
+          add(entry.value)
+        }
+      }
+    },
+    restore = { list ->
+      val map = mutableMapOf<K, V>()
+      check(list.size.rem(2) == 0) { "non-zero remainder" }
+      var index = 0
+      while (index < list.size) {
+        val key = list[index] as K
+        val value = list[index + 1] as V
+        map[key] = value
+        index += 2
+      }
+      restore(map)
+    },
+  )
+
+@Suppress("UNCHECKED_CAST")
+fun <K, V, M : Map<K, V>> mapSaver(toOriginal: (Map<K, V>) -> M) =
+  mapSaver(save = { it }, restore = { toOriginal(it) })
+
+fun <K, V> Map<K, V>.toMutableStateMap() = SnapshotStateMap<K, V>().also { it.putAll(this.toMap()) }

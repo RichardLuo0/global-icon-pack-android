@@ -38,17 +38,17 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.richardluo.globalIconPack.R
-import com.richardluo.globalIconPack.ui.viewModel.AutoFillVM
-import com.richardluo.globalIconPack.ui.viewModel.IconPackApps
+import com.richardluo.globalIconPack.ui.repo.IconPackApps
+import com.richardluo.globalIconPack.ui.state.AutoFillState
+import com.richardluo.globalIconPack.ui.state.rememberAutoFillState
 import kotlin.math.roundToInt
 import kotlinx.coroutines.launch
 import sh.calvin.reorderable.ReorderableItem
 import sh.calvin.reorderable.rememberReorderableLazyListState
 
 @Composable
-fun AutoFillDialog(vm: AutoFillVM = viewModel(), onOk: (List<String>) -> Unit) {
+fun AutoFillDialog(vm: AutoFillState = rememberAutoFillState(), onOk: (List<String>) -> Unit) {
   val lazyListState = rememberLazyListState()
   val reorderableLazyListState =
     rememberReorderableLazyListState(lazyListState) { from, to ->

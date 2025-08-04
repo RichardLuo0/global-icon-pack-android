@@ -3,7 +3,6 @@ package com.richardluo.globalIconPack.ui.viewModel
 import android.app.Application
 import android.content.ComponentName
 import android.net.Uri
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateMapOf
@@ -11,27 +10,37 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.SavedStateHandleSaveableApi
+import androidx.lifecycle.viewmodel.compose.saveable
 import com.richardluo.globalIconPack.R
 import com.richardluo.globalIconPack.iconPack.model.IconPackConfig
 import com.richardluo.globalIconPack.iconPack.model.defaultIconPackConfig
 import com.richardluo.globalIconPack.iconPack.source.isSamePackage
-import com.richardluo.globalIconPack.ui.IconsHolder
-import com.richardluo.globalIconPack.ui.model.AppIconInfo
+import com.richardluo.globalIconPack.ui.model.AnyCompIcon
+import com.richardluo.globalIconPack.ui.model.AppCompInfo
+import com.richardluo.globalIconPack.ui.model.CompIcon
+import com.richardluo.globalIconPack.ui.model.CompInfo
 import com.richardluo.globalIconPack.ui.model.IconEntryWithPack
-import com.richardluo.globalIconPack.ui.model.IconInfo
 import com.richardluo.globalIconPack.ui.model.IconPack
 import com.richardluo.globalIconPack.ui.model.VariantIcon
 import com.richardluo.globalIconPack.ui.model.VariantPackIcon
+import com.richardluo.globalIconPack.ui.repo.Apps
 import com.richardluo.globalIconPack.utils.ContextVM
+import com.richardluo.globalIconPack.utils.ILoadable
 import com.richardluo.globalIconPack.utils.IconPackCreator
 import com.richardluo.globalIconPack.utils.IconPackCreator.Progress
-import com.richardluo.globalIconPack.utils.InstanceManager.get
+import com.richardluo.globalIconPack.utils.Loadable
 import com.richardluo.globalIconPack.utils.MapPreferences
+import com.richardluo.globalIconPack.utils.SingletonManager.get
 import com.richardluo.globalIconPack.utils.map
+import com.richardluo.globalIconPack.utils.mapSaver
 import com.richardluo.globalIconPack.utils.runCatchingToast
+import com.richardluo.globalIconPack.utils.toMutableStateMap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
@@ -46,14 +55,14 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import me.zhanghai.compose.preference.Preferences
 
-@OptIn(FlowPreview::class)
-class MergerVM(context: Application) :
-  ContextVM(context), IAppsFilter by AppsFilter(), IconsHolder {
+@OptIn(SavedStateHandleSaveableApi::class)
+class MergerVM(context: Application, savedStateHandle: SavedStateHandle) :
+  ContextVM(context), IAppsFilter by AppsFilter(), IconsHolder, ILoadable by Loadable() {
   private val iconPackCache by get { IconPackCache(context) }
   private val iconCache by get { IconCache(context) }
   private val fallbackIconCache = IconCache(context)
 
-  var baseIconPack by mutableStateOf<IconPack?>(null)
+  var baseIconPack by savedStateHandle.saveable { mutableStateOf<IconPack?>(null) }
     private set
 
   var basePack
@@ -66,6 +75,7 @@ class MergerVM(context: Application) :
 
   var iconCacheToken by mutableLongStateOf(System.currentTimeMillis())
   val optionsFlow = MutableStateFlow<Preferences>(MapPreferences())
+  @OptIn(FlowPreview::class)
   private val iconPackConfigFlow =
     optionsFlow
       .drop(1)
@@ -78,7 +88,25 @@ class MergerVM(context: Application) :
       }
       .stateIn(viewModelScope, SharingStarted.Eagerly, defaultIconPackConfig)
 
-  private val changedIcons = mutableStateMapOf<ComponentName, IconEntryWithPack?>()
+  private val changedIcons by
+    savedStateHandle.saveable(saver = mapSaver { it.toMutableStateMap() }) {
+      mutableStateMapOf<ComponentName, IconEntryWithPack?>()
+    }
+
+  override val updateFlow: Flow<*> = snapshotFlow { changedIcons.toMap() }
+
+  private val icons =
+    combine(snapshotFlow { baseIconPack }, Apps.flow, updateFlow) { iconPack, apps, _ ->
+        return@combine if (iconPack == null) apps.map { emptyList() }
+        else apps.map { it.map { info -> CompIcon(info, getIconEntry(info.componentName)) } }
+      }
+      .flowOn(Dispatchers.Default)
+      .stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
+  val filteredIconsFlow =
+    createFilteredIconsFlow(icons).stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
+  override fun getCurrentIconPack() = baseIconPack
 
   private fun getIconEntry(cn: ComponentName): IconEntryWithPack? {
     return if (changedIcons.containsKey(cn)) changedIcons[cn]
@@ -88,36 +116,12 @@ class MergerVM(context: Application) :
     }
   }
 
-  private val icons =
-    combine(snapshotFlow { baseIconPack }, Apps.flow, snapshotFlow { changedIcons.toMap() }) {
-        iconPack,
-        apps,
-        _ ->
-        return@combine if (iconPack == null) apps.map { emptyList() }
-        else apps.map { it.map { info -> info to getIconEntry(info.componentName) } }
-      }
-      .flowOn(Dispatchers.Default)
-      .stateIn(viewModelScope, SharingStarted.Eagerly, null)
+  override fun mapIconEntry(cnList: List<ComponentName>) = cnList.map(::getIconEntry)
 
-  val filteredIconsFlow =
-    createFilteredIconsFlow(icons).stateIn(viewModelScope, SharingStarted.Eagerly, null)
-
-  val appIconListVM =
-    AppIconListVM(context, viewModelScope, snapshotFlow { changedIcons.toMap() }) {
-      it.map(::getIconEntry)
-    }
-
-  override fun getCurrentIconPack() = baseIconPack
-
-  var newPackIcon by mutableStateOf<IconEntryWithPack?>(null)
-  var newPackName by mutableStateOf("Merged Icon Pack")
-  var newPackPackage by mutableStateOf("com.dummy.iconPack")
-  var installedAppsOnly by mutableStateOf(true)
-
-  override suspend fun loadIcon(pair: Pair<IconInfo, IconEntryWithPack?>): ImageBitmap {
-    return (if (pair.second != null) iconCache else fallbackIconCache).loadIcon(
-      pair.first,
-      pair.second,
+  override suspend fun loadIcon(compIcon: AnyCompIcon): ImageBitmap {
+    return (if (compIcon.entry != null) iconCache else fallbackIconCache).loadIcon(
+      compIcon.info,
+      compIcon.entry,
       baseIconPack ?: return emptyImageBitmap,
       iconPackConfigFlow.value,
     )
@@ -125,7 +129,7 @@ class MergerVM(context: Application) :
 
   suspend fun loadIcon(entry: IconEntryWithPack) = iconCache.loadIcon(entry.entry, entry.pack)
 
-  override fun saveIcon(info: IconInfo, icon: VariantIcon) {
+  override fun saveIcon(info: CompInfo, icon: VariantIcon) {
     changedIcons[info.componentName] =
       when (icon) {
         is VariantPackIcon -> IconEntryWithPack(icon.entry, icon.pack)
@@ -137,33 +141,43 @@ class MergerVM(context: Application) :
     changedIcons.clear()
   }
 
-  override fun restoreDefault(info: AppIconInfo) {
+  override fun restoreDefault(info: AppCompInfo) {
     changedIcons.entries.removeIf { it.key.isSamePackage(info.componentName) }
   }
 
-  override fun clearAll(info: AppIconInfo) {
+  override fun clearAll(info: AppCompInfo) {
     baseIconPack?.iconEntryMap?.forEach {
       if (it.key.isSamePackage(info.componentName)) changedIcons[it.key] = null
     }
   }
 
-  suspend fun autoFill(packs: List<String>) {
+  fun autoFill(packs: List<String>) {
     packs.ifEmpty {
       return
     }
-    val iconPacks = packs.map { iconPackCache[it] }
-    icons.first()?.forEach { icons ->
-      icons.forEach { (info, entry) ->
-        if (entry != null) return@forEach
-        val cn = info.componentName
-        iconPacks.firstNotNullOfOrNull { iconPack ->
-          iconPack.getIconEntry(cn)?.also { changedIcons[cn] = IconEntryWithPack(it, iconPack) }
+    launchLoading(viewModelScope) {
+      val iconPacks = packs.map { iconPackCache[it] }
+      icons.first()?.forEach { icons ->
+        icons.forEach { (info, entry) ->
+          if (entry != null) return@forEach
+          val cn = info.componentName
+          iconPacks.firstNotNullOfOrNull { iconPack ->
+            iconPack.getIconEntry(cn)?.also { changedIcons[cn] = IconEntryWithPack(it, iconPack) }
+          }
         }
       }
     }
   }
 
-  fun createIconPack(uri: Uri, progress: MutableState<Progress?>, onSuccess: () -> Unit) {
+  var newPackIcon by savedStateHandle.saveable { mutableStateOf<IconEntryWithPack?>(null) }
+  var newPackName by savedStateHandle.saveable { mutableStateOf("Merged Icon Pack") }
+  var newPackPackage by savedStateHandle.saveable { mutableStateOf("com.dummy.iconPack") }
+  var installedAppsOnly by savedStateHandle.saveable { mutableStateOf(true) }
+
+  var creatingApkProgress by mutableStateOf<Progress?>(null)
+    private set
+
+  fun createIconPack(uri: Uri, onSuccess: () -> Unit) {
     val iconPack = baseIconPack ?: return
     val newPackName =
       newPackName.ifEmpty {
@@ -175,7 +189,7 @@ class MergerVM(context: Application) :
       }
 
     viewModelScope.launch(Dispatchers.Default) {
-      progress.value = Progress(0, 0, "")
+      creatingApkProgress = Progress(0, 0, "")
       runCatchingToast(
         context,
         {
@@ -200,12 +214,13 @@ class MergerVM(context: Application) :
           iconPack,
           newIcons,
           installedAppsOnly,
-          progress as MutableState<Progress>,
-        )
+        ) {
+          creatingApkProgress = it
+        }
 
         onSuccess()
       }
-      progress.value = null
+      creatingApkProgress = null
     }
   }
 }

@@ -25,15 +25,19 @@ import com.richardluo.globalIconPack.iconPack.model.defaultIconPackConfig
 import com.richardluo.globalIconPack.iconPack.useEachRow
 import com.richardluo.globalIconPack.iconPack.useFirstRow
 import com.richardluo.globalIconPack.iconPack.useMapToArray
-import com.richardluo.globalIconPack.ui.IconsHolder
-import com.richardluo.globalIconPack.ui.model.AppIconInfo
+import com.richardluo.globalIconPack.ui.model.AnyCompIcon
+import com.richardluo.globalIconPack.ui.model.AppCompInfo
+import com.richardluo.globalIconPack.ui.model.CompInfo
 import com.richardluo.globalIconPack.ui.model.IconEntryWithPack
-import com.richardluo.globalIconPack.ui.model.IconInfo
 import com.richardluo.globalIconPack.ui.model.OriginalIcon
 import com.richardluo.globalIconPack.ui.model.VariantIcon
 import com.richardluo.globalIconPack.ui.model.VariantPackIcon
+import com.richardluo.globalIconPack.ui.model.to
+import com.richardluo.globalIconPack.ui.repo.Apps
 import com.richardluo.globalIconPack.utils.ContextVM
-import com.richardluo.globalIconPack.utils.InstanceManager.get
+import com.richardluo.globalIconPack.utils.ILoadable
+import com.richardluo.globalIconPack.utils.Loadable
+import com.richardluo.globalIconPack.utils.SingletonManager.get
 import com.richardluo.globalIconPack.utils.WorldPreference
 import com.richardluo.globalIconPack.utils.get
 import com.richardluo.globalIconPack.utils.ifNotEmpty
@@ -42,7 +46,7 @@ import com.richardluo.globalIconPack.utils.runCatchingToast
 import com.richardluo.globalIconPack.utils.unflattenFromString
 import java.io.OutputStreamWriter
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
@@ -55,7 +59,7 @@ import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserFactory
 
 class IconVariantVM(context: Application) :
-  ContextVM(context), IAppsFilter by AppsFilter(), IconsHolder {
+  ContextVM(context), IAppsFilter by AppsFilter(), IconsHolder, ILoadable by Loadable() {
   private val iconPackCache by get { IconPackCache(context) }
   private val iconCache by get { IconCache(context) }
   private val fallbackIconCache = IconCache(context)
@@ -73,18 +77,19 @@ class IconVariantVM(context: Application) :
       ?.orNullIfEmpty()
   private val iconPackConfig = IconPackConfig(WorldPreference.get())
 
+  override val updateFlow: Flow<*> = iconPackDB.iconsUpdateFlow
+
   private val icons =
-    combine(Apps.flow, iconPackDB.iconsUpdateFlow) { apps, _ ->
-        apps.map { it.zip(getIconEntry(it.map { it.componentName })) }
+    combine(Apps.flow, updateFlow) { apps, _ ->
+        apps.map {
+          it.zip(getIconEntry(it.map { it.componentName })) { info, entry -> info to entry }
+        }
       }
       .flowOn(Dispatchers.IO)
       .stateIn(viewModelScope, SharingStarted.Eagerly, null)
 
   val filteredIcons =
     createFilteredIconsFlow(icons).stateIn(viewModelScope, SharingStarted.Eagerly, null)
-
-  val appIconListVM =
-    AppIconListVM(context, viewModelScope, iconPackDB.iconsUpdateFlow, ::getIconEntry)
 
   override fun getCurrentIconPack() = iconPack
 
@@ -106,9 +111,12 @@ class IconVariantVM(context: Application) :
       }
       .asList()
 
-  override suspend fun loadIcon(pair: Pair<IconInfo, IconEntryWithPack?>) =
-    if (pair.second != null) iconCache.loadIcon(pair.first, pair.second, iconPack, iconPackConfig)
-    else fallbackIconCache.loadIcon(pair.first, iconFallback, iconPack, iconPackConfig)
+  override fun mapIconEntry(cnList: List<ComponentName>) = getIconEntry(cnList)
+
+  override suspend fun loadIcon(compIcon: AnyCompIcon) =
+    if (compIcon.entry != null)
+      iconCache.loadIcon(compIcon.info, compIcon.entry, iconPack, iconPackConfig)
+    else fallbackIconCache.loadIcon(compIcon.info, iconFallback, iconPack, iconPackConfig)
 
   fun restoreDefault() {
     viewModelScope.launch(Dispatchers.IO) {
@@ -116,7 +124,7 @@ class IconVariantVM(context: Application) :
     }
   }
 
-  override fun restoreDefault(info: AppIconInfo) {
+  override fun restoreDefault(info: AppCompInfo) {
     viewModelScope.launch(Dispatchers.IO) {
       runCatchingToast(context) {
         val packageName = info.componentName.packageName
@@ -127,7 +135,7 @@ class IconVariantVM(context: Application) :
     }
   }
 
-  override fun clearAll(info: AppIconInfo) {
+  override fun clearAll(info: AppCompInfo) {
     viewModelScope.launch(Dispatchers.IO) {
       runCatchingToast(context) {
         val packageName = info.componentName.packageName
@@ -144,7 +152,7 @@ class IconVariantVM(context: Application) :
     }
   }
 
-  override fun saveIcon(info: IconInfo, icon: VariantIcon) {
+  override fun saveIcon(info: CompInfo, icon: VariantIcon) {
     val cn = info.componentName
     viewModelScope.launch(Dispatchers.IO) {
       runCatchingToast(context) {
@@ -156,24 +164,28 @@ class IconVariantVM(context: Application) :
     }
   }
 
-  suspend fun autoFill(packs: List<String>) {
+  fun autoFill(packs: List<String>) {
     packs.ifEmpty {
       return
     }
-    val iconPacks = packs.map { iconPackCache[it] }
-    icons.first()?.forEach { icons ->
-      icons.forEach { (info, entry) ->
-        if (entry != null) return@forEach
-        val cn = info.componentName
-        iconPacks.firstNotNullOfOrNull { iconPack ->
-          iconPack.getIconEntry(cn)?.also { iconPackDB.insertOrUpdateIcon(pack, cn, it, iconPack) }
+    launchLoading(viewModelScope) {
+      val iconPacks = packs.map { iconPackCache[it] }
+      icons.first()?.forEach { icons ->
+        icons.forEach { (info, entry) ->
+          if (entry != null) return@forEach
+          val cn = info.componentName
+          iconPacks.firstNotNullOfOrNull { iconPack ->
+            iconPack.getIconEntry(cn)?.also {
+              iconPackDB.insertOrUpdateIcon(pack, cn, it, iconPack)
+            }
+          }
         }
       }
     }
   }
 
   fun export(uri: Uri) =
-    viewModelScope.async(Dispatchers.Default) {
+    launchLoading(viewModelScope) {
       runCatchingToast(context) {
         val xml = StringBuilder("<?xml version=\"1.0\" encoding=\"UTF-8\"?><resources>\n")
         iconPackDB.getAllIcons(pack, Apps.getAllWithShortcuts()).useEachRow { c ->
@@ -209,7 +221,7 @@ class IconVariantVM(context: Application) :
     }
 
   fun import(uri: Uri) =
-    viewModelScope.async(Dispatchers.IO) {
+    launchLoading(viewModelScope) {
       runCatchingToast(context) {
         context.contentResolver.openInputStream(uri).use {
           val parser = XmlPullParserFactory.newInstance().newPullParser()

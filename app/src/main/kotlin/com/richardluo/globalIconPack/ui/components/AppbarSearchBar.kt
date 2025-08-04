@@ -38,8 +38,8 @@ fun AppbarSearchBar(
   ) {
     AnimatedVisibility(
       expandSearchBar.value,
-      enter = fadeIn() + slideInHorizontally(initialOffsetX = { it }),
-      exit = slideOutHorizontally(targetOffsetX = { it }) + fadeOut(),
+      enter = fadeIn() + slideInHorizontally { it },
+      exit = slideOutHorizontally { it } + fadeOut(),
       label = "Expand search bar",
       modifier = Modifier.align(Alignment.Center),
     ) {

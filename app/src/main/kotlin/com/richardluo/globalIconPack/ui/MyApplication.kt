@@ -2,13 +2,12 @@ package com.richardluo.globalIconPack.ui
 
 import android.annotation.SuppressLint
 import android.app.Application
-import android.content.Context
 import com.topjohnwu.superuser.Shell
 
 class MyApplication : Application() {
   companion object {
     @SuppressLint("StaticFieldLeak")
-    lateinit var context: Context
+    lateinit var context: Application
       private set
 
     init {
@@ -18,6 +17,6 @@ class MyApplication : Application() {
 
   override fun onCreate() {
     super.onCreate()
-    context = applicationContext
+    context = this
   }
 }

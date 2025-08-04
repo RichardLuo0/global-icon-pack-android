@@ -5,11 +5,12 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.dependency.license.report)
+    id("kotlin-parcelize")
 }
 
 android {
     namespace 'com.richardluo.globalIconPack'
-    compileSdk 36
+    compileSdk = 36
 
     def versionProps = new Properties()
     versionProps.load(new FileInputStream("$project.rootDir/version.properties"))
@@ -91,6 +92,7 @@ dependencies {
     implementation libs.core.ktx
     implementation libs.activity
     implementation libs.viewmodel
+    implementation libs.viewmodel.savedstate
     implementation libs.compose.foundation
     implementation libs.preference
     implementation libs.material3

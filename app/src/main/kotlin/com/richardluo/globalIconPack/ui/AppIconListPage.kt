@@ -61,35 +61,24 @@ import com.richardluo.globalIconPack.ui.components.MyDropdownMenu
 import com.richardluo.globalIconPack.ui.components.OneLineText
 import com.richardluo.globalIconPack.ui.components.TwoLineText
 import com.richardluo.globalIconPack.ui.components.sharedBounds
-import com.richardluo.globalIconPack.ui.model.AppIconInfo
-import com.richardluo.globalIconPack.ui.model.IconEntryWithPack
-import com.richardluo.globalIconPack.ui.model.IconInfo
-import com.richardluo.globalIconPack.ui.model.IconPack
-import com.richardluo.globalIconPack.ui.model.VariantIcon
+import com.richardluo.globalIconPack.ui.model.AnyCompIcon
+import com.richardluo.globalIconPack.ui.model.AppCompIcon
+import com.richardluo.globalIconPack.ui.model.to
 import com.richardluo.globalIconPack.ui.viewModel.AppIconListVM
 import com.richardluo.globalIconPack.ui.viewModel.IconChooserVM
+import com.richardluo.globalIconPack.ui.viewModel.IconsHolder
 import com.richardluo.globalIconPack.utils.consumable
 import com.richardluo.globalIconPack.utils.getValue
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 
-interface IconsHolder {
-  fun getCurrentIconPack(): IconPack?
-
-  suspend fun loadIcon(pair: Pair<IconInfo, IconEntryWithPack?>): ImageBitmap
-
-  fun saveIcon(info: IconInfo, icon: VariantIcon)
-
-  fun restoreDefault(info: AppIconInfo)
-
-  fun clearAll(info: AppIconInfo)
-}
-
-private class TabItem(val name: Int, val flow: Flow<List<Pair<IconInfo, IconEntryWithPack?>>?>)
+private class TabItem(val name: Int, val flow: Flow<List<AnyCompIcon>?>)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AppIconListPage(onBack: () -> Unit, iconsHolder: IconsHolder, vm: AppIconListVM) {
+fun AppIconListPage(onBack: () -> Unit, iconsHolder: IconsHolder, appIcon: AppCompIcon) {
+  val vm: AppIconListVM = viewModel { with(AppIconListVM) { initializer(iconsHolder, appIcon) } }
+
   val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
   val iconChooser: IconChooserVM = viewModel(key = "IconsListPageIconChooser")
 
@@ -104,13 +93,12 @@ fun AppIconListPage(onBack: () -> Unit, iconsHolder: IconsHolder, vm: AppIconLis
   val pagerState = rememberPagerState(pageCount = { tabs.count() })
   val coroutineScope = rememberCoroutineScope()
 
-  fun openChooser(pair: Pair<IconInfo, IconEntryWithPack?>) {
-    val (info, entry) = pair
+  fun openChooser(compIcon: AnyCompIcon) {
+    val (info, entry) = compIcon
     iconChooser.open(info, iconsHolder.getCurrentIconPack() ?: return, entry?.entry?.name)
   }
 
-  val info = vm.appIcon?.first ?: return
-
+  val info = appIcon.info
   Scaffold(
     modifier = Modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
     topBar = {
@@ -121,9 +109,12 @@ fun AppIconListPage(onBack: () -> Unit, iconsHolder: IconsHolder, vm: AppIconLis
               IconButtonWithTooltip(Icons.AutoMirrored.Outlined.ArrowBack, "Back", onBack)
             },
             title = {
+              // Will crash when config changes, issue:
+              // https://issuetracker.google.com/issues/435980400
               val expanded =
                 LocalTextStyle.current.fontSize == MaterialTheme.typography.headlineMedium.fontSize
               val entry = vm.appIconEntry.getValue()
+              val compIcon = AnyCompIcon(info, entry)
               val packageName = info.componentName.packageName
               if (expanded)
                 Row(
@@ -135,10 +126,10 @@ fun AppIconListPage(onBack: () -> Unit, iconsHolder: IconsHolder, vm: AppIconLis
                     contentDescription = info.label,
                     modifier =
                       Modifier.size(86.dp).sharedBounds("AppIcon/$packageName").clickable {
-                        openChooser(info to entry)
+                        openChooser(compIcon)
                       },
                     contentScale = ContentScale.Crop,
-                    loadImage = { iconsHolder.loadIcon(info to entry) },
+                    loadImage = { iconsHolder.loadIcon(compIcon) },
                   )
                   Spacer(modifier = Modifier.width(16.dp))
                   Column {
@@ -158,9 +149,9 @@ fun AppIconListPage(onBack: () -> Unit, iconsHolder: IconsHolder, vm: AppIconLis
                   LazyImage(
                     entry?.entry?.name,
                     contentDescription = info.label,
-                    modifier = Modifier.size(36.dp).clickable { openChooser(info to entry) },
+                    modifier = Modifier.size(36.dp).clickable { openChooser(compIcon) },
                     contentScale = ContentScale.Crop,
-                    loadImage = { iconsHolder.loadIcon(info to entry) },
+                    loadImage = { iconsHolder.loadIcon(compIcon) },
                   )
                   Spacer(modifier = Modifier.width(12.dp))
                   OneLineText(info.label)
@@ -221,7 +212,7 @@ fun AppIconListPage(onBack: () -> Unit, iconsHolder: IconsHolder, vm: AppIconLis
       contentPadding = consumablePadding.consume(),
       beyondViewportPageCount = 0,
     ) {
-      IconList(tabs[it].flow.getValue(null), ::openChooser, iconsHolder::loadIcon, pagePadding)
+      IconList(tabs[it].flow.getValue(null), pagePadding, iconsHolder::loadIcon, ::openChooser)
     }
 
     IconChooserSheet(iconChooser, { iconsHolder.loadIcon(it to null) }, iconsHolder::saveIcon)
@@ -230,14 +221,14 @@ fun AppIconListPage(onBack: () -> Unit, iconsHolder: IconsHolder, vm: AppIconLis
 
 @Composable
 private fun IconList(
-  icons: List<Pair<IconInfo, IconEntryWithPack?>>?,
-  onClick: (pair: Pair<IconInfo, IconEntryWithPack?>) -> Unit,
-  loadIcon: suspend (pair: Pair<IconInfo, IconEntryWithPack?>) -> ImageBitmap,
+  icons: List<AnyCompIcon>?,
   contentPadding: PaddingValues,
+  loadIcon: suspend (AnyCompIcon) -> ImageBitmap,
+  onClick: (AnyCompIcon) -> Unit,
 ) {
   if (icons != null)
     LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = contentPadding) {
-      itemsIndexed(icons, key = { _, it -> it.first.componentName.className }) { index, it ->
+      itemsIndexed(icons, key = { _, it -> it.info.componentName.className }) { index, it ->
         val (info) = it
         Row(
           modifier =
@@ -248,7 +239,7 @@ private fun IconList(
           verticalAlignment = Alignment.CenterVertically,
         ) {
           LazyImage(
-            it.second?.entry?.name,
+            it.entry?.entry?.name,
             contentDescription = info.label,
             modifier = Modifier.size(47.dp),
             contentScale = ContentScale.Crop,

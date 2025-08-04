@@ -1,4 +1,4 @@
-package com.richardluo.globalIconPack.ui.viewModel
+package com.richardluo.globalIconPack.ui.repo
 
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -16,7 +16,7 @@ object InstalledAppsMonitor {
   @OptIn(DelicateCoroutinesApi::class)
   val flow =
     callbackFlow {
-        val app = MyApplication.context
+        val app = MyApplication.Companion.context
         val packageChangeReceiver =
           object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent?) {
@@ -35,5 +35,5 @@ object InstalledAppsMonitor {
         packageChangeReceiver.onReceive(app, null)
         awaitClose { app.unregisterReceiver(packageChangeReceiver) }
       }
-      .shareIn(GlobalScope, started = SharingStarted.WhileSubscribed(), replay = 1)
+      .shareIn(GlobalScope, started = SharingStarted.Companion.WhileSubscribed(), replay = 1)
 }

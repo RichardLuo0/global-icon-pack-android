@@ -1,6 +1,7 @@
 package com.richardluo.globalIconPack.ui
 
 import android.content.ComponentName
+import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.PredictiveBackHandler
@@ -21,9 +22,11 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -35,9 +38,10 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.ArrowForward
@@ -63,10 +67,9 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -90,11 +93,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
 import com.richardluo.globalIconPack.R
 import com.richardluo.globalIconPack.ui.MainPreference.fallback
 import com.richardluo.globalIconPack.ui.components.AnimatedFab
@@ -104,7 +103,7 @@ import com.richardluo.globalIconPack.ui.components.AppIcon
 import com.richardluo.globalIconPack.ui.components.AppbarSearchBar
 import com.richardluo.globalIconPack.ui.components.AutoFillDialog
 import com.richardluo.globalIconPack.ui.components.ExpandFabScrollConnection
-import com.richardluo.globalIconPack.ui.components.FabSnapshot
+import com.richardluo.globalIconPack.ui.components.FabDesc
 import com.richardluo.globalIconPack.ui.components.IconButtonWithTooltip
 import com.richardluo.globalIconPack.ui.components.IconChooserSheet
 import com.richardluo.globalIconPack.ui.components.IconPackItemContent
@@ -112,6 +111,7 @@ import com.richardluo.globalIconPack.ui.components.InfoDialog
 import com.richardluo.globalIconPack.ui.components.LazyDialog
 import com.richardluo.globalIconPack.ui.components.LazyImage
 import com.richardluo.globalIconPack.ui.components.LoadingDialog
+import com.richardluo.globalIconPack.ui.components.LocalNavControllerWithArgs
 import com.richardluo.globalIconPack.ui.components.MyDropdownMenu
 import com.richardluo.globalIconPack.ui.components.SampleTheme
 import com.richardluo.globalIconPack.ui.components.ScrollIndicationBox
@@ -120,65 +120,99 @@ import com.richardluo.globalIconPack.ui.components.getLabelByType
 import com.richardluo.globalIconPack.ui.components.myPreferenceTheme
 import com.richardluo.globalIconPack.ui.components.navPage
 import com.richardluo.globalIconPack.ui.components.pinnedScrollBehaviorWithPager
+import com.richardluo.globalIconPack.ui.model.AppCompIcon
+import com.richardluo.globalIconPack.ui.model.CompInfo
 import com.richardluo.globalIconPack.ui.model.IconEntryWithPack
-import com.richardluo.globalIconPack.ui.model.IconInfo
 import com.richardluo.globalIconPack.ui.model.VariantPackIcon
-import com.richardluo.globalIconPack.ui.viewModel.AutoFillVM
+import com.richardluo.globalIconPack.ui.repo.IconPackApps
+import com.richardluo.globalIconPack.ui.state.rememberAutoFillState
 import com.richardluo.globalIconPack.ui.viewModel.IconChooserVM
-import com.richardluo.globalIconPack.ui.viewModel.IconPackApps
 import com.richardluo.globalIconPack.ui.viewModel.MergerVM
 import com.richardluo.globalIconPack.ui.viewModel.emptyImageBitmap
-import com.richardluo.globalIconPack.utils.IconPackCreator
 import com.richardluo.globalIconPack.utils.consumable
 import com.richardluo.globalIconPack.utils.getValue
 import kotlinx.coroutines.launch
+import kotlinx.parcelize.Parcelize
 import me.zhanghai.compose.preference.ProvidePreferenceLocals
 
-class MergerActivityVM : ViewModel() {
-  val expandSearchBar = mutableStateOf(false)
-
-  val iconOptionDialogState = mutableStateOf(false)
-  val warningDialogState = mutableStateOf(false)
-  val instructionDialogState = mutableStateOf(false)
-
-  var waiting by mutableIntStateOf(0)
-  var creatingApkProgress = mutableStateOf<IconPackCreator.Progress?>(null)
-}
-
 class IconPackMergerActivity : ComponentActivity() {
-  private lateinit var navController: NavHostController
   private val vm: MergerVM by viewModels()
-  private val avm: MergerActivityVM by viewModels()
 
   override fun onCreate(savedInstanceState: Bundle?) {
     enableEdgeToEdge()
     super.onCreate(savedInstanceState)
+
     setContent {
       SampleTheme {
-        navController = rememberNavController()
-        AnimatedNavHost(navController = navController, startDestination = "Main") {
-          navPage("Main") { Screen() }
-          navPage("AppIconList") {
-            AppIconListPage({ navController.popBackStack() }, vm, vm.appIconListVM)
-          }
-        }
+        AnimatedNavHost(
+          startDestination = "Main",
+          pages =
+            arrayOf(
+              navPage("Main") { Screen() },
+              navPage<AppCompIcon>("AppIconList") {
+                val navController = LocalNavControllerWithArgs.current!!
+                AppIconListPage({ navController.popBackStack() }, vm, it)
+              },
+            ),
+        )
       }
     }
   }
 
-  enum class Page {
-    SelectBasePack,
-    IconList,
-    PackInfoForm,
-    Count,
-  }
+  private class Page(
+    val title: String,
+    val actions: @Composable (RowScope.() -> Unit)? = null,
+    val fab: @Composable (() -> Unit)? = null,
+    val animatedFab: FabDesc? = null,
+    val screen: @Composable (PaddingValues) -> Unit,
+  )
+
+  // Open after created apk
+  private lateinit var instructionDialogState: MutableState<Boolean>
 
   @OptIn(ExperimentalMaterial3Api::class)
   @Composable
   private fun Screen() {
-    val pagerState = rememberPagerState(pageCount = { Page.Count.ordinal })
+    val expandSearchBar = rememberSaveable { mutableStateOf(false) }
+    val iconOptionDialogState = rememberSaveable { mutableStateOf(false) }
+    val warningDialogState = rememberSaveable { mutableStateOf(false) }
+    instructionDialogState = rememberSaveable { mutableStateOf(false) }
+
+    val pagerState = rememberPagerState(pageCount = { 3 })
     val scrollBehavior = pinnedScrollBehaviorWithPager(pagerState)
+
     val coroutineScope = rememberCoroutineScope()
+    val nextStep = remember {
+      FabDesc(Icons.AutoMirrored.Outlined.ArrowForward, getString(R.string.nextStep)) {
+        coroutineScope.launch { pagerState.animateScrollToPage(pagerState.currentPage + 1) }
+      }
+    }
+    val done = remember {
+      FabDesc(Icons.Outlined.Done, getString(R.string.done)) {
+        if (vm.baseIconPack != null) warningDialogState.value = true
+      }
+    }
+
+    val pages = remember {
+      arrayOf(
+        Page(getString(R.string.chooseBasePack), animatedFab = nextStep) {
+          SelectBasePack(it) { pagerState.animateScrollToPage(1) }
+        },
+        Page(
+          getString(R.string.chooseIconToReplace),
+          actions = { IconListActions(expandSearchBar) },
+          fab = {
+            FloatingActionButton(onClick = { iconOptionDialogState.value = true }) {
+              Icon(Icons.Outlined.Settings, getString(R.string.options))
+            }
+          },
+          animatedFab = nextStep,
+        ) {
+          IconList(it, iconOptionDialogState)
+        },
+        Page(getString(R.string.fillNewPackInfo), animatedFab = done) { PackInfoForm(it) },
+      )
+    }
 
     val expandFabScrollConnection = remember {
       object : ExpandFabScrollConnection() {
@@ -222,70 +256,26 @@ class IconPackMergerActivity : ComponentActivity() {
               IconButtonWithTooltip(Icons.AutoMirrored.Outlined.ArrowBack, "Back") { finish() }
             },
             title = {
-              AnimatedContent(targetState = pagerState.currentPage, label = "Title text change") {
-                when (it) {
-                  Page.SelectBasePack.ordinal -> Text(getString(R.string.chooseBasePack))
-                  Page.IconList.ordinal -> Text(getString(R.string.chooseIconToReplace))
-                  Page.PackInfoForm.ordinal -> Text(getString(R.string.fillNewPackInfo))
-                }
-              }
+              AnimatedContent(targetState = pagerState.currentPage) { Text(pages[it].title) }
             },
             actions = {
-              if (pagerState.currentPage == Page.IconList.ordinal) {
-                IconButtonWithTooltip(Icons.Outlined.Search, stringResource(R.string.search)) {
-                  avm.expandSearchBar.value = true
-                }
-                var expand by rememberSaveable { mutableStateOf(false) }
-                val expandFilter = rememberSaveable { mutableStateOf(false) }
-                val autoFillVM: AutoFillVM = viewModel()
-                IconButtonWithTooltip(
-                  Icons.Outlined.MoreVert,
-                  stringResource(R.string.moreOptions),
-                ) {
-                  expand = true
-                }
-                MyDropdownMenu(expanded = expand, onDismissRequest = { expand = false }) {
-                  DropdownMenuItem(
-                    leadingIcon = { Icon(Icons.Outlined.FilterList, "filter") },
-                    text = { Text(getLabelByType(vm.filterType.value)) },
-                    onClick = {
-                      expand = false
-                      expandFilter.value = true
-                    },
-                  )
-                  DropdownMenuItem(
-                    leadingIcon = { Icon(Icons.Outlined.FormatColorFill, "auto fill") },
-                    text = { Text(stringResource(R.string.autoFill)) },
-                    onClick = {
-                      autoFillVM.open(vm.basePack ?: return@DropdownMenuItem)
-                      expand = false
-                    },
-                  )
-                  DropdownMenuItem(
-                    leadingIcon = { Icon(Icons.Outlined.Restore, "restore default") },
-                    text = { Text(stringResource(R.string.restoreDefault)) },
-                    onClick = {
-                      vm.restoreDefault()
-                      expand = false
-                    },
-                  )
-                }
-                AppFilterByType(expandFilter, vm.filterType)
-                AutoFillDialog(autoFillVM) {
-                  lifecycleScope.launch {
-                    avm.waiting++
-                    vm.autoFill(it)
-                    avm.waiting--
+              pages.forEachIndexed { i, it ->
+                val actions = it.actions
+                if (actions != null)
+                  AnimatedVisibility(
+                    pagerState.currentPage == i,
+                    enter = fadeIn(),
+                    exit = fadeOut(),
+                  ) {
+                    Row(content = actions)
                   }
-                }
               }
             },
             modifier = Modifier.fillMaxWidth(),
             scrollBehavior = scrollBehavior,
           )
 
-          if (pagerState.currentPage == Page.IconList.ordinal)
-            AppbarSearchBar(avm.expandSearchBar, vm.searchText)
+          AppbarSearchBar(expandSearchBar, vm.searchText)
         }
       },
       floatingActionButton = {
@@ -293,35 +283,21 @@ class IconPackMergerActivity : ComponentActivity() {
           modifier =
             Modifier.onGloballyPositioned { fabY = with(density) { it.positionInRoot().y.toDp() } }
         ) {
-          AnimatedVisibility(
-            pagerState.currentPage == Page.IconList.ordinal,
-            enter = fadeIn() + scaleIn(),
-            exit = scaleOut() + fadeOut(),
-            modifier = Modifier.align(Alignment.End).padding(bottom = 12.dp),
-          ) {
-            FloatingActionButton(onClick = { avm.iconOptionDialogState.value = true }) {
-              Icon(Icons.Outlined.Settings, getString(R.string.options))
-            }
+          pages.forEachIndexed { i, it ->
+            val fab = it.fab
+            if (fab != null)
+              AnimatedVisibility(
+                pagerState.currentPage == i,
+                enter = scaleIn(),
+                exit = scaleOut(),
+                modifier = Modifier.align(Alignment.End).padding(bottom = 12.dp),
+              ) {
+                fab()
+              }
           }
 
-          val nextStep = remember {
-            FabSnapshot(Icons.AutoMirrored.Outlined.ArrowForward, getString(R.string.nextStep)) {
-              coroutineScope.launch { pagerState.animateScrollToPage(pagerState.currentPage + 1) }
-            }
-          }
-          val done = remember {
-            FabSnapshot(Icons.Outlined.Done, getString(R.string.done)) {
-              if (vm.baseIconPack != null) avm.warningDialogState.value = true
-            }
-          }
-          AnimatedFab(
-            remember {
-              derivedStateOf {
-                if (pagerState.currentPage != pagerState.pageCount - 1) nextStep else done
-              }
-            },
-            expandFabScrollConnection.isExpand,
-          )
+          val fabState = pages[pagerState.currentPage].animatedFab
+          if (fabState != null) AnimatedFab(fabState, expandFabScrollConnection.isExpand)
         }
       },
     ) { contentPadding ->
@@ -334,45 +310,41 @@ class IconPackMergerActivity : ComponentActivity() {
         contentPadding = consumablePadding.consume(),
         beyondViewportPageCount = 2,
       ) {
-        when (it) {
-          Page.SelectBasePack.ordinal -> SelectBasePack(pagerState, pagePadding)
-          Page.IconList.ordinal -> IconList(pagePadding)
-          Page.PackInfoForm.ordinal -> PackInfoForm(pagePadding)
-        }
+        pages[it].screen(pagePadding)
       }
-
-      WarnDialog(
-        avm.warningDialogState,
-        title = { Text(getString(R.string.warning)) },
-        onOk = { createIconPackLauncher.launch(null) },
-      ) {
-        Text(getString(R.string.mergerWarning))
-      }
-
-      InfoDialog(
-        avm.instructionDialogState,
-        icon = Icons.Outlined.Notifications,
-        title = { Text(getString(R.string.notice)) },
-      ) {
-        Text(getString(R.string.mergerInstruction))
-      }
-
-      if (avm.waiting > 0) LoadingDialog()
-
-      val progress = avm.creatingApkProgress.value
-      if (progress != null)
-        LoadingDialog(progress.percentage, "${progress.current}/${progress.total} ${progress.info}")
     }
+
+    WarnDialog(
+      warningDialogState,
+      title = { Text(getString(R.string.warning)) },
+      onOk = { createIconPackLauncher.launch(null) },
+    ) {
+      Text(getString(R.string.mergerWarning))
+    }
+
+    InfoDialog(
+      instructionDialogState,
+      icon = Icons.Outlined.Notifications,
+      title = { Text(getString(R.string.notice)) },
+    ) {
+      Text(getString(R.string.mergerInstruction))
+    }
+
+    if (vm.loading > 0) LoadingDialog()
+
+    val progress = vm.creatingApkProgress
+    if (progress != null)
+      LoadingDialog(progress.percentage, "${progress.current}/${progress.total} ${progress.info}")
   }
 
   private val createIconPackLauncher =
     registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) {
       it ?: return@registerForActivityResult
-      vm.createIconPack(it, avm.creatingApkProgress) { avm.instructionDialogState.value = true }
+      vm.createIconPack(it) { instructionDialogState.value = true }
     }
 
   @Composable
-  private fun SelectBasePack(pagerState: PagerState, contentPadding: PaddingValues) {
+  private fun SelectBasePack(contentPadding: PaddingValues, scrollToNextPage: suspend () -> Unit) {
     val coroutineScope = rememberCoroutineScope()
     val valueMap = IconPackApps.flow.collectAsState(null).value
     if (valueMap == null)
@@ -390,7 +362,7 @@ class IconPackMergerActivity : ComponentActivity() {
                 .clip(MaterialTheme.shapes.large)
                 .selectable(selected, true, Role.RadioButton) {
                   coroutineScope.launch {
-                    pagerState.animateScrollToPage(Page.IconList.ordinal)
+                    scrollToNextPage()
                     vm.basePack = pack
                   }
                 }
@@ -410,7 +382,12 @@ class IconPackMergerActivity : ComponentActivity() {
   }
 
   @Composable
-  private fun IconList(contentPadding: PaddingValues) {
+  private fun IconList(
+    contentPadding: PaddingValues,
+    iconOptionDialogState: MutableState<Boolean>,
+  ) {
+    val navController = LocalNavControllerWithArgs.current!!
+
     val icons = vm.filteredIconsFlow.getValue(null)
     if (icons != null)
       LazyVerticalGrid(
@@ -418,7 +395,7 @@ class IconPackMergerActivity : ComponentActivity() {
         contentPadding = contentPadding,
         columns = GridCells.Adaptive(minSize = 74.dp),
       ) {
-        items(icons, key = { it.first.componentName }) {
+        items(icons, key = { it.info.componentName }) {
           val (info, entry) = it
           AppIcon(
             info.label,
@@ -428,8 +405,7 @@ class IconPackMergerActivity : ComponentActivity() {
             loadImage = { vm.loadIcon(it) },
             shareKey = info.componentName.packageName,
           ) {
-            vm.appIconListVM.setup(it)
-            navController.navigate("AppIconList")
+            navController.navigate("AppIconList", it)
           }
         }
       }
@@ -440,7 +416,7 @@ class IconPackMergerActivity : ComponentActivity() {
 
     val iconOptionScrollState = rememberLazyListState()
     LazyDialog(
-      avm.iconOptionDialogState,
+      iconOptionDialogState,
       title = { Text(getString(R.string.options)) },
       value = vm.optionsFlow,
     ) {
@@ -454,6 +430,57 @@ class IconPackMergerActivity : ComponentActivity() {
         }
       }
     }
+  }
+
+  @Composable
+  private fun IconListActions(expandSearchBar: MutableState<Boolean>) {
+    IconButtonWithTooltip(Icons.Outlined.Search, stringResource(R.string.search)) {
+      expandSearchBar.value = true
+    }
+    var expand by rememberSaveable { mutableStateOf(false) }
+    val expandFilter = rememberSaveable { mutableStateOf(false) }
+    val autoFillState = rememberAutoFillState()
+    IconButtonWithTooltip(Icons.Outlined.MoreVert, stringResource(R.string.moreOptions)) {
+      expand = true
+    }
+    MyDropdownMenu(expanded = expand, onDismissRequest = { expand = false }) {
+      DropdownMenuItem(
+        leadingIcon = { Icon(Icons.Outlined.FilterList, "filter") },
+        text = { Text(getLabelByType(vm.filterType.value)) },
+        onClick = {
+          expand = false
+          expandFilter.value = true
+        },
+      )
+      DropdownMenuItem(
+        leadingIcon = { Icon(Icons.Outlined.FormatColorFill, "auto fill") },
+        text = { Text(stringResource(R.string.autoFill)) },
+        onClick = {
+          autoFillState.open(vm.basePack ?: return@DropdownMenuItem)
+          expand = false
+        },
+      )
+      DropdownMenuItem(
+        leadingIcon = { Icon(Icons.Outlined.Restore, "restore default") },
+        text = { Text(stringResource(R.string.restoreDefault)) },
+        onClick = {
+          vm.restoreDefault()
+          expand = false
+        },
+      )
+    }
+    AppFilterByType(expandFilter, vm.filterType)
+    AutoFillDialog(autoFillState) { vm.autoFill(it) }
+  }
+
+  @Parcelize
+  private class NewPackCompInfo(
+    override val componentName: ComponentName,
+    override val label: String,
+  ) : CompInfo() {
+    constructor(pack: String) : this(ComponentName(pack, ""), "")
+
+    override fun getIcon(context: Context) = null
   }
 
   @Composable
@@ -490,8 +517,7 @@ class IconPackMergerActivity : ComponentActivity() {
               Modifier.align(Alignment.CenterHorizontally)
                 .clickable {
                   val iconPack = vm.baseIconPack ?: return@clickable
-                  val info = object : IconInfo(ComponentName(iconPack.pack, ""), "") {}
-                  iconChooser.open(info, iconPack)
+                  iconChooser.open(NewPackCompInfo(iconPack.pack), iconPack)
                 }
                 .padding(12.dp)
                 .size(72.dp),

@@ -4,7 +4,6 @@ import android.content.ComponentName
 import android.content.ContentResolver
 import android.content.Context
 import android.net.Uri
-import androidx.compose.runtime.MutableState
 import androidx.documentfile.provider.DocumentFile
 import com.richardluo.globalIconPack.R
 import com.richardluo.globalIconPack.ui.model.IconEntryWithPack
@@ -136,7 +135,7 @@ object IconPackCreator {
     baseIconPack: IconPack,
     newIcons: Map<ComponentName, IconEntryWithPack?>,
     installedAppsOnly: Boolean,
-    progress: MutableState<Progress>,
+    onProgress: (Progress) -> Unit,
   ) {
     val workDir = fromTreeUri(context, uri)
     if (workDir.listFiles().isNotEmpty()) throw FolderNotEmptyException()
@@ -150,20 +149,21 @@ object IconPackCreator {
         (if (icon != null) 1 else 0) +
         1
 
-    progress.value = Progress(1, total, "icon_fallback")
+    val progress = Progress(1, total, "icon_fallback")
+    onProgress(progress)
     baseIconPack.copyFallbacks("icon_fallback", appfilterXML, apkBuilder)
 
     var i = 0
     if (installedAppsOnly)
       newIcons.entries.forEach { (cn, entry) ->
-        progress.update { advance(cn.packageName) }
+        onProgress(progress.advance(cn.packageName))
         if (entry == null) return@forEach
         val iconName = "icon_${i++}"
         entry.pack.copyIcon(entry.entry, cn.flattenToString(), iconName, appfilterXML, apkBuilder)
       }
     else
       baseIconPack.iconEntryMap.forEach { (cn, entry) ->
-        progress.update { advance(cn.packageName) }
+        onProgress(progress.advance(cn.packageName))
         val iconName = "icon_${i++}"
         val newEntry = if (newIcons.containsKey(cn)) newIcons[cn] ?: return@forEach else null
         val entry = newEntry?.entry ?: entry
@@ -173,7 +173,7 @@ object IconPackCreator {
     apkBuilder.addXML(appfilterXML.append("</resources>").toString())
 
     if (icon != null) {
-      progress.update { advance("ic_launcher") }
+      onProgress(progress.advance("ic_launcher"))
       icon.pack.copyIcon(
         icon.entry,
         ComponentName(packageName, "").flattenToString(),
@@ -181,10 +181,10 @@ object IconPackCreator {
         appfilterXML,
         apkBuilder,
       )
-      progress.update { advance("building...") }
+      onProgress(progress.advance("building..."))
       apkBuilder.build(label, "@drawable/ic_launcher")
     } else {
-      progress.update { advance("building...") }
+      onProgress(progress.advance("building..."))
       apkBuilder.build(label)
     }
   }

@@ -7,7 +7,8 @@ import android.net.Uri
 import android.os.StrictMode
 import androidx.core.net.toUri
 import com.richardluo.globalIconPack.BuildConfig
-import com.richardluo.globalIconPack.utils.InstanceManager.get
+import com.richardluo.globalIconPack.ui.MyApplication
+import com.richardluo.globalIconPack.utils.SingletonManager.get
 import com.richardluo.globalIconPack.utils.getOrNull
 import com.richardluo.globalIconPack.utils.log
 import com.richardluo.globalIconPack.utils.unflattenFromString
@@ -22,7 +23,7 @@ class IconPackProvider : ContentProvider() {
   private var iconPackDB: IconPackDB? = null
 
   override fun onCreate(): Boolean {
-    runCatching { iconPackDB = get { IconPackDB(context!!) }.value }
+    runCatching { iconPackDB = get { IconPackDB(MyApplication.context) }.value }
     return true
   }
 

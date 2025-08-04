@@ -24,7 +24,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
-import com.richardluo.globalIconPack.ui.viewModel.IconPackApp
+import com.richardluo.globalIconPack.ui.repo.IconPackApp
 
 @Composable
 fun IconPackItem(pack: String, app: IconPackApp, selected: Boolean, onClick: () -> Unit) {

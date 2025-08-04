@@ -1,8 +1,8 @@
 package com.richardluo.globalIconPack.iconPack
 
+import android.app.Application
 import android.content.ComponentName
 import android.content.ContentValues
-import android.content.Context
 import android.database.Cursor
 import android.database.MatrixCursor
 import android.database.MergeCursor
@@ -29,7 +29,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 
 class IconPackDB(
-  private val context: Context,
+  private val context: Application,
   path: String = AppPreference.get().get(AppPref.PATH),
 ) : SQLiteOpenHelper(context.createDeviceProtectedStorageContext(), path, null, 8) {
   val iconsUpdateFlow = flowTrigger()

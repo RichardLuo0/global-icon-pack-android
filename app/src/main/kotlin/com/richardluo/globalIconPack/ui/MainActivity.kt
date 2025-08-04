@@ -161,22 +161,23 @@ class MainActivity : ComponentActivity() {
     }
   }
 
-  private class Route(val name: String, val icon: ImageVector, val screen: @Composable () -> Unit)
+  private class Page(val name: String, val icon: ImageVector, val screen: @Composable () -> Unit)
 
   @Composable
   @OptIn(ExperimentalMaterial3Api::class)
   private fun SampleScreen() {
     val pages = remember {
-      listOf(
-        Route(getString(R.string.general), Icons.Outlined.Settings) { MainPreference.General() },
-        Route(getString(R.string.iconPackSettings), Icons.Outlined.Backpack) {
+      arrayOf(
+        Page(getString(R.string.general), Icons.Outlined.Settings) { MainPreference.General() },
+        Page(getString(R.string.iconPackSettings), Icons.Outlined.Backpack) {
           MainPreference.IconPack()
         },
-        Route(getString(R.string.pixelSettings), Icons.Outlined.PhoneAndroid) {
+        Page(getString(R.string.pixelSettings), Icons.Outlined.PhoneAndroid) {
           MainPreference.Pixel()
         },
       )
     }
+
     val pagerState = rememberPagerState(pageCount = { pages.size })
     val scrollBehavior = pinnedScrollBehaviorWithPager(pagerState)
     val snackbarState = remember { SnackbarHostState() }
@@ -226,7 +227,7 @@ class MainActivity : ComponentActivity() {
         }
       },
     ) { contentPadding ->
-      if (vm.waiting > 0) LoadingDialog()
+      if (vm.loading > 0) LoadingDialog()
 
       val flow = LocalPreferenceFlow.current
       LaunchedEffect(flow) {

@@ -1,8 +1,7 @@
 package com.richardluo.globalIconPack.ui.viewModel
 
+import android.app.Application
 import android.content.ComponentName
-import android.content.Context
-import android.content.pm.LauncherApps
 import android.graphics.drawable.Drawable
 import androidx.collection.LruCache
 import androidx.compose.ui.graphics.ImageBitmap
@@ -14,13 +13,11 @@ import com.richardluo.globalIconPack.iconPack.model.IconEntry
 import com.richardluo.globalIconPack.iconPack.model.IconFallback
 import com.richardluo.globalIconPack.iconPack.model.IconPackConfig
 import com.richardluo.globalIconPack.ui.MyApplication
-import com.richardluo.globalIconPack.ui.model.ActivityIconInfo
-import com.richardluo.globalIconPack.ui.model.AppIconInfo
+import com.richardluo.globalIconPack.ui.model.ActivityCompInfo
+import com.richardluo.globalIconPack.ui.model.AppCompInfo
+import com.richardluo.globalIconPack.ui.model.CompInfo
 import com.richardluo.globalIconPack.ui.model.IconEntryWithPack
-import com.richardluo.globalIconPack.ui.model.IconInfo
 import com.richardluo.globalIconPack.ui.model.IconPack
-import com.richardluo.globalIconPack.ui.model.ShortcutIconInfo
-import com.richardluo.globalIconPack.utils.asType
 import com.richardluo.globalIconPack.utils.getOrPut
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -31,11 +28,11 @@ private class BitmapLruCache<K : Any>(bytes: Long) :
     value.asAndroidBitmap().allocationByteCount / 1024
 }
 
-class IconCache(private val context: Context, factor: Int = 4) {
+class IconCache(private val context: Application, factor: Int = 4) {
   private val bitmapCache = BitmapLruCache<String>(Runtime.getRuntime().maxMemory() / factor)
 
   suspend fun loadIcon(
-    info: IconInfo,
+    info: CompInfo,
     entry: IconEntryWithPack?,
     basePack: IconPack,
     config: IconPackConfig,
@@ -45,16 +42,16 @@ class IconCache(private val context: Context, factor: Int = 4) {
   }
 
   suspend fun loadIcon(
-    info: IconInfo,
+    info: CompInfo,
     iconFallback: IconFallback?,
     basePack: IconPack,
     config: IconPackConfig,
   ): ImageBitmap =
     bitmapCache.getOrPut("${basePack.pack}/fallback/${info.componentName}") {
       // If ActivityIconInfo does not have an icon, return application icon directly
-      if (info is ActivityIconInfo && info.info.icon == 0)
+      if (info is ActivityCompInfo && info.info.icon == 0)
         loadIcon(
-          AppIconInfo(
+          AppCompInfo(
             ComponentName(info.componentName.packageName, ""),
             "",
             info.info.applicationInfo,
@@ -78,19 +75,8 @@ class IconCache(private val context: Context, factor: Int = 4) {
       }
     }
 
-  private suspend fun getBaseIcon(info: IconInfo) =
-    withContext(Dispatchers.IO) {
-      when (info) {
-        is AppIconInfo -> context.packageManager.getApplicationIcon(info.info)
-        is ActivityIconInfo -> info.info.loadIcon(context.packageManager)
-        is ShortcutIconInfo ->
-          context
-            .getSystemService(Context.LAUNCHER_APPS_SERVICE)
-            .asType<LauncherApps>()
-            ?.getShortcutIconDrawable(info.info, 0)
-        else -> null
-      }
-    }
+  private suspend fun getBaseIcon(info: CompInfo) =
+    withContext(Dispatchers.IO) { info.getIcon(context) }
 
   fun clear() {
     bitmapCache.evictAll()
