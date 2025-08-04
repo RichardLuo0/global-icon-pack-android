@@ -154,10 +154,8 @@ private constructor(
 
   fun migrate(name: String, block: (File?) -> Unit) {
     synchronized(this) {
-      if (mDatabase != null && mDatabase!!.isOpen) {
-        mDatabase!!.close()
-        mDatabase = null
-      }
+      if (mDatabase != null && mDatabase!!.isOpen) mDatabase!!.close()
+      mDatabase = null
       block(getDatabaseFile())
       databaseName = name
     }
