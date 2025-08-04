@@ -88,9 +88,8 @@ class MainVM(context: Application) : ContextVM(context), ILoadable by Loadable()
     val parent = shareDBFile.parent
 
     if (!shareDBFile.exists()) {
-      iconPackDB.migrate(shareDB) {
-        val oldDB =
-          context.createDeviceProtectedStorageContext().getDatabasePath(AppPref.PATH.def).path
+      iconPackDB.migrate(shareDB) { oldDBFile ->
+        val oldDB = oldDBFile!!.path
         Shell.cmd(
             "set -e",
             "mkdir -p $parent",

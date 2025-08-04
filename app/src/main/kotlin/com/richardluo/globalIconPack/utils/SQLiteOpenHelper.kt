@@ -152,13 +152,13 @@ private constructor(
 
   fun usable() = getDatabaseFile()?.let { !it.exists() || (it.canRead() && it.canWrite()) } == true
 
-  fun migrate(name: String, block: () -> Unit) {
+  fun migrate(name: String, block: (File?) -> Unit) {
     synchronized(this) {
       if (mDatabase != null && mDatabase!!.isOpen) {
         mDatabase!!.close()
         mDatabase = null
       }
-      block()
+      block(getDatabaseFile())
       databaseName = name
     }
   }
