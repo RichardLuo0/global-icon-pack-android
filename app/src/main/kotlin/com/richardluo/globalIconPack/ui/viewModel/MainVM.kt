@@ -59,15 +59,25 @@ class MainVM(context: Application) : ContextVM(context), ILoadable by Loadable()
                     update { it.toMutablePreferences().apply { set(Pref.MODE.key, MODE_PROVIDER) } }
                   },
                 ) {
-                  createShareDB()
-                  resetDBPermission()
+                  val shareDB = createShareDB()
+                  resetDBPermission(shareDB)
                   updateDB(pack)
+                  AppPreference.get().edit { putString(AppPref.PATH.key, shareDB) }
                 }
               }
               MODE_PROVIDER -> {
                 KeepAliveService.startForeground(context)
                 startOnBoot(true)
-                runCatchingToast(context) { resetDBPermission() }
+                runCatchingToast(
+                  context,
+                  onFailure = {
+                    // Revert to default database
+                    iconPackDB.migrate(AppPref.PATH.def) {}
+                    AppPreference.get().edit { remove(AppPref.PATH.key) }
+                  },
+                ) {
+                  resetDBPermission(AppPreference.get().get(AppPref.PATH))
+                }
                 updateDB(pack)
               }
               else -> {
@@ -82,11 +92,10 @@ class MainVM(context: Application) : ContextVM(context), ILoadable by Loadable()
     }
   }
 
-  private fun createShareDB() {
+  private fun createShareDB(): String {
     val shareDB = ShareSource.DATABASE_PATH
     val shareDBFile = File(shareDB)
     val parent = shareDBFile.parent
-
     if (!shareDBFile.exists()) {
       iconPackDB.migrate(shareDB) { oldDBFile ->
         val oldDB = oldDBFile!!.path
@@ -101,29 +110,29 @@ class MainVM(context: Application) : ContextVM(context), ILoadable by Loadable()
           .throwOnFail()
       }
     }
-
-    AppPreference.get().edit { putString(AppPref.PATH.key, shareDB) }
+    return shareDB
   }
 
-  private fun resetDBPermission() {
-    val shareDB =
-      AppPreference.get().get(AppPref.PATH).also { if (!it.startsWith(File.separatorChar)) return }
-    val shareDBFile = File(shareDB)
-    if (shareDBFile.canRead() && shareDBFile.canWrite()) return
-
-    val parent = shareDBFile.parent
-
+  private fun resetDBPermission(db: String) {
+    if (!db.startsWith(File.separatorChar)) return
+    val dbFile = File(db)
+    if (dbFile.canRead() && dbFile.canWrite()) return
+    // Reset permission
+    val parent = dbFile.parent
     val prefPath = WorldPreference.getFile()?.path ?: ""
     val uid = android.os.Process.myUid()
     Shell.cmd(
         "set -e",
-        "if ! [ -f $shareDB ]; then touch $shareDB; fi",
+        "if ! [ -f $db ]; then touch $db; fi",
         "[ -n \"$prefPath\" ] && context=$(ls -Z $prefPath | cut -d: -f1-4) || context=\"u:object_r:magisk_file:s0\"",
         "chown $uid:$uid $parent && chmod 0777 $parent && chcon \$context $parent",
-        "chown $uid:$uid $shareDB && chmod 0666 $shareDB && chcon \$context $shareDB",
+        "chown $uid:$uid $db && chmod 0666 $db && chcon \$context $db",
       )
       .exec()
       .throwOnFail()
+    // Check again
+    if (dbFile.canRead() && dbFile.canWrite())
+      throw Exception("Unable to read and write after resetting permission")
   }
 
   private fun startOnBoot(enable: Boolean = true) {

@@ -256,13 +256,12 @@ class IconPackDB(
               it.readUTF(),
               if (pack.isNotEmpty()) iconPackCache[pack] else iconPack,
             ) ?: return@use
-          updateId
-            .apply {
-              clearBindings()
-              bindLong(1, id.toLong())
-              bindLong(2, rowId.toLong())
-            }
-            .execute()
+          updateId.apply {
+            clearBindings()
+            bindLong(1, id.toLong())
+            bindLong(2, rowId.toLong())
+            execute()
+          }
         }
       }
   }
