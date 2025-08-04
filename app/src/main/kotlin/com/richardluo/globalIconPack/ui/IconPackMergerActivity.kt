@@ -494,17 +494,18 @@ class IconPackMergerActivity : ComponentActivity() {
 
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
-    Box(
+    Column(
       modifier =
-        Modifier.fillMaxSize().padding(contentPadding).clickable(
+        Modifier.fillMaxSize().verticalScroll(rememberScrollState()).clickable(
           indication = null,
           interactionSource = remember { MutableInteractionSource() },
         ) {
           keyboardController?.hide()
           focusManager.clearFocus(true)
         },
-      contentAlignment = Alignment.TopCenter,
+      horizontalAlignment = Alignment.CenterHorizontally,
     ) {
+      Spacer(modifier = Modifier.height(contentPadding.calculateTopPadding()))
       Card(modifier = Modifier.padding(8.dp).wrapContentHeight()) {
         Column(
           modifier = Modifier.padding(12.dp),
@@ -540,7 +541,9 @@ class IconPackMergerActivity : ComponentActivity() {
           )
           Row(
             modifier =
-              Modifier.fillMaxWidth().clickable { vm.installedAppsOnly = !vm.installedAppsOnly },
+              Modifier.fillMaxWidth().clip(MaterialTheme.shapes.medium).clickable {
+                vm.installedAppsOnly = !vm.installedAppsOnly
+              },
             verticalAlignment = Alignment.CenterVertically,
           ) {
             Checkbox(
@@ -551,6 +554,7 @@ class IconPackMergerActivity : ComponentActivity() {
           }
         }
       }
+      Spacer(modifier = Modifier.height(contentPadding.calculateBottomPadding()))
     }
 
     IconChooserSheet(iconChooser, { symDefAppIcon }) { info, icon ->
