@@ -84,11 +84,11 @@
     <string name="importIconPack">Import</string>
     <string name="importedIconPack">Icon pack has been imported.</string>
 
-    <string name="chooseBasePack">Choose a base icon pack</string>
-    <string name="chooseIconToReplace">Choose the icon to replace</string>
+    <string name="chooseBasePack">Base icon pack</string>
+    <string name="chooseIconToReplace">Replace icons</string>
     <string name="chooseNewIcon">Choose a new icon</string>
     <string name="originalIcon">Original icon</string>
-    <string name="fillNewPackInfo">Fill new pack info</string>
+    <string name="fillNewPackInfo">New pack info</string>
     <string name="newPackName">New pack name</string>
     <string name="newPackPackage">New pack package</string>
     <string name="installedAppsOnly">Generate icons only for installed apps</string>
