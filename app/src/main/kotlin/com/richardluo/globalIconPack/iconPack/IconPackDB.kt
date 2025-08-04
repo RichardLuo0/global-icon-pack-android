@@ -51,6 +51,13 @@ class IconPackDB(
       execSQL(
         "CREATE TABLE IF NOT EXISTS 'iconPack' (pack TEXT PRIMARY KEY NOT NULL, fallback BLOB NOT NULL, updateAt NUMERIC NOT NULL, modified INTEGER NOT NULL DEFAULT FALSE)"
       )
+      // Delete uninstalled packs
+      val packSet = installedPacks.joinToString(", ") { "'$it'" }
+      delete("iconPack", "pack not in ($packSet)", null)
+      // Drop uninstalled pack tables
+      val packTables = installedPacks.map { pt(it) }.toSet()
+      foreachPackTable { if (!packTables.contains("'$it'")) execSQL("DROP TABLE '$it'") }
+      // Update pack
       val packTable = pt(pack)
       // Check update time
       val lastUpdateTime =
@@ -78,12 +85,7 @@ class IconPackDB(
       updateIconId(this, iconPack)
       // Insert fallback
       insertFallbackSettings(this, pack, FallbackSettings(iconPack.info))
-      // Delete expired iconPack
-      val packSet = installedPacks.joinToString(", ") { "'$it'" }
-      delete("iconPack", "pack not in ($packSet)", null)
-      // Drop expired tables
-      val packTables = installedPacks.map { pt(it) }
-      foreachPackTable { if (!packTables.contains("'$it'")) execSQL("DROP TABLE '$it'") }
+      // Send update
       log("Database: $pack updated")
       iconsUpdateFlow.tryEmit()
     }
