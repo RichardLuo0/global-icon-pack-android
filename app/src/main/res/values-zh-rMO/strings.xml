@@ -58,11 +58,11 @@
     <string name="exportedIconPack">圖示包已匯出。</string>
     <string name="importIconPack">匯入</string>
     <string name="importedIconPack">圖示包已匯入。</string>
-    <string name="chooseBasePack">選擇基本圖示包</string>
-    <string name="chooseIconToReplace">選擇要替換的圖示</string>
+    <string name="chooseBasePack">基本圖示包</string>
+    <string name="chooseIconToReplace">替換圖示</string>
     <string name="chooseNewIcon">選擇一個新圖示</string>
     <string name="originalIcon">原始圖示</string>
-    <string name="fillNewPackInfo">填寫新包的資訊</string>
+    <string name="fillNewPackInfo">新包資訊</string>
     <string name="newPackName">新圖示包名稱</string>
     <string name="newPackPackage">新圖示包包名</string>
     <string name="installedAppsOnly">僅為已安裝應用生成圖示</string>

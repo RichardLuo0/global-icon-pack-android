@@ -44,6 +44,8 @@
     <string name="noShadow">Altındaki gölgeyi kaldır</string>
     <string name="noShadowSummary">Sistem simge maskesi için oluşturulan gölgeyi kaldırır.</string>
     <string name="forceLoadClockAndCalendar">Saat ve takvim simgesini zorla yükle</string>
+    <string name="clockUseFallbackMask">Saat yedek maske kullanıyor</string>
+    <string name="disableClockSeconds">Saat saniyelerini devre dışı bırak</string>
     <string name="forceActivityIconForTask">Görevler için etkinlik simgesini zorla yükle</string>
     <string name="forceActivityIconForTaskSummary">Bazı uygulamalar çalışırken bir görev simgesi ayarlar. Bu ayar, ne olursa olsun etkinlik simgesinin yüklenmesini zorlar.</string>
     <string name="moreOptions">Daha fazla seçenek</string>
@@ -60,6 +62,7 @@
     <string name="options">Seçenekler</string>
     <string name="empty">Boş</string>
     <string name="restoreDefault">Varsayılana geri yükle</string>
+    <string name="clearAll">Tümünü temizle</string>
     <string name="restoreDefaultWarning">Varsayılan simgelere geri yüklemek istediğinizden emin misiniz?</string>
     <string name="suggestedIcons">Önerilen simgeler</string>
     <string name="allIcons">Tüm simgeler</string>
