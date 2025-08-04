@@ -115,10 +115,9 @@ class MainVM(context: Application) : ContextVM(context), ILoadable by Loadable()
 
   private fun resetDBPermission(db: String) {
     if (!db.startsWith(File.separatorChar)) return
-    val dbFile = File(db)
-    if (dbFile.canRead() && dbFile.canWrite()) return
+    val parent = File(db).parent!!
+    if (isAllFilesUsable(parent)) return
     // Reset permission
-    val parent = dbFile.parent
     val prefPath = WorldPreference.getFile()?.path ?: ""
     val uid = android.os.Process.myUid()
     Shell.cmd(
@@ -126,14 +125,17 @@ class MainVM(context: Application) : ContextVM(context), ILoadable by Loadable()
         "if ! [ -f $db ]; then touch $db; fi",
         "[ -n \"$prefPath\" ] && context=$(ls -Z $prefPath | cut -d: -f1-4) || context=\"u:object_r:magisk_file:s0\"",
         "chown $uid:$uid $parent && chmod 0777 $parent && chcon \$context $parent",
-        "chown $uid:$uid $db && chmod 0666 $db && chcon \$context $db",
+        "for file in $parent/*; do chown $uid:$uid \$file && chmod 0666 \$file && chcon \$context \$file; done",
       )
       .exec()
       .throwOnFail()
     // Check again
-    if (dbFile.canRead() && dbFile.canWrite())
-      throw Exception("Unable to read and write after resetting permission")
+    if (!isAllFilesUsable(parent))
+      throw Exception("Unable to read and write after resetting permission!")
   }
+
+  private fun isAllFilesUsable(folder: String) =
+    File(folder).listFiles()?.all { it.canRead() && it.canWrite() } == true
 
   private fun startOnBoot(enable: Boolean = true) {
     context.packageManager.setComponentEnabledSetting(
