@@ -189,7 +189,7 @@ class MergerVM(context: Application, savedStateHandle: SavedStateHandle) :
       }
 
     viewModelScope.launch(Dispatchers.Default) {
-      creatingApkProgress = Progress(0, 0, "preparing")
+      creatingApkProgress = Progress(info = "preparing")
       runCatchingToast(
         context,
         {
