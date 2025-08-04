@@ -63,7 +63,9 @@ jobs:
                   "title": "## 🐛 Fixes",
                   "labels": [
                     "fix",
-                    "perf"
+                    "perf",
+                    "refactor",
+                    "revert"
                   ]
                 },
                 {
@@ -72,9 +74,7 @@ jobs:
                     "build",
                     "chore",
                     "ci",
-                    "docs",
-                    "refactor",
-                    "revert"
+                    "docs"
                   ]
                 }
               ],
