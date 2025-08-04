@@ -15,7 +15,7 @@ const val MODE_LOCAL = "local"
 object Pref {
   val MODE = "mode" defaultTo MODE_LOCAL
   val ICON_PACK = "iconPack" defaultTo ""
-  val ICON_PACK_AS_FALLBACK = "iconPackAsFallback" defaultTo false
+  val ICON_PACK_AS_FALLBACK = "iconPackAsFallback" defaultTo true
   val SHORTCUT = "shortcut" defaultTo true
 
   val ICON_FALLBACK = "iconFallback" defaultTo true
