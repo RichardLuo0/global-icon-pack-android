@@ -34,9 +34,6 @@ import kotlinx.coroutines.withContext
 class IconPackDB(
   private val context: Application,
   path: String = AppPreference.get().get(AppPref.PATH),
-) : SQLiteOpenHelper(context.createDeviceProtectedStorageContext(), path, null, 8) {
-  val iconsUpdateFlow = flowTrigger()
-  val modifiedUpdateFlow = flowTrigger()
 ) :
   SQLiteOpenHelper(
     context.createDeviceProtectedStorageContext(),
@@ -47,6 +44,14 @@ class IconPackDB(
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) setJournalMode("MEMORY")
     },
   ) {
+  private val mIconsUpdateFlow = flowTrigger()
+  private val mModifiedUpdateFlow = flowTrigger()
+
+  val iconsUpdateFlow: Flow<*>
+    get() = mIconsUpdateFlow
+
+  val modifiedUpdateFlow: Flow<*>
+    get() = mModifiedUpdateFlow
 
   init {
     if (!usable()) throw Exception("DB file can not be read and write: $path")
