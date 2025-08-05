@@ -108,13 +108,11 @@ class AppIconListVM(context: Application, iconsHolder: IconsHolder, appIcon: App
       .flowOn(Dispatchers.IO)
       .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
       .combine(iconsHolder.updateFlow) { iconInfos, _ ->
-        iconInfos
-          ?.let {
-            it.zip(iconsHolder.mapIconEntry(it.map { it.componentName })) { info, entry ->
-              info to entry
-            }
+        iconInfos?.let {
+          it.zip(iconsHolder.mapIconEntry(it.map { it.componentName })) { info, entry ->
+            info to entry
           }
-          ?.sortedBy { it.entry == null }
+        }
       }
       .flowOn(Dispatchers.Default)
       .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
