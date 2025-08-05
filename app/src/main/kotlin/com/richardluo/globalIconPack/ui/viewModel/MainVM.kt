@@ -93,7 +93,8 @@ class MainVM(context: Application) : ContextVM(context), ILoadable by Loadable()
   }
 
   private fun createShareDB(): String {
-    val shareDB = ShareSource.DATABASE_PATH
+    val shareDB =
+      AppPreference.get().get(AppPref.PATH).takeIf { it.isShareDB() } ?: ShareSource.DATABASE_PATH
     val shareDBFile = File(shareDB)
     val parent = shareDBFile.parent
     if (!shareDBFile.exists()) {
@@ -114,7 +115,7 @@ class MainVM(context: Application) : ContextVM(context), ILoadable by Loadable()
   }
 
   private fun resetDBPermission(db: String) {
-    if (!db.startsWith(File.separatorChar)) return
+    if (!db.isShareDB()) return
     val parent = File(db).parent!!
     if (isAllFilesUsable(parent)) return
     // Reset permission
@@ -136,6 +137,8 @@ class MainVM(context: Application) : ContextVM(context), ILoadable by Loadable()
 
   private fun isAllFilesUsable(folder: String) =
     File(folder).listFiles()?.all { it.canRead() && it.canWrite() } == true
+
+  private fun String.isShareDB() = startsWith(File.separatorChar)
 
   private fun startOnBoot(enable: Boolean = true) {
     context.packageManager.setComponentEnabledSetting(
