@@ -7,6 +7,8 @@ import android.database.Cursor
 import android.database.MatrixCursor
 import android.database.MergeCursor
 import android.database.sqlite.SQLiteDatabase
+import android.database.sqlite.SQLiteDatabase.OpenParams
+import android.os.Build
 import android.widget.Toast
 import androidx.compose.ui.util.fastJoinToString
 import com.richardluo.globalIconPack.AppPref
@@ -25,6 +27,7 @@ import com.richardluo.globalIconPack.utils.tryEmit
 import java.io.ByteArrayInputStream
 import java.io.DataInputStream
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 
@@ -34,6 +37,16 @@ class IconPackDB(
 ) : SQLiteOpenHelper(context.createDeviceProtectedStorageContext(), path, null, 8) {
   val iconsUpdateFlow = flowTrigger()
   val modifiedUpdateFlow = flowTrigger()
+) :
+  SQLiteOpenHelper(
+    context.createDeviceProtectedStorageContext(),
+    path,
+    8,
+    0,
+    OpenParams.Builder().apply {
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) setJournalMode("MEMORY")
+    },
+  ) {
 
   init {
     if (!usable()) throw Exception("DB file can not be read and write: $path")
@@ -87,7 +100,7 @@ class IconPackDB(
       insertFallbackSettings(this, pack, FallbackSettings(iconPack.info))
       // Send update
       log("Database: $pack updated")
-      iconsUpdateFlow.tryEmit()
+      mIconsUpdateFlow.tryEmit()
     }
   }
 
@@ -138,7 +151,7 @@ class IconPackDB(
         "pack=?",
         arrayOf(pack),
       )
-      modifiedUpdateFlow.tryEmit()
+      mModifiedUpdateFlow.tryEmit()
     }
   }
 
@@ -288,7 +301,7 @@ class IconPackDB(
         SQLiteDatabase.CONFLICT_REPLACE,
       )
       setPackModified(pack)
-      iconsUpdateFlow.tryEmit()
+      mIconsUpdateFlow.tryEmit()
     }
   }
 
@@ -296,7 +309,7 @@ class IconPackDB(
     writableDatabase.transaction {
       delete(pt(pack), "packageName=? AND className=?", arrayOf(cn.packageName, cn.className))
       setPackModified(pack)
-      iconsUpdateFlow.tryEmit()
+      mIconsUpdateFlow.tryEmit()
     }
   }
 
@@ -307,8 +320,8 @@ class IconPackDB(
       insertIcons(this, pack, iconPack.iconEntryMap.asIterable())
       updateIconId(this, iconPack)
       setPackModified(pack, false)
-      iconsUpdateFlow.tryEmit()
-      modifiedUpdateFlow.tryEmit()
+      mIconsUpdateFlow.tryEmit()
+      mModifiedUpdateFlow.tryEmit()
     }
   }
 
@@ -322,14 +335,14 @@ class IconPackDB(
         iconPack.iconEntryMap.filter { it.key.packageName == packageName }.asIterable(),
       )
       updateIconId(this, iconPack, packageName)
-      iconsUpdateFlow.tryEmit()
+      mIconsUpdateFlow.tryEmit()
     }
   }
 
   fun clearPackage(iconPack: IconPack, packageName: String) {
     writableDatabase.transaction {
       delete(pt(iconPack.pack), "packageName=?", arrayOf(packageName))
-      iconsUpdateFlow.tryEmit()
+      mIconsUpdateFlow.tryEmit()
     }
   }
 

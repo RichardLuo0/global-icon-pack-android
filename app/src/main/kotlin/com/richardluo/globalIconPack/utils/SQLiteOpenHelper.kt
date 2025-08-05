@@ -59,8 +59,7 @@ import kotlin.synchronized
  * **Note:** the [AutoCloseable] interface was first added in the [android.os.Build.VERSION_CODES.Q]
  * release.
  */
-abstract class SQLiteOpenHelper
-private constructor(
+abstract class SQLiteOpenHelper(
   private val context: Context,
   name: String?,
   version: Int,
