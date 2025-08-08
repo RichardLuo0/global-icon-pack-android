@@ -183,34 +183,34 @@ class IconPackMergerActivity : ComponentActivity() {
 
     val coroutineScope = rememberCoroutineScope()
     val nextStep = remember {
-      FabDesc(Icons.AutoMirrored.Outlined.ArrowForward, getString(R.string.nextStep)) {
+      FabDesc(Icons.AutoMirrored.Outlined.ArrowForward, getString(R.string.merger_nextStep)) {
         coroutineScope.launch { pagerState.animateScrollToPage(pagerState.currentPage + 1) }
       }
     }
     val done = remember {
-      FabDesc(Icons.Outlined.Done, getString(R.string.done)) {
+      FabDesc(Icons.Outlined.Done, getString(R.string.merger_done)) {
         if (vm.baseIconPack != null) warningDialogState.value = true
       }
     }
 
     val pages = remember {
       arrayOf(
-        Page(getString(R.string.chooseBasePack), animatedFab = nextStep) {
+        Page(getString(R.string.merger_basePack_title), animatedFab = nextStep) {
           SelectBasePack(it) { coroutineScope.launch { pagerState.animateScrollToPage(1) } }
         },
         Page(
-          getString(R.string.chooseIconToReplace),
+          getString(R.string.merger_replaceIcons_title),
           actions = { IconListActions(expandSearchBar) },
           fab = {
             FloatingActionButton(onClick = { iconOptionDialogState.value = true }) {
-              Icon(Icons.Outlined.Settings, getString(R.string.options))
+              Icon(Icons.Outlined.Settings, getString(R.string.common_options))
             }
           },
           animatedFab = nextStep,
         ) {
           IconList(it, iconOptionDialogState)
         },
-        Page(getString(R.string.fillNewPackInfo), animatedFab = done) { PackInfoForm(it) },
+        Page(getString(R.string.merger_newPack_title), animatedFab = done) { PackInfoForm(it) },
       )
     }
 
@@ -316,18 +316,18 @@ class IconPackMergerActivity : ComponentActivity() {
 
     WarnDialog(
       warningDialogState,
-      title = { Text(getString(R.string.warning)) },
+      title = { Text(getString(R.string.common_warning)) },
       onOk = { createIconPackLauncher.launch(null) },
     ) {
-      Text(getString(R.string.mergerWarning))
+      Text(getString(R.string.merger_warn_generated))
     }
 
     InfoDialog(
       instructionDialogState,
       icon = Icons.Outlined.Notifications,
-      title = { Text(getString(R.string.notice)) },
+      title = { Text(getString(R.string.common_notice)) },
     ) {
-      Text(getString(R.string.mergerInstruction))
+      Text(getString(R.string.merger_info_instruction))
     }
 
     if (vm.loading > 0) LoadingDialog()
@@ -414,7 +414,7 @@ class IconPackMergerActivity : ComponentActivity() {
     val iconOptionScrollState = rememberLazyListState()
     LazyDialog(
       iconOptionDialogState,
-      title = { Text(getString(R.string.options)) },
+      title = { Text(getString(R.string.common_options)) },
       value = vm.optionsFlow,
     ) {
       ProvidePreferenceLocals(flow = it, myPreferenceTheme()) {
@@ -431,13 +431,13 @@ class IconPackMergerActivity : ComponentActivity() {
 
   @Composable
   private fun IconListActions(expandSearchBar: MutableState<Boolean>) {
-    IconButtonWithTooltip(Icons.Outlined.Search, stringResource(R.string.search)) {
+    IconButtonWithTooltip(Icons.Outlined.Search, stringResource(R.string.common_search)) {
       expandSearchBar.value = true
     }
     var expand by rememberSaveable { mutableStateOf(false) }
     val expandFilter = rememberSaveable { mutableStateOf(false) }
     val autoFillState = rememberAutoFillState()
-    IconButtonWithTooltip(Icons.Outlined.MoreVert, stringResource(R.string.moreOptions)) {
+    IconButtonWithTooltip(Icons.Outlined.MoreVert, stringResource(R.string.common_moreOptions)) {
       expand = true
     }
     MyDropdownMenu(expanded = expand, onDismissRequest = { expand = false }) {
@@ -459,7 +459,7 @@ class IconPackMergerActivity : ComponentActivity() {
       )
       DropdownMenuItem(
         leadingIcon = { Icon(Icons.Outlined.Restore, "restore default") },
-        text = { Text(stringResource(R.string.restoreDefault)) },
+        text = { Text(stringResource(R.string.icons_restoreDefault)) },
         onClick = {
           vm.restoreDefault()
           expand = false
@@ -525,14 +525,14 @@ class IconPackMergerActivity : ComponentActivity() {
           OutlinedTextField(
             value = vm.newPackName,
             onValueChange = { vm.newPackName = it },
-            label = { Text(getString(R.string.newPackName)) },
+            label = { Text(getString(R.string.merger_newPack_Name)) },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
           )
           OutlinedTextField(
             value = vm.newPackPackage,
             onValueChange = { vm.newPackPackage = it },
-            label = { Text(getString(R.string.newPackPackage)) },
+            label = { Text(getString(R.string.merger_newPack_Package)) },
             modifier = Modifier.fillMaxWidth(),
             singleLine = true,
           )
@@ -547,7 +547,10 @@ class IconPackMergerActivity : ComponentActivity() {
               checked = vm.installedAppsOnly,
               onCheckedChange = { vm.installedAppsOnly = it },
             )
-            Text(text = getString(R.string.installedAppsOnly), modifier = Modifier.fillMaxWidth())
+            Text(
+              text = getString(R.string.merger_newPack_installedAppsOnly),
+              modifier = Modifier.fillMaxWidth(),
+            )
           }
         }
       }

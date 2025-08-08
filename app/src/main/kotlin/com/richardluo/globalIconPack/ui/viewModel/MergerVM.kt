@@ -198,7 +198,7 @@ class MergerVM(context: Application, savedStateHandle: SavedStateHandle) :
         context,
         {
           if (it is IconPackCreator.FolderNotEmptyException)
-            context.getString(R.string.requiresEmptyFolder)
+            context.getString(R.string.merger_error_needEmptyFolder)
           else it.toString()
         },
       ) {

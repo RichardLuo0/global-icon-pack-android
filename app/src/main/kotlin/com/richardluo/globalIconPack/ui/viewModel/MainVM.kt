@@ -54,7 +54,7 @@ class MainVM(context: Application) : ContextVM(context), ILoadable by Loadable()
                 startOnBoot(false)
                 runCatchingToast(
                   context,
-                  { context.getString(R.string.errorOnShareMode) },
+                  { context.getString(R.string.general_error_onShareMode) },
                   {
                     update { it.toMutablePreferences().apply { set(Pref.MODE.key, MODE_PROVIDER) } }
                   },

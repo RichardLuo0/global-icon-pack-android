@@ -29,7 +29,7 @@ import com.richardluo.globalIconPack.R
 fun AppbarSearchBar(
   expandSearchBar: MutableState<Boolean>,
   searchText: MutableState<String>,
-  placeHolder: String = stringResource(R.string.search),
+  placeHolder: String = stringResource(R.string.common_search),
 ) {
   Box(
     modifier =

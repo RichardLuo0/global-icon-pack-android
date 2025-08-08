@@ -98,7 +98,7 @@ private fun Nothing() {
       )
       Spacer(modifier = Modifier.width(8.dp))
       OneLineText(
-        stringResource(R.string.empty),
+        stringResource(R.string.common_empty),
         style = MaterialTheme.typography.bodyMedium,
         color = MaterialTheme.colorScheme.onSurfaceVariant,
       )

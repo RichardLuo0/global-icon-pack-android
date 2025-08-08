@@ -4,8 +4,8 @@
         android:enabled="true"
         android:icon="@mipmap/ic_merger"
         android:shortcutId="mergeIconPack"
-        android:shortcutLongLabel="@string/mergeIconPackSummary"
-        android:shortcutShortLabel="@string/mergeIconPack">
+        android:shortcutLongLabel="@string/general_mergeIconPack_summary"
+        android:shortcutShortLabel="@string/general_mergeIconPack">
         <intent
             android:action="android.intent.action.VIEW"
             android:targetClass="com.richardluo.globalIconPack.ui.IconPackMergerActivity"
@@ -15,8 +15,8 @@
         android:enabled="true"
         android:icon="@mipmap/ic_variant"
         android:shortcutId="iconVariant"
-        android:shortcutLongLabel="@string/iconVariantSummary"
-        android:shortcutShortLabel="@string/iconVariant">
+        android:shortcutLongLabel="@string/iconPack_iconVariant_summary"
+        android:shortcutShortLabel="@string/iconPack_iconVariant">
         <intent
             android:action="android.intent.action.VIEW"
             android:targetClass="com.richardluo.globalIconPack.ui.IconVariantActivity"

@@ -40,7 +40,7 @@ fun MainDropdownMenu(snackbarState: SnackbarHostState) {
       scope.launch {
         if (result.isSuccess)
           snackbarState.showSnackbar(
-            "✅ ${context.getString(R.string.restartedSuccessfully)}",
+            "✅ ${context.getString(R.string.mainMenu_info_restarted)}",
             withDismissAction = true,
             duration = SnackbarDuration.Long,
           )
@@ -64,18 +64,18 @@ fun MainDropdownMenu(snackbarState: SnackbarHostState) {
     expand = false
   }
 
-  IconButtonWithTooltip(Icons.Outlined.MoreVert, stringResource(R.string.moreOptions)) {
+  IconButtonWithTooltip(Icons.Outlined.MoreVert, stringResource(R.string.common_moreOptions)) {
     expand = !expand
   }
   MyDropdownMenu(expanded = expand, onDismissRequest = { expand = false }) {
     DropdownMenuItem(
       leadingIcon = {},
-      text = { Text(stringResource(R.string.restartSystemUI)) },
+      text = { Text(stringResource(R.string.mainMenu_restartSystemUI)) },
       onClick = { runCommand("killall com.android.systemui") },
     )
     DropdownMenuItem(
       leadingIcon = {},
-      text = { Text(stringResource(R.string.restartPixelLauncher)) },
+      text = { Text(stringResource(R.string.mainMenu_restartLauncher)) },
       onClick = {
         val launcher = WorldPreference.get().get(Pref.PIXEL_LAUNCHER_PACKAGE)
         runCommand("rm -f /data/data/$launcher/databases/app_icons.db && am force-stop $launcher")
@@ -83,7 +83,7 @@ fun MainDropdownMenu(snackbarState: SnackbarHostState) {
     )
     DropdownMenuItem(
       leadingIcon = {},
-      text = { Text(stringResource(R.string.restartOthers)) },
+      text = { Text(stringResource(R.string.mainMenu_restartOthers)) },
       onClick = {
         runCommand(
           "am force-stop com.android.settings",
@@ -95,7 +95,7 @@ fun MainDropdownMenu(snackbarState: SnackbarHostState) {
     )
     DropdownMenuItem(
       leadingIcon = { Text("🌐") },
-      text = { Text(stringResource(R.string.openCrowdin)) },
+      text = { Text(stringResource(R.string.mainMenu_openCrowdin)) },
       onClick = {
         context.startActivity(
           Intent(Intent.ACTION_VIEW, "https://crowdin.com/project/global-icon-pack-android".toUri())
@@ -105,7 +105,7 @@ fun MainDropdownMenu(snackbarState: SnackbarHostState) {
     )
     DropdownMenuItem(
       leadingIcon = { Text("🧑‍💻") },
-      text = { Text(stringResource(R.string.openGithub)) },
+      text = { Text(stringResource(R.string.mainMenu_openGithub)) },
       onClick = {
         context.startActivity(
           Intent(
@@ -118,7 +118,7 @@ fun MainDropdownMenu(snackbarState: SnackbarHostState) {
     )
     DropdownMenuItem(
       leadingIcon = { Text("☕") },
-      text = { Text(stringResource(R.string.buyMeACoffee)) },
+      text = { Text(stringResource(R.string.mainMenu_buyMeACoffee)) },
       onClick = {
         context.startActivity(Intent(Intent.ACTION_VIEW, "https://ko-fi.com/richardluo".toUri()))
         expand = false

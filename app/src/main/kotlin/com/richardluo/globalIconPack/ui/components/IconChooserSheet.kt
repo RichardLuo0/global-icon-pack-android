@@ -95,14 +95,18 @@ fun IconChooserSheet(
           onDismissRequest()
         }
       } catch (_: IconChooserVM.NotCalendarEntryException) {
-        Toast.makeText(context, context.getString(R.string.notCalendarIcon), Toast.LENGTH_LONG)
+        Toast.makeText(
+            context,
+            context.getString(R.string.iconChooser_warn_notCalendarIcon),
+            Toast.LENGTH_LONG,
+          )
           .show()
       }
     }
 
     RoundSearchBar(
       vm.searchText,
-      stringResource(R.string.search),
+      stringResource(R.string.common_search),
       modifier = Modifier.padding(bottom = 8.dp),
       trailingIcon = {
         IconButtonWithTooltip(Icons.Outlined.FilterList, "By pack") { packDialogState.value = true }
@@ -137,7 +141,7 @@ fun IconChooserSheet(
       items(icons) { icon ->
         AppIcon(
           when (icon) {
-            is OriginalIcon -> stringResource(R.string.originalIcon)
+            is OriginalIcon -> stringResource(R.string.iconChooser_originalIcon)
             is VariantPackIcon -> icon.entry.name
             else -> ""
           },
@@ -171,14 +175,14 @@ fun IconChooserSheet(
         ) {
           val shrinkSize = gridState.layoutInfo.maxSpan * 2
           if (suggestIcons.size > shrinkSize) {
-            variantIconTitle(context.getString(R.string.suggestedIcons), expandState)
+            variantIconTitle(context.getString(R.string.iconChooser_suggestedIcons), expandState)
             variantIconItems(if (expandState.value) suggestIcons else suggestIcons.take(shrinkSize))
           } else {
-            variantIconTitle(context.getString(R.string.suggestedIcons))
+            variantIconTitle(context.getString(R.string.iconChooser_suggestedIcons))
             variantIconItems(suggestIcons)
           }
 
-          variantIconTitle(context.getString(R.string.allIcons))
+          variantIconTitle(context.getString(R.string.iconChooser_allIcons))
           variantIconItems(icons)
         }
       else ProgressBar()
@@ -197,7 +201,7 @@ fun IconChooserSheet(
 
     LazyListDialog(
       packDialogState,
-      title = { Text(stringResource(R.string.iconPack)) },
+      title = { Text(stringResource(R.string.general_iconPack)) },
       value = IconPackApps.flow.collectAsState(null).value?.toList(),
       key = { it.first },
       focusItem = { it.first == vm.iconPack?.pack },
@@ -213,13 +217,13 @@ fun IconChooserSheet(
     ProvideMyPreferenceTheme {
       LazyListDialog(
         optionDialogState,
-        title = { Text(stringResource(R.string.options)) },
+        title = { Text(stringResource(R.string.common_options)) },
         value =
           listOf(
-            Option(null, stringResource(R.string.asNormalIcon), ::replaceAsNormalIcon),
+            Option(null, stringResource(R.string.iconChooser_asNormalIcon), ::replaceAsNormalIcon),
             Option(
               Icons.Outlined.CalendarMonth,
-              stringResource(R.string.asCalendarIcon),
+              stringResource(R.string.iconChooser_asCalendarIcon),
               ::replaceAsCalendarIcon,
             ),
           ),

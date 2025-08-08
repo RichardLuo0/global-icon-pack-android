@@ -96,11 +96,11 @@ class MainActivity : ComponentActivity() {
         if (prefFlow == null)
           WarnDialog(
             openState = remember { mutableStateOf(true) },
-            title = { OneLineText(getString(R.string.warning)) },
+            title = { OneLineText(getString(R.string.common_warning)) },
             onOk = { finish() },
             onCancel = { finish() },
           ) {
-            Text(getString(R.string.plzEnableModuleFirst))
+            Text(getString(R.string.warn_enableModule))
           }
         else {
           val setupDialogState = rememberSaveable {
@@ -126,7 +126,7 @@ class MainActivity : ComponentActivity() {
           set(Pref.ICON_PACK.key, intent.getStringExtra("packageName"))
         }
       }
-      Toast.makeText(this, R.string.iconPackApplied, Toast.LENGTH_LONG).show()
+      Toast.makeText(this, R.string.info_iconPackApplied, Toast.LENGTH_LONG).show()
     }
   }
 
@@ -134,7 +134,7 @@ class MainActivity : ComponentActivity() {
   private fun SetUpDialog(state: MutableState<Boolean>, prefFlow: MutableStateFlow<Preferences>) {
     LazyListDialog(
       state,
-      title = { OneLineText(stringResource(R.string.chooseMode)) },
+      title = { OneLineText(stringResource(R.string.setup_chooseMode)) },
       value = listOf(MODE_SHARE, MODE_PROVIDER, MODE_LOCAL),
       dismissible = false,
     ) { mode, dismiss ->
@@ -168,11 +168,13 @@ class MainActivity : ComponentActivity() {
   private fun SampleScreen() {
     val pages = remember {
       arrayOf(
-        Page(getString(R.string.general), Icons.Outlined.Settings) { MainPreference.General() },
-        Page(getString(R.string.iconPackSettings), Icons.Outlined.Backpack) {
+        Page(getString(R.string.general_settings), Icons.Outlined.Settings) {
+          MainPreference.General()
+        },
+        Page(getString(R.string.iconPack_settings), Icons.Outlined.Backpack) {
           MainPreference.IconPack()
         },
-        Page(getString(R.string.pixelSettings), Icons.Outlined.PhoneAndroid) {
+        Page(getString(R.string.pixel_settings), Icons.Outlined.PhoneAndroid) {
           MainPreference.Pixel()
         },
       )

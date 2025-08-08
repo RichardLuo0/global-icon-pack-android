@@ -65,7 +65,7 @@ fun AutoFillDialog(vm: AutoFillState = rememberAutoFillState(), onOk: (List<Stri
 
     TwoLineText(
       modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 4.dp),
-      text = stringResource(R.string.autoFillSummary),
+      text = stringResource(R.string.autoFill_summary),
       color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
 
@@ -135,7 +135,7 @@ fun AutoFillDialog(vm: AutoFillState = rememberAutoFillState(), onOk: (List<Stri
 
     DialogButtonRow(
       arrayOf(
-        DialogButton(stringResource(R.string.autoFillAdd)) { addPackDialog.value = true },
+        DialogButton(stringResource(R.string.autoFill_add)) { addPackDialog.value = true },
         DialogButton(stringResource(android.R.string.cancel), ButtonType.Outlined) {
           vm.dialog.value = false
         },
@@ -148,7 +148,7 @@ fun AutoFillDialog(vm: AutoFillState = rememberAutoFillState(), onOk: (List<Stri
 
     LazyListDialog(
       addPackDialog,
-      { OneLineText(stringResource(R.string.autoFillAdd)) },
+      { OneLineText(stringResource(R.string.autoFill_add)) },
       remember { derivedStateOf { (apps - vm.packs - vm.basePack).toList() } }.value,
     ) { (pack, app), dismiss ->
       IconPackItem(pack, app, false) {

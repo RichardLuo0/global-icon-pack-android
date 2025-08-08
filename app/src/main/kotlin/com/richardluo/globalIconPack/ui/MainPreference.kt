@@ -116,12 +116,12 @@ object MainPreference {
         item = { key, value, currentKey, onClick ->
           IconPackItem(key, value, key == currentKey, onClick)
         },
-        title = { TwoLineText(stringResource(R.string.iconPack)) },
+        title = { TwoLineText(stringResource(R.string.general_iconPack)) },
         summary = { key, value ->
           Text(
             value?.label
               ?: key.takeIf { it.isNotEmpty() }
-              ?: stringResource(R.string.iconPackSummary)
+              ?: stringResource(R.string.general_iconPack_summary)
           )
         },
       )
@@ -129,21 +129,21 @@ object MainPreference {
         icon = {},
         key = Pref.ICON_PACK_AS_FALLBACK.key,
         defaultValue = Pref.ICON_PACK_AS_FALLBACK.def,
-        title = { TwoLineText(stringResource(R.string.iconPackAsFallback)) },
-        summary = { TwoLineText(stringResource(R.string.iconPackAsFallbackSummary)) },
+        title = { TwoLineText(stringResource(R.string.general_iconPackAsFallback)) },
+        summary = { TwoLineText(stringResource(R.string.general_iconPackAsFallback_summary)) },
       )
       switchPreference(
         icon = { Icon(Icons.AutoMirrored.Outlined.Shortcut, Pref.SHORTCUT.key) },
         key = Pref.SHORTCUT.key,
         defaultValue = Pref.SHORTCUT.def,
-        title = { TwoLineText(stringResource(R.string.shortcut)) },
+        title = { TwoLineText(stringResource(R.string.general_shortcut)) },
       )
       preference(
         icon = { Icon(Icons.Outlined.Merge, "openMerger") },
         key = "openMerger",
         onClick = { context.startActivity(Intent(context, IconPackMergerActivity::class.java)) },
-        title = { TwoLineText(stringResource(R.string.mergeIconPack)) },
-        summary = { TwoLineText(stringResource(R.string.mergeIconPackSummary)) },
+        title = { TwoLineText(stringResource(R.string.general_mergeIconPack)) },
+        summary = { TwoLineText(stringResource(R.string.general_mergeIconPack_summary)) },
       )
     }
   }
@@ -157,8 +157,8 @@ object MainPreference {
         key = "iconVariant",
         enabled = { it.get(Pref.MODE) != MODE_LOCAL && it.get(Pref.ICON_PACK).isNotEmpty() },
         onClick = { context.startActivity(Intent(context, IconVariantActivity::class.java)) },
-        title = { TwoLineText(stringResource(R.string.iconVariant)) },
-        summary = { TwoLineText(stringResource(R.string.iconVariantSummary)) },
+        title = { TwoLineText(stringResource(R.string.iconPack_iconVariant)) },
+        summary = { TwoLineText(stringResource(R.string.iconPack_iconVariant_summary)) },
       )
       item { HorizontalDivider() }
       fallback(context)
@@ -189,22 +189,22 @@ object MainPreference {
       icon = { Icon(Icons.Outlined.SettingsBackupRestore, Pref.ICON_FALLBACK.key) },
       key = Pref.ICON_FALLBACK.key,
       defaultValue = Pref.ICON_FALLBACK.def,
-      title = { TwoLineText(stringResource(R.string.iconFallback)) },
-      summary = { TwoLineText(stringResource(R.string.iconFallbackSummary)) },
+      title = { TwoLineText(stringResource(R.string.iconPack_iconFallback)) },
+      summary = { TwoLineText(stringResource(R.string.iconPack_iconFallback_summary)) },
     )
     mySwitchPreference(
       icon = {},
       enabled = { it.get(Pref.ICON_FALLBACK) },
       key = Pref.SCALE_ONLY_FOREGROUND.key,
       defaultValue = Pref.SCALE_ONLY_FOREGROUND.def,
-      title = { TwoLineText(stringResource(R.string.scaleOnlyForeground)) },
+      title = { TwoLineText(stringResource(R.string.iconPack_scaleOnlyForeground)) },
     )
     mySwitchPreference(
       icon = {},
       enabled = { it.get(Pref.ICON_FALLBACK) },
       key = Pref.BACK_AS_ADAPTIVE_BACK.key,
       defaultValue = Pref.BACK_AS_ADAPTIVE_BACK.def,
-      title = { TwoLineText(stringResource(R.string.backAsAdaptiveBack)) },
+      title = { TwoLineText(stringResource(R.string.iconPack_backAsAdaptiveBack)) },
     )
     mySliderPreference(
       icon = {},
@@ -213,7 +213,7 @@ object MainPreference {
       defaultValue = Pref.NON_ADAPTIVE_SCALE.def,
       valueRange = 0.1f..1.5f,
       valueSteps = 13,
-      title = { TwoLineText(stringResource(R.string.nonAdaptiveScale)) },
+      title = { TwoLineText(stringResource(R.string.iconPack_nonAdaptiveScale)) },
       summary = { OneLineText("%.2f".format(it)) },
       valueToText = { "%.2f".format(it) },
     )
@@ -222,8 +222,8 @@ object MainPreference {
       enabled = { it.get(Pref.ICON_FALLBACK) },
       key = Pref.CONVERT_TO_ADAPTIVE.key,
       defaultValue = Pref.CONVERT_TO_ADAPTIVE.def,
-      title = { TwoLineText(stringResource(R.string.convertToAdaptive)) },
-      summary = { TwoLineText(stringResource(R.string.convertToAdaptiveSummary)) },
+      title = { TwoLineText(stringResource(R.string.iconPack_convertToAdaptive)) },
+      summary = { TwoLineText(stringResource(R.string.iconPack_convertToAdaptive_summary)) },
     )
     item { HorizontalDivider() }
     mySwitchPreference(
@@ -231,8 +231,8 @@ object MainPreference {
       enabled = { it.get(Pref.ICON_FALLBACK) },
       key = Pref.OVERRIDE_ICON_FALLBACK.key,
       defaultValue = Pref.OVERRIDE_ICON_FALLBACK.def,
-      title = { TwoLineText(stringResource(R.string.overrideIconFallback)) },
-      summary = { TwoLineText(stringResource(R.string.overrideIconFallbackSummary)) },
+      title = { TwoLineText(stringResource(R.string.iconPack_overrideIconFallback)) },
+      summary = { TwoLineText(stringResource(R.string.iconPack_overrideIconFallback_summary)) },
     )
     mySliderPreference(
       icon = { Icon(Icons.Outlined.PhotoSizeSelectSmall, Pref.ICON_PACK_SCALE.key) },
@@ -241,7 +241,7 @@ object MainPreference {
       defaultValue = Pref.ICON_PACK_SCALE.def,
       valueRange = 0.1f..1.5f,
       valueSteps = 13,
-      title = { TwoLineText(stringResource(R.string.iconPackScale)) },
+      title = { TwoLineText(stringResource(R.string.iconPack_iconPackScale)) },
       summary = { OneLineText("%.2f".format(it)) },
       valueToText = { "%.2f".format(it) },
     )
@@ -250,7 +250,7 @@ object MainPreference {
       enabled = { it.get(Pref.ICON_FALLBACK) && it.get(Pref.OVERRIDE_ICON_FALLBACK) },
       key = Pref.ICON_PACK_SHAPE.key,
       defaultValue = Pref.ICON_PACK_SHAPE.def,
-      title = { TwoLineText(stringResource(R.string.iconPackShape)) },
+      title = { TwoLineText(stringResource(R.string.iconPack_iconPackShape)) },
       summary = {
         val iconColor = LocalPreferenceTheme.current.iconColor
         AnimatedContent(it) {
@@ -311,13 +311,13 @@ object MainPreference {
           }
         }
         TextButton(onClick = { openCustomizeDialog.value = true }) {
-          Text(text = stringResource(R.string.customize))
+          Text(text = stringResource(R.string.iconPack_iconPackShape_customize))
         }
       }
 
       TextFieldDialog(
         openCustomizeDialog,
-        title = { Text(stringResource(R.string.pathData)) },
+        title = { Text(stringResource(R.string.iconPack_iconPackShape_pathData)) },
         initValue = value,
       ) {
         runCatchingToastOnMain(context) {
@@ -336,7 +336,7 @@ object MainPreference {
       },
       key = Pref.ICON_PACK_SHAPE_COLOR.key,
       defaultValue = Pref.ICON_PACK_SHAPE_COLOR.def,
-      title = { TwoLineText(stringResource(R.string.iconPackShapeColor)) },
+      title = { TwoLineText(stringResource(R.string.iconPack_iconPackShape_color)) },
       summary = { value ->
         AnimatedContent(Color(value)) {
           Row(verticalAlignment = Alignment.CenterVertically) {
@@ -368,7 +368,7 @@ object MainPreference {
       enabled = { it.get(Pref.ICON_FALLBACK) && it.get(Pref.OVERRIDE_ICON_FALLBACK) },
       key = Pref.ICON_PACK_ENABLE_UPON.key,
       defaultValue = Pref.ICON_PACK_ENABLE_UPON.def,
-      title = { TwoLineText(stringResource(R.string.iconPackEnableUpon)) },
+      title = { TwoLineText(stringResource(R.string.iconPack_iconPackEnableUpon)) },
     )
   }
 
@@ -379,11 +379,11 @@ object MainPreference {
         icon = { Icon(Icons.Outlined.Apps, Pref.PIXEL_LAUNCHER_PACKAGE.key) },
         key = Pref.PIXEL_LAUNCHER_PACKAGE.key,
         defaultValue = Pref.PIXEL_LAUNCHER_PACKAGE.def,
-        title = { TwoLineText(stringResource(R.string.pixelLauncherPackage)) },
+        title = { TwoLineText(stringResource(R.string.pixel_pixelLauncherPackage)) },
         summary = {
           TwoLineText(
             if (it == Pref.PIXEL_LAUNCHER_PACKAGE.def)
-              stringResource(R.string.pixelLauncherPackageSummary)
+              stringResource(R.string.pixel_pixelLauncherPackage_summary)
             else it
           )
         },
@@ -407,37 +407,37 @@ object MainPreference {
         icon = {},
         key = Pref.NO_SHADOW.key,
         defaultValue = Pref.NO_SHADOW.def,
-        title = { TwoLineText(stringResource(R.string.noShadow)) },
-        summary = { TwoLineText(stringResource(R.string.noShadowSummary)) },
+        title = { TwoLineText(stringResource(R.string.pixel_noShadow)) },
+        summary = { TwoLineText(stringResource(R.string.pixel_noShadow_summary)) },
       )
       item { HorizontalDivider() }
       switchPreference(
         icon = { Icon(Icons.Outlined.CalendarMonth, Pref.FORCE_LOAD_CLOCK_AND_CALENDAR.key) },
         key = Pref.FORCE_LOAD_CLOCK_AND_CALENDAR.key,
         defaultValue = Pref.FORCE_LOAD_CLOCK_AND_CALENDAR.def,
-        title = { TwoLineText(stringResource(R.string.forceLoadClockAndCalendar)) },
+        title = { TwoLineText(stringResource(R.string.pixel_forceLoadClockAndCalendar)) },
       )
       mySwitchPreference(
         icon = {},
         enabled = { it.get(Pref.FORCE_LOAD_CLOCK_AND_CALENDAR) },
         key = Pref.CLOCK_USE_FALLBACK_MASK.key,
         defaultValue = Pref.CLOCK_USE_FALLBACK_MASK.def,
-        title = { TwoLineText(stringResource(R.string.clockUseFallbackMask)) },
+        title = { TwoLineText(stringResource(R.string.pixel_clockUseFallbackMask)) },
       )
       mySwitchPreference(
         icon = {},
         enabled = { it.get(Pref.FORCE_LOAD_CLOCK_AND_CALENDAR) },
         key = Pref.DISABLE_CLOCK_SECONDS.key,
         defaultValue = Pref.DISABLE_CLOCK_SECONDS.def,
-        title = { TwoLineText(stringResource(R.string.disableClockSeconds)) },
+        title = { TwoLineText(stringResource(R.string.pixel_disableClockSeconds)) },
       )
       item { HorizontalDivider() }
       switchPreference(
         icon = {},
         key = Pref.FORCE_ACTIVITY_ICON_FOR_TASK.key,
         defaultValue = Pref.FORCE_ACTIVITY_ICON_FOR_TASK.def,
-        title = { TwoLineText(stringResource(R.string.forceActivityIconForTask)) },
-        summary = { TwoLineText(stringResource(R.string.forceActivityIconForTaskSummary)) },
+        title = { TwoLineText(stringResource(R.string.pixel_forceActivityIconForTask)) },
+        summary = { TwoLineText(stringResource(R.string.pixel_forceActivityIconForTask_summary)) },
       )
     }
   }
@@ -459,17 +459,17 @@ object MainPreference {
 
   fun modeToTitle(context: Context, mode: String) =
     when (mode) {
-      MODE_SHARE -> context.getString(R.string.shareMode)
-      MODE_PROVIDER -> context.getString(R.string.providerMode)
-      MODE_LOCAL -> context.getString(R.string.localMode)
+      MODE_SHARE -> context.getString(R.string.general_mode_shareMode)
+      MODE_PROVIDER -> context.getString(R.string.general_mode_providerMode)
+      MODE_LOCAL -> context.getString(R.string.general_mode_localMode)
       else -> mode
     }
 
   fun modeToSummary(context: Context, mode: String) =
     when (mode) {
-      MODE_SHARE -> context.getString(R.string.shareModeSummary)
-      MODE_PROVIDER -> context.getString(R.string.providerModeSummary)
-      MODE_LOCAL -> context.getString(R.string.localModeSummary)
+      MODE_SHARE -> context.getString(R.string.general_mode_shareMode_summary)
+      MODE_PROVIDER -> context.getString(R.string.general_mode_providerMode_summary)
+      MODE_LOCAL -> context.getString(R.string.general_mode_localMode_summary)
       else -> mode
     }
 }

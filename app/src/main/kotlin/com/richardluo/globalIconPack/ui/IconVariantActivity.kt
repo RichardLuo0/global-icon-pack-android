@@ -109,15 +109,18 @@ class IconVariantActivity : ComponentActivity() {
             navigationIcon = {
               IconButtonWithTooltip(Icons.AutoMirrored.Outlined.ArrowBack, "Back") { finish() }
             },
-            title = { Text(stringResource(R.string.iconVariant)) },
+            title = { Text(stringResource(R.string.iconPack_iconVariant)) },
             actions = {
-              IconButtonWithTooltip(Icons.Outlined.Search, stringResource(R.string.search)) {
+              IconButtonWithTooltip(Icons.Outlined.Search, stringResource(R.string.common_search)) {
                 expandSearchBar.value = true
               }
               var expand by rememberSaveable { mutableStateOf(false) }
               val expandFilter = rememberSaveable { mutableStateOf(false) }
               val autoFillState = rememberAutoFillState()
-              IconButtonWithTooltip(Icons.Outlined.MoreVert, stringResource(R.string.moreOptions)) {
+              IconButtonWithTooltip(
+                Icons.Outlined.MoreVert,
+                stringResource(R.string.common_moreOptions),
+              ) {
                 expand = true
               }
               MyDropdownMenu(expanded = expand, onDismissRequest = { expand = false }) {
@@ -139,7 +142,7 @@ class IconVariantActivity : ComponentActivity() {
                 )
                 DropdownMenuItem(
                   leadingIcon = { Icon(Icons.Outlined.Restore, "restore default") },
-                  text = { Text(stringResource(R.string.restoreDefault)) },
+                  text = { Text(stringResource(R.string.icons_restoreDefault)) },
                   onClick = {
                     resetWarnDialogState.value = true
                     expand = false
@@ -147,7 +150,7 @@ class IconVariantActivity : ComponentActivity() {
                 )
                 DropdownMenuItem(
                   leadingIcon = { Checkbox(vm.modified.getValue(), onCheckedChange = null) },
-                  text = { Text(stringResource(R.string.modified)) },
+                  text = { Text(stringResource(R.string.iconVariant_menu_modified)) },
                   onClick = {
                     lifecycleScope.launch {
                       vm.flipModified()
@@ -158,9 +161,9 @@ class IconVariantActivity : ComponentActivity() {
                 )
                 DropdownMenuItem(
                   leadingIcon = {
-                    Icon(Icons.Outlined.Upload, stringResource(R.string.exportIconPack))
+                    Icon(Icons.Outlined.Upload, stringResource(R.string.iconVariant_menu_export))
                   },
-                  text = { Text(stringResource(R.string.exportIconPack)) },
+                  text = { Text(stringResource(R.string.iconVariant_menu_export)) },
                   onClick = {
                     exportLauncher.launch("${vm.pack}.xml")
                     expand = false
@@ -168,9 +171,9 @@ class IconVariantActivity : ComponentActivity() {
                 )
                 DropdownMenuItem(
                   leadingIcon = {
-                    Icon(Icons.Outlined.Download, stringResource(R.string.importIconPack))
+                    Icon(Icons.Outlined.Download, stringResource(R.string.iconVariant_menu_import))
                   },
-                  text = { Text(stringResource(R.string.importIconPack)) },
+                  text = { Text(stringResource(R.string.iconVariant_menu_import)) },
                   onClick = {
                     importLauncher.launch(arrayOf("text/xml"))
                     expand = false
@@ -218,10 +221,10 @@ class IconVariantActivity : ComponentActivity() {
 
       WarnDialog(
         resetWarnDialogState,
-        title = { Text(getString(R.string.restoreDefault)) },
+        title = { Text(getString(R.string.icons_restoreDefault)) },
         onOk = { vm.restoreDefault() },
       ) {
-        Text(getString(R.string.restoreDefaultWarning))
+        Text(getString(R.string.icons_warn_restoreDefault))
       }
     }
   }

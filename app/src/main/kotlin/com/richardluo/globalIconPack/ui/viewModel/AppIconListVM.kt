@@ -76,7 +76,7 @@ class AppIconListVM(context: Application, iconsHolder: IconsHolder, appIcon: App
 
   val shortcutIcons =
     createFilteredIconsFlow(iconsHolder) {
-      runCatchingToast(context, { context.getString(R.string.requiresHookSystem) }) {
+      runCatchingToast(context, { context.getString(R.string.appIconList_warn_needHookSystem) }) {
           context
             .getSystemService(Context.LAUNCHER_APPS_SERVICE)
             .asType<LauncherApps>()!!

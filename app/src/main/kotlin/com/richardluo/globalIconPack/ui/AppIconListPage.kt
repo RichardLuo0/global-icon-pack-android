@@ -86,8 +86,8 @@ fun AppIconListPage(onBack: () -> Unit, iconsHolder: IconsHolder, appIcon: AppCo
 
   val tabs = remember {
     listOf(
-      TabItem(R.string.activities, vm.activityIcons),
-      TabItem(R.string.shortcuts, vm.shortcutIcons),
+      TabItem(R.string.appIconList_activities, vm.activityIcons),
+      TabItem(R.string.appIconList_shortcuts, vm.shortcutIcons),
     )
   }
   val pagerState = rememberPagerState(pageCount = { tabs.count() })
@@ -158,18 +158,21 @@ fun AppIconListPage(onBack: () -> Unit, iconsHolder: IconsHolder, appIcon: AppCo
                 }
             },
             actions = {
-              IconButtonWithTooltip(Icons.Outlined.Search, stringResource(R.string.search)) {
+              IconButtonWithTooltip(Icons.Outlined.Search, stringResource(R.string.common_search)) {
                 expandSearchBar.value = true
               }
 
               var expand by rememberSaveable { mutableStateOf(false) }
-              IconButtonWithTooltip(Icons.Outlined.MoreVert, stringResource(R.string.moreOptions)) {
+              IconButtonWithTooltip(
+                Icons.Outlined.MoreVert,
+                stringResource(R.string.common_moreOptions),
+              ) {
                 expand = !expand
               }
               MyDropdownMenu(expanded = expand, onDismissRequest = { expand = false }) {
                 DropdownMenuItem(
                   leadingIcon = { Icon(Icons.Outlined.Restore, "restore default") },
-                  text = { Text(stringResource(R.string.restoreDefault)) },
+                  text = { Text(stringResource(R.string.icons_restoreDefault)) },
                   onClick = {
                     iconsHolder.restoreDefault(info)
                     expand = false
@@ -177,7 +180,7 @@ fun AppIconListPage(onBack: () -> Unit, iconsHolder: IconsHolder, appIcon: AppCo
                 )
                 DropdownMenuItem(
                   leadingIcon = { Icon(Icons.Outlined.ClearAll, "clear all") },
-                  text = { Text(stringResource(R.string.clearAll)) },
+                  text = { Text(stringResource(R.string.icons_clearAll)) },
                   onClick = {
                     iconsHolder.clearAll(info)
                     expand = false

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
     <string name="appName">Global Icon Pack</string>
-    <string name="plzEnableModuleFirst">Por favor, primeiro verifique se o módulo Xposed já foi ativado.</string>
-    <string name="iconPackApplied">Pacote de ícones aplicado. Por favor, clique em \"Reiniciar XXX\" manualmente.</string>
+    <string name="warn_enableModule">Por favor, primeiro verifique se o módulo Xposed já foi ativado.</string>
+    <string name="info_iconPackApplied">Pacote de ícones aplicado. Por favor, clique em \"Reiniciar XXX\" manualmente.</string>
 </resources>

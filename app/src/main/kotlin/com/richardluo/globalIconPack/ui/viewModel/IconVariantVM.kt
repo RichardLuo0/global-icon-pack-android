@@ -216,7 +216,7 @@ class IconVariantVM(context: Application) :
           it.write(xml.append("</resources>\n").toString())
         }
         withContext(Dispatchers.Main) {
-          Toast.makeText(context, R.string.exportedIconPack, Toast.LENGTH_LONG).show()
+          Toast.makeText(context, R.string.iconVariant_info_exported, Toast.LENGTH_LONG).show()
         }
       }
     }
@@ -247,7 +247,7 @@ class IconVariantVM(context: Application) :
           }
         }
         withContext(Dispatchers.Main) {
-          Toast.makeText(context, R.string.importedIconPack, Toast.LENGTH_LONG).show()
+          Toast.makeText(context, R.string.iconVariant_info_imported, Toast.LENGTH_LONG).show()
         }
       }
     }
