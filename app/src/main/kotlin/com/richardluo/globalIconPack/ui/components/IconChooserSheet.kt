@@ -49,8 +49,8 @@ import com.richardluo.globalIconPack.ui.model.CompInfo
 import com.richardluo.globalIconPack.ui.model.OriginalIcon
 import com.richardluo.globalIconPack.ui.model.VariantIcon
 import com.richardluo.globalIconPack.ui.model.VariantPackIcon
-import com.richardluo.globalIconPack.ui.viewModel.IconChooserVM
 import com.richardluo.globalIconPack.ui.repo.IconPackApps
+import com.richardluo.globalIconPack.ui.viewModel.IconChooserVM
 import com.richardluo.globalIconPack.ui.viewModel.emptyImageBitmap
 import com.richardluo.globalIconPack.utils.getValue
 import kotlinx.coroutines.launch

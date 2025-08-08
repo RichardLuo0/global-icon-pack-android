@@ -1,9 +1,7 @@
 package com.richardluo.globalIconPack.ui.viewModel
 
 import android.app.Application
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.serialization.saved
@@ -11,7 +9,6 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.SavedStateHandleSaveableApi
 import androidx.lifecycle.viewmodel.compose.saveable
 import com.richardluo.globalIconPack.iconPack.model.CalendarIconEntry
-import com.richardluo.globalIconPack.iconPack.model.NormalIconEntry
 import com.richardluo.globalIconPack.ui.model.CompInfo
 import com.richardluo.globalIconPack.ui.model.IconPack
 import com.richardluo.globalIconPack.ui.model.OriginalIcon
@@ -46,7 +43,7 @@ class IconChooserVM(context: Application, savedStateHandle: SavedStateHandle) : 
       .transform { iconPack ->
         iconPack ?: return@transform
         emit(null)
-        emit(iconPack.drawables.map { VariantPackIcon(iconPack, NormalIconEntry(it)) })
+        emit(iconPack.drawables.map { VariantPackIcon(iconPack, it) })
       }
       .flowOn(Dispatchers.IO)
       .stateIn(viewModelScope, SharingStarted.Lazily, null)

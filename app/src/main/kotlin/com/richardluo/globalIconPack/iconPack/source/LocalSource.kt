@@ -1,11 +1,9 @@
 package com.richardluo.globalIconPack.iconPack.source
 
-import android.annotation.SuppressLint
 import android.content.ComponentName
 import android.content.res.Resources
 import android.content.res.XmlResourceParser
 import android.graphics.drawable.Drawable
-import android.util.Xml
 import com.richardluo.globalIconPack.iconPack.model.CalendarIconEntry
 import com.richardluo.globalIconPack.iconPack.model.ClockIconEntry
 import com.richardluo.globalIconPack.iconPack.model.ClockMetadata
@@ -17,11 +15,10 @@ import com.richardluo.globalIconPack.iconPack.model.NormalIconEntry
 import com.richardluo.globalIconPack.iconPack.model.ResourceOwner
 import com.richardluo.globalIconPack.iconPack.model.defaultIconPackConfig
 import com.richardluo.globalIconPack.utils.get
-import com.richardluo.globalIconPack.utils.getOrNull
 import com.richardluo.globalIconPack.utils.log
+import com.richardluo.globalIconPack.utils.parseXML
 import com.richardluo.globalIconPack.utils.unflattenFromString
 import org.xmlpull.v1.XmlPullParser
-import org.xmlpull.v1.XmlPullParserFactory
 
 class LocalSource(pack: String, config: IconPackConfig = defaultIconPackConfig) :
   Source, ResourceOwner(pack) {
@@ -72,51 +69,41 @@ interface IconPackInfo {
   val iconMasks: List<String>
   val iconScale: Float
   val iconEntryMap: Map<ComponentName, IconEntry>
+  val clockIconEntryMap: Map<String, ClockIconEntry>
 }
 
 private class MutableIconPackInfo : IconPackInfo {
-  override val iconBacks: MutableList<String> = mutableListOf()
-  override val iconUpons: MutableList<String> = mutableListOf()
-  override val iconMasks: MutableList<String> = mutableListOf()
-  override var iconScale: Float = 1f
-  override val iconEntryMap: MutableMap<ComponentName, IconEntry> = mutableMapOf()
+  override val iconBacks = mutableListOf<String>()
+  override val iconUpons = mutableListOf<String>()
+  override val iconMasks = mutableListOf<String>()
+  override var iconScale = 1f
+  override val iconEntryMap = mutableMapOf<ComponentName, IconEntry>()
+  override val clockIconEntryMap = mutableMapOf<String, ClockIconEntry>()
 }
 
-@SuppressLint("DiscouragedApi")
-internal fun loadIconPack(resources: Resources, pack: String): IconPackInfo {
+fun loadIconPack(resources: Resources, pack: String): IconPackInfo {
   val info = MutableIconPackInfo()
   val iconEntryMap = info.iconEntryMap
+  val clockIconEntryMap = info.clockIconEntryMap
 
-  val parser = getAppFilter(resources, pack) ?: return info
-  val compStart = "ComponentInfo{"
-  val compStartLength = compStart.length
-  val compEnd = "}"
-  val compEndLength = compEnd.length
+  val parser = parseXML(resources, "appfilter", pack) ?: return info
+  val compPrefix = "ComponentInfo{"
+  val compSuffix = "}"
 
   fun addFallback(parseXml: XmlPullParser, list: MutableList<String>) {
     for (i in 0 until parseXml.attributeCount) if (parseXml.getAttributeName(i).startsWith("img"))
       list.add(parseXml.getAttributeValue(i))
   }
 
-  // Any type other than normal will take priority
-  fun addIconEntry(cn: ComponentName, entry: IconEntry) {
-    if (!iconEntryMap.containsKey(cn) || entry !is NormalIconEntry) iconEntryMap[cn] = entry
-  }
-
   fun addIcon(parseXml: XmlPullParser, iconEntry: IconEntry) {
-    var componentName: String = parseXml["component"] ?: return
-    if (componentName.startsWith(compStart) && componentName.endsWith(compEnd)) {
-      componentName = componentName.substring(compStartLength, componentName.length - compEndLength)
-    }
-    unflattenFromString(componentName)?.let { cn ->
-      addIconEntry(cn, iconEntry)
-      // Use the first icon as app icon. I don't see a better way.
-      addIconEntry(getComponentName(cn.packageName), iconEntry)
-    }
+    val cnString = parseXml["component"]?.removeSurrounding(compPrefix, compSuffix) ?: return
+    val cn = unflattenFromString(cnString) ?: return
+    iconEntryMap[cn] = iconEntry
+    // Use the first icon as app icon. I don't see a better way.
+    iconEntryMap.putIfAbsent(getComponentName(cn.packageName), iconEntry)
   }
 
   try {
-    val clockMetaMap = mutableMapOf<String, IconEntry>()
     while (parser.next() != XmlPullParser.END_DOCUMENT) {
       if (parser.eventType != XmlPullParser.START_TAG) continue
       when (parser.name) {
@@ -129,7 +116,7 @@ internal fun loadIconPack(resources: Resources, pack: String): IconPackInfo {
         "dynamic-clock" -> {
           val drawableName = parser["drawable"] ?: continue
           if (parser !is XmlResourceParser) continue
-          clockMetaMap[drawableName] =
+          clockIconEntryMap[drawableName] =
             ClockIconEntry(
               drawableName,
               ClockMetadata(
@@ -144,10 +131,9 @@ internal fun loadIconPack(resources: Resources, pack: String): IconPackInfo {
         }
       }
     }
-    if (clockMetaMap.isNotEmpty())
-      iconEntryMap
-        .filter { it.value !is ClockIconEntry }
-        .forEach { (cn, entry) -> clockMetaMap[entry.name]?.let { iconEntryMap[cn] = it } }
+    // Replace clock iconEntries in iconEntryMap
+    if (clockIconEntryMap.isNotEmpty())
+      iconEntryMap.replaceAll { _, entry -> clockIconEntryMap[entry.name] ?: entry }
   } catch (e: Exception) {
     log(e)
   }
@@ -155,15 +141,3 @@ internal fun loadIconPack(resources: Resources, pack: String): IconPackInfo {
   if (parser is XmlResourceParser) parser.close()
   return info
 }
-
-@SuppressLint("DiscouragedApi")
-private fun getAppFilter(res: Resources, pack: String) =
-  runCatching {
-      res.getIdentifier("appfilter", "xml", pack).takeIf { 0 != it }?.let { res.getXml(it) }
-        ?: run {
-          XmlPullParserFactory.newInstance().newPullParser().apply {
-            setInput(res.assets.open("appfilter.xml"), Xml.Encoding.UTF_8.toString())
-          }
-        }
-    }
-    .getOrNull { log(it) }

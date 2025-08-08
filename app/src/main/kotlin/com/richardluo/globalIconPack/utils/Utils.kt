@@ -1,12 +1,15 @@
 package com.richardluo.globalIconPack.utils
 
+import android.annotation.SuppressLint
 import android.app.ActivityManager
 import android.app.Application
 import android.content.ComponentName
 import android.content.Context
+import android.content.res.Resources
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.Drawable.ConstantState
 import android.os.Build
+import android.util.Xml
 import android.widget.Toast
 import androidx.annotation.CheckResult
 import androidx.collection.LruCache
@@ -37,6 +40,7 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.withContext
 import org.xmlpull.v1.XmlPullParser
+import org.xmlpull.v1.XmlPullParserFactory
 
 @CheckResult
 fun withHighByteSet(id: Int, flag: Int): Int {
@@ -288,3 +292,15 @@ fun <K, V, M : Map<K, V>> mapSaver(toOriginal: (Map<K, V>) -> M) =
   mapSaver(save = { it }, restore = { toOriginal(it) })
 
 fun <K, V> Map<K, V>.toMutableStateMap() = SnapshotStateMap<K, V>().also { it.putAll(this.toMap()) }
+
+@SuppressLint("DiscouragedApi")
+fun parseXML(res: Resources, name: String, pack: String) =
+  runCatching {
+      res.getIdentifier(name, "xml", pack).takeIf { 0 != it }?.let { res.getXml(it) }
+        ?: run {
+          XmlPullParserFactory.newInstance().newPullParser().apply {
+            setInput(res.assets.open(name), Xml.Encoding.UTF_8.toString())
+          }
+        }
+    }
+    .getOrNull { log(it) }

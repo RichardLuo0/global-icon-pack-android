@@ -10,6 +10,7 @@ import com.richardluo.globalIconPack.iconPack.model.FallbackSettings
 import com.richardluo.globalIconPack.iconPack.model.IconEntry
 import com.richardluo.globalIconPack.iconPack.model.IconFallback
 import com.richardluo.globalIconPack.iconPack.model.IconPackConfig
+import com.richardluo.globalIconPack.iconPack.model.NormalIconEntry
 import com.richardluo.globalIconPack.iconPack.model.defaultIconPackConfig
 import com.richardluo.globalIconPack.iconPack.model.withConfig
 import com.richardluo.globalIconPack.iconPack.source.getComponentName
@@ -22,6 +23,7 @@ import com.richardluo.globalIconPack.utils.IconPackCreator.ApkBuilder
 import com.richardluo.globalIconPack.utils.SingletonManager.get
 import com.richardluo.globalIconPack.utils.get
 import com.richardluo.globalIconPack.utils.isHighTwoByte
+import com.richardluo.globalIconPack.utils.parseXML
 import kotlin.getValue
 import kotlinx.parcelize.Parceler
 import kotlinx.parcelize.Parcelize
@@ -71,16 +73,16 @@ class IconPack(val pack: String, val res: Resources) : Parcelable {
   fun getDrawableId(name: String) =
     idCache.getOrPut(name) { res.getIdentifier(name, "drawable", pack) }
 
-  val drawables: Set<String> by lazy {
-    @SuppressLint("DiscouragedApi")
-    val parser =
-      res.getIdentifier("drawable", "xml", pack).takeIf { 0 != it }?.let { res.getXml(it) }
-        ?: return@lazy setOf()
-    mutableSetOf<String>().apply {
+  val drawables: Set<IconEntry> by lazy {
+    val parser = parseXML(res, "drawable", pack) ?: return@lazy setOf()
+    buildSet {
       while (parser.next() != XmlPullParser.END_DOCUMENT) {
         if (parser.eventType != XmlPullParser.START_TAG) continue
         when (parser.name) {
-          "item" -> add(parser["drawable"] ?: continue)
+          "item" -> {
+            val drawableName = parser["drawable"] ?: continue
+            add(info.clockIconEntryMap[drawableName] ?: NormalIconEntry(drawableName))
+          }
         }
       }
     }
