@@ -196,7 +196,7 @@ class IconPackMergerActivity : ComponentActivity() {
     val pages = remember {
       arrayOf(
         Page(getString(R.string.chooseBasePack), animatedFab = nextStep) {
-          SelectBasePack(it) { pagerState.animateScrollToPage(1) }
+          SelectBasePack(it) { coroutineScope.launch { pagerState.animateScrollToPage(1) } }
         },
         Page(
           getString(R.string.chooseIconToReplace),
@@ -344,8 +344,7 @@ class IconPackMergerActivity : ComponentActivity() {
     }
 
   @Composable
-  private fun SelectBasePack(contentPadding: PaddingValues, scrollToNextPage: suspend () -> Unit) {
-    val coroutineScope = rememberCoroutineScope()
+  private fun SelectBasePack(contentPadding: PaddingValues, scrollToNextPage: () -> Unit) {
     val valueMap = IconPackApps.flow.collectAsState(null).value
     if (valueMap == null)
       Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
@@ -361,10 +360,8 @@ class IconPackMergerActivity : ComponentActivity() {
                 .padding(horizontal = 12.dp, vertical = 2.dp)
                 .clip(MaterialTheme.shapes.large)
                 .selectable(selected, true, Role.RadioButton) {
-                  coroutineScope.launch {
-                    scrollToNextPage()
-                    vm.basePack = pack
-                  }
+                  vm.basePack = pack
+                  scrollToNextPage()
                 }
                 .padding(horizontal = 4.dp, vertical = 14.dp),
             verticalAlignment = Alignment.CenterVertically,

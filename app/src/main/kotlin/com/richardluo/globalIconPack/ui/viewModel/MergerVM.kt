@@ -68,9 +68,9 @@ class MergerVM(context: Application, savedStateHandle: SavedStateHandle) :
   var basePack
     get() = baseIconPack?.pack
     set(value) {
-      if (value == null || baseIconPack?.pack == value) return
+      if (baseIconPack?.pack == value) return
       changedIcons.clear()
-      baseIconPack = iconPackCache[value]
+      if (value != null) baseIconPack = iconPackCache[value]
     }
 
   override val currentIconPack
@@ -99,9 +99,12 @@ class MergerVM(context: Application, savedStateHandle: SavedStateHandle) :
   override val updateFlow: Flow<*> = snapshotFlow { changedIcons.toMap() }
 
   private val icons =
-    combine(snapshotFlow { baseIconPack }, Apps.flow, updateFlow) { iconPack, apps, _ ->
-        return@combine if (iconPack == null) apps.map { emptyList() }
-        else apps.map { it.map { info -> CompIcon(info, getIconEntry(info.componentName)) } }
+    combineTransform(snapshotFlow { baseIconPack }, Apps.flow, updateFlow) { iconPack, apps, _ ->
+        emit(null)
+        emit(
+          if (iconPack == null) apps.map { emptyList() }
+          else apps.map { it.map { info -> CompIcon(info, getIconEntry(info.componentName)) } }
+        )
       }
       .flowOn(Dispatchers.Default)
       .stateIn(viewModelScope, SharingStarted.Eagerly, null)
