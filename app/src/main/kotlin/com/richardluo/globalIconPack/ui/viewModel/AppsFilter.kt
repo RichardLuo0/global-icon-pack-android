@@ -25,7 +25,8 @@ interface IAppsFilter {
         icons[type.ordinal]
       }
       .filter(snapshotFlow { searchText.value }) { (info), text ->
-        info.label.contains(text, ignoreCase = true)
+        info.label.contains(text, ignoreCase = true) ||
+          info.componentName.packageName.contains(text, ignoreCase = true)
       }
 }
 
