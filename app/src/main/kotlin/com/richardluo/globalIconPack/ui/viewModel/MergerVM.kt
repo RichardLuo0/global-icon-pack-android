@@ -43,7 +43,7 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.combineTransform
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.drop
@@ -72,6 +72,9 @@ class MergerVM(context: Application, savedStateHandle: SavedStateHandle) :
       changedIcons.clear()
       baseIconPack = iconPackCache[value]
     }
+
+  override val currentIconPack
+    get() = baseIconPack
 
   var iconCacheToken by mutableLongStateOf(System.currentTimeMillis())
   val optionsFlow = MutableStateFlow<Preferences>(MapPreferences())
@@ -105,8 +108,6 @@ class MergerVM(context: Application, savedStateHandle: SavedStateHandle) :
 
   val filteredIconsFlow =
     createFilteredIconsFlow(icons).stateIn(viewModelScope, SharingStarted.Eagerly, null)
-
-  override fun getCurrentIconPack() = baseIconPack
 
   private fun getIconEntry(cn: ComponentName): IconEntryWithPack? {
     return if (changedIcons.containsKey(cn)) changedIcons[cn]

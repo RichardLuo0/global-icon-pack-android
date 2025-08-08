@@ -69,6 +69,9 @@ class IconVariantVM(context: Application) :
   val pack
     get() = iconPack.pack
 
+  override val currentIconPack
+    get() = iconPack
+
   private val iconFallback =
     iconPackDB
       .getFallbackSettings(pack)
@@ -90,8 +93,6 @@ class IconVariantVM(context: Application) :
 
   val filteredIcons =
     createFilteredIconsFlow(icons).stateIn(viewModelScope, SharingStarted.Eagerly, null)
-
-  override fun getCurrentIconPack() = iconPack
 
   val modified =
     iconPackDB.modifiedUpdateFlow

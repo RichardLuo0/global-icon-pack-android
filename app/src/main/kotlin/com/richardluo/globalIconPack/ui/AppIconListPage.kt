@@ -95,7 +95,7 @@ fun AppIconListPage(onBack: () -> Unit, iconsHolder: IconsHolder, appIcon: AppCo
 
   fun openChooser(compIcon: AnyCompIcon) {
     val (info, entry) = compIcon
-    iconChooser.open(info, iconsHolder.getCurrentIconPack() ?: return, entry?.entry?.name)
+    iconChooser.open(info, iconsHolder.currentIconPack ?: return, entry?.entry?.name)
   }
 
   val info = appIcon.info

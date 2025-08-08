@@ -41,7 +41,7 @@ import kotlinx.coroutines.flow.stateIn
 interface IconsHolder {
   val updateFlow: Flow<*>
 
-  fun getCurrentIconPack(): IconPack?
+  val currentIconPack: IconPack?
 
   suspend fun loadIcon(compIcon: AnyCompIcon): ImageBitmap
 
