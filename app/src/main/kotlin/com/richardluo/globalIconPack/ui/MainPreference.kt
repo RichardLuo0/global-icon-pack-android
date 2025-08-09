@@ -354,6 +354,15 @@ object MainPreference {
       TextFieldDialogContent(
         initValue = state.value.toHexString(),
         prefix = { Text("#") },
+        leadingIcon = {
+          val color = runCatching { Color("#${it.value}".toColorInt()) }.getOrDefault(Color.White)
+          Box(
+            modifier =
+              Modifier.size(24.dp).drawBehind {
+                drawRoundRect(color, cornerRadius = CornerRadius(6.dp.toPx(), 6.dp.toPx()))
+              }
+          )
+        },
         trailingIcon = { IconButtonWithTooltip(Icons.Outlined.Clear, "Clear") { it.value = "" } },
         onCancel = dismiss,
       ) {
