@@ -222,6 +222,7 @@ class MainActivity : ComponentActivity() {
           pages.forEachIndexed { i, page ->
             NavigationBarItem(
               icon = { Icon(page.icon, contentDescription = page.name) },
+              label = { Text(page.name) },
               selected = pagerState.currentPage == i,
               onClick = { coroutineScope.launch { pagerState.animateScrollToPage(i) } },
             )

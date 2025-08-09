@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
@@ -22,7 +21,6 @@ import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
@@ -185,7 +183,7 @@ fun IconChooserSheet(
           variantIconTitle(context.getString(R.string.iconChooser_allIcons))
           variantIconItems(icons)
         }
-      else ProgressBar()
+      else Loading()
     } else {
       val filteredIcons = vm.filteredIcons.getValue()
 
@@ -196,7 +194,7 @@ fun IconChooserSheet(
         ) {
           variantIconItems(filteredIcons)
         }
-      else ProgressBar()
+      else Loading()
     }
 
     LazyListDialog(
@@ -241,8 +239,8 @@ fun IconChooserSheet(
 }
 
 @Composable
-private fun ProgressBar() {
+private fun Loading() {
   Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
-    LinearProgressIndicator(modifier = Modifier.fillMaxWidth().padding(24.dp))
+    LoadingCircle(modifier = Modifier.padding(48.dp))
   }
 }

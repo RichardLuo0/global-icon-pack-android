@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.automirrored.outlined.ArrowRight
 import androidx.compose.material.icons.outlined.Download
 import androidx.compose.material.icons.outlined.FilterList
 import androidx.compose.material.icons.outlined.FormatColorFill
@@ -23,11 +24,10 @@ import androidx.compose.material.icons.outlined.Restore
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Upload
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -45,11 +45,12 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import com.richardluo.globalIconPack.R
 import com.richardluo.globalIconPack.ui.components.AnimatedNavHost
-import com.richardluo.globalIconPack.ui.components.AppFilterByType
+import com.richardluo.globalIconPack.ui.components.AppFilterMenu
 import com.richardluo.globalIconPack.ui.components.AppIcon
 import com.richardluo.globalIconPack.ui.components.AppbarSearchBar
 import com.richardluo.globalIconPack.ui.components.AutoFillDialog
 import com.richardluo.globalIconPack.ui.components.IconButtonWithTooltip
+import com.richardluo.globalIconPack.ui.components.LoadingCircle
 import com.richardluo.globalIconPack.ui.components.LoadingDialog
 import com.richardluo.globalIconPack.ui.components.LocalNavControllerWithArgs
 import com.richardluo.globalIconPack.ui.components.MyDropdownMenu
@@ -127,6 +128,7 @@ class IconVariantActivity : ComponentActivity() {
                 DropdownMenuItem(
                   leadingIcon = { Icon(Icons.Outlined.FilterList, "filter") },
                   text = { Text(getLabelByType(vm.filterType.value)) },
+                  trailingIcon = { Icon(Icons.AutoMirrored.Outlined.ArrowRight, "filter") },
                   onClick = {
                     expand = false
                     expandFilter.value = true
@@ -159,6 +161,7 @@ class IconVariantActivity : ComponentActivity() {
                     }
                   },
                 )
+                HorizontalDivider()
                 DropdownMenuItem(
                   leadingIcon = {
                     Icon(Icons.Outlined.Upload, stringResource(R.string.iconVariant_menu_export))
@@ -180,7 +183,7 @@ class IconVariantActivity : ComponentActivity() {
                   },
                 )
               }
-              AppFilterByType(expandFilter, vm.filterType)
+              AppFilterMenu(expandFilter, vm.filterType)
               AutoFillDialog(autoFillState) { vm.autoFill(it) }
             },
             modifier = Modifier.fillMaxWidth(),
@@ -212,10 +215,7 @@ class IconVariantActivity : ComponentActivity() {
             }
           }
         }
-      else
-        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-          CircularProgressIndicator(trackColor = MaterialTheme.colorScheme.surfaceVariant)
-        }
+      else LoadingCircle()
 
       if (vm.loading > 0) LoadingDialog()
 

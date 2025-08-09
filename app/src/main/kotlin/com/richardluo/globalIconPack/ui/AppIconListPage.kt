@@ -23,19 +23,18 @@ import androidx.compose.material.icons.outlined.ClearAll
 import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.Restore
 import androidx.compose.material.icons.outlined.Search
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LargeTopAppBar
-import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.TwoRowsTopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -57,6 +56,7 @@ import com.richardluo.globalIconPack.ui.components.AppbarSearchBar
 import com.richardluo.globalIconPack.ui.components.IconButtonWithTooltip
 import com.richardluo.globalIconPack.ui.components.IconChooserSheet
 import com.richardluo.globalIconPack.ui.components.LazyImage
+import com.richardluo.globalIconPack.ui.components.LoadingCircle
 import com.richardluo.globalIconPack.ui.components.MyDropdownMenu
 import com.richardluo.globalIconPack.ui.components.OneLineText
 import com.richardluo.globalIconPack.ui.components.TwoLineText
@@ -74,7 +74,9 @@ import kotlinx.coroutines.launch
 
 private class TabItem(val name: Int, val flow: Flow<List<AnyCompIcon>?>)
 
-@OptIn(ExperimentalMaterial3Api::class)
+// Crash when config changes, issue:
+// https://issuetracker.google.com/issues/435980400
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun AppIconListPage(onBack: () -> Unit, iconsHolder: IconsHolder, appIcon: AppCompIcon) {
   val vm: AppIconListVM = viewModel { with(AppIconListVM) { initializer(iconsHolder, appIcon) } }
@@ -99,23 +101,20 @@ fun AppIconListPage(onBack: () -> Unit, iconsHolder: IconsHolder, appIcon: AppCo
   }
 
   val info = appIcon.info
+  val entry = vm.appIconEntry.getValue()
+  val compIcon = AnyCompIcon(info, entry)
+  val packageName = info.componentName.packageName
+
   Scaffold(
     modifier = Modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
     topBar = {
       Column {
         Box {
-          LargeTopAppBar(
+          TwoRowsTopAppBar(
             navigationIcon = {
               IconButtonWithTooltip(Icons.AutoMirrored.Outlined.ArrowBack, "Back", onBack)
             },
-            title = {
-              // Will crash when config changes, issue:
-              // https://issuetracker.google.com/issues/435980400
-              val expanded =
-                LocalTextStyle.current.fontSize == MaterialTheme.typography.headlineMedium.fontSize
-              val entry = vm.appIconEntry.getValue()
-              val compIcon = AnyCompIcon(info, entry)
-              val packageName = info.componentName.packageName
+            title = { expanded ->
               if (expanded)
                 Row(
                   verticalAlignment = Alignment.CenterVertically,
@@ -269,8 +268,5 @@ private fun IconList(
         if (index < icons.lastIndex) HorizontalDivider()
       }
     }
-  else
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-      CircularProgressIndicator(trackColor = MaterialTheme.colorScheme.surfaceVariant)
-    }
+  else LoadingCircle()
 }

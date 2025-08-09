@@ -16,7 +16,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.HourglassEmpty
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -37,8 +36,7 @@ fun <T> LazyDialog(
   content: @Composable (T) -> Unit,
 ) {
   CustomDialog(openState, title = title, dismissible = dismissible) {
-    if (value != null) content(value)
-    else LinearProgressIndicator(modifier = Modifier.fillMaxWidth().padding(24.dp))
+    if (value != null) content(value) else LoadingLine(modifier = Modifier.padding(24.dp))
   }
 }
 

@@ -55,7 +55,6 @@ import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Card
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -98,7 +97,7 @@ import com.richardluo.globalIconPack.R
 import com.richardluo.globalIconPack.ui.MainPreference.fallback
 import com.richardluo.globalIconPack.ui.components.AnimatedFab
 import com.richardluo.globalIconPack.ui.components.AnimatedNavHost
-import com.richardluo.globalIconPack.ui.components.AppFilterByType
+import com.richardluo.globalIconPack.ui.components.AppFilterMenu
 import com.richardluo.globalIconPack.ui.components.AppIcon
 import com.richardluo.globalIconPack.ui.components.AppbarSearchBar
 import com.richardluo.globalIconPack.ui.components.AutoFillDialog
@@ -110,6 +109,7 @@ import com.richardluo.globalIconPack.ui.components.IconPackItemContent
 import com.richardluo.globalIconPack.ui.components.InfoDialog
 import com.richardluo.globalIconPack.ui.components.LazyDialog
 import com.richardluo.globalIconPack.ui.components.LazyImage
+import com.richardluo.globalIconPack.ui.components.LoadingCircle
 import com.richardluo.globalIconPack.ui.components.LoadingDialog
 import com.richardluo.globalIconPack.ui.components.LocalNavControllerWithArgs
 import com.richardluo.globalIconPack.ui.components.MyDropdownMenu
@@ -346,10 +346,7 @@ class IconPackMergerActivity : ComponentActivity() {
   @Composable
   private fun SelectBasePack(contentPadding: PaddingValues, scrollToNextPage: () -> Unit) {
     val valueMap = IconPackApps.flow.collectAsState(null).value
-    if (valueMap == null)
-      Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        CircularProgressIndicator(trackColor = MaterialTheme.colorScheme.surfaceVariant)
-      }
+    if (valueMap == null) LoadingCircle()
     else
       LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = contentPadding) {
         items(valueMap.toList()) { (pack, app) ->
@@ -406,10 +403,7 @@ class IconPackMergerActivity : ComponentActivity() {
           }
         }
       }
-    else
-      Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        CircularProgressIndicator(trackColor = MaterialTheme.colorScheme.surfaceVariant)
-      }
+    else LoadingCircle()
 
     val iconOptionScrollState = rememberLazyListState()
     LazyDialog(
@@ -466,7 +460,7 @@ class IconPackMergerActivity : ComponentActivity() {
         },
       )
     }
-    AppFilterByType(expandFilter, vm.filterType)
+    AppFilterMenu(expandFilter, vm.filterType)
     AutoFillDialog(autoFillState) { vm.autoFill(it) }
   }
 

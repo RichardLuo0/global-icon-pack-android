@@ -12,7 +12,7 @@ import com.richardluo.globalIconPack.R
 import com.richardluo.globalIconPack.ui.viewModel.IAppsFilter.Type
 
 @Composable
-fun AppFilterByType(enabledState: MutableState<Boolean>, typeState: MutableState<Type>) {
+fun AppFilterMenu(enabledState: MutableState<Boolean>, typeState: MutableState<Type>) {
   var type by typeState
   MyDropdownMenu(expanded = enabledState.value, onDismissRequest = { enabledState.value = false }) {
     Type.entries.forEach {

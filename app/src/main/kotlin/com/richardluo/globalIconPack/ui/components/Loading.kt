@@ -1,18 +1,21 @@
 package com.richardluo.globalIconPack.ui.components
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.LinearWavyProgressIndicator
+import androidx.compose.material3.LoadingIndicator
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun LoadingDialog(progress: Float? = null, text: String? = null) {
   CustomDialog(
@@ -20,14 +23,24 @@ fun LoadingDialog(progress: Float? = null, text: String? = null) {
     properties = DialogProperties(dismissOnBackPress = false, dismissOnClickOutside = false),
   ) {
     Column(Modifier.fillMaxWidth().padding(horizontal = 24.dp, vertical = 6.dp)) {
-      if (progress != null)
-        LinearProgressIndicator(modifier = Modifier.fillMaxWidth(), progress = { progress })
-      else LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-
+      LoadingLine(progress = progress)
       if (text != null) {
         Spacer(modifier = Modifier.height(6.dp))
         OneLineText(text)
       }
     }
   }
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+fun LoadingCircle(modifier: Modifier = Modifier) {
+  Box(modifier = modifier, contentAlignment = Alignment.Center) { LoadingIndicator() }
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+fun LoadingLine(modifier: Modifier = Modifier, progress: Float? = null) {
+  if (progress != null) LinearWavyProgressIndicator(modifier = modifier, progress = { progress })
+  else LinearWavyProgressIndicator(modifier = modifier)
 }
