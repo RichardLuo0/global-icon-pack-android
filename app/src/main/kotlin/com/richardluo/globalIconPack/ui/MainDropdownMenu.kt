@@ -2,8 +2,13 @@ package com.richardluo.globalIconPack.ui
 
 import android.content.Intent
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Code
+import androidx.compose.material.icons.outlined.Coffee
+import androidx.compose.material.icons.outlined.Language
 import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -93,8 +98,9 @@ fun MainDropdownMenu(snackbarState: SnackbarHostState) {
         )
       },
     )
+    HorizontalDivider()
     DropdownMenuItem(
-      leadingIcon = { Text("🌐") },
+      leadingIcon = { Icon(Icons.Outlined.Language, "localization") },
       text = { Text(stringResource(R.string.mainMenu_openCrowdin)) },
       onClick = {
         context.startActivity(
@@ -104,7 +110,7 @@ fun MainDropdownMenu(snackbarState: SnackbarHostState) {
       },
     )
     DropdownMenuItem(
-      leadingIcon = { Text("🧑‍💻") },
+      leadingIcon = { Icon(Icons.Outlined.Code, "Github") },
       text = { Text(stringResource(R.string.mainMenu_openGithub)) },
       onClick = {
         context.startActivity(
@@ -117,7 +123,7 @@ fun MainDropdownMenu(snackbarState: SnackbarHostState) {
       },
     )
     DropdownMenuItem(
-      leadingIcon = { Text("☕") },
+      leadingIcon = { Icon(Icons.Outlined.Coffee, "kofi") },
       text = { Text(stringResource(R.string.mainMenu_buyMeACoffee)) },
       onClick = {
         context.startActivity(Intent(Intent.ACTION_VIEW, "https://ko-fi.com/richardluo".toUri()))
