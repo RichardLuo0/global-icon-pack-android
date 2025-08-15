@@ -5,6 +5,7 @@ import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.PredictiveBackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
@@ -167,16 +168,13 @@ class IconPackMergerActivity : ComponentActivity() {
     val screen: @Composable (PaddingValues) -> Unit,
   )
 
-  // Open after created apk
-  private lateinit var instructionDialogState: MutableState<Boolean>
-
   @OptIn(ExperimentalMaterial3Api::class)
   @Composable
   private fun Screen() {
     val expandSearchBar = rememberSaveable { mutableStateOf(false) }
     val iconOptionDialogState = rememberSaveable { mutableStateOf(false) }
     val warningDialogState = rememberSaveable { mutableStateOf(false) }
-    instructionDialogState = rememberSaveable { mutableStateOf(false) }
+    val instructionDialogState = rememberSaveable { mutableStateOf(false) }
 
     val pagerState = rememberPagerState(pageCount = { 3 })
     val scrollBehavior = pinnedScrollBehaviorWithPager(pagerState)
@@ -314,6 +312,12 @@ class IconPackMergerActivity : ComponentActivity() {
       }
     }
 
+    val createIconPackLauncher =
+      rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) {
+        it ?: return@rememberLauncherForActivityResult
+        vm.createIconPack(it) { instructionDialogState.value = true }
+      }
+
     WarnDialog(
       warningDialogState,
       title = { Text(getString(R.string.common_warning)) },
@@ -336,12 +340,6 @@ class IconPackMergerActivity : ComponentActivity() {
     if (progress != null)
       LoadingDialog(progress.percentage, "${progress.current}/${progress.total} ${progress.info}")
   }
-
-  private val createIconPackLauncher =
-    registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) {
-      it ?: return@registerForActivityResult
-      vm.createIconPack(it) { instructionDialogState.value = true }
-    }
 
   @Composable
   private fun SelectBasePack(contentPadding: PaddingValues, scrollToNextPage: () -> Unit) {

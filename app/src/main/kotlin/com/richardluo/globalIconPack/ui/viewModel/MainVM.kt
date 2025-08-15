@@ -108,7 +108,7 @@ class MainVM(context: Application) : ContextVM(context), ILoadable by Loadable()
             "if [ -f $oldDB ]; then rm $oldDB; fi",
           )
           .exec()
-          .throwOnFail()
+          .throwOnFail("Error when creating share DB")
       }
     }
     return shareDB
@@ -119,7 +119,7 @@ class MainVM(context: Application) : ContextVM(context), ILoadable by Loadable()
     val parent = File(db).parent!!
     if (isAllFilesUsable(parent)) return
     // Reset permission
-    val prefPath = WorldPreference.getFile()?.path ?: ""
+    val prefPath = WorldPreference.getFile()?.takeIf { it.exists() }?.path ?: ""
     val uid = android.os.Process.myUid()
     Shell.cmd(
         "set -e",
@@ -129,7 +129,7 @@ class MainVM(context: Application) : ContextVM(context), ILoadable by Loadable()
         "for file in $parent/*; do chown $uid:$uid \$file && chmod 0666 \$file && chcon \$context \$file; done",
       )
       .exec()
-      .throwOnFail()
+      .throwOnFail("Database permission setting failed")
     // Check again
     if (!isAllFilesUsable(parent))
       throw Exception("Unable to read and write after resetting permission!")
