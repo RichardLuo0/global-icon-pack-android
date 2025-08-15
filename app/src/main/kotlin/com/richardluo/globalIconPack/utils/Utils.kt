@@ -222,8 +222,8 @@ fun createCSS(vararg drawables: Drawable?): Array<ConstantState?>? {
 val Shell.Result.msg: String
   get() = "code: $code err: ${err.joinToString("\n")} out: ${out.joinToString("\n")}"
 
-fun Shell.Result.throwOnFail() {
-  if (!isSuccess) throw Exception("Database permission setting failed: $msg")
+fun Shell.Result.throwOnFail(prefixMsg: String) {
+  if (!isSuccess) throw Exception("$prefixMsg: $msg")
 }
 
 class ConsumablePadding(
