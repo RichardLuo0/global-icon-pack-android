@@ -34,7 +34,7 @@ fun IconPackItem(pack: String, app: IconPackApp, selected: Boolean, onClick: () 
         .padding(horizontal = 16.dp, vertical = 2.dp)
         .clip(MaterialTheme.shapes.extraLarge)
         .background(if (selected) MaterialTheme.colorScheme.primary else Color.Transparent)
-        .selectable(selected, true, Role.RadioButton, onClick)
+        .selectable(selected, true, Role.RadioButton, onClick = onClick)
         .padding(horizontal = 8.dp, vertical = 10.dp)
   ) {
     IconPackItemContent(pack, app, selected)
