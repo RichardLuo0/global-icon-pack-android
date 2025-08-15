@@ -4,7 +4,6 @@
     <string name="warn_enableModule">Lütfen önce Xposed modülünün etkinleştirildiğinden emin olun.</string>
     <string name="info_iconPackApplied">Simge paketi uygulandı. Lütfen \"XXX\'i Yeniden Başlat\" seçeneğine elle dokunun.</string>
     <string name="setup_chooseMode">Bir mod seçin</string>
-    <string name="general_error_onShareMode">Paylaşım modu etkinleştirilirken hata oluştu, sağlayıcı moduna geri dönülüyor.</string>
     <string name="general_settings">Genel</string>
     <string name="general_mode">Mod</string>
     <string name="general_mode_shareMode">Paylaşım Modu</string>
@@ -20,6 +19,7 @@
     <string name="general_shortcut">Kısayollar için simge oluştur</string>
     <string name="general_mergeIconPack">Simge Paketlerini Birleştir</string>
     <string name="general_mergeIconPack_summary">Çeşitli simge paketlerinden yeni bir simge paketi oluşturur.</string>
+    <string name="general_error_onShareMode">Paylaşım modu etkinleştirilirken hata oluştu, sağlayıcı moduna geri dönülüyor.</string>
     <string name="iconPack_settings">Simge Paketi</string>
     <string name="iconPack_iconVariant">Simge varyantı</string>
     <string name="iconPack_iconVariant_summary">Simge paketinden farklı varyantları seçin.</string>
@@ -48,7 +48,6 @@
     <string name="pixel_disableClockSeconds">Saat saniyelerini devre dışı bırak</string>
     <string name="pixel_forceActivityIconForTask">Görevler için etkinlik simgesini zorla yükle</string>
     <string name="pixel_forceActivityIconForTask_summary">Bazı uygulamalar çalışırken bir görev simgesi ayarlar. Bu ayar, ne olursa olsun etkinlik simgesinin yüklenmesini zorlar.</string>
-    <string name="common_moreOptions">Daha fazla seçenek</string>
     <string name="mainMenu_restartSystemUI">SystemUI\'ı Yeniden Başlat</string>
     <string name="mainMenu_restartLauncher">VT\'yi Temizle &amp; Pixel Başlatıcı\'yı Yeniden Başlat</string>
     <string name="mainMenu_restartOthers">Diğerlerini Yeniden Başlat</string>
@@ -56,6 +55,7 @@
     <string name="mainMenu_openGithub">Github</string>
     <string name="mainMenu_buyMeACoffee">Bana bir kahve ısmarla</string>
     <string name="mainMenu_info_restarted">Başarıyla yeniden başlatıldı</string>
+    <string name="common_moreOptions">Daha fazla seçenek</string>
     <string name="common_warning">Uyarı</string>
     <string name="common_notice">Bildirim</string>
     <string name="common_search">Ara</string>
@@ -64,8 +64,6 @@
     <string name="icons_restoreDefault">Varsayılana geri yükle</string>
     <string name="icons_clearAll">Tümünü temizle</string>
     <string name="icons_warn_restoreDefault">Varsayılan simgelere geri yüklemek istediğinizden emin misiniz?</string>
-    <string name="iconChooser_suggestedIcons">Önerilen simgeler</string>
-    <string name="iconChooser_allIcons">Tüm simgeler</string>
     <string name="icons_filter_user">Kullanıcı uygulamaları</string>
     <string name="icons_filter_system">Sistem uygulamaları</string>
     <string name="appIconList_activities">Etkinlikler</string>
@@ -79,7 +77,6 @@
     <string name="merger_basePack_title">Temel simge paketi</string>
     <string name="merger_replaceIcons_title">Simgeleri değiştir</string>
     <string name="merger_chooseIcon_title">Yeni bir simge seçin</string>
-    <string name="iconChooser_originalIcon">Orijinal simge</string>
     <string name="merger_newPack_title">Yeni paket bilgisi</string>
     <string name="merger_newPack_Name">Yeni paket adı</string>
     <string name="merger_newPack_Package">Yeni paket yolu</string>
@@ -89,6 +86,9 @@
     <string name="merger_warn_generated">Uygulama, yeni bir simge paketi oluşturmak için gerekli dosyaları toplayacak ve üretecektir.\nOluşturulan içeriği orijinal yaratıcılarının izni olmadan dağıtmanıza izin verilmez.\nUyarıldınız!</string>
     <string name="merger_error_needEmptyFolder">Boş bir klasör gereklidir!</string>
     <string name="merger_info_instruction">Aşağıdaki adımları izleyin:\n1. Termux\'u kurun ve depolama izni verin.\n2. `cd çıktı klasörü &amp;&amp; bash create_icon_pack.sh` komutunu çalıştırın.</string>
+    <string name="iconChooser_originalIcon">Orijinal simge</string>
+    <string name="iconChooser_suggestedIcons">Önerilen simgeler</string>
+    <string name="iconChooser_allIcons">Tüm simgeler</string>
     <string name="iconChooser_asNormalIcon">Normal simge olarak</string>
     <string name="iconChooser_asCalendarIcon">Takvim simgesi olarak</string>
     <string name="iconChooser_warn_notCalendarIcon">Geçerli bir takvim simgesi değil!</string>

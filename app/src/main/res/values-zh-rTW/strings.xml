@@ -4,7 +4,6 @@
     <string name="warn_enableModule">請先確認 Xposed 模組已啟用。</string>
     <string name="info_iconPackApplied">圖示包已應用。請手動點選「重啟 XXX」。</string>
     <string name="setup_chooseMode">選擇模式</string>
-    <string name="general_error_onShareMode">開啟分享模式時發生錯誤，正在返回供給者模式。</string>
     <string name="general_settings">總體</string>
     <string name="general_mode">模式</string>
     <string name="general_mode_shareMode">分享模式</string>
@@ -18,6 +17,7 @@
     <string name="general_shortcut">生成快捷方式圖示</string>
     <string name="general_mergeIconPack">合併圖示包</string>
     <string name="general_mergeIconPack_summary">從多個圖示包生成一個新的圖示包。</string>
+    <string name="general_error_onShareMode">開啟分享模式時發生錯誤，正在返回供給者模式。</string>
     <string name="iconPack_settings">圖示包</string>
     <string name="iconPack_iconVariant">圖示變體</string>
     <string name="iconPack_iconVariant_summary">從圖示包中選擇不同的變體。</string>
@@ -27,28 +27,24 @@
     <string name="iconPack_overrideIconFallback">覆蓋回退選項</string>
     <string name="iconPack_overrideIconFallback_summary">為回退選項使用新值。</string>
     <string name="iconPack_iconPackScale">縮放</string>
-    <string name="pixel_settings">Pixel</string>
     <string name="pixel_pixelLauncherPackage">啟動器包名</string>
     <string name="pixel_pixelLauncherPackage_summary">用於識別基於 launcher 3 的啟動器，但以下功能不保證正常工作。</string>
     <string name="pixel_noShadow">移除下方的陰影</string>
     <string name="pixel_noShadow_summary">刪除系統圖標遮罩生成的陰影。</string>
     <string name="pixel_forceLoadClockAndCalendar">強制載入時鐘和日曆圖示</string>
-    <string name="common_moreOptions">更多選項</string>
     <string name="mainMenu_restartSystemUI">重啟系統 UI</string>
     <string name="mainMenu_restartLauncher">清除 DB &amp; 重啟 Pixel 啟動器</string>
     <string name="mainMenu_restartOthers">重啟其他app</string>
     <string name="mainMenu_openCrowdin">協助本地化</string>
-    <string name="mainMenu_openGithub">Github</string>
     <string name="mainMenu_buyMeACoffee">贊助一杯咖啡</string>
     <string name="mainMenu_info_restarted">重啟成功</string>
+    <string name="common_moreOptions">更多選項</string>
     <string name="common_warning">警告</string>
     <string name="common_notice">提示</string>
     <string name="common_search">搜尋</string>
     <string name="common_options">選項</string>
     <string name="icons_restoreDefault">恢復預設</string>
     <string name="icons_warn_restoreDefault">您確定要還原為預設圖示嗎？</string>
-    <string name="iconChooser_suggestedIcons">推薦圖示</string>
-    <string name="iconChooser_allIcons">所有圖示</string>
     <string name="icons_filter_user">使用者應用</string>
     <string name="icons_filter_system">系統應用</string>
     <string name="appIconList_shortcuts">快捷方式</string>
@@ -61,7 +57,6 @@
     <string name="merger_basePack_title">基本圖示包</string>
     <string name="merger_replaceIcons_title">替換圖示</string>
     <string name="merger_chooseIcon_title">選擇一個新圖示</string>
-    <string name="iconChooser_originalIcon">原始圖示</string>
     <string name="merger_newPack_title">新包資訊</string>
     <string name="merger_newPack_Name">新圖示包名稱</string>
     <string name="merger_newPack_Package">新圖示包包名</string>
@@ -71,4 +66,7 @@
     <string name="merger_warn_generated">此 APP 會收集並且生成構建新圖示包所需的檔案。\n未經原創者許可，您不得分發所生成的內容。\n你已被警告！</string>
     <string name="merger_error_needEmptyFolder">需要一個空資料夾！</string>
     <string name="merger_info_instruction">請按照以下步驟操作：\n1. 安裝 Termux 並授予儲存許可權。\n2. 執行命令`cd &lt;the output folder&gt; &amp;&amp; bash create_icon_pack.sh`。</string>
+    <string name="iconChooser_originalIcon">原始圖示</string>
+    <string name="iconChooser_suggestedIcons">推薦圖示</string>
+    <string name="iconChooser_allIcons">所有圖示</string>
 </resources>

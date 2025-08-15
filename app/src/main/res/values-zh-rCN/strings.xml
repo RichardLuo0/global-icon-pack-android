@@ -4,7 +4,6 @@
     <string name="warn_enableModule">请先确认 Xposed 模块已启用。</string>
     <string name="info_iconPackApplied">图标包已应用。请手动点击“重启XXX”。</string>
     <string name="setup_chooseMode">请选择一种模式</string>
-    <string name="general_error_onShareMode">启用共享模式时出错，回退到提供器模式。</string>
     <string name="general_settings">常规</string>
     <string name="general_mode">模式</string>
     <string name="general_mode_shareMode">共享模式</string>
@@ -20,6 +19,7 @@
     <string name="general_shortcut">生成快捷方式图标</string>
     <string name="general_mergeIconPack">合并图标包</string>
     <string name="general_mergeIconPack_summary">从多个图标包生成一个新的图标包。</string>
+    <string name="general_error_onShareMode">启用共享模式时出错，回退到提供器模式。</string>
     <string name="iconPack_settings">图标包</string>
     <string name="iconPack_iconVariant">图标变体</string>
     <string name="iconPack_iconVariant_summary">从图标包中选择不同的变体。</string>
@@ -48,7 +48,6 @@
     <string name="pixel_disableClockSeconds">禁用时钟秒数</string>
     <string name="pixel_forceActivityIconForTask">强制为任务加载 activity 图标</string>
     <string name="pixel_forceActivityIconForTask_summary">某些应用在运行时设置任务图标。无论怎样强制加载 activity 图标。</string>
-    <string name="common_moreOptions">更多选项</string>
     <string name="mainMenu_restartSystemUI">重启系统UI</string>
     <string name="mainMenu_restartLauncher">清除DB &amp; 重启 Pixel 启动器</string>
     <string name="mainMenu_restartOthers">重启其他 app</string>
@@ -56,6 +55,7 @@
     <string name="mainMenu_openGithub">Github</string>
     <string name="mainMenu_buyMeACoffee">赞助一杯咖啡</string>
     <string name="mainMenu_info_restarted">重启成功</string>
+    <string name="common_moreOptions">更多选项</string>
     <string name="common_warning">警告</string>
     <string name="common_notice">提示</string>
     <string name="common_search">搜索</string>
@@ -64,8 +64,6 @@
     <string name="icons_restoreDefault">恢复默认</string>
     <string name="icons_clearAll">清除所有</string>
     <string name="icons_warn_restoreDefault">您确定要还原为默认图标吗？</string>
-    <string name="iconChooser_suggestedIcons">推荐图标</string>
-    <string name="iconChooser_allIcons">所有图标</string>
     <string name="icons_filter_user">用户应用</string>
     <string name="icons_filter_system">系统应用</string>
     <string name="appIconList_activities">活动</string>
@@ -79,7 +77,6 @@
     <string name="merger_basePack_title">基础图标包</string>
     <string name="merger_replaceIcons_title">替换图标</string>
     <string name="merger_chooseIcon_title">选择一个新图标</string>
-    <string name="iconChooser_originalIcon">原始图标</string>
     <string name="merger_newPack_title">新包信息</string>
     <string name="merger_newPack_Name">新图标包名称</string>
     <string name="merger_newPack_Package">新图标包包名</string>
@@ -89,6 +86,9 @@
     <string name="merger_warn_generated">此 app 会收集并且生成构建新图标包所需的文件。\n未经原创者许可，您不得分发所生成的内容。\n你已被警告！</string>
     <string name="merger_error_needEmptyFolder">需要一个空文件夹！</string>
     <string name="merger_info_instruction">请按照以下步骤操作：\n1. 安装Termux并授予存储权限。\n2. 运行命令`cd &lt;the output folder&gt; &amp;&amp; bash create_icon_pack.sh`。</string>
+    <string name="iconChooser_originalIcon">原始图标</string>
+    <string name="iconChooser_suggestedIcons">推荐图标</string>
+    <string name="iconChooser_allIcons">所有图标</string>
     <string name="iconChooser_asNormalIcon">作为普通图标</string>
     <string name="iconChooser_asCalendarIcon">作为日历图标</string>
     <string name="iconChooser_warn_notCalendarIcon">不是有效的日历图标！</string>

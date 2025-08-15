@@ -4,7 +4,6 @@
     <string name="warn_enableModule">Пожалуйста, сначала убедитесь, что модуль Xposed включен.</string>
     <string name="info_iconPackApplied">Набор иконок был применен. Пожалуйста, нажмите «Перезапустить XXX» вручную.</string>
     <string name="setup_chooseMode">Выбор режима </string>
-    <string name="general_error_onShareMode">Произошла ошибка при включении режима общего доступа, резервный доступ в режиме провайдера.</string>
     <string name="general_settings">Основные</string>
     <string name="general_mode">Режим</string>
     <string name="general_mode_shareMode">Режим общего доступа</string>
@@ -20,6 +19,7 @@
     <string name="general_shortcut">Генерация иконок для ярлыков</string>
     <string name="general_mergeIconPack">Объединить наборы иконок</string>
     <string name="general_mergeIconPack_summary">Создать новый набор иконок из различных наборов.</string>
+    <string name="general_error_onShareMode">Произошла ошибка при включении режима общего доступа, резервный доступ в режиме провайдера.</string>
     <string name="iconPack_settings">Набор иконок</string>
     <string name="iconPack_iconVariant">Варианты иконок</string>
     <string name="iconPack_iconVariant_summary">Выбирайте различные варианты из набора иконок.</string>
@@ -48,7 +48,6 @@
     <string name="pixel_disableClockSeconds">Отключить секунды часов</string>
     <string name="pixel_forceActivityIconForTask">Принудительная загрузка иконки активности</string>
     <string name="pixel_forceActivityIconForTask_summary">Некоторые приложения устанавливают значок задачи при запуске</string>
-    <string name="common_moreOptions">Дополнительные параметры</string>
     <string name="mainMenu_restartSystemUI">Перезапустить SystemUI</string>
     <string name="mainMenu_restartLauncher">Очистить бд &amp; перезапустить Pixel Launcher</string>
     <string name="mainMenu_restartOthers">Перезапустить остальное</string>
@@ -56,6 +55,7 @@
     <string name="mainMenu_openGithub">Github</string>
     <string name="mainMenu_buyMeACoffee">Угости меня кофе</string>
     <string name="mainMenu_info_restarted">Успешно перезапущено</string>
+    <string name="common_moreOptions">Дополнительные параметры</string>
     <string name="common_warning">Внимание</string>
     <string name="common_notice">Уведомление</string>
     <string name="common_search">Поиск</string>
@@ -64,8 +64,6 @@
     <string name="icons_restoreDefault">Восстановить значение по умолчанию</string>
     <string name="icons_clearAll">Очистить всё</string>
     <string name="icons_warn_restoreDefault">Вы уверены, что хотите восстановить иконки по умолчанию?</string>
-    <string name="iconChooser_suggestedIcons">Предлагаемые иконки</string>
-    <string name="iconChooser_allIcons">Все иконки</string>
     <string name="icons_filter_user">Пользовательские приложения</string>
     <string name="icons_filter_system">Системные приложения</string>
     <string name="appIconList_activities">Действия</string>
@@ -79,7 +77,6 @@
     <string name="merger_basePack_title">Базовый набор иконок</string>
     <string name="merger_replaceIcons_title">Замена иконок</string>
     <string name="merger_chooseIcon_title">Выберите новую иконку</string>
-    <string name="iconChooser_originalIcon">Оригинальная иконка</string>
     <string name="merger_newPack_title">Информация о новом наборе</string>
     <string name="merger_newPack_Name">Название нового набора</string>
     <string name="merger_newPack_Package">Имя пакета</string>
@@ -89,6 +86,9 @@
     <string name="merger_warn_generated">Приложение соберет и сгенерирует файлы, необходимые для создания нового набора иконок. \nВам не разрешается распространять созданный контент без разрешения его создателей. \nВы были предупреждены!</string>
     <string name="merger_error_needEmptyFolder">Необходима пустая папка!</string>
     <string name="merger_info_instruction">Выполните следующие действия:\n1. Установите Termux и предоставьте доступ к хранению.\n2. Запустите команду `cd &lt;выходная папка&gt; &amp;&amp; bash create_icon_pack.sh`.</string>
+    <string name="iconChooser_originalIcon">Оригинальная иконка</string>
+    <string name="iconChooser_suggestedIcons">Предлагаемые иконки</string>
+    <string name="iconChooser_allIcons">Все иконки</string>
     <string name="iconChooser_asNormalIcon">Как обычная иконка</string>
     <string name="iconChooser_asCalendarIcon">Иконка календаря</string>
     <string name="iconChooser_warn_notCalendarIcon">Недопустимый значок календаря!</string>
