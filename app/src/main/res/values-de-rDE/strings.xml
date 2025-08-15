@@ -4,7 +4,6 @@
     <string name="warn_enableModule">Bitte stellen Sie sicher, dass das Xposed-Modul als erstes aktiviert ist.</string>
     <string name="info_iconPackApplied">Icon-Paket wurde angewendet. Bitte klicken Sie manuell auf \"XXX neustarten\".</string>
     <string name="setup_chooseMode">Wählen Sie einen Modus</string>
-    <string name="general_error_onShareMode">Wenn ein Fehler im share Modus existiert das sollten sie zum Provider Modus wechseln.</string>
     <string name="general_settings">Allgemein</string>
     <string name="general_mode">Modus</string>
     <string name="general_mode_shareMode">Share Modus</string>
@@ -20,6 +19,7 @@
     <string name="general_shortcut">Symbole für Verknüpfungen generieren</string>
     <string name="general_mergeIconPack">Symbol-Paket zusammenführen</string>
     <string name="general_mergeIconPack_summary">Erstelle ein neues Icon-Paket aus verschiedenen Symbol-Paketen.</string>
+    <string name="general_error_onShareMode">Wenn ein Fehler im share Modus existiert das sollten sie zum Provider Modus wechseln.</string>
     <string name="iconPack_settings">Symbol-Paket</string>
     <string name="iconPack_iconVariant">Symbol-Variante</string>
     <string name="iconPack_iconVariant_summary">Wählen Sie verschiedene Varianten aus dem Symbol-Paket.</string>
@@ -46,7 +46,6 @@
     <string name="pixel_forceLoadClockAndCalendar">Laden des Uhr- und Kalendersymbols erzwingen</string>
     <string name="pixel_forceActivityIconForTask">Aktivitätssymbol für Aufgabe laden</string>
     <string name="pixel_forceActivityIconForTask_summary">Einige Apps setzen beim Ausführen ein Tasksymbol. Erzwingen Sie das Laden des Aktivitätssymbols unabhängig davon, was passiert.</string>
-    <string name="common_moreOptions">Weitere Optionen</string>
     <string name="mainMenu_restartSystemUI">SystemUI neustarten</string>
     <string name="mainMenu_restartLauncher">DB &amp; leeren und Pixel Launcher neustarten</string>
     <string name="mainMenu_restartOthers">Andere neustarten</string>
@@ -54,15 +53,15 @@
     <string name="mainMenu_openGithub">Github</string>
     <string name="mainMenu_buyMeACoffee">Spendiere mir einen Kaffee</string>
     <string name="mainMenu_info_restarted">Neustart erfolgreich</string>
+    <string name="common_moreOptions">Weitere Optionen</string>
     <string name="common_warning">Warnung</string>
     <string name="common_notice">Hinweis</string>
     <string name="common_search">Suche</string>
     <string name="common_options">Einstellungen</string>
     <string name="common_empty">Leer</string>
     <string name="icons_restoreDefault">Standardeinstellungen wiederherstellen</string>
+    <string name="icons_clearAll">Alle löschen</string>
     <string name="icons_warn_restoreDefault">Sind Sie sicher, dass Sie die Standard-Symbole wiederherstellen möchten?</string>
-    <string name="iconChooser_suggestedIcons">Empfohlene Symbole</string>
-    <string name="iconChooser_allIcons">Alle Symbole</string>
     <string name="icons_filter_user">Vom Benutzer installierte Apps</string>
     <string name="icons_filter_system">System Apps</string>
     <string name="appIconList_activities">Aktivitäten</string>
@@ -76,7 +75,6 @@
     <string name="merger_basePack_title">Wählen Sie ein Basis-Icon-Paket</string>
     <string name="merger_replaceIcons_title">Wählen Sie das zu ersetzen Symbol</string>
     <string name="merger_chooseIcon_title">Wähle ein neues Symbol</string>
-    <string name="iconChooser_originalIcon">Originalsymbol</string>
     <string name="merger_newPack_title">Füllen Sie neue Paketinformationen</string>
     <string name="merger_newPack_Name">Neuer Paketname</string>
     <string name="merger_newPack_Package">Neues Paket</string>
@@ -86,6 +84,9 @@
     <string name="merger_warn_generated">Die App sammelt und generiert die notwendigen Dateien für die Erstellung eines neuen Symbolpakets.\nSie sind nicht berechtigt, den generierten Inhalt ohne die Erlaubnis der Urheber zu verbreiten.\nSie wurden gewarnt!</string>
     <string name="merger_error_needEmptyFolder">Ein leerer Ordner ist erforderlich!</string>
     <string name="merger_info_instruction">Folgen Sie den folgenden Schritten:\n1. Installieren Sie Termux und gewähren Sie Speicherberechtigung.\n2. Führen Sie den Befehl `cd &lt;the output folder&gt; &amp;&amp; bash create_icon_pack.sh` aus.</string>
+    <string name="iconChooser_originalIcon">Originalsymbol</string>
+    <string name="iconChooser_suggestedIcons">Empfohlene Symbole</string>
+    <string name="iconChooser_allIcons">Alle Symbole</string>
     <string name="iconChooser_asNormalIcon">Als normales Symbol</string>
     <string name="iconChooser_asCalendarIcon">Als Kalendersymbol</string>
     <string name="iconChooser_warn_notCalendarIcon">Kein gültiges Kalender-Symbol!</string>
