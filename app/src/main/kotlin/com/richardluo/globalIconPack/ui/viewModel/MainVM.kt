@@ -119,7 +119,7 @@ class MainVM(context: Application) : ContextVM(context), ILoadable by Loadable()
     val parent = File(db).parent!!
     if (isAllFilesUsable(parent)) return
     // Reset permission
-    val prefPath = WorldPreference.getFile()?.path ?: ""
+    val prefPath = WorldPreference.getFile()?.takeIf { it.exists() }?.path ?: ""
     val uid = android.os.Process.myUid()
     Shell.cmd(
         "set -e",
