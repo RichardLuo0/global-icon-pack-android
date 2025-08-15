@@ -20,12 +20,11 @@ class IconPackProvider : ContentProvider() {
     val FALLBACK = "content://$AUTHORITIES/FALLBACK".toUri()
   }
 
-  private var iconPackDB: IconPackDB? = null
-
-  override fun onCreate(): Boolean {
-    runCatching { iconPackDB = get { IconPackDB(MyApplication.context) }.value }
-    return true
+  private val iconPackDB: IconPackDB? by get {
+    runCatching { IconPackDB(MyApplication.context) }.getOrNull { log(it) }
   }
+
+  override fun onCreate() = true
 
   override fun query(
     uri: Uri,
