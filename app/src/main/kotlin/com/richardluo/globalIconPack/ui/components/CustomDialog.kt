@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -16,7 +15,10 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ButtonShapes
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
@@ -127,6 +129,7 @@ class CancelDialogButton(context: Context, onClick: () -> Unit) :
 class OkDialogButton(context: Context, onClick: () -> Unit) :
   DialogButton(context.getString(android.R.string.ok), ButtonType.Filled, onClick)
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun DialogButtonRow(buttons: Array<DialogButton> = emptyArray()) {
   if (buttons.isEmpty()) return
@@ -144,20 +147,16 @@ fun DialogButtonRow(buttons: Array<DialogButton> = emptyArray()) {
   }
 }
 
-private val borderButtonPadding = PaddingValues(horizontal = 20.dp, vertical = 4.dp)
-
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun DialogButton(button: DialogButton) {
+private fun DialogButton(button: DialogButton, shapes: ButtonShapes = ButtonDefaults.shapes()) {
   when (button.type) {
-    ButtonType.Text -> TextButton(onClick = button.onClick) { Text(text = button.name) }
+    ButtonType.Text ->
+      TextButton(shapes = shapes, onClick = button.onClick) { Text(text = button.name) }
     ButtonType.Filled ->
-      Button(contentPadding = borderButtonPadding, onClick = button.onClick) {
-        Text(text = button.name)
-      }
+      Button(shapes = shapes, onClick = button.onClick) { Text(text = button.name) }
     ButtonType.Outlined ->
-      OutlinedButton(contentPadding = borderButtonPadding, onClick = button.onClick) {
-        Text(text = button.name)
-      }
+      OutlinedButton(shapes = shapes, onClick = button.onClick) { Text(text = button.name) }
   }
 }
 
