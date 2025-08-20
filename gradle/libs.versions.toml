@@ -13,13 +13,15 @@ documentfile = { group = "androidx.documentfile", name = "documentfile", version
 hiddenapibypass = { group = "org.lsposed.hiddenapibypass", name = "hiddenapibypass", version = "+" }
 navigation = { group = "androidx.navigation", name = "navigation-compose", version = "2.9.3" }
 reorderable = { module = "sh.calvin.reorderable:reorderable", version = "2.5.1" }
+ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview", version = "1.9.0" }
+ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling", version = "1.9.0" }
 
 #junit = { group = "junit", name = "junit", version.ref = "junit" }
 #ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 #espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
 
 [plugins]
-android-application = { id = "com.android.application", version = "8.12.0" }
+android-application = { id = "com.android.application", version = "8.12.1" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version = "2.2.10" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version = "2.2.10" }
 dependency-license-report = { id = "com.github.jk1.dependency-license-report", version = "2.9" }

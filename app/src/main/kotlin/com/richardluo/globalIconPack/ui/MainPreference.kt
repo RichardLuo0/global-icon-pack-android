@@ -4,9 +4,11 @@ import android.content.Context
 import android.content.Intent
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
@@ -38,7 +40,6 @@ import androidx.compose.material.icons.outlined.SettingsBackupRestore
 import androidx.compose.material.icons.outlined.SettingsRemote
 import androidx.compose.material.icons.outlined.ShapeLine
 import androidx.compose.material.icons.outlined.Share
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -64,6 +65,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.PathParser
 import androidx.core.graphics.toColorInt
@@ -76,12 +78,18 @@ import com.richardluo.globalIconPack.get
 import com.richardluo.globalIconPack.ui.components.IconButtonWithTooltip
 import com.richardluo.globalIconPack.ui.components.IconPackItem
 import com.richardluo.globalIconPack.ui.components.OneLineText
+import com.richardluo.globalIconPack.ui.components.SampleTheme
 import com.richardluo.globalIconPack.ui.components.TextFieldDialog
 import com.richardluo.globalIconPack.ui.components.TextFieldDialogContent
 import com.richardluo.globalIconPack.ui.components.TwoLineText
 import com.richardluo.globalIconPack.ui.components.dialogPreference
+import com.richardluo.globalIconPack.ui.components.listBottomItemShape
+import com.richardluo.globalIconPack.ui.components.listMiddleItemShape
+import com.richardluo.globalIconPack.ui.components.listSingleItemShape
+import com.richardluo.globalIconPack.ui.components.listTopItemShape
 import com.richardluo.globalIconPack.ui.components.mapListPreference
 import com.richardluo.globalIconPack.ui.components.myPreference
+import com.richardluo.globalIconPack.ui.components.myPreferenceTheme
 import com.richardluo.globalIconPack.ui.components.mySliderPreference
 import com.richardluo.globalIconPack.ui.components.mySwitchPreference
 import com.richardluo.globalIconPack.ui.repo.IconPackApps
@@ -89,17 +97,42 @@ import com.richardluo.globalIconPack.utils.DrawablePainter
 import com.richardluo.globalIconPack.utils.PathDrawable
 import com.richardluo.globalIconPack.utils.runCatchingToastOnMain
 import me.zhanghai.compose.preference.LocalPreferenceTheme
+import me.zhanghai.compose.preference.ProvidePreferenceLocals
 import me.zhanghai.compose.preference.listPreference
 import me.zhanghai.compose.preference.preference
 import me.zhanghai.compose.preference.switchPreference
 
 object MainPreference {
+
+  class ListModifiers(
+    val top: Modifier,
+    val middle: Modifier,
+    val bottom: Modifier,
+    val single: Modifier,
+  )
+
+  @Composable
+  private fun createListModifiers(): ListModifiers {
+    val itemPadding = PaddingValues(horizontal = 12.dp, vertical = 2.dp)
+    val background = MaterialTheme.colorScheme.surfaceContainer
+    val itemModifier = Modifier.padding(itemPadding)
+    return ListModifiers(
+      itemModifier.clip(listTopItemShape).background(background),
+      itemModifier.clip(listMiddleItemShape).background(background),
+      itemModifier.clip(listBottomItemShape).background(background),
+      itemModifier.clip(listSingleItemShape).background(background),
+    )
+  }
+
   @Composable
   fun General(modifier: Modifier = Modifier) {
     val context = LocalContext.current
     val typography = MaterialTheme.typography
+    val listModifiers = createListModifiers()
+
     LazyColumn(modifier = modifier) {
       listPreference(
+        modifier = listModifiers.top,
         icon = { AnimatedContent(it) { ModeToIcon(it) } },
         key = Pref.MODE.key,
         defaultValue = Pref.MODE.def,
@@ -109,6 +142,7 @@ object MainPreference {
         summary = { TwoLineText(modeToSummary(context, it)) },
       )
       mapListPreference(
+        modifier = listModifiers.middle,
         icon = { Icon(Icons.Outlined.Backpack, Pref.ICON_PACK.key) },
         key = Pref.ICON_PACK.key,
         defaultValue = Pref.ICON_PACK.def,
@@ -126,6 +160,7 @@ object MainPreference {
         },
       )
       switchPreference(
+        modifier = listModifiers.middle,
         icon = {},
         key = Pref.ICON_PACK_AS_FALLBACK.key,
         defaultValue = Pref.ICON_PACK_AS_FALLBACK.def,
@@ -133,12 +168,14 @@ object MainPreference {
         summary = { TwoLineText(stringResource(R.string.general_iconPackAsFallback_summary)) },
       )
       switchPreference(
+        modifier = listModifiers.middle,
         icon = { Icon(Icons.AutoMirrored.Outlined.Shortcut, Pref.SHORTCUT.key) },
         key = Pref.SHORTCUT.key,
         defaultValue = Pref.SHORTCUT.def,
         title = { TwoLineText(stringResource(R.string.general_shortcut)) },
       )
       preference(
+        modifier = listModifiers.bottom,
         icon = { Icon(Icons.Outlined.Merge, "openMerger") },
         key = "openMerger",
         onClick = { context.startActivity(Intent(context, IconPackMergerActivity::class.java)) },
@@ -151,8 +188,11 @@ object MainPreference {
   @Composable
   fun IconPack(modifier: Modifier = Modifier) {
     val context = LocalContext.current
+    val listModifiers = createListModifiers()
+
     LazyColumn(modifier = modifier) {
       myPreference(
+        modifier = listModifiers.single,
         icon = { Icon(Icons.Outlined.Edit, "iconVariant") },
         key = "iconVariant",
         enabled = { it.get(Pref.MODE) != MODE_LOCAL && it.get(Pref.ICON_PACK).isNotEmpty() },
@@ -160,8 +200,8 @@ object MainPreference {
         title = { TwoLineText(stringResource(R.string.iconPack_iconVariant)) },
         summary = { TwoLineText(stringResource(R.string.iconPack_iconVariant_summary)) },
       )
-      item { HorizontalDivider() }
-      fallback(context)
+      spacer()
+      fallbackPref(context, listModifiers)
     }
   }
 
@@ -183,9 +223,18 @@ object MainPreference {
       ),
     )
 
+  @Composable
+  fun Fallback(modifier: Modifier = Modifier) {
+    val context = LocalContext.current
+    val listModifiers = createListModifiers()
+
+    LazyColumn(modifier = modifier) { fallbackPref(context, listModifiers) }
+  }
+
   @OptIn(ExperimentalStdlibApi::class)
-  fun LazyListScope.fallback(context: Context) {
+  fun LazyListScope.fallbackPref(context: Context, listModifiers: ListModifiers) {
     switchPreference(
+      modifier = listModifiers.top,
       icon = { Icon(Icons.Outlined.SettingsBackupRestore, Pref.ICON_FALLBACK.key) },
       key = Pref.ICON_FALLBACK.key,
       defaultValue = Pref.ICON_FALLBACK.def,
@@ -193,6 +242,7 @@ object MainPreference {
       summary = { TwoLineText(stringResource(R.string.iconPack_iconFallback_summary)) },
     )
     mySwitchPreference(
+      modifier = listModifiers.middle,
       icon = {},
       enabled = { it.get(Pref.ICON_FALLBACK) },
       key = Pref.SCALE_ONLY_FOREGROUND.key,
@@ -200,6 +250,7 @@ object MainPreference {
       title = { TwoLineText(stringResource(R.string.iconPack_scaleOnlyForeground)) },
     )
     mySwitchPreference(
+      modifier = listModifiers.middle,
       icon = {},
       enabled = { it.get(Pref.ICON_FALLBACK) },
       key = Pref.BACK_AS_ADAPTIVE_BACK.key,
@@ -207,6 +258,7 @@ object MainPreference {
       title = { TwoLineText(stringResource(R.string.iconPack_backAsAdaptiveBack)) },
     )
     mySliderPreference(
+      modifier = listModifiers.middle,
       icon = {},
       enabled = { it.get(Pref.ICON_FALLBACK) },
       key = Pref.NON_ADAPTIVE_SCALE.key,
@@ -218,6 +270,7 @@ object MainPreference {
       valueToText = { "%.2f".format(it) },
     )
     mySwitchPreference(
+      modifier = listModifiers.bottom,
       icon = {},
       enabled = { it.get(Pref.ICON_FALLBACK) },
       key = Pref.CONVERT_TO_ADAPTIVE.key,
@@ -225,8 +278,9 @@ object MainPreference {
       title = { TwoLineText(stringResource(R.string.iconPack_convertToAdaptive)) },
       summary = { TwoLineText(stringResource(R.string.iconPack_convertToAdaptive_summary)) },
     )
-    item { HorizontalDivider() }
+    spacer()
     mySwitchPreference(
+      modifier = listModifiers.top,
       icon = {},
       enabled = { it.get(Pref.ICON_FALLBACK) },
       key = Pref.OVERRIDE_ICON_FALLBACK.key,
@@ -235,6 +289,7 @@ object MainPreference {
       summary = { TwoLineText(stringResource(R.string.iconPack_overrideIconFallback_summary)) },
     )
     mySliderPreference(
+      modifier = listModifiers.middle,
       icon = { Icon(Icons.Outlined.PhotoSizeSelectSmall, Pref.ICON_PACK_SCALE.key) },
       enabled = { it.get(Pref.ICON_FALLBACK) && it.get(Pref.OVERRIDE_ICON_FALLBACK) },
       key = Pref.ICON_PACK_SCALE.key,
@@ -246,6 +301,7 @@ object MainPreference {
       valueToText = { "%.2f".format(it) },
     )
     dialogPreference(
+      modifier = listModifiers.middle,
       icon = { Icon(Icons.Outlined.ShapeLine, Pref.ICON_PACK_SHAPE.key) },
       enabled = { it.get(Pref.ICON_FALLBACK) && it.get(Pref.OVERRIDE_ICON_FALLBACK) },
       key = Pref.ICON_PACK_SHAPE.key,
@@ -328,6 +384,7 @@ object MainPreference {
       }
     }
     dialogPreference(
+      modifier = listModifiers.middle,
       icon = { Icon(Icons.Outlined.ColorLens, Pref.ICON_PACK_SHAPE.key) },
       enabled = {
         it.get(Pref.ICON_FALLBACK) &&
@@ -373,6 +430,7 @@ object MainPreference {
       }
     }
     mySwitchPreference(
+      modifier = listModifiers.bottom,
       icon = { Icon(Icons.Outlined.FlipToFront, Pref.ICON_PACK_ENABLE_UPON.key) },
       enabled = { it.get(Pref.ICON_FALLBACK) && it.get(Pref.OVERRIDE_ICON_FALLBACK) },
       key = Pref.ICON_PACK_ENABLE_UPON.key,
@@ -383,8 +441,11 @@ object MainPreference {
 
   @Composable
   fun Pixel(modifier: Modifier = Modifier) {
+    val listModifiers = createListModifiers()
+
     LazyColumn(modifier = modifier) {
       dialogPreference(
+        modifier = listModifiers.top,
         icon = { Icon(Icons.Outlined.Apps, Pref.PIXEL_LAUNCHER_PACKAGE.key) },
         key = Pref.PIXEL_LAUNCHER_PACKAGE.key,
         defaultValue = Pref.PIXEL_LAUNCHER_PACKAGE.def,
@@ -413,20 +474,23 @@ object MainPreference {
         }
       }
       switchPreference(
+        modifier = listModifiers.bottom,
         icon = {},
         key = Pref.NO_SHADOW.key,
         defaultValue = Pref.NO_SHADOW.def,
         title = { TwoLineText(stringResource(R.string.pixel_noShadow)) },
         summary = { TwoLineText(stringResource(R.string.pixel_noShadow_summary)) },
       )
-      item { HorizontalDivider() }
+      spacer()
       switchPreference(
+        modifier = listModifiers.top,
         icon = { Icon(Icons.Outlined.CalendarMonth, Pref.FORCE_LOAD_CLOCK_AND_CALENDAR.key) },
         key = Pref.FORCE_LOAD_CLOCK_AND_CALENDAR.key,
         defaultValue = Pref.FORCE_LOAD_CLOCK_AND_CALENDAR.def,
         title = { TwoLineText(stringResource(R.string.pixel_forceLoadClockAndCalendar)) },
       )
       mySwitchPreference(
+        modifier = listModifiers.middle,
         icon = {},
         enabled = { it.get(Pref.FORCE_LOAD_CLOCK_AND_CALENDAR) },
         key = Pref.CLOCK_USE_FALLBACK_MASK.key,
@@ -434,14 +498,16 @@ object MainPreference {
         title = { TwoLineText(stringResource(R.string.pixel_clockUseFallbackMask)) },
       )
       mySwitchPreference(
+        modifier = listModifiers.bottom,
         icon = {},
         enabled = { it.get(Pref.FORCE_LOAD_CLOCK_AND_CALENDAR) },
         key = Pref.DISABLE_CLOCK_SECONDS.key,
         defaultValue = Pref.DISABLE_CLOCK_SECONDS.def,
         title = { TwoLineText(stringResource(R.string.pixel_disableClockSeconds)) },
       )
-      item { HorizontalDivider() }
+      spacer()
       switchPreference(
+        modifier = listModifiers.single,
         icon = {},
         key = Pref.FORCE_ACTIVITY_ICON_FOR_TASK.key,
         defaultValue = Pref.FORCE_ACTIVITY_ICON_FOR_TASK.def,
@@ -449,6 +515,10 @@ object MainPreference {
         summary = { TwoLineText(stringResource(R.string.pixel_forceActivityIconForTask_summary)) },
       )
     }
+  }
+
+  private fun LazyListScope.spacer() {
+    item { Spacer(Modifier.height(8.dp)) }
   }
 
   fun modeToAnnotatedString(context: Context, mode: String, typography: Typography) =
@@ -481,4 +551,22 @@ object MainPreference {
       MODE_LOCAL -> context.getString(R.string.general_mode_localMode_summary)
       else -> mode
     }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun GeneralPreview() {
+  SampleTheme { ProvidePreferenceLocals(theme = myPreferenceTheme()) { MainPreference.General() } }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun IconPackPreview() {
+  SampleTheme { ProvidePreferenceLocals(theme = myPreferenceTheme()) { MainPreference.IconPack() } }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun PixelPreview() {
+  SampleTheme { ProvidePreferenceLocals(theme = myPreferenceTheme()) { MainPreference.Pixel() } }
 }

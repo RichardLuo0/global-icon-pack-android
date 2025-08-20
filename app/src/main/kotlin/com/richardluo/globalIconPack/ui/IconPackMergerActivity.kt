@@ -85,7 +85,6 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -95,7 +94,6 @@ import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.richardluo.globalIconPack.R
-import com.richardluo.globalIconPack.ui.MainPreference.fallback
 import com.richardluo.globalIconPack.ui.components.AnimatedFab
 import com.richardluo.globalIconPack.ui.components.AnimatedNavHost
 import com.richardluo.globalIconPack.ui.components.AppFilterMenu
@@ -414,8 +412,7 @@ class IconPackMergerActivity : ComponentActivity() {
           modifier = Modifier.padding(top = 8.dp),
           state = iconOptionScrollState,
         ) {
-          val context = LocalContext.current
-          LazyColumn(state = iconOptionScrollState) { fallback(context) }
+          MainPreference.Fallback()
         }
       }
     }

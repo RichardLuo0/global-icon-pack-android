@@ -96,6 +96,8 @@ dependencies {
   implementation(libs.hiddenapibypass)
   implementation(libs.navigation)
   implementation(libs.reorderable)
+  implementation(libs.ui.tooling.preview)
+  "debugAppImplementation"(libs.ui.tooling)
 }
 
 licenseReport {
