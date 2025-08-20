@@ -118,8 +118,11 @@ class MainVM(context: Application) : ContextVM(context), ILoadable by Loadable()
     if (!db.isShareDB()) return
     val parent = File(db).parent!!
     if (isAllFilesUsable(parent)) return
-    // Reset permission
-    val prefPath = WorldPreference.getFile()?.takeIf { it.exists() }?.path ?: ""
+
+    // Make sure the file exists and try to get its selinux context
+    AppPreference.get().edit(commit = true) {}
+    val prefPath = AppPreference.getFile()?.takeIf { it.exists() }?.path ?: ""
+
     val uid = android.os.Process.myUid()
     Shell.cmd(
         "set -e",
