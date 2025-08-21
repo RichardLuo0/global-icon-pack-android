@@ -13,10 +13,10 @@ import android.graphics.drawable.AdaptiveIconDrawable
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.DrawableWrapper
-import android.graphics.drawable.InsetDrawable
 import androidx.core.graphics.createBitmap
 import androidx.core.graphics.drawable.toBitmap
 import androidx.core.graphics.drawable.toDrawable
+import androidx.core.graphics.withScale
 
 object IconHelper {
   val ADAPTIVE_ICON_VIEWPORT_SCALE = 1 / (1 + 2 * AdaptiveIconDrawable.getExtraInsetFraction())
@@ -36,7 +36,7 @@ object IconHelper {
       cache
         .getBitmap(bounds) {
           drawIcon(paint, bounds, back, upon, mask) {
-            // Use original mask if mask is not presented
+            // Use system mask if mask is not presented
             if (mask != null) super.draw(this) else super.drawClip(this)
           }
         }
@@ -157,11 +157,8 @@ object IconHelper {
           if (baseIcon is BitmapDrawable) CustomBitmapDrawable(res, it, back, upon, mask)
           else CustomDrawable(it, back, upon, mask)
         }
-      if (mask != null) makeAdaptiveBack(backAsAdaptiveBack, back, ::makeIcon)
-      else {
-        if (convertToAdaptive) makeAdaptiveBack(backAsAdaptiveBack, back, ::makeIcon)
-        else makeIcon(back)
-      }
+      if (mask != null || convertToAdaptive) makeAdaptiveBack(backAsAdaptiveBack, back, ::makeIcon)
+      else makeIcon(back)
     }
 
   private fun makeAdaptiveBack(
@@ -221,19 +218,37 @@ object IconHelper {
     paint.xfermode = null
   }
 
-  fun scale(drawable: Drawable, scale: Float = ADAPTIVE_ICON_VIEWPORT_SCALE): Drawable {
-    if (scale == 1f) return drawable
-    val h = drawable.intrinsicHeight.toFloat()
-    val w = drawable.intrinsicWidth.toFloat()
-    var scaleX = scale
-    var scaleY = scale
-    if (h > w && w > 0) {
-      scaleX *= w / h
-    } else if (w > h && h > 0) {
-      scaleY *= h / w
+  class ScaleDrawable(drawable: Drawable, private val scale: Float) : DrawableWrapper(drawable) {
+
+    override fun draw(canvas: Canvas) {
+      canvas.withScale(scale, scale, bounds.exactCenterX(), bounds.exactCenterY()) {
+        super.draw(canvas)
+      }
     }
-    scaleX = (1 - scaleX) / 2
-    scaleY = (1 - scaleY) / 2
-    return InsetDrawable(drawable, scaleX, scaleY, scaleX, scaleY)
+
+    override fun getIntrinsicWidth() =
+      when (val w = super.intrinsicWidth) {
+        -1 -> -1
+        else -> (w / scale).toInt()
+      }
+
+    override fun getIntrinsicHeight() =
+      when (val h = super.intrinsicHeight) {
+        -1 -> -1
+        else -> (h / scale).toInt()
+      }
+
+    private val cState by lazy { super.constantState?.let { CState(it, scale) } }
+
+    override fun getConstantState(): ConstantState? = cState
+
+    private class CState(val cs: ConstantState, private val scale: Float) : ConstantState() {
+      override fun newDrawable(): Drawable = ScaleDrawable(cs.newDrawable(), scale)
+
+      override fun getChangingConfigurations(): Int = cs.changingConfigurations
+    }
   }
+
+  fun scale(drawable: Drawable, scale: Float = ADAPTIVE_ICON_VIEWPORT_SCALE) =
+    if (scale == 1f) drawable else ScaleDrawable(drawable, scale)
 }

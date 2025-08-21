@@ -62,14 +62,14 @@ class PathDrawable(private val path: Path, color: Int, private val fill: Int = 1
       }
   }
 
-  private var pathScaled = Path()
+  private var pathScaled = path
   private var lastBounds: Rect = Rect()
 
   override fun draw(canvas: Canvas) {
     if (lastBounds != bounds) {
       val matrix = Matrix().apply { setScale(bounds.width() / 100f, bounds.height() / 100f) }
       path.transform(matrix, pathScaled)
-      lastBounds = bounds
+      lastBounds = copyBounds()
     }
     canvas.drawPath(pathScaled, paint)
   }
