@@ -19,9 +19,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Shortcut
 import androidx.compose.material.icons.outlined.Apps
@@ -224,11 +226,11 @@ object MainPreference {
     )
 
   @Composable
-  fun Fallback(modifier: Modifier = Modifier) {
+  fun Fallback(modifier: Modifier = Modifier, state: LazyListState = rememberLazyListState()) {
     val context = LocalContext.current
     val listModifiers = createListModifiers()
 
-    LazyColumn(modifier = modifier) { fallbackPref(context, listModifiers) }
+    LazyColumn(modifier = modifier, state = state) { fallbackPref(context, listModifiers) }
   }
 
   @OptIn(ExperimentalStdlibApi::class)

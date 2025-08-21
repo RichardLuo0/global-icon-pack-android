@@ -412,7 +412,7 @@ class IconPackMergerActivity : ComponentActivity() {
           modifier = Modifier.padding(top = 8.dp),
           state = iconOptionScrollState,
         ) {
-          MainPreference.Fallback()
+          MainPreference.Fallback(state = it)
         }
       }
     }
