@@ -7,7 +7,6 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.res.Resources
 import android.graphics.drawable.Drawable
-import android.graphics.drawable.Drawable.ConstantState
 import android.os.Build
 import android.util.Xml
 import android.widget.Toast
@@ -206,18 +205,12 @@ inline fun <T> Flow<List<T>?>.filter(
     .conflate()
     .flowOn(Dispatchers.Default)
 
-fun getChangingConfigurations(init: Int = 0, vararg css: ConstantState?): Int =
-  css.fold(init) { last, cs -> last or (cs?.changingConfigurations ?: 0) }
+fun Drawable.newDrawable() = this.constantState?.newDrawable() ?: this
 
-abstract class CSSWrapper(protected val css: Array<ConstantState?>) : ConstantState() {
-  protected fun newDrawables() = css.map { it?.newDrawable() }
+fun Array<Drawable?>.newDrawables() = map { it?.newDrawable() ?: it }
 
-  override fun getChangingConfigurations(): Int = getChangingConfigurations(css = css)
-}
-
-fun createCSS(vararg drawables: Drawable?): Array<ConstantState?>? {
-  return drawables.map { if (it == null) null else it.constantState ?: return@createCSS null }
-}
+fun Array<Drawable?>.getChangingConfigurations() =
+  fold(0) { last, dr -> last or (dr?.changingConfigurations ?: 0) }
 
 val Shell.Result.msg: String
   get() = "code: $code err: ${err.joinToString("\n")} out: ${out.joinToString("\n")}"

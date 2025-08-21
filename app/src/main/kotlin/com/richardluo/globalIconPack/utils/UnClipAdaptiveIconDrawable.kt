@@ -17,8 +17,13 @@ private val mCanvasF by lazy { AdaptiveIconDrawable::class.java.field("mCanvas")
 private val mPaintF by lazy { AdaptiveIconDrawable::class.java.field("mPaint") }
 private val mMaskScaleOnly by lazy { AdaptiveIconDrawable::class.java.field("mMaskScaleOnly") }
 
-open class UnClipAdaptiveIconDrawable(background: Drawable?, foreground: Drawable?) :
-  AdaptiveIconDrawable(background, foreground) {
+open class UnClipAdaptiveIconDrawable(protected open val state: CState) :
+  AdaptiveIconDrawable(state.background, state.foreground) {
+
+  constructor(
+    background: Drawable?,
+    foreground: Drawable?,
+  ) : this(CState(arrayOf(background, foreground)))
 
   override fun draw(canvas: Canvas) {
     draw(
@@ -66,13 +71,17 @@ open class UnClipAdaptiveIconDrawable(background: Drawable?, foreground: Drawabl
       inset(-bounds.width() * getExtraInsetFraction(), -bounds.height() * getExtraInsetFraction())
     }
 
-  protected open val cState: ConstantState? by lazy {
-    createCSS(background, foreground)?.let { CState(it) }
-  }
+  override fun getConstantState() = state
 
-  override fun getConstantState() = cState
+  open class CState(protected val drawables: Array<Drawable?>) : ConstantState() {
+    val background
+      get() = drawables[0]
 
-  private class CState(css: Array<ConstantState?>) : CSSWrapper(css) {
-    override fun newDrawable() = newDrawables().let { UnClipAdaptiveIconDrawable(it[0], it[1]) }
+    val foreground
+      get() = drawables[1]
+
+    override fun newDrawable() = UnClipAdaptiveIconDrawable(CState(drawables.newDrawables()))
+
+    override fun getChangingConfigurations(): Int = drawables.getChangingConfigurations()
   }
 }
