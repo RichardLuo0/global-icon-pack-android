@@ -215,7 +215,7 @@ class IconVariantActivity : ComponentActivity() {
             }
           }
         }
-      else LoadingCircle()
+      else LoadingCircle(modifier = Modifier.fillMaxSize())
 
       if (vm.loading > 0) LoadingDialog()
 

@@ -342,7 +342,7 @@ class IconPackMergerActivity : ComponentActivity() {
   @Composable
   private fun SelectBasePack(contentPadding: PaddingValues, scrollToNextPage: () -> Unit) {
     val valueMap = IconPackApps.flow.collectAsState(null).value
-    if (valueMap == null) LoadingCircle()
+    if (valueMap == null) LoadingCircle(modifier = Modifier.fillMaxSize())
     else
       LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = contentPadding) {
         items(valueMap.toList()) { (pack, app) ->
@@ -399,7 +399,7 @@ class IconPackMergerActivity : ComponentActivity() {
           }
         }
       }
-    else LoadingCircle()
+    else LoadingCircle(modifier = Modifier.fillMaxSize())
 
     val iconOptionScrollState = rememberLazyListState()
     LazyDialog(
