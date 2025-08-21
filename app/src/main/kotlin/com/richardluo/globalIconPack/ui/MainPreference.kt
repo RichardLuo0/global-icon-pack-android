@@ -115,8 +115,8 @@ object MainPreference {
 
   @Composable
   private fun createListModifiers(): ListModifiers {
-    val itemPadding = PaddingValues(horizontal = 12.dp, vertical = 2.dp)
-    val background = MaterialTheme.colorScheme.surfaceContainer
+    val itemPadding = PaddingValues(horizontal = 12.dp, vertical = 1.5.dp)
+    val background = MaterialTheme.colorScheme.surfaceContainerLow
     val itemModifier = Modifier.padding(itemPadding)
     return ListModifiers(
       itemModifier.clip(listTopItemShape).background(background),
