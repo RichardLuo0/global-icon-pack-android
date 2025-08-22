@@ -5,7 +5,6 @@ import android.graphics.ColorFilter
 import android.graphics.Matrix
 import android.graphics.Paint
 import android.graphics.Path
-import android.graphics.Path.FillType
 import android.graphics.PixelFormat
 import android.graphics.Rect
 import android.graphics.drawable.Drawable
@@ -22,7 +21,10 @@ import androidx.core.graphics.PathParser
 //  -1 inverse fill
 //  0 no fill
 //  1 fill
-class PathDrawable(private val path: Path, color: Int, private val fill: Int = 1) : Drawable() {
+class PathDrawable(private val state: CState) : Drawable() {
+
+  constructor(path: Path, color: Int, fill: Int = 1) : this(CState(path, color, fill))
+
   constructor(
     pathData: String,
     color: Int,
@@ -45,30 +47,22 @@ class PathDrawable(private val path: Path, color: Int, private val fill: Int = 1
 
   private val paint =
     Paint(Paint.ANTI_ALIAS_FLAG or Paint.DITHER_FLAG or Paint.FILTER_BITMAP_FLAG).apply {
-      setColor(color)
+      color = state.color
       style =
-        when (fill) {
+        when (state.fill) {
           0 -> Paint.Style.STROKE
           else -> Paint.Style.FILL
         }
       strokeWidth = 6f
     }
 
-  init {
-    path.fillType =
-      when (fill) {
-        -1 -> FillType.INVERSE_WINDING
-        else -> FillType.WINDING
-      }
-  }
-
-  private var pathScaled = path
+  private val pathScaled = Path()
   private var lastBounds: Rect = Rect()
 
   override fun draw(canvas: Canvas) {
     if (lastBounds != bounds) {
       val matrix = Matrix().apply { setScale(bounds.width() / 100f, bounds.height() / 100f) }
-      path.transform(matrix, pathScaled)
+      state.path.transform(matrix, pathScaled)
       lastBounds = copyBounds()
     }
     canvas.drawPath(pathScaled, paint)
@@ -90,13 +84,18 @@ class PathDrawable(private val path: Path, color: Int, private val fill: Int = 1
 
   @Deprecated("Deprecated in Java") override fun getOpacity() = PixelFormat.TRANSLUCENT
 
-  private val cState by lazy { CState(path, paint.color, fill) }
+  override fun getConstantState(): ConstantState? = state
 
-  override fun getConstantState(): ConstantState? = cState
+  class CState(val path: Path, val color: Int, val fill: Int) : ConstantState() {
+    init {
+      path.fillType =
+        when (fill) {
+          -1 -> Path.FillType.INVERSE_WINDING
+          else -> Path.FillType.WINDING
+        }
+    }
 
-  private class CState(private val path: Path, private val color: Int, private val fill: Int) :
-    ConstantState() {
-    override fun newDrawable(): Drawable = PathDrawable(path, color, fill)
+    override fun newDrawable(): Drawable = PathDrawable(this)
 
     override fun getChangingConfigurations(): Int = 0
   }

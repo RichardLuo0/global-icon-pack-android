@@ -7,6 +7,7 @@ import android.content.ComponentName
 import android.content.Context
 import android.content.res.Resources
 import android.graphics.drawable.Drawable
+import android.graphics.drawable.Drawable.ConstantState
 import android.os.Build
 import android.util.Xml
 import android.widget.Toast
@@ -205,12 +206,13 @@ inline fun <T> Flow<List<T>?>.filter(
     .conflate()
     .flowOn(Dispatchers.Default)
 
-fun Drawable.newDrawable() = this.constantState?.newDrawable() ?: this
+fun Array<ConstantState?>.newDrawables() = map { it?.newDrawable() }
 
-fun Array<Drawable?>.newDrawables() = map { it?.newDrawable() ?: it }
-
-fun Array<Drawable?>.getChangingConfigurations() =
+fun Array<ConstantState?>.getChangingConfigurations() =
   fold(0) { last, dr -> last or (dr?.changingConfigurations ?: 0) }
+
+fun createCSS(vararg drawables: Drawable?): Array<ConstantState?>? =
+  drawables.map { if (it == null) null else it.constantState ?: return@createCSS null }
 
 val Shell.Result.msg: String
   get() = "code: $code err: ${err.joinToString("\n")} out: ${out.joinToString("\n")}"

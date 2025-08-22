@@ -21,32 +21,27 @@ import androidx.core.graphics.withScale
 object IconHelper {
   val ADAPTIVE_ICON_VIEWPORT_SCALE = 1 / (1 + 2 * AdaptiveIconDrawable.getExtraInsetFraction())
 
-  private class CustomAdaptiveIconDrawable(override val state: CState) :
-    UnClipAdaptiveIconDrawable(state) {
-
-    constructor(
-      background: Drawable?,
-      foreground: Drawable?,
-      back: Drawable?,
-      upon: Drawable?,
-      mask: Drawable?,
-    ) : this(CState(arrayOf(background, foreground, back, upon, mask)))
-
+  private class CustomAdaptiveIconDrawable(
+    background: Drawable?,
+    foreground: Drawable?,
+    private val back: Drawable?,
+    private val upon: Drawable?,
+    private val mask: Drawable?,
+    state: CState? = createCSS(background, foreground, back, upon, mask)?.let { CState(it) },
+  ) : UnClipAdaptiveIconDrawable(background, foreground, state) {
     private val paint =
       Paint(Paint.ANTI_ALIAS_FLAG or Paint.DITHER_FLAG or Paint.FILTER_BITMAP_FLAG)
     private val cache = BitmapCache()
 
     override fun draw(canvas: Canvas) {
-      state.run {
-        cache
-          .getBitmap(bounds) {
-            drawIcon(paint, bounds, back, upon, mask) {
-              // Use system mask if mask is not presented
-              if (mask != null) super.draw(this) else super.drawClip(this)
-            }
+      cache
+        .getBitmap(bounds) {
+          drawIcon(paint, bounds, back, upon, mask) {
+            // Use system mask if mask is not presented
+            if (mask != null) super.draw(this) else super.drawClip(this)
           }
-          .let { canvas.drawBitmap(it, null, bounds, paint) }
-      }
+        }
+        .let { canvas.drawBitmap(it, null, bounds, paint) }
     }
 
     override fun setAlpha(alpha: Int) {
@@ -61,19 +56,12 @@ object IconHelper {
       invalidateSelf()
     }
 
-    private class CState(drawables: Array<Drawable?>) :
-      UnClipAdaptiveIconDrawable.CState(drawables) {
+    private class CState(css: Array<ConstantState?>) : UnClipAdaptiveIconDrawable.CState(css) {
 
-      val back
-        get() = drawables[2]
-
-      val upon
-        get() = drawables[3]
-
-      val mask
-        get() = drawables[4]
-
-      override fun newDrawable() = CustomAdaptiveIconDrawable(CState(drawables.newDrawables()))
+      override fun newDrawable() =
+        css.newDrawables().let {
+          CustomAdaptiveIconDrawable(it[0], it[1], it[2], it[3], it[4], this)
+        }
     }
   }
 
@@ -99,25 +87,21 @@ object IconHelper {
       },
     )
 
-  private class CustomDrawable(private val state: CState) : DrawableWrapper(state.drawable) {
-
-    constructor(
-      drawable: Drawable,
-      back: Drawable?,
-      upon: Drawable?,
-      mask: Drawable?,
-    ) : this(CState(arrayOf(drawable, back, upon, mask)))
-
+  private class CustomDrawable(
+    drawable: Drawable,
+    private val back: Drawable?,
+    private val upon: Drawable?,
+    private val mask: Drawable?,
+    private val state: CState? = createCSS(drawable, back, upon, mask)?.let { CState(it) },
+  ) : DrawableWrapper(drawable) {
     private val paint =
       Paint(Paint.ANTI_ALIAS_FLAG or Paint.DITHER_FLAG or Paint.FILTER_BITMAP_FLAG)
     private val cache = BitmapCache()
 
     override fun draw(canvas: Canvas) {
-      state.run {
-        cache
-          .getBitmap(bounds) { drawIcon(paint, bounds, back, upon, mask) { super.draw(this) } }
-          .let { canvas.drawBitmap(it, null, bounds, paint) }
-      }
+      cache
+        .getBitmap(bounds) { drawIcon(paint, bounds, back, upon, mask) { super.draw(this) } }
+        .let { canvas.drawBitmap(it, null, bounds, paint) }
     }
 
     override fun setAlpha(alpha: Int) {
@@ -134,22 +118,12 @@ object IconHelper {
 
     override fun getConstantState(): ConstantState? = state
 
-    private class CState(private val drawables: Array<Drawable?>) : ConstantState() {
-      val drawable
-        get() = drawables[0]
+    private class CState(private val css: Array<ConstantState?>) : ConstantState() {
 
-      val back
-        get() = drawables[1]
+      override fun newDrawable() =
+        css.newDrawables().let { CustomDrawable(it[0]!!, it[1], it[2], it[3], this) }
 
-      val upon
-        get() = drawables[2]
-
-      val mask
-        get() = drawables[3]
-
-      override fun newDrawable() = CustomDrawable(CState(drawables.newDrawables()))
-
-      override fun getChangingConfigurations(): Int = drawables.getChangingConfigurations()
+      override fun getChangingConfigurations(): Int = css.getChangingConfigurations()
     }
   }
 
@@ -246,9 +220,12 @@ object IconHelper {
     paint.xfermode = null
   }
 
-  class ScaleDrawable(private val state: CState) : DrawableWrapper(state.drawable) {
+  class ScaleDrawable(drawable: Drawable, private val state: CState) : DrawableWrapper(drawable) {
 
-    constructor(drawable: Drawable, scale: Float) : this(CState(drawable, scale))
+    constructor(
+      drawable: Drawable,
+      scale: Float,
+    ) : this(drawable, CState(drawable.constantState, scale))
 
     override fun draw(canvas: Canvas) {
       state.run {
@@ -259,27 +236,25 @@ object IconHelper {
     }
 
     override fun getIntrinsicWidth() =
-      state.run {
-        when (val w = super.intrinsicWidth) {
-          -1 -> -1
-          else -> (w / scale).toInt()
-        }
+      when (val w = super.intrinsicWidth) {
+        -1 -> -1
+        else -> (w / state.scale).toInt()
       }
 
     override fun getIntrinsicHeight() =
-      state.run {
-        when (val h = super.intrinsicHeight) {
-          -1 -> -1
-          else -> (h / scale).toInt()
-        }
+      when (val h = super.intrinsicHeight) {
+        -1 -> -1
+        else -> (h / state.scale).toInt()
       }
 
-    override fun getConstantState(): ConstantState? = state
+    override fun getConstantState(): ConstantState? = state.takeIf { it.canConstantState() }
 
-    class CState(val drawable: Drawable, val scale: Float) : ConstantState() {
-      override fun newDrawable(): Drawable = ScaleDrawable(drawable.newDrawable(), scale)
+    class CState(private val cs: ConstantState?, val scale: Float) : ConstantState() {
+      override fun newDrawable(): Drawable = ScaleDrawable(cs!!.newDrawable(), this)
 
-      override fun getChangingConfigurations(): Int = drawable.changingConfigurations
+      override fun getChangingConfigurations(): Int = cs!!.changingConfigurations
+
+      fun canConstantState() = cs != null
     }
   }
 
