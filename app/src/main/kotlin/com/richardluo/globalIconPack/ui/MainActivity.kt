@@ -31,7 +31,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
@@ -59,11 +58,11 @@ import com.richardluo.globalIconPack.MODE_SHARE
 import com.richardluo.globalIconPack.Pref
 import com.richardluo.globalIconPack.R
 import com.richardluo.globalIconPack.get
+import com.richardluo.globalIconPack.ui.components.CustomSnackbar
 import com.richardluo.globalIconPack.ui.components.LazyListDialog
 import com.richardluo.globalIconPack.ui.components.LoadingDialog
 import com.richardluo.globalIconPack.ui.components.OneLineText
 import com.richardluo.globalIconPack.ui.components.SampleTheme
-import com.richardluo.globalIconPack.ui.components.SnackbarErrorVisuals
 import com.richardluo.globalIconPack.ui.components.WarnDialog
 import com.richardluo.globalIconPack.ui.components.myPreferenceTheme
 import com.richardluo.globalIconPack.ui.components.pinnedScrollBehaviorWithPager
@@ -198,24 +197,7 @@ class MainActivity : ComponentActivity() {
           actions = { MainDropdownMenu(snackbarState) },
         )
       },
-      snackbarHost = {
-        SnackbarHost(
-          hostState = snackbarState,
-          snackbar = {
-            val isError = snackbarState.currentSnackbarData?.visuals is SnackbarErrorVisuals
-            Snackbar(
-              it,
-              shape = MaterialTheme.shapes.extraLarge,
-              containerColor =
-                if (isError) MaterialTheme.colorScheme.error
-                else MaterialTheme.colorScheme.secondary,
-              contentColor =
-                if (isError) MaterialTheme.colorScheme.onError
-                else MaterialTheme.colorScheme.onSecondary,
-            )
-          },
-        )
-      },
+      snackbarHost = { SnackbarHost(hostState = snackbarState, snackbar = { CustomSnackbar(it) }) },
       bottomBar = {
         val coroutineScope = rememberCoroutineScope()
         NavigationBar {

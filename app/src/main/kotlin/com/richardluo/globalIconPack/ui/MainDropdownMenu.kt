@@ -25,9 +25,10 @@ import androidx.core.net.toUri
 import com.richardluo.globalIconPack.Pref
 import com.richardluo.globalIconPack.R
 import com.richardluo.globalIconPack.get
+import com.richardluo.globalIconPack.ui.components.CustomSnackbarVisuals
 import com.richardluo.globalIconPack.ui.components.IconButtonWithTooltip
 import com.richardluo.globalIconPack.ui.components.MyDropdownMenu
-import com.richardluo.globalIconPack.ui.components.SnackbarErrorVisuals
+import com.richardluo.globalIconPack.ui.components.SnackbarType
 import com.richardluo.globalIconPack.utils.WorldPreference
 import com.richardluo.globalIconPack.utils.log
 import com.richardluo.globalIconPack.utils.msg
@@ -45,16 +46,20 @@ fun MainDropdownMenu(snackbarState: SnackbarHostState) {
       scope.launch {
         if (result.isSuccess)
           snackbarState.showSnackbar(
-            "✅ ${context.getString(R.string.mainMenu_info_restarted)}",
-            withDismissAction = true,
-            duration = SnackbarDuration.Long,
+            CustomSnackbarVisuals(
+              SnackbarType.Success,
+              context.getString(R.string.mainMenu_info_restarted),
+              withDismissAction = true,
+              duration = SnackbarDuration.Long,
+            )
           )
         else {
           val error = result.msg
           log(error)
           snackbarState.showSnackbar(
-            SnackbarErrorVisuals(
-              "❌ $error",
+            CustomSnackbarVisuals(
+              SnackbarType.Error,
+              error,
               withDismissAction = true,
               duration = SnackbarDuration.Long,
             )
