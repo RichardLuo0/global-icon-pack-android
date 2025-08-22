@@ -1,8 +1,10 @@
 package com.richardluo.globalIconPack.ui.components
 
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Text
 import androidx.compose.material3.TooltipAnchorPosition
@@ -12,7 +14,7 @@ import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.vector.ImageVector
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun IconButtonWithTooltip(icon: ImageVector, tooltip: String, onClick: () -> Unit) {
   TooltipBox(
@@ -20,6 +22,8 @@ fun IconButtonWithTooltip(icon: ImageVector, tooltip: String, onClick: () -> Uni
     tooltip = { PlainTooltip { Text(tooltip) } },
     state = rememberTooltipState(isPersistent = false),
   ) {
-    IconButton(onClick) { Icon(imageVector = icon, contentDescription = tooltip) }
+    FilledTonalIconButton(onClick, shapes = IconButtonDefaults.shapes()) {
+      Icon(imageVector = icon, contentDescription = tooltip)
+    }
   }
 }
