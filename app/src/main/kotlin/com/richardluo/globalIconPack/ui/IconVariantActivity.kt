@@ -15,9 +15,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
-import androidx.compose.material.icons.automirrored.outlined.ArrowRight
 import androidx.compose.material.icons.outlined.Download
-import androidx.compose.material.icons.outlined.FilterList
 import androidx.compose.material.icons.outlined.FormatColorFill
 import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.Restore
@@ -35,17 +33,20 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import com.richardluo.globalIconPack.R
 import com.richardluo.globalIconPack.ui.components.AnimatedNavHost
-import com.richardluo.globalIconPack.ui.components.AppFilterMenu
+import com.richardluo.globalIconPack.ui.components.AppFilterButtonGroup
 import com.richardluo.globalIconPack.ui.components.AppIcon
 import com.richardluo.globalIconPack.ui.components.AppbarSearchBar
 import com.richardluo.globalIconPack.ui.components.AutoFillDialog
@@ -56,11 +57,11 @@ import com.richardluo.globalIconPack.ui.components.LocalNavControllerWithArgs
 import com.richardluo.globalIconPack.ui.components.MyDropdownMenu
 import com.richardluo.globalIconPack.ui.components.SampleTheme
 import com.richardluo.globalIconPack.ui.components.WarnDialog
-import com.richardluo.globalIconPack.ui.components.getLabelByType
 import com.richardluo.globalIconPack.ui.components.navPage
 import com.richardluo.globalIconPack.ui.model.AppCompIcon
 import com.richardluo.globalIconPack.ui.state.rememberAutoFillState
 import com.richardluo.globalIconPack.ui.viewModel.IconVariantVM
+import com.richardluo.globalIconPack.utils.consumable
 import com.richardluo.globalIconPack.utils.getValue
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -116,7 +117,7 @@ class IconVariantActivity : ComponentActivity() {
                 expandSearchBar.value = true
               }
               var expand by rememberSaveable { mutableStateOf(false) }
-              val expandFilter = rememberSaveable { mutableStateOf(false) }
+
               val autoFillState = rememberAutoFillState()
               IconButtonWithTooltip(
                 Icons.Outlined.MoreVert,
@@ -125,15 +126,6 @@ class IconVariantActivity : ComponentActivity() {
                 expand = true
               }
               MyDropdownMenu(expanded = expand, onDismissRequest = { expand = false }) {
-                DropdownMenuItem(
-                  leadingIcon = { Icon(Icons.Outlined.FilterList, "filter") },
-                  text = { Text(getLabelByType(vm.filterType.value)) },
-                  trailingIcon = { Icon(Icons.AutoMirrored.Outlined.ArrowRight, "filter") },
-                  onClick = {
-                    expand = false
-                    expandFilter.value = true
-                  },
-                )
                 DropdownMenuItem(
                   leadingIcon = { Icon(Icons.Outlined.FormatColorFill, "auto fill") },
                   text = { Text(stringResource(R.string.autoFill)) },
@@ -183,7 +175,6 @@ class IconVariantActivity : ComponentActivity() {
                   },
                 )
               }
-              AppFilterMenu(expandFilter, vm.filterType)
               AutoFillDialog(autoFillState) { vm.autoFill(it) }
             },
             modifier = Modifier.fillMaxWidth(),
@@ -195,27 +186,40 @@ class IconVariantActivity : ComponentActivity() {
       },
     ) { contentPadding ->
       val navController = LocalNavControllerWithArgs.current!!
+      val density = LocalDensity.current
+      val consumablePadding = contentPadding.consumable()
 
-      val icons = vm.filteredIcons.getValue()
-      if (icons != null)
-        LazyVerticalGrid(
-          contentPadding = contentPadding,
-          modifier = Modifier.fillMaxSize().padding(horizontal = 2.dp),
-          columns = GridCells.Adaptive(minSize = 74.dp),
-        ) {
-          items(icons, key = { it.info.componentName }) {
-            val (info, entry) = it
-            AppIcon(
-              info.label,
-              key = entry?.entry?.name,
-              loadImage = { vm.loadIcon(it) },
-              shareKey = info.componentName.packageName,
-            ) {
-              navController.navigate("AppIconList", it)
+      Box(modifier = Modifier.padding(consumablePadding.consumeTop())) {
+        var filterHeight by remember { mutableStateOf(0.dp) }
+
+        val icons = vm.filteredIcons.getValue()
+        if (icons != null)
+          LazyVerticalGrid(
+            contentPadding = consumablePadding.apply { top += filterHeight }.consume(),
+            modifier = Modifier.fillMaxSize().padding(horizontal = 2.dp),
+            columns = GridCells.Adaptive(minSize = 74.dp),
+          ) {
+            items(icons, key = { it.info.componentName }) {
+              val (info, entry) = it
+              AppIcon(
+                info.label,
+                key = entry?.entry?.name,
+                loadImage = { vm.loadIcon(it) },
+                shareKey = info.componentName.packageName,
+              ) {
+                navController.navigate("AppIconList", it)
+              }
             }
           }
-        }
-      else LoadingCircle(modifier = Modifier.fillMaxSize())
+        else LoadingCircle(modifier = Modifier.fillMaxSize())
+
+        AppFilterButtonGroup(
+          Modifier.padding(horizontal = 8.dp).fillMaxWidth().onGloballyPositioned {
+            filterHeight = with(density) { it.size.height.toDp() }
+          },
+          vm.filterType,
+        )
+      }
 
       if (vm.loading > 0) LoadingDialog()
 

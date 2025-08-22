@@ -21,7 +21,6 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
@@ -31,6 +30,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -47,7 +47,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.ArrowForward
 import androidx.compose.material.icons.outlined.Done
-import androidx.compose.material.icons.outlined.FilterList
 import androidx.compose.material.icons.outlined.FormatColorFill
 import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.Notifications
@@ -55,6 +54,7 @@ import androidx.compose.material.icons.outlined.Restore
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -96,7 +96,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.richardluo.globalIconPack.R
 import com.richardluo.globalIconPack.ui.components.AnimatedFab
 import com.richardluo.globalIconPack.ui.components.AnimatedNavHost
-import com.richardluo.globalIconPack.ui.components.AppFilterMenu
+import com.richardluo.globalIconPack.ui.components.AppFilterButtonGroup
 import com.richardluo.globalIconPack.ui.components.AppIcon
 import com.richardluo.globalIconPack.ui.components.AppbarSearchBar
 import com.richardluo.globalIconPack.ui.components.AutoFillDialog
@@ -115,7 +115,6 @@ import com.richardluo.globalIconPack.ui.components.MyDropdownMenu
 import com.richardluo.globalIconPack.ui.components.SampleTheme
 import com.richardluo.globalIconPack.ui.components.ScrollIndicationBox
 import com.richardluo.globalIconPack.ui.components.WarnDialog
-import com.richardluo.globalIconPack.ui.components.getLabelByType
 import com.richardluo.globalIconPack.ui.components.myPreferenceTheme
 import com.richardluo.globalIconPack.ui.components.navPage
 import com.richardluo.globalIconPack.ui.components.pinnedScrollBehaviorWithPager
@@ -128,6 +127,7 @@ import com.richardluo.globalIconPack.ui.state.rememberAutoFillState
 import com.richardluo.globalIconPack.ui.viewModel.IconChooserVM
 import com.richardluo.globalIconPack.ui.viewModel.MergerVM
 import com.richardluo.globalIconPack.ui.viewModel.emptyImageBitmap
+import com.richardluo.globalIconPack.utils.ConsumablePadding
 import com.richardluo.globalIconPack.utils.consumable
 import com.richardluo.globalIconPack.utils.getValue
 import kotlinx.coroutines.launch
@@ -163,7 +163,7 @@ class IconPackMergerActivity : ComponentActivity() {
     val actions: @Composable (RowScope.() -> Unit)? = null,
     val fab: @Composable (() -> Unit)? = null,
     val animatedFab: FabDesc? = null,
-    val screen: @Composable (PaddingValues) -> Unit,
+    val screen: @Composable (ConsumablePadding) -> Unit,
   )
 
   @OptIn(ExperimentalMaterial3Api::class)
@@ -299,7 +299,7 @@ class IconPackMergerActivity : ComponentActivity() {
     ) { contentPadding ->
       val consumablePadding = contentPadding.consumable()
       val pagePadding =
-        PaddingValues(bottom = scaffoldBottom - fabY + consumablePadding.consumeBottomValue())
+        ConsumablePadding(bottom = scaffoldBottom - fabY + consumablePadding.consumeBottomValue())
 
       HorizontalPager(
         pagerState,
@@ -340,11 +340,11 @@ class IconPackMergerActivity : ComponentActivity() {
   }
 
   @Composable
-  private fun SelectBasePack(contentPadding: PaddingValues, scrollToNextPage: () -> Unit) {
+  private fun SelectBasePack(consumablePadding: ConsumablePadding, scrollToNextPage: () -> Unit) {
     val valueMap = IconPackApps.flow.collectAsState(null).value
     if (valueMap == null) LoadingCircle(modifier = Modifier.fillMaxSize())
     else
-      LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = contentPadding) {
+      LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = consumablePadding.consume()) {
         items(valueMap.toList()) { (pack, app) ->
           val selected = pack == vm.basePack
           Row(
@@ -373,33 +373,45 @@ class IconPackMergerActivity : ComponentActivity() {
 
   @Composable
   private fun IconList(
-    contentPadding: PaddingValues,
+    consumablePadding: ConsumablePadding,
     iconOptionDialogState: MutableState<Boolean>,
   ) {
     val navController = LocalNavControllerWithArgs.current!!
+    val density = LocalDensity.current
 
-    val icons = vm.filteredIconsFlow.getValue(null)
-    if (icons != null)
-      LazyVerticalGrid(
-        modifier = Modifier.fillMaxSize().padding(horizontal = 2.dp),
-        contentPadding = contentPadding,
-        columns = GridCells.Adaptive(minSize = 74.dp),
-      ) {
-        items(icons, key = { it.info.componentName }) {
-          val (info, entry) = it
-          AppIcon(
-            info.label,
-            key =
-              if (entry != null) "${entry.pack.pack}/icon/${entry.entry.name}"
-              else "${vm.basePack}/fallback/${vm.iconCacheToken}",
-            loadImage = { vm.loadIcon(it) },
-            shareKey = info.componentName.packageName,
-          ) {
-            navController.navigate("AppIconList", it)
+    Box(modifier = Modifier.padding(consumablePadding.consumeTop())) {
+      var filterHeight by remember { mutableStateOf(0.dp) }
+
+      val icons = vm.filteredIconsFlow.getValue(null)
+      if (icons != null)
+        LazyVerticalGrid(
+          modifier = Modifier.fillMaxSize().padding(horizontal = 2.dp),
+          contentPadding = consumablePadding.apply { top += filterHeight }.consume(),
+          columns = GridCells.Adaptive(minSize = 74.dp),
+        ) {
+          items(icons, key = { it.info.componentName }) {
+            val (info, entry) = it
+            AppIcon(
+              info.label,
+              key =
+                if (entry != null) "${entry.pack.pack}/icon/${entry.entry.name}"
+                else "${vm.basePack}/fallback/${vm.iconCacheToken}",
+              loadImage = { vm.loadIcon(it) },
+              shareKey = info.componentName.packageName,
+            ) {
+              navController.navigate("AppIconList", it)
+            }
           }
         }
-      }
-    else LoadingCircle(modifier = Modifier.fillMaxSize())
+      else LoadingCircle(modifier = Modifier.fillMaxSize())
+
+      AppFilterButtonGroup(
+        Modifier.padding(horizontal = 8.dp).fillMaxWidth().onGloballyPositioned {
+          filterHeight = with(density) { it.size.height.toDp() }
+        },
+        vm.filterType,
+      )
+    }
 
     val iconOptionScrollState = rememberLazyListState()
     LazyDialog(
@@ -424,20 +436,11 @@ class IconPackMergerActivity : ComponentActivity() {
       expandSearchBar.value = true
     }
     var expand by rememberSaveable { mutableStateOf(false) }
-    val expandFilter = rememberSaveable { mutableStateOf(false) }
     val autoFillState = rememberAutoFillState()
     IconButtonWithTooltip(Icons.Outlined.MoreVert, stringResource(R.string.common_moreOptions)) {
       expand = true
     }
     MyDropdownMenu(expanded = expand, onDismissRequest = { expand = false }) {
-      DropdownMenuItem(
-        leadingIcon = { Icon(Icons.Outlined.FilterList, "filter") },
-        text = { Text(getLabelByType(vm.filterType.value)) },
-        onClick = {
-          expand = false
-          expandFilter.value = true
-        },
-      )
       DropdownMenuItem(
         leadingIcon = { Icon(Icons.Outlined.FormatColorFill, "auto fill") },
         text = { Text(stringResource(R.string.autoFill)) },
@@ -455,7 +458,6 @@ class IconPackMergerActivity : ComponentActivity() {
         },
       )
     }
-    AppFilterMenu(expandFilter, vm.filterType)
     AutoFillDialog(autoFillState) { vm.autoFill(it) }
   }
 
@@ -470,7 +472,7 @@ class IconPackMergerActivity : ComponentActivity() {
   }
 
   @Composable
-  private fun PackInfoForm(contentPadding: PaddingValues) {
+  private fun PackInfoForm(consumablePadding: ConsumablePadding) {
     val iconChooser: IconChooserVM = viewModel(key = "newPackIconIconChooser")
 
     val symDefAppIcon = remember {
@@ -491,8 +493,13 @@ class IconPackMergerActivity : ComponentActivity() {
         },
       horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-      Spacer(modifier = Modifier.height(contentPadding.calculateTopPadding()))
-      Card(modifier = Modifier.padding(8.dp).wrapContentHeight()) {
+      Spacer(modifier = Modifier.height(consumablePadding.top))
+      Card(
+        modifier = Modifier.padding(8.dp).wrapContentHeight().widthIn(max = 400.dp),
+        colors =
+          CardDefaults.cardColors()
+            .copy(containerColor = MaterialTheme.colorScheme.surfaceContainerLow),
+      ) {
         Column(
           modifier = Modifier.padding(12.dp),
           verticalArrangement = Arrangement.spacedBy(12.dp),
@@ -543,7 +550,7 @@ class IconPackMergerActivity : ComponentActivity() {
           }
         }
       }
-      Spacer(modifier = Modifier.height(contentPadding.calculateBottomPadding()))
+      Spacer(modifier = Modifier.height(consumablePadding.bottom))
     }
 
     IconChooserSheet(iconChooser, { symDefAppIcon }) { info, icon ->
