@@ -25,6 +25,7 @@ import androidx.compose.material.icons.outlined.PhoneAndroid
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FloatingToolbarDefaults
 import androidx.compose.material3.HorizontalFloatingToolbar
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
@@ -187,18 +188,6 @@ class MainActivity : ComponentActivity() {
         )
       },
       snackbarHost = { SnackbarHost(hostState = snackbarState, snackbar = { CustomSnackbar(it) }) },
-      //      bottomBar = {
-      //        NavigationBar {
-      //          pages.forEachIndexed { i, page ->
-      //            NavigationBarItem(
-      //              icon = { Icon(page.icon, contentDescription = page.name) },
-      //              label = { Text(page.name) },
-      //              selected = pagerState.currentPage == i,
-      //              onClick = { coroutineScope.launch { pagerState.animateScrollToPage(i) } },
-      //            )
-      //          }
-      //        }
-      //      },
     ) { contentPadding ->
       val flow = LocalPreferenceFlow.current
       LaunchedEffect(flow) {
@@ -219,8 +208,16 @@ class MainActivity : ComponentActivity() {
       }
 
       Box {
+        val toolBarBottomPadding = 8.dp
         val consumablePadding = contentPadding.consumable()
-        val pagePadding = consumablePadding.consumeBottom()
+        val pagePadding =
+          PaddingValues(
+            bottom =
+              consumablePadding.consumeBottomValue() +
+                toolBarBottomPadding +
+                FloatingToolbarDefaults.ContainerSize
+          )
+
         HorizontalPager(
           pagerState,
           contentPadding = consumablePadding.consume(),
@@ -233,7 +230,7 @@ class MainActivity : ComponentActivity() {
         HorizontalFloatingToolbar(
           modifier =
             Modifier.align(Alignment.BottomCenter)
-              .padding(bottom = contentPadding.calculateBottomPadding() + 8.dp),
+              .padding(bottom = contentPadding.calculateBottomPadding() + toolBarBottomPadding),
           expanded = true,
         ) {
           pages.forEachIndexed { i, page ->
