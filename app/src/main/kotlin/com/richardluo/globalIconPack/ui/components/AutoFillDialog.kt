@@ -150,8 +150,8 @@ fun AutoFillDialog(vm: AutoFillState = rememberAutoFillState(), onOk: (List<Stri
       addPackDialog,
       { OneLineText(stringResource(R.string.autoFill_add)) },
       remember { derivedStateOf { (apps - vm.packs - vm.basePack).toList() } }.value,
-    ) { (pack, app), dismiss ->
-      IconPackItem(pack, app, false) {
+    ) { pos, (pack, app), dismiss ->
+      IconPackItem(pack, app, false, pos.toShape()) {
         vm.addPack(pack)
         dismiss()
       }

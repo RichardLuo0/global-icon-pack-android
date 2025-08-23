@@ -11,14 +11,9 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
@@ -27,7 +22,6 @@ import androidx.compose.material.icons.outlined.PhoneAndroid
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
@@ -42,12 +36,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.unit.dp
 import androidx.core.content.edit
 import androidx.lifecycle.lifecycleScope
 import com.richardluo.globalIconPack.AppPref
@@ -58,6 +50,7 @@ import com.richardluo.globalIconPack.MODE_SHARE
 import com.richardluo.globalIconPack.Pref
 import com.richardluo.globalIconPack.R
 import com.richardluo.globalIconPack.get
+import com.richardluo.globalIconPack.ui.MainPreference.ModeItem
 import com.richardluo.globalIconPack.ui.components.CustomSnackbar
 import com.richardluo.globalIconPack.ui.components.LazyListDialog
 import com.richardluo.globalIconPack.ui.components.LoadingDialog
@@ -136,26 +129,11 @@ class MainActivity : ComponentActivity() {
       title = { OneLineText(stringResource(R.string.setup_chooseMode)) },
       value = listOf(MODE_SHARE, MODE_PROVIDER, MODE_LOCAL),
       dismissible = false,
-    ) { mode, dismiss ->
-      Row(
-        modifier =
-          Modifier.fillMaxWidth()
-            .clickable {
-              prefFlow.update { it.toMutablePreferences().apply { set(Pref.MODE.key, mode) } }
-              AppPreference.get().edit { putBoolean(AppPref.NEED_SETUP.key, false) }
-              dismiss()
-            }
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-      ) {
-        MainPreference.ModeToIcon(mode)
-        Spacer(modifier = Modifier.width(12.dp))
-        Text(
-          text =
-            MainPreference.modeToAnnotatedString(this@MainActivity, mode, MaterialTheme.typography),
-          color = MaterialTheme.colorScheme.onSurface,
-          style = MaterialTheme.typography.bodyMedium,
-        )
+    ) { pos, mode, dismiss ->
+      ModeItem(pos, mode) {
+        prefFlow.update { it.toMutablePreferences().apply { set(Pref.MODE.key, mode) } }
+        AppPreference.get().edit { putBoolean(AppPref.NEED_SETUP.key, false) }
+        dismiss()
       }
     }
   }

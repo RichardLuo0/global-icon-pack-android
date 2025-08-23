@@ -345,27 +345,11 @@ class IconPackMergerActivity : ComponentActivity() {
     if (valueMap == null) LoadingCircle(modifier = Modifier.fillMaxSize())
     else
       LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = consumablePadding.consume()) {
-        items(valueMap.toList()) { (pack, app) ->
+        itemsIndexed(valueMap.toList()) { index, (pack, app) ->
           val selected = pack == vm.basePack
-          Row(
-            modifier =
-              Modifier.fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 2.dp)
-                .clip(MaterialTheme.shapes.large)
-                .selectable(selected, true, Role.RadioButton) {
-                  vm.basePack = pack
-                  scrollToNextPage()
-                }
-                .padding(horizontal = 4.dp, vertical = 14.dp),
-            verticalAlignment = Alignment.CenterVertically,
-          ) {
-            RadioButton(
-              modifier = Modifier.padding(horizontal = 8.dp),
-              selected = selected,
-              onClick = null,
-            )
-            Spacer(modifier = Modifier.width(8.dp))
-            IconPackItemContent(pack, app)
+          IconPackItem(pack, app, selected, ListItemPos.from(index, valueMap.size).toShape()) {
+            vm.basePack = pack
+            scrollToNextPage()
           }
         }
       }

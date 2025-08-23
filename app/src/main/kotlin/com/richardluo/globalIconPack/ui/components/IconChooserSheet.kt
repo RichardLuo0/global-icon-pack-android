@@ -1,10 +1,13 @@
 package com.richardluo.globalIconPack.ui.components
 
 import android.widget.Toast
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
@@ -36,6 +39,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
@@ -201,10 +205,10 @@ fun IconChooserSheet(
       packDialogState,
       title = { Text(stringResource(R.string.general_iconPack)) },
       value = IconPackApps.flow.collectAsState(null).value?.toList(),
-      key = { it.first },
+      key = { _, it -> it.first },
       focusItem = { it.first == vm.iconPack?.pack },
-    ) { item, dismiss ->
-      IconPackItem(item.first, item.second, item.first == vm.iconPack?.pack) {
+    ) { pos, item, dismiss ->
+      IconPackItem(item.first, item.second, item.first == vm.iconPack?.pack, pos.toShape()) {
         vm.setPack(item.first)
         dismiss()
       }
@@ -225,8 +229,12 @@ fun IconChooserSheet(
               ::replaceAsCalendarIcon,
             ),
           ),
-      ) { option, dismiss ->
+      ) { pos, option, dismiss ->
         Preference(
+          modifier =
+            Modifier.padding(listItemPadding)
+              .clip(pos.toShape())
+              .background(MaterialTheme.colorScheme.surfaceContainerLow),
           icon = { option.icon?.let { Icon(it, option.name) } },
           title = { Text(option.name) },
         ) {

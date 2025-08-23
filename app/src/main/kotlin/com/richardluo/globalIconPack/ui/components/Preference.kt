@@ -4,7 +4,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Label
@@ -12,6 +14,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -23,14 +26,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardType
+import com.richardluo.globalIconPack.utils.consumable
 import com.richardluo.globalIconPack.utils.getValue
 import me.zhanghai.compose.preference.LocalPreferenceFlow
+import me.zhanghai.compose.preference.LocalPreferenceTheme
 import me.zhanghai.compose.preference.Preference
 import me.zhanghai.compose.preference.PreferenceTheme
 import me.zhanghai.compose.preference.Preferences
 import me.zhanghai.compose.preference.ProvidePreferenceTheme
-import me.zhanghai.compose.preference.SwitchPreference
 import me.zhanghai.compose.preference.preferenceTheme
 import me.zhanghai.compose.preference.rememberPreferenceState
 
@@ -66,6 +71,48 @@ fun LazyListScope.myPreference(
   }
 }
 
+inline fun <T> LazyListScope.myListPreference(
+  key: String,
+  defaultValue: T,
+  values: List<T>,
+  crossinline title: @Composable (T) -> Unit,
+  modifier: Modifier = Modifier.fillMaxWidth(),
+  crossinline rememberState: @Composable () -> MutableState<T> = {
+    rememberPreferenceState(key, defaultValue)
+  },
+  crossinline enabled: (Preferences) -> Boolean = { true },
+  noinline icon: @Composable ((T) -> Unit)? = null,
+  noinline summary: @Composable ((T) -> Unit)? = null,
+  noinline item:
+    @Composable
+    (pos: ListItemPos, value: T, currentValue: T, onClick: () -> Unit) -> Unit,
+) {
+  item(key = key, contentType = "MyListPreference") {
+    val state = rememberState()
+    var value by state
+    val title = @Composable { title(value) }
+    val openSelector = rememberSaveable { mutableStateOf(false) }
+    LazyListDialog(openSelector, title, values, focusItem = { it == value }) {
+      pos,
+      itemValue,
+      dismiss ->
+      item(pos, itemValue, value) {
+        value = itemValue
+        dismiss()
+      }
+    }
+    Preference(
+      title = title,
+      modifier = modifier,
+      enabled = enabled(LocalPreferenceFlow.current.getValue()),
+      icon = icon?.let { { it(value) } },
+      summary = summary?.let { { it(value) } },
+    ) {
+      openSelector.value = true
+    }
+  }
+}
+
 inline fun <T, U> LazyListScope.mapListPreference(
   key: String,
   defaultValue: T,
@@ -78,7 +125,9 @@ inline fun <T, U> LazyListScope.mapListPreference(
   crossinline enabled: (Preferences) -> Boolean = { true },
   noinline icon: @Composable ((T) -> Unit)? = null,
   noinline summary: @Composable ((T, U?) -> Unit)? = null,
-  noinline item: @Composable (key: T, value: U, currentKey: T, onClick: () -> Unit) -> Unit,
+  noinline item:
+    @Composable
+    (pos: ListItemPos, key: T, value: U, currentKey: T, onClick: () -> Unit) -> Unit,
 ) {
   item(key = key, contentType = "MapListPreference") {
     val state = rememberState()
@@ -87,9 +136,10 @@ inline fun <T, U> LazyListScope.mapListPreference(
     val title = @Composable { title(valueKey) }
     val openSelector = rememberSaveable { mutableStateOf(false) }
     LazyListDialog(openSelector, title, valueMap?.keys?.toList(), focusItem = { it == valueKey }) {
+      pos,
       key,
       dismiss ->
-      item(key, valueMap!!.getValue(key), valueKey) {
+      item(pos, key, valueMap!!.getValue(key), valueKey) {
         valueKey = key
         dismiss()
       }

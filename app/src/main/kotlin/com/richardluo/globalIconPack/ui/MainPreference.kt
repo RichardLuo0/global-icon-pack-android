@@ -8,7 +8,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
@@ -25,6 +24,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.Help
 import androidx.compose.material.icons.automirrored.outlined.Shortcut
 import androidx.compose.material.icons.outlined.Apps
 import androidx.compose.material.icons.outlined.Backpack
@@ -46,7 +46,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.Typography
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -63,10 +62,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.PathParser
@@ -79,30 +76,32 @@ import com.richardluo.globalIconPack.R
 import com.richardluo.globalIconPack.get
 import com.richardluo.globalIconPack.ui.components.IconButtonWithTooltip
 import com.richardluo.globalIconPack.ui.components.IconPackItem
+import com.richardluo.globalIconPack.ui.components.ListItem
+import com.richardluo.globalIconPack.ui.components.ListItemPos
 import com.richardluo.globalIconPack.ui.components.OneLineText
+import com.richardluo.globalIconPack.ui.components.ProvideMyPreferenceTheme
 import com.richardluo.globalIconPack.ui.components.SampleTheme
 import com.richardluo.globalIconPack.ui.components.TextFieldDialog
 import com.richardluo.globalIconPack.ui.components.TextFieldDialogContent
 import com.richardluo.globalIconPack.ui.components.TwoLineText
 import com.richardluo.globalIconPack.ui.components.dialogPreference
 import com.richardluo.globalIconPack.ui.components.listBottomItemShape
+import com.richardluo.globalIconPack.ui.components.listItemPadding
 import com.richardluo.globalIconPack.ui.components.listMiddleItemShape
 import com.richardluo.globalIconPack.ui.components.listSingleItemShape
 import com.richardluo.globalIconPack.ui.components.listTopItemShape
 import com.richardluo.globalIconPack.ui.components.mapListPreference
+import com.richardluo.globalIconPack.ui.components.myListPreference
 import com.richardluo.globalIconPack.ui.components.myPreference
-import com.richardluo.globalIconPack.ui.components.myPreferenceTheme
 import com.richardluo.globalIconPack.ui.components.mySliderPreference
 import com.richardluo.globalIconPack.ui.components.mySwitchPreference
+import com.richardluo.globalIconPack.ui.components.toShape
 import com.richardluo.globalIconPack.ui.repo.IconPackApps
 import com.richardluo.globalIconPack.utils.DrawablePainter
 import com.richardluo.globalIconPack.utils.PathDrawable
 import com.richardluo.globalIconPack.utils.runCatchingToastOnMain
 import me.zhanghai.compose.preference.LocalPreferenceTheme
-import me.zhanghai.compose.preference.ProvidePreferenceLocals
-import me.zhanghai.compose.preference.listPreference
 import me.zhanghai.compose.preference.preference
-import me.zhanghai.compose.preference.switchPreference
 
 object MainPreference {
 
@@ -115,9 +114,8 @@ object MainPreference {
 
   @Composable
   private fun createListModifiers(): ListModifiers {
-    val itemPadding = PaddingValues(horizontal = 12.dp, vertical = 1.5.dp)
     val background = MaterialTheme.colorScheme.surfaceContainerLow
-    val itemModifier = Modifier.padding(itemPadding)
+    val itemModifier = Modifier.padding(listItemPadding)
     return ListModifiers(
       itemModifier.clip(listTopItemShape).background(background),
       itemModifier.clip(listMiddleItemShape).background(background),
@@ -129,29 +127,26 @@ object MainPreference {
   @Composable
   fun General(modifier: Modifier = Modifier) {
     val context = LocalContext.current
-    val typography = MaterialTheme.typography
     val listModifiers = createListModifiers()
 
     LazyColumn(modifier = modifier) {
-      listPreference(
+      myListPreference(
         modifier = listModifiers.top,
-        icon = { AnimatedContent(it) { ModeToIcon(it) } },
+        icon = { AnimatedContent(it) { Icon(modeToIcon(it), it) } },
         key = Pref.MODE.key,
         defaultValue = Pref.MODE.def,
         values = listOf(MODE_SHARE, MODE_PROVIDER, MODE_LOCAL),
-        valueToText = { modeToAnnotatedString(context, it, typography) },
         title = { TwoLineText(modeToTitle(context, it)) },
         summary = { TwoLineText(modeToSummary(context, it)) },
-      )
+      ) { pos, value, currentValue, onClick ->
+        ModeItem(pos, value, value == currentValue, onClick)
+      }
       mapListPreference(
         modifier = listModifiers.middle,
         icon = { Icon(Icons.Outlined.Backpack, Pref.ICON_PACK.key) },
         key = Pref.ICON_PACK.key,
         defaultValue = Pref.ICON_PACK.def,
         getValueMap = { IconPackApps.flow.collectAsState(null).value },
-        item = { key, value, currentKey, onClick ->
-          IconPackItem(key, value, key == currentKey, onClick)
-        },
         title = { TwoLineText(stringResource(R.string.general_iconPack)) },
         summary = { key, value ->
           Text(
@@ -160,8 +155,10 @@ object MainPreference {
               ?: stringResource(R.string.general_iconPack_summary)
           )
         },
-      )
-      switchPreference(
+      ) { pos, key, value, currentKey, onClick ->
+        IconPackItem(key, value, key == currentKey, pos.toShape(), onClick)
+      }
+      mySwitchPreference(
         modifier = listModifiers.middle,
         icon = {},
         key = Pref.ICON_PACK_AS_FALLBACK.key,
@@ -169,7 +166,7 @@ object MainPreference {
         title = { TwoLineText(stringResource(R.string.general_iconPackAsFallback)) },
         summary = { TwoLineText(stringResource(R.string.general_iconPackAsFallback_summary)) },
       )
-      switchPreference(
+      mySwitchPreference(
         modifier = listModifiers.middle,
         icon = { Icon(Icons.AutoMirrored.Outlined.Shortcut, Pref.SHORTCUT.key) },
         key = Pref.SHORTCUT.key,
@@ -235,7 +232,7 @@ object MainPreference {
 
   @OptIn(ExperimentalStdlibApi::class)
   fun LazyListScope.fallbackPref(context: Context, listModifiers: ListModifiers) {
-    switchPreference(
+    mySwitchPreference(
       modifier = listModifiers.top,
       icon = { Icon(Icons.Outlined.SettingsBackupRestore, Pref.ICON_FALLBACK.key) },
       key = Pref.ICON_FALLBACK.key,
@@ -475,7 +472,7 @@ object MainPreference {
           dismiss()
         }
       }
-      switchPreference(
+      mySwitchPreference(
         modifier = listModifiers.bottom,
         icon = {},
         key = Pref.NO_SHADOW.key,
@@ -484,7 +481,7 @@ object MainPreference {
         summary = { TwoLineText(stringResource(R.string.pixel_noShadow_summary)) },
       )
       spacer()
-      switchPreference(
+      mySwitchPreference(
         modifier = listModifiers.top,
         icon = { Icon(Icons.Outlined.CalendarMonth, Pref.FORCE_LOAD_CLOCK_AND_CALENDAR.key) },
         key = Pref.FORCE_LOAD_CLOCK_AND_CALENDAR.key,
@@ -508,7 +505,7 @@ object MainPreference {
         title = { TwoLineText(stringResource(R.string.pixel_disableClockSeconds)) },
       )
       spacer()
-      switchPreference(
+      mySwitchPreference(
         modifier = listModifiers.single,
         icon = {},
         key = Pref.FORCE_ACTIVITY_ICON_FOR_TASK.key,
@@ -523,19 +520,25 @@ object MainPreference {
     item { Spacer(Modifier.height(8.dp)) }
   }
 
-  fun modeToAnnotatedString(context: Context, mode: String, typography: Typography) =
-    buildAnnotatedString {
-      withStyle(typography.titleMedium.toSpanStyle()) { append(modeToTitle(context, mode) + "\n") }
-      withStyle(typography.bodyMedium.toSpanStyle()) { append(modeToSummary(context, mode)) }
-    }
-
   @Composable
-  fun ModeToIcon(mode: String) =
+  fun ModeItem(pos: ListItemPos, mode: String, selected: Boolean = false, onClick: () -> Unit) {
+    val context = LocalContext.current
+    ListItem(
+      { Icon(modeToIcon(mode), mode) },
+      { Text(modeToTitle(context, mode)) },
+      { Text(modeToSummary(context, mode)) },
+      selected,
+      pos.toShape(),
+      onClick,
+    )
+  }
+
+  fun modeToIcon(mode: String) =
     when (mode) {
-      MODE_SHARE -> Icon(Icons.Outlined.Share, mode)
-      MODE_PROVIDER -> Icon(Icons.Outlined.SettingsRemote, mode)
-      MODE_LOCAL -> Icon(Icons.Outlined.Memory, mode)
-      else -> {}
+      MODE_SHARE -> Icons.Outlined.Share
+      MODE_PROVIDER -> Icons.Outlined.SettingsRemote
+      MODE_LOCAL -> Icons.Outlined.Memory
+      else -> Icons.AutoMirrored.Outlined.Help
     }
 
   fun modeToTitle(context: Context, mode: String) =
@@ -558,17 +561,17 @@ object MainPreference {
 @Preview(showBackground = true)
 @Composable
 private fun GeneralPreview() {
-  SampleTheme { ProvidePreferenceLocals(theme = myPreferenceTheme()) { MainPreference.General() } }
+  SampleTheme { ProvideMyPreferenceTheme { MainPreference.General() } }
 }
 
 @Preview(showBackground = true)
 @Composable
 private fun IconPackPreview() {
-  SampleTheme { ProvidePreferenceLocals(theme = myPreferenceTheme()) { MainPreference.IconPack() } }
+  SampleTheme { ProvideMyPreferenceTheme { MainPreference.IconPack() } }
 }
 
 @Preview(showBackground = true)
 @Composable
 private fun PixelPreview() {
-  SampleTheme { ProvidePreferenceLocals(theme = myPreferenceTheme()) { MainPreference.Pixel() } }
+  SampleTheme { ProvideMyPreferenceTheme { MainPreference.Pixel() } }
 }

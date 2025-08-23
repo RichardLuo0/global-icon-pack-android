@@ -11,7 +11,7 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.HourglassEmpty
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -45,10 +45,10 @@ fun <T> LazyListDialog(
   openState: MutableState<Boolean>,
   title: @Composable () -> Unit,
   value: List<T>?,
-  key: ((item: T) -> Any)? = null,
+  key: ((index: Int, item: T) -> Any)? = null,
   dismissible: Boolean = true,
   focusItem: (T) -> Boolean = { true },
-  itemContent: @Composable (item: T, dismiss: () -> Unit) -> Unit,
+  itemContent: @Composable (pos: ListItemPos, item: T, dismiss: () -> Unit) -> Unit,
 ) =
   LazyDialog(openState, title, value, dismissible) { list ->
     if (list.isEmpty()) Nothing()
@@ -61,7 +61,10 @@ fun <T> LazyListDialog(
           },
       ) {
         LazyColumn(state = it) {
-          items(list, key) { item -> itemContent(item) { openState.value = false } }
+          val size = list.size
+          itemsIndexed(list, key) { i, item ->
+            itemContent(ListItemPos.from(i, size), item) { openState.value = false }
+          }
         }
       }
   }
