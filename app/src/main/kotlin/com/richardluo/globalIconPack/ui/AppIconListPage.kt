@@ -1,7 +1,6 @@
 package com.richardluo.globalIconPack.ui
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
@@ -52,7 +51,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.richardluo.globalIconPack.R
-import com.richardluo.globalIconPack.ui.components.AppbarSearchBar
 import com.richardluo.globalIconPack.ui.components.IconButtonWithTooltip
 import com.richardluo.globalIconPack.ui.components.IconChooserSheet
 import com.richardluo.globalIconPack.ui.components.LazyImage
@@ -60,6 +58,7 @@ import com.richardluo.globalIconPack.ui.components.LoadingCircle
 import com.richardluo.globalIconPack.ui.components.MyDropdownMenu
 import com.richardluo.globalIconPack.ui.components.OneLineText
 import com.richardluo.globalIconPack.ui.components.TwoLineText
+import com.richardluo.globalIconPack.ui.components.WithSearch
 import com.richardluo.globalIconPack.ui.components.sharedBounds
 import com.richardluo.globalIconPack.ui.model.AnyCompIcon
 import com.richardluo.globalIconPack.ui.model.AppCompIcon
@@ -109,10 +108,10 @@ fun AppIconListPage(onBack: () -> Unit, iconsHolder: IconsHolder, appIcon: AppCo
     modifier = Modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
     topBar = {
       Column {
-        Box {
+        WithSearch(expandSearchBar, vm.searchText) {
           TwoRowsTopAppBar(
             navigationIcon = {
-              IconButtonWithTooltip(Icons.AutoMirrored.Outlined.ArrowBack, "Back", onBack)
+              IconButtonWithTooltip(Icons.AutoMirrored.Outlined.ArrowBack, "Back", onClick = onBack)
             },
             title = { expanded ->
               if (expanded)
@@ -190,8 +189,6 @@ fun AppIconListPage(onBack: () -> Unit, iconsHolder: IconsHolder, appIcon: AppCo
             modifier = Modifier.fillMaxWidth(),
             scrollBehavior = scrollBehavior,
           )
-
-          AppbarSearchBar(expandSearchBar, vm.searchText)
         }
 
         PrimaryTabRow(selectedTabIndex = pagerState.currentPage) {

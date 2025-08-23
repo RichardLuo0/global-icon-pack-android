@@ -95,7 +95,6 @@ import com.richardluo.globalIconPack.ui.components.AnimatedFab
 import com.richardluo.globalIconPack.ui.components.AnimatedNavHost
 import com.richardluo.globalIconPack.ui.components.AppFilterButtonGroup
 import com.richardluo.globalIconPack.ui.components.AppIcon
-import com.richardluo.globalIconPack.ui.components.AppbarSearchBar
 import com.richardluo.globalIconPack.ui.components.AutoFillDialog
 import com.richardluo.globalIconPack.ui.components.ExpandFabScrollConnection
 import com.richardluo.globalIconPack.ui.components.FabDesc
@@ -113,6 +112,7 @@ import com.richardluo.globalIconPack.ui.components.MyDropdownMenu
 import com.richardluo.globalIconPack.ui.components.SampleTheme
 import com.richardluo.globalIconPack.ui.components.ScrollIndicationBox
 import com.richardluo.globalIconPack.ui.components.WarnDialog
+import com.richardluo.globalIconPack.ui.components.WithSearch
 import com.richardluo.globalIconPack.ui.components.appFilterHeight
 import com.richardluo.globalIconPack.ui.components.myPreferenceTheme
 import com.richardluo.globalIconPack.ui.components.navPage
@@ -238,7 +238,7 @@ class IconPackMergerActivity : ComponentActivity() {
           .nestedScroll(scrollBehavior.nestedScrollConnection)
           .nestedScroll(expandFabScrollConnection),
       topBar = {
-        Box {
+        WithSearch(expandSearchBar, vm.searchText) {
           TopAppBar(
             navigationIcon = {
               IconButtonWithTooltip(Icons.AutoMirrored.Outlined.ArrowBack, "Back") { finish() }
@@ -262,8 +262,6 @@ class IconPackMergerActivity : ComponentActivity() {
             modifier = Modifier.fillMaxWidth(),
             scrollBehavior = scrollBehavior,
           )
-
-          AppbarSearchBar(expandSearchBar, vm.searchText)
         }
       },
       floatingActionButton = {

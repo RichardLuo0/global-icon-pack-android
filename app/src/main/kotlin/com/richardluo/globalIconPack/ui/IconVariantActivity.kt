@@ -38,7 +38,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
@@ -48,7 +47,6 @@ import com.richardluo.globalIconPack.R
 import com.richardluo.globalIconPack.ui.components.AnimatedNavHost
 import com.richardluo.globalIconPack.ui.components.AppFilterButtonGroup
 import com.richardluo.globalIconPack.ui.components.AppIcon
-import com.richardluo.globalIconPack.ui.components.AppbarSearchBar
 import com.richardluo.globalIconPack.ui.components.AutoFillDialog
 import com.richardluo.globalIconPack.ui.components.ExpandFabScrollConnection
 import com.richardluo.globalIconPack.ui.components.IconButtonWithTooltip
@@ -58,6 +56,7 @@ import com.richardluo.globalIconPack.ui.components.LocalNavControllerWithArgs
 import com.richardluo.globalIconPack.ui.components.MyDropdownMenu
 import com.richardluo.globalIconPack.ui.components.SampleTheme
 import com.richardluo.globalIconPack.ui.components.WarnDialog
+import com.richardluo.globalIconPack.ui.components.WithSearch
 import com.richardluo.globalIconPack.ui.components.appFilterHeight
 import com.richardluo.globalIconPack.ui.components.navPage
 import com.richardluo.globalIconPack.ui.model.AppCompIcon
@@ -112,7 +111,7 @@ class IconVariantActivity : ComponentActivity() {
           .nestedScroll(scrollBehavior.nestedScrollConnection)
           .nestedScroll(expandFabScrollConnection),
       topBar = {
-        Box(contentAlignment = Alignment.TopCenter) {
+        WithSearch(expandSearchBar, vm.searchText) {
           TopAppBar(
             navigationIcon = {
               IconButtonWithTooltip(Icons.AutoMirrored.Outlined.ArrowBack, "Back") { finish() }
@@ -186,8 +185,6 @@ class IconVariantActivity : ComponentActivity() {
             modifier = Modifier.fillMaxWidth(),
             scrollBehavior = scrollBehavior,
           )
-
-          AppbarSearchBar(expandSearchBar, vm.searchText)
         }
       },
     ) { contentPadding ->

@@ -111,7 +111,9 @@ fun IconChooserSheet(
       stringResource(R.string.common_search),
       modifier = Modifier.padding(bottom = 8.dp),
       trailingIcon = {
-        IconButtonWithTooltip(Icons.Outlined.FilterList, "By pack") { packDialogState.value = true }
+        IconButtonWithTooltip(Icons.Outlined.FilterList, "By pack", IconButtonStyle.None) {
+          packDialogState.value = true
+        }
       },
     ) {
       Icon(Icons.Outlined.Search, contentDescription = "Search")
