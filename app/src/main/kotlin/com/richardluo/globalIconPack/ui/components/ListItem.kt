@@ -17,9 +17,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CornerBasedShape
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MaterialTheme.shapes
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -109,7 +111,7 @@ fun ListItem(
         .selectable(selected, true, Role.RadioButton, onClick = onClick)
         .padding(horizontal = 8.dp, vertical = 10.dp)
   ) {
-    ListItemContent(leading, headline, supporting)
+    ListItemContent(leading, headline, supporting, selected)
   }
 }
 
@@ -122,7 +124,13 @@ fun ListItemContent(
 ) {
   Row(modifier = Modifier.height(IntrinsicSize.Min)) {
     if (leading != null) {
-      Box(modifier = Modifier.fillMaxHeight(), contentAlignment = Alignment.Center) { leading() }
+      CompositionLocalProvider(
+        LocalContentColor provides
+          if (selected) MaterialTheme.colorScheme.onPrimaryFixed
+          else MaterialTheme.colorScheme.secondary
+      ) {
+        Box(modifier = Modifier.fillMaxHeight(), contentAlignment = Alignment.Center) { leading() }
+      }
       Spacer(modifier = Modifier.width(12.dp))
     }
     Column {
