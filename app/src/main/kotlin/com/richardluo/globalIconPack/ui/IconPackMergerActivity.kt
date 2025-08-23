@@ -29,7 +29,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
@@ -37,11 +36,11 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
@@ -62,7 +61,6 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -89,7 +87,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -104,10 +101,11 @@ import com.richardluo.globalIconPack.ui.components.ExpandFabScrollConnection
 import com.richardluo.globalIconPack.ui.components.FabDesc
 import com.richardluo.globalIconPack.ui.components.IconButtonWithTooltip
 import com.richardluo.globalIconPack.ui.components.IconChooserSheet
-import com.richardluo.globalIconPack.ui.components.IconPackItemContent
+import com.richardluo.globalIconPack.ui.components.IconPackItem
 import com.richardluo.globalIconPack.ui.components.InfoDialog
 import com.richardluo.globalIconPack.ui.components.LazyDialog
 import com.richardluo.globalIconPack.ui.components.LazyImage
+import com.richardluo.globalIconPack.ui.components.ListItemPos
 import com.richardluo.globalIconPack.ui.components.LoadingCircle
 import com.richardluo.globalIconPack.ui.components.LoadingDialog
 import com.richardluo.globalIconPack.ui.components.LocalNavControllerWithArgs
@@ -118,6 +116,7 @@ import com.richardluo.globalIconPack.ui.components.WarnDialog
 import com.richardluo.globalIconPack.ui.components.myPreferenceTheme
 import com.richardluo.globalIconPack.ui.components.navPage
 import com.richardluo.globalIconPack.ui.components.pinnedScrollBehaviorWithPager
+import com.richardluo.globalIconPack.ui.components.toShape
 import com.richardluo.globalIconPack.ui.model.AppCompIcon
 import com.richardluo.globalIconPack.ui.model.CompInfo
 import com.richardluo.globalIconPack.ui.model.IconEntryWithPack
@@ -342,7 +341,7 @@ class IconPackMergerActivity : ComponentActivity() {
   @Composable
   private fun SelectBasePack(consumablePadding: ConsumablePadding, scrollToNextPage: () -> Unit) {
     val valueMap = IconPackApps.flow.collectAsState(null).value
-    if (valueMap == null) LoadingCircle(modifier = Modifier.fillMaxSize())
+    if (valueMap == null) LoadingCircle()
     else
       LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = consumablePadding.consume()) {
         itemsIndexed(valueMap.toList()) { index, (pack, app) ->
@@ -387,7 +386,7 @@ class IconPackMergerActivity : ComponentActivity() {
             }
           }
         }
-      else LoadingCircle(modifier = Modifier.fillMaxSize())
+      else LoadingCircle()
 
       AppFilterButtonGroup(
         Modifier.padding(horizontal = 8.dp).fillMaxWidth().onGloballyPositioned {

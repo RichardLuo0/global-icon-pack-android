@@ -268,5 +268,5 @@ private fun IconList(
         if (index < icons.lastIndex) HorizontalDivider()
       }
     }
-  else LoadingCircle(modifier = Modifier.fillMaxSize())
+  else LoadingCircle()
 }

@@ -249,6 +249,6 @@ fun IconChooserSheet(
 @Composable
 private fun Loading() {
   Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
-    LoadingCircle(modifier = Modifier.padding(48.dp))
+    LoadingCircle(modifier = Modifier.fillMaxWidth().height(128.dp))
   }
 }

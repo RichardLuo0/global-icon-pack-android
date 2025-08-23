@@ -211,7 +211,7 @@ class IconVariantActivity : ComponentActivity() {
               }
             }
           }
-        else LoadingCircle(modifier = Modifier.fillMaxSize())
+        else LoadingCircle()
 
         AppFilterButtonGroup(
           Modifier.padding(horizontal = 8.dp).fillMaxWidth().onGloballyPositioned {
