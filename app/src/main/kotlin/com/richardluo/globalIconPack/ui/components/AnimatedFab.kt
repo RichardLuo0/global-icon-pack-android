@@ -13,14 +13,21 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.unit.dp
 
 class FabDesc(val icon: ImageVector, val text: String, val onClick: () -> Unit)
 
 open class ExpandFabScrollConnection : NestedScrollConnection {
   var isExpand by mutableStateOf(true)
+
+  override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
+    if (available.y > 1) isExpand = true else if (available.y < -1) isExpand = false
+    return Offset.Zero
+  }
 }
 
 @Composable
