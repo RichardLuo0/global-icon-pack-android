@@ -5,16 +5,22 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Check
+import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Label
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -320,10 +326,10 @@ inline fun LazyListScope.mySwitchPreference(
   noinline icon: @Composable ((Boolean) -> Unit)? = null,
   noinline summary: @Composable ((Boolean) -> Unit)? = null,
 ) {
-  item(key = key, contentType = "SwitchPreference") {
+  item(key = key, contentType = "MySwitchPreference") {
     val state = rememberState()
     val value by state
-    SwitchPreference(
+    MySwitchPreference(
       state = state,
       title = { title(value) },
       modifier = modifier,
@@ -332,4 +338,42 @@ inline fun LazyListScope.mySwitchPreference(
       summary = summary?.let { { it(value) } },
     )
   }
+}
+
+@Composable
+fun MySwitchPreference(
+  state: MutableState<Boolean>,
+  title: @Composable () -> Unit,
+  modifier: Modifier = Modifier,
+  enabled: Boolean = true,
+  icon: @Composable (() -> Unit)? = null,
+  summary: @Composable (() -> Unit)? = null,
+) {
+  var value by state
+  Preference(
+    title = title,
+    modifier = modifier.toggleable(value, enabled, Role.Switch) { value = it },
+    enabled = enabled,
+    icon = icon,
+    summary = summary,
+    widgetContainer = {
+      val theme = LocalPreferenceTheme.current
+      Switch(
+        checked = value,
+        onCheckedChange = null,
+        modifier =
+          Modifier.padding(
+            theme.padding.consumable().apply { start = theme.horizontalSpacing }.consume()
+          ),
+        enabled = enabled,
+        thumbContent = {
+          Icon(
+            if (value) Icons.Outlined.Check else Icons.Outlined.Close,
+            "Thumb",
+            modifier = Modifier.size(SwitchDefaults.IconSize),
+          )
+        },
+      )
+    },
+  )
 }
