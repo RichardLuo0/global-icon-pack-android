@@ -16,7 +16,7 @@ import android.graphics.drawable.DrawableWrapper
 import androidx.core.graphics.createBitmap
 import androidx.core.graphics.drawable.toBitmap
 import androidx.core.graphics.drawable.toDrawable
-import androidx.core.graphics.withScale
+import kotlin.math.ceil
 
 object IconHelper {
   val ADAPTIVE_ICON_VIEWPORT_SCALE = 1 / (1 + 2 * AdaptiveIconDrawable.getExtraInsetFraction())
@@ -227,12 +227,18 @@ object IconHelper {
       scale: Float,
     ) : this(drawable, CState(drawable.constantState, scale))
 
-    override fun draw(canvas: Canvas) {
-      state.run {
-        canvas.withScale(scale, scale, bounds.exactCenterX(), bounds.exactCenterY()) {
-          super.draw(canvas)
+    override fun onBoundsChange(bounds: Rect) {
+      val insetFrac = (1 - state.scale) / 2
+      super.onBoundsChange(
+        Rect(bounds).apply {
+          val insetX = ceil(width() * insetFrac).toInt()
+          val insetY = ceil(height() * insetFrac).toInt()
+          left += insetX
+          top += insetY
+          right -= insetX
+          bottom -= insetY
         }
-      }
+      )
     }
 
     override fun getIntrinsicWidth() =
