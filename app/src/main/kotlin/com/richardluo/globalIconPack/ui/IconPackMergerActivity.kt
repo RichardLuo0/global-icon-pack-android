@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -112,6 +113,7 @@ import com.richardluo.globalIconPack.ui.components.MyDropdownMenu
 import com.richardluo.globalIconPack.ui.components.SampleTheme
 import com.richardluo.globalIconPack.ui.components.ScrollIndicationBox
 import com.richardluo.globalIconPack.ui.components.WarnDialog
+import com.richardluo.globalIconPack.ui.components.appFilterHeight
 import com.richardluo.globalIconPack.ui.components.myPreferenceTheme
 import com.richardluo.globalIconPack.ui.components.navPage
 import com.richardluo.globalIconPack.ui.components.pinnedScrollBehaviorWithPager
@@ -334,12 +336,17 @@ class IconPackMergerActivity : ComponentActivity() {
     val valueMap = IconPackApps.flow.collectAsState(null).value
     if (valueMap == null) LoadingCircle()
     else
-      LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = consumablePadding.consume()) {
-        itemsIndexed(valueMap.toList()) { index, (pack, app) ->
-          val selected = pack == vm.basePack
-          IconPackItem(pack, app, selected, ListItemPos.from(index, valueMap.size).toShape()) {
-            vm.basePack = pack
-            scrollToNextPage()
+      Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
+        LazyColumn(
+          modifier = Modifier.widthIn(max = 400.dp).fillMaxHeight(),
+          contentPadding = consumablePadding.consume(),
+        ) {
+          itemsIndexed(valueMap.toList()) { index, (pack, app) ->
+            val selected = pack == vm.basePack
+            IconPackItem(pack, app, selected, ListItemPos.from(index, valueMap.size).toShape()) {
+              vm.basePack = pack
+              scrollToNextPage()
+            }
           }
         }
       }
@@ -352,16 +359,13 @@ class IconPackMergerActivity : ComponentActivity() {
     scrollConnection: ExpandFabScrollConnection,
   ) {
     val navController = LocalNavControllerWithArgs.current!!
-    val density = LocalDensity.current
 
     Box(modifier = Modifier.padding(consumablePadding.consumeTop())) {
-      var filterHeight by remember { mutableStateOf(0.dp) }
-
       val icons = vm.filteredIconsFlow.getValue(null)
       if (icons != null)
         LazyVerticalGrid(
           modifier = Modifier.fillMaxSize().padding(horizontal = 2.dp),
-          contentPadding = consumablePadding.apply { top += filterHeight }.consume(),
+          contentPadding = consumablePadding.apply { top += appFilterHeight }.consume(),
           columns = GridCells.Adaptive(minSize = 74.dp),
         ) {
           items(icons, key = { it.info.componentName }) {
@@ -385,8 +389,7 @@ class IconPackMergerActivity : ComponentActivity() {
       AppFilterButtonGroup(
         Modifier.padding(horizontal = 8.dp)
           .fillMaxWidth()
-          .onGloballyPositioned { filterHeight = with(density) { it.size.height.toDp() } }
-          .offset(y = -filterHeight * animatedFloat),
+          .offset(y = -appFilterHeight * animatedFloat),
         vm.filterType,
       )
     }

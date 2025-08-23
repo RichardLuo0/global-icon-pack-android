@@ -41,8 +41,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
@@ -60,6 +58,7 @@ import com.richardluo.globalIconPack.ui.components.LocalNavControllerWithArgs
 import com.richardluo.globalIconPack.ui.components.MyDropdownMenu
 import com.richardluo.globalIconPack.ui.components.SampleTheme
 import com.richardluo.globalIconPack.ui.components.WarnDialog
+import com.richardluo.globalIconPack.ui.components.appFilterHeight
 import com.richardluo.globalIconPack.ui.components.navPage
 import com.richardluo.globalIconPack.ui.model.AppCompIcon
 import com.richardluo.globalIconPack.ui.state.rememberAutoFillState
@@ -193,16 +192,13 @@ class IconVariantActivity : ComponentActivity() {
       },
     ) { contentPadding ->
       val navController = LocalNavControllerWithArgs.current!!
-      val density = LocalDensity.current
       val consumablePadding = contentPadding.consumable()
 
       Box(modifier = Modifier.padding(consumablePadding.consumeTop())) {
-        var filterHeight by remember { mutableStateOf(0.dp) }
-
         val icons = vm.filteredIcons.getValue()
         if (icons != null)
           LazyVerticalGrid(
-            contentPadding = consumablePadding.apply { top += filterHeight }.consume(),
+            contentPadding = consumablePadding.apply { top += appFilterHeight }.consume(),
             modifier = Modifier.fillMaxSize().padding(horizontal = 2.dp),
             columns = GridCells.Adaptive(minSize = 74.dp),
           ) {
@@ -225,8 +221,7 @@ class IconVariantActivity : ComponentActivity() {
         AppFilterButtonGroup(
           Modifier.padding(horizontal = 8.dp)
             .fillMaxWidth()
-            .onGloballyPositioned { filterHeight = with(density) { it.size.height.toDp() } }
-            .offset(y = -filterHeight * animatedFloat),
+            .offset(y = -appFilterHeight * animatedFloat),
           vm.filterType,
         )
       }
