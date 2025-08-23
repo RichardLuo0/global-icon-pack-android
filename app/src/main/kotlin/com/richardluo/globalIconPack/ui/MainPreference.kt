@@ -8,6 +8,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
@@ -125,11 +126,11 @@ object MainPreference {
   }
 
   @Composable
-  fun General(modifier: Modifier = Modifier) {
+  fun General(modifier: Modifier = Modifier, contentPadding: PaddingValues = PaddingValues(0.dp)) {
     val context = LocalContext.current
     val listModifiers = createListModifiers()
 
-    LazyColumn(modifier = modifier) {
+    LazyColumn(modifier = modifier, contentPadding = contentPadding) {
       myListPreference(
         modifier = listModifiers.top,
         icon = { AnimatedContent(it) { Icon(modeToIcon(it), it) } },
@@ -185,11 +186,11 @@ object MainPreference {
   }
 
   @Composable
-  fun IconPack(modifier: Modifier = Modifier) {
+  fun IconPack(modifier: Modifier = Modifier, contentPadding: PaddingValues = PaddingValues(0.dp)) {
     val context = LocalContext.current
     val listModifiers = createListModifiers()
 
-    LazyColumn(modifier = modifier) {
+    LazyColumn(modifier = modifier, contentPadding = contentPadding) {
       myPreference(
         modifier = listModifiers.single,
         icon = { Icon(Icons.Outlined.Edit, "iconVariant") },
@@ -439,10 +440,10 @@ object MainPreference {
   }
 
   @Composable
-  fun Pixel(modifier: Modifier = Modifier) {
+  fun Pixel(modifier: Modifier = Modifier, contentPadding: PaddingValues = PaddingValues(0.dp)) {
     val listModifiers = createListModifiers()
 
-    LazyColumn(modifier = modifier) {
+    LazyColumn(modifier = modifier, contentPadding = contentPadding) {
       dialogPreference(
         modifier = listModifiers.top,
         icon = { Icon(Icons.Outlined.Apps, Pref.PIXEL_LAUNCHER_PACKAGE.key) },

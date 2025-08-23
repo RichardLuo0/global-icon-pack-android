@@ -71,7 +71,7 @@ fun AppFilterButtonGroup(modifier: Modifier = Modifier, typeState: MutableState<
         button.label,
         { type = button.type },
         { if (checked) Icon(button.icon, button.label) },
-        weight = if (checked) 1.3f else 1f,
+        if (checked) 1.3f else 1f,
       )
     }
   }
