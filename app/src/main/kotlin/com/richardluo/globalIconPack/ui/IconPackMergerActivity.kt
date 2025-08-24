@@ -67,6 +67,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -96,7 +97,7 @@ import com.richardluo.globalIconPack.ui.components.AnimatedNavHost
 import com.richardluo.globalIconPack.ui.components.AppFilterButtonGroup
 import com.richardluo.globalIconPack.ui.components.AppIcon
 import com.richardluo.globalIconPack.ui.components.AutoFillDialog
-import com.richardluo.globalIconPack.ui.components.ExpandFabScrollConnection
+import com.richardluo.globalIconPack.ui.components.ExpandedScrollConnection
 import com.richardluo.globalIconPack.ui.components.FabDesc
 import com.richardluo.globalIconPack.ui.components.IconButtonWithTooltip
 import com.richardluo.globalIconPack.ui.components.IconChooserSheet
@@ -176,7 +177,8 @@ class IconPackMergerActivity : ComponentActivity() {
 
     val pagerState = rememberPagerState(pageCount = { 3 })
     val scrollBehavior = pinnedScrollBehaviorWithPager(pagerState)
-    val expandFabScrollConnection = remember { ExpandFabScrollConnection() }
+    val expandedScrollConnection = remember { ExpandedScrollConnection() }
+    LaunchedEffect(pagerState.currentPage) { expandedScrollConnection.expanded = true }
 
     val coroutineScope = rememberCoroutineScope()
     val nextStep = remember {
@@ -205,7 +207,7 @@ class IconPackMergerActivity : ComponentActivity() {
           },
           animatedFab = nextStep,
         ) {
-          IconList(it, iconOptionDialogState, expandFabScrollConnection)
+          IconList(it, iconOptionDialogState, expandedScrollConnection)
         },
         Page(getString(R.string.merger_newPack_title), animatedFab = done) { PackInfoForm(it) },
       )
@@ -236,7 +238,7 @@ class IconPackMergerActivity : ComponentActivity() {
             scaffoldBottom = with(density) { (it.positionInRoot().y + it.size.height).toDp() }
           }
           .nestedScroll(scrollBehavior.nestedScrollConnection)
-          .nestedScroll(expandFabScrollConnection),
+          .nestedScroll(expandedScrollConnection),
       topBar = {
         WithSearch(expandSearchBar, vm.searchText) {
           TopAppBar(
@@ -283,7 +285,7 @@ class IconPackMergerActivity : ComponentActivity() {
           }
 
           val fabState = pages[pagerState.currentPage].animatedFab
-          if (fabState != null) AnimatedFab(fabState, expandFabScrollConnection.isExpand)
+          if (fabState != null) AnimatedFab(fabState, expandedScrollConnection.expanded)
         }
       },
     ) { contentPadding ->
@@ -354,7 +356,7 @@ class IconPackMergerActivity : ComponentActivity() {
   private fun IconList(
     consumablePadding: ConsumablePadding,
     iconOptionDialogState: MutableState<Boolean>,
-    scrollConnection: ExpandFabScrollConnection,
+    scrollConnection: ExpandedScrollConnection,
   ) {
     val navController = LocalNavControllerWithArgs.current!!
 
@@ -383,7 +385,7 @@ class IconPackMergerActivity : ComponentActivity() {
       else LoadingCircle()
 
       val animatedFloat by
-        animateFloatAsState(targetValue = if (scrollConnection.isExpand) 0f else 1f)
+        animateFloatAsState(targetValue = if (scrollConnection.expanded) 0f else 1f)
       AppFilterButtonGroup(
         Modifier.padding(horizontal = 8.dp)
           .fillMaxWidth()
