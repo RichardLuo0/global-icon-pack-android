@@ -31,6 +31,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
@@ -45,6 +46,7 @@ fun RoundSearchBar(
   trailingIcon: (@Composable () -> Unit)? = null,
   leadingIcon: @Composable () -> Unit,
 ) {
+  val focusManager = LocalFocusManager.current
   val keyboardController = LocalSoftwareKeyboardController.current
   TextField(
     value = state.value,
@@ -62,7 +64,13 @@ fun RoundSearchBar(
         disabledIndicatorColor = Color.Transparent,
       ),
     keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Search),
-    keyboardActions = KeyboardActions(onSearch = { keyboardController?.hide() }),
+    keyboardActions =
+      KeyboardActions(
+        onSearch = {
+          keyboardController?.hide()
+          focusManager.clearFocus()
+        }
+      ),
   )
 }
 
