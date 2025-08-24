@@ -297,6 +297,7 @@ class IconPackMergerActivity : ComponentActivity() {
         pagerState,
         contentPadding = consumablePadding.consume(),
         beyondViewportPageCount = 2,
+        userScrollEnabled = vm.basePack != null,
       ) {
         pages[it].screen(pagePadding)
       }
