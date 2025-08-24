@@ -1,6 +1,7 @@
 package com.richardluo.globalIconPack.ui.components
 
 import android.widget.Toast
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -26,6 +27,7 @@ import androidx.compose.material.icons.outlined.ExpandMore
 import androidx.compose.material.icons.outlined.FilterList
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -46,6 +48,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -71,6 +74,7 @@ fun IconChooserSheet(
 ) {
   val context = LocalContext.current
   val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
+  val expandedScrollConnection = remember { ExpandedScrollConnection() }
   val scope = rememberCoroutineScope()
 
   fun onDismissRequest() {
@@ -80,7 +84,11 @@ fun IconChooserSheet(
 
   if (!vm.variantSheet) return
 
-  ModalBottomSheet(sheetState = sheetState, onDismissRequest = ::onDismissRequest) {
+  ModalBottomSheet(
+    sheetState = sheetState,
+    onDismissRequest = ::onDismissRequest,
+    modifier = Modifier.nestedScroll(expandedScrollConnection),
+  ) {
     val packDialogState = rememberSaveable { mutableStateOf(false) }
     val optionDialogState = remember { mutableStateOf(false) }
     val selectedIcon = remember { mutableStateOf<VariantIcon?>(null) }
@@ -215,24 +223,37 @@ fun IconChooserSheet(
         }
       }
 
-      RoundSearchBar(
-        vm.searchText,
-        stringResource(R.string.common_search),
+      AnimatedContent(
+        expandedScrollConnection.expanded,
         modifier = Modifier.padding(vertical = 8.dp),
-        trailingIcon = {
-          Row {
-            AnimatedVisibility(vm.searchText.value.isNotEmpty()) {
-              IconButtonWithTooltip(Icons.Outlined.Clear, "Clear", IconButtonStyle.None) {
-                vm.searchText.value = ""
-              }
-            }
-            IconButtonWithTooltip(Icons.Outlined.FilterList, "By pack", IconButtonStyle.None) {
-              packDialogState.value = true
-            }
-          }
-        },
       ) {
-        Icon(Icons.Outlined.Search, contentDescription = "Search")
+        if (it)
+          RoundSearchBar(
+            vm.searchText,
+            stringResource(R.string.common_search),
+            trailingIcon = {
+              Row {
+                AnimatedVisibility(vm.searchText.value.isNotEmpty()) {
+                  IconButtonWithTooltip(Icons.Outlined.Clear, "Clear", IconButtonStyle.None) {
+                    vm.searchText.value = ""
+                  }
+                }
+                IconButtonWithTooltip(Icons.Outlined.FilterList, "By pack", IconButtonStyle.None) {
+                  packDialogState.value = true
+                }
+              }
+            },
+          ) {
+            Icon(Icons.Outlined.Search, "Search")
+          }
+        else
+          FloatingActionButton(
+            { expandedScrollConnection.expanded = true },
+            Modifier.padding(horizontal = 12.dp),
+            containerColor = MaterialTheme.colorScheme.secondaryContainer,
+          ) {
+            Icon(Icons.Outlined.Search, "Search")
+          }
       }
     }
 
