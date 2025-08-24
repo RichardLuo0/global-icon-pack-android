@@ -54,7 +54,7 @@ fun RoundSearchBar(
     trailingIcon = trailingIcon,
     singleLine = true,
     shape = MaterialTheme.shapes.extraLarge,
-    modifier = modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 6.dp),
+    modifier = modifier.fillMaxWidth().padding(horizontal = 12.dp),
     colors =
       TextFieldDefaults.colors(
         focusedIndicatorColor = Color.Transparent,
@@ -89,7 +89,8 @@ fun WithSearch(
       Box(
         modifier =
           Modifier.windowInsetsPadding(TopAppBarDefaults.windowInsets)
-            .height(TopAppBarDefaults.TopAppBarExpandedHeight)
+            .height(TopAppBarDefaults.TopAppBarExpandedHeight),
+        contentAlignment = Alignment.Center,
       ) {
         BackHandler {
           expand = false
