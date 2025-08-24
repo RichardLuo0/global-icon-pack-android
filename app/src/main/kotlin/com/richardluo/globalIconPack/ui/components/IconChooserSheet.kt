@@ -1,9 +1,11 @@
 package com.richardluo.globalIconPack.ui.components
 
 import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -17,6 +19,8 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CalendarMonth
+import androidx.compose.material.icons.outlined.Circle
+import androidx.compose.material.icons.outlined.Clear
 import androidx.compose.material.icons.outlined.ExpandLess
 import androidx.compose.material.icons.outlined.ExpandMore
 import androidx.compose.material.icons.outlined.FilterList
@@ -106,19 +110,6 @@ fun IconChooserSheet(
       }
     }
 
-    RoundSearchBar(
-      vm.searchText,
-      stringResource(R.string.common_search),
-      modifier = Modifier.padding(bottom = 8.dp),
-      trailingIcon = {
-        IconButtonWithTooltip(Icons.Outlined.FilterList, "By pack", IconButtonStyle.None) {
-          packDialogState.value = true
-        }
-      },
-    ) {
-      Icon(Icons.Outlined.Search, contentDescription = "Search")
-    }
-
     fun LazyGridScope.variantIconTitle(text: String, expandState: MutableState<Boolean>? = null) {
       item(span = { GridItemSpan(maxLineSpan) }, contentType = "Title") {
         Row(horizontalArrangement = Arrangement.SpaceBetween) {
@@ -165,42 +156,84 @@ fun IconChooserSheet(
       }
     }
 
-    if (vm.searchText.value.isEmpty()) {
-      val icons = vm.icons.getValue()
-      val suggestIcons = vm.suggestIcons.getValue()
-      val expandState = rememberSaveable { mutableStateOf(false) }
-      val gridState = rememberLazyGridState()
+    Box {
+      val searchBarHeight = 72.dp
 
-      if (icons != null && suggestIcons != null)
-        LazyVerticalGrid(
-          state = gridState,
-          modifier = Modifier.fillMaxSize().padding(horizontal = 2.dp),
-          columns = GridCells.Adaptive(minSize = 74.dp),
-        ) {
-          val shrinkSize = gridState.layoutInfo.maxSpan * 2
-          if (suggestIcons.size > shrinkSize) {
-            variantIconTitle(context.getString(R.string.iconChooser_suggestedIcons), expandState)
-            variantIconItems(if (expandState.value) suggestIcons else suggestIcons.take(shrinkSize))
-          } else {
-            variantIconTitle(context.getString(R.string.iconChooser_suggestedIcons))
-            variantIconItems(suggestIcons)
+      if (vm.searchText.value.isEmpty()) {
+        val icons = vm.icons.getValue()
+        val suggestIcons = vm.suggestIcons.getValue()
+        val expandState = rememberSaveable { mutableStateOf(false) }
+
+        ScrollIndicationBox(
+          modifier = Modifier.clip(MaterialTheme.shapes.large),
+          state = rememberLazyGridState(),
+          radius = 16.dp,
+        ) { gridState ->
+          if (icons != null && suggestIcons != null)
+            LazyVerticalGrid(
+              state = gridState,
+              modifier = Modifier.fillMaxSize().padding(horizontal = 2.dp),
+              columns = GridCells.Adaptive(minSize = 74.dp),
+              contentPadding = PaddingValues(top = searchBarHeight),
+            ) {
+              val shrinkSize = gridState.layoutInfo.maxSpan * 2
+              if (suggestIcons.size > shrinkSize) {
+                variantIconTitle(
+                  context.getString(R.string.iconChooser_suggestedIcons),
+                  expandState,
+                )
+                variantIconItems(
+                  if (expandState.value) suggestIcons else suggestIcons.take(shrinkSize)
+                )
+              } else {
+                variantIconTitle(context.getString(R.string.iconChooser_suggestedIcons))
+                variantIconItems(suggestIcons)
+              }
+
+              variantIconTitle(context.getString(R.string.iconChooser_allIcons))
+              variantIconItems(icons)
+            }
+          else Loading(Modifier.padding(top = searchBarHeight))
+        }
+      } else {
+        val filteredIcons = vm.filteredIcons.getValue()
+        ScrollIndicationBox(
+          modifier = Modifier.clip(MaterialTheme.shapes.large),
+          state = rememberLazyGridState(),
+          radius = 16.dp,
+        ) { gridState ->
+          if (filteredIcons != null)
+            LazyVerticalGrid(
+              state = gridState,
+              modifier = Modifier.fillMaxSize().padding(horizontal = 2.dp),
+              columns = GridCells.Adaptive(minSize = 74.dp),
+              contentPadding = PaddingValues(top = searchBarHeight),
+            ) {
+              variantIconItems(filteredIcons)
+            }
+          else Loading(Modifier.padding(top = searchBarHeight))
+        }
+      }
+
+      RoundSearchBar(
+        vm.searchText,
+        stringResource(R.string.common_search),
+        modifier = Modifier.padding(vertical = 8.dp),
+        trailingIcon = {
+          Row {
+            AnimatedVisibility(vm.searchText.value.isNotEmpty()) {
+              IconButtonWithTooltip(Icons.Outlined.Clear, "Clear", IconButtonStyle.None) {
+                vm.searchText.value = ""
+              }
+            }
+            IconButtonWithTooltip(Icons.Outlined.FilterList, "By pack", IconButtonStyle.None) {
+              packDialogState.value = true
+            }
           }
-
-          variantIconTitle(context.getString(R.string.iconChooser_allIcons))
-          variantIconItems(icons)
-        }
-      else Loading()
-    } else {
-      val filteredIcons = vm.filteredIcons.getValue()
-
-      if (filteredIcons != null)
-        LazyVerticalGrid(
-          modifier = Modifier.fillMaxSize().padding(horizontal = 2.dp),
-          columns = GridCells.Adaptive(minSize = 74.dp),
-        ) {
-          variantIconItems(filteredIcons)
-        }
-      else Loading()
+        },
+      ) {
+        Icon(Icons.Outlined.Search, contentDescription = "Search")
+      }
     }
 
     LazyListDialog(
@@ -224,7 +257,11 @@ fun IconChooserSheet(
         title = { Text(stringResource(R.string.common_options)) },
         value =
           listOf(
-            Option(null, stringResource(R.string.iconChooser_asNormalIcon), ::replaceAsNormalIcon),
+            Option(
+              Icons.Outlined.Circle,
+              stringResource(R.string.iconChooser_asNormalIcon),
+              ::replaceAsNormalIcon,
+            ),
             Option(
               Icons.Outlined.CalendarMonth,
               stringResource(R.string.iconChooser_asCalendarIcon),
@@ -249,8 +286,8 @@ fun IconChooserSheet(
 }
 
 @Composable
-private fun Loading() {
-  Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
+private fun Loading(modifier: Modifier = Modifier) {
+  Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
     LoadingCircle(modifier = Modifier.fillMaxWidth().height(128.dp))
   }
 }
