@@ -17,8 +17,10 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Download
 import androidx.compose.material.icons.outlined.FormatColorFill
+import androidx.compose.material.icons.outlined.ImportExport
 import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material.icons.outlined.Restore
 import androidx.compose.material.icons.outlined.Search
@@ -26,18 +28,24 @@ import androidx.compose.material.icons.outlined.Upload
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FloatingActionButtonMenu
+import androidx.compose.material3.FloatingActionButtonMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.ToggleFloatingActionButton
+import androidx.compose.material3.ToggleFloatingActionButtonDefaults.animateIcon
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
@@ -48,7 +56,7 @@ import com.richardluo.globalIconPack.ui.components.AnimatedNavHost
 import com.richardluo.globalIconPack.ui.components.AppFilterButtonGroup
 import com.richardluo.globalIconPack.ui.components.AppIcon
 import com.richardluo.globalIconPack.ui.components.AutoFillDialog
-import com.richardluo.globalIconPack.ui.components.ExpandFabScrollConnection
+import com.richardluo.globalIconPack.ui.components.ExpandedScrollConnection
 import com.richardluo.globalIconPack.ui.components.IconButtonWithTooltip
 import com.richardluo.globalIconPack.ui.components.LoadingCircle
 import com.richardluo.globalIconPack.ui.components.LoadingDialog
@@ -97,11 +105,11 @@ class IconVariantActivity : ComponentActivity() {
     }
   }
 
-  @OptIn(ExperimentalMaterial3Api::class)
+  @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
   @Composable
   private fun Screen() {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
-    val expandFabScrollConnection = remember { ExpandFabScrollConnection() }
+    val expandedScrollConnection = remember { ExpandedScrollConnection() }
     val expandSearchBar = rememberSaveable { mutableStateOf(false) }
     val resetWarnDialogState = rememberSaveable { mutableStateOf(false) }
 
@@ -109,7 +117,7 @@ class IconVariantActivity : ComponentActivity() {
       modifier =
         Modifier.fillMaxSize()
           .nestedScroll(scrollBehavior.nestedScrollConnection)
-          .nestedScroll(expandFabScrollConnection),
+          .nestedScroll(expandedScrollConnection),
       topBar = {
         WithSearch(expandSearchBar, vm.searchText) {
           TopAppBar(
@@ -158,27 +166,6 @@ class IconVariantActivity : ComponentActivity() {
                     }
                   },
                 )
-                HorizontalDivider()
-                DropdownMenuItem(
-                  leadingIcon = {
-                    Icon(Icons.Outlined.Upload, stringResource(R.string.iconVariant_menu_export))
-                  },
-                  text = { Text(stringResource(R.string.iconVariant_menu_export)) },
-                  onClick = {
-                    exportLauncher.launch("${vm.pack}.xml")
-                    expand = false
-                  },
-                )
-                DropdownMenuItem(
-                  leadingIcon = {
-                    Icon(Icons.Outlined.Download, stringResource(R.string.iconVariant_menu_import))
-                  },
-                  text = { Text(stringResource(R.string.iconVariant_menu_import)) },
-                  onClick = {
-                    importLauncher.launch(arrayOf("text/xml"))
-                    expand = false
-                  },
-                )
               }
               AutoFillDialog(autoFillState) { vm.autoFill(it) }
             },
@@ -214,13 +201,59 @@ class IconVariantActivity : ComponentActivity() {
         else LoadingCircle()
 
         val animatedFloat by
-          animateFloatAsState(targetValue = if (expandFabScrollConnection.isExpand) 0f else 1f)
+          animateFloatAsState(targetValue = if (expandedScrollConnection.expanded) 0f else 1f)
         AppFilterButtonGroup(
           Modifier.padding(horizontal = 8.dp)
             .fillMaxWidth()
             .offset(y = -appFilterHeight * animatedFloat),
           vm.filterType,
         )
+
+        var expandedFabMenu by rememberSaveable { mutableStateOf(false) }
+        FloatingActionButtonMenu(
+          expandedFabMenu,
+          modifier =
+            Modifier.align(Alignment.BottomEnd)
+              .padding(bottom = contentPadding.calculateBottomPadding()),
+          button = {
+            ToggleFloatingActionButton(
+              checked = expandedFabMenu,
+              onCheckedChange = { expandedFabMenu = !expandedFabMenu },
+            ) {
+              val icon by remember {
+                derivedStateOf {
+                  if (checkedProgress > 0.5f) Icons.Outlined.Close else Icons.Outlined.ImportExport
+                }
+              }
+              Icon(
+                imageVector = icon,
+                contentDescription = "Import/Export",
+                modifier = Modifier.animateIcon({ checkedProgress }),
+              )
+            }
+          },
+        ) {
+          FloatingActionButtonMenuItem(
+            {
+              exportLauncher.launch("${vm.pack}.xml")
+              expandedFabMenu = false
+            },
+            icon = {
+              Icon(Icons.Outlined.Upload, stringResource(R.string.iconVariant_menu_export))
+            },
+            text = { Text(stringResource(R.string.iconVariant_menu_export)) },
+          )
+          FloatingActionButtonMenuItem(
+            {
+              importLauncher.launch(arrayOf("text/xml"))
+              expandedFabMenu = false
+            },
+            icon = {
+              Icon(Icons.Outlined.Download, stringResource(R.string.iconVariant_menu_import))
+            },
+            text = { Text(stringResource(R.string.iconVariant_menu_import)) },
+          )
+        }
       }
 
       if (vm.loading > 0) LoadingDialog()
