@@ -530,7 +530,7 @@ object MainPreference {
       { Text(modeToSummary(context, mode)) },
       selected,
       pos.toShape(),
-      onClick,
+      onClick = onClick,
     )
   }
 

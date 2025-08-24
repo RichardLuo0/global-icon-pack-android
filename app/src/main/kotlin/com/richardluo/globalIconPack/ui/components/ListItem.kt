@@ -4,14 +4,11 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.selectable
@@ -28,12 +25,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
 import com.richardluo.globalIconPack.R
+import com.richardluo.globalIconPack.utils.chain
 
 enum class ListItemPos {
   Top,
@@ -95,21 +94,26 @@ fun ListItem(
   leading: @Composable (() -> Unit)? = null,
   headline: @Composable () -> Unit,
   supporting: @Composable () -> Unit,
-  selected: Boolean,
-  shape: CornerBasedShape = listSingleItemShape,
-  onClick: () -> Unit,
+  selected: Boolean = false,
+  shape: CornerBasedShape? = listSingleItemShape,
+  padding: PaddingValues = listItemPadding,
+  onClick: (() -> Unit)? = null,
 ) {
   Box(
     modifier =
       Modifier.fillMaxWidth()
-        .padding(listItemPadding)
-        .clip(shape)
-        .background(
-          if (selected) MaterialTheme.colorScheme.primaryFixedDim
-          else MaterialTheme.colorScheme.surfaceContainerLow
-        )
-        .selectable(selected, true, Role.RadioButton, onClick = onClick)
-        .padding(horizontal = 8.dp, vertical = 10.dp)
+        .padding(padding)
+        .chain {
+          shape?.let {
+            clip(it)
+              .background(
+                if (selected) MaterialTheme.colorScheme.primaryFixedDim
+                else MaterialTheme.colorScheme.surfaceContainerLow
+              )
+          }
+        }
+        .chain { onClick?.let { selectable(selected, true, Role.RadioButton, onClick = onClick) } }
+        .padding(horizontal = 12.dp, vertical = 10.dp)
   ) {
     ListItemContent(leading, headline, supporting, selected)
   }
@@ -122,39 +126,73 @@ fun ListItemContent(
   supporting: @Composable () -> Unit,
   selected: Boolean = false,
 ) {
-  Row(modifier = Modifier.height(IntrinsicSize.Min)) {
-    if (leading != null) {
-      CompositionLocalProvider(
-        LocalContentColor provides
-          if (selected) MaterialTheme.colorScheme.onPrimaryFixed
-          else MaterialTheme.colorScheme.secondary
-      ) {
-        Box(modifier = Modifier.fillMaxHeight(), contentAlignment = Alignment.Center) { leading() }
+  val textPart =
+    @Composable {
+      Column {
+        ProvideContentColorTextStyle(
+          contentColor =
+            if (selected) MaterialTheme.colorScheme.onPrimaryFixed
+            else MaterialTheme.colorScheme.onSurface,
+          textStyle = MaterialTheme.typography.bodyLarge,
+          headline,
+        )
+        ProvideContentColorTextStyle(
+          contentColor =
+            if (selected) MaterialTheme.colorScheme.onPrimaryFixedVariant
+            else MaterialTheme.colorScheme.onSurfaceVariant,
+          textStyle = MaterialTheme.typography.bodySmall,
+          supporting,
+        )
       }
-      Spacer(modifier = Modifier.width(12.dp))
     }
-    Column {
-      ProvideContentColorTextStyle(
-        contentColor =
-          if (selected) MaterialTheme.colorScheme.onPrimaryFixed
-          else MaterialTheme.colorScheme.onSurface,
-        textStyle = MaterialTheme.typography.bodyLarge,
-        headline,
-      )
-      ProvideContentColorTextStyle(
-        contentColor =
-          if (selected) MaterialTheme.colorScheme.onPrimaryFixedVariant
-          else MaterialTheme.colorScheme.onSurfaceVariant,
-        textStyle = MaterialTheme.typography.bodySmall,
-        supporting,
-      )
+
+  if (leading != null)
+    Layout(
+      content = {
+        CompositionLocalProvider(
+          LocalContentColor provides
+            if (selected) MaterialTheme.colorScheme.onPrimaryFixed
+            else MaterialTheme.colorScheme.secondary
+        ) {
+          Box(modifier = Modifier.fillMaxHeight(), contentAlignment = Alignment.Center) {
+            leading()
+          }
+        }
+        Spacer(modifier = Modifier.width(12.dp))
+        textPart()
+      }
+    ) { measurables, constraints ->
+      val leading = measurables[0]
+      val others = measurables.drop(1)
+
+      val estimatedHeight = others.maxOf { it.maxIntrinsicHeight(constraints.maxWidth) }
+      val leadingWidth = leading.minIntrinsicWidth(estimatedHeight)
+
+      var newOtherWidth = constraints.maxWidth - leadingWidth
+      val otherPlaceables =
+        others.map {
+          it.measure(constraints.copy(maxWidth = newOtherWidth)).also { newOtherWidth -= it.width }
+        }
+      val height = otherPlaceables.maxOf { it.height }
+      val leadingPlaceable =
+        leading.measure(constraints.copy(maxWidth = leadingWidth, maxHeight = height))
+
+      layout(constraints.maxWidth, height) {
+        var x = 0
+        leadingPlaceable.placeRelative(x, 0)
+        x += leadingPlaceable.width
+        otherPlaceables.forEach {
+          it.placeRelative(x, 0)
+          x += it.width
+        }
+      }
     }
-  }
+  else textPart()
 }
 
 @Preview(showBackground = true)
 @Composable
-fun IconPackItemContentPreview() {
+fun ListItemPreview() {
   val context = LocalContext.current
   val image =
     remember(context) { context.getDrawable(R.drawable.broken_image)!!.toBitmap().asImageBitmap() }

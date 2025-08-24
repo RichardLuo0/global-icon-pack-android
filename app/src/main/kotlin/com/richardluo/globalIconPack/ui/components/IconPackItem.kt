@@ -1,12 +1,8 @@
 package com.richardluo.globalIconPack.ui.components
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.shape.CornerBasedShape
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.core.graphics.drawable.toBitmap
@@ -14,14 +10,11 @@ import com.richardluo.globalIconPack.ui.repo.IconPackApp
 
 @Composable
 private fun IconPackIcon(app: IconPackApp) {
-  Box(modifier = Modifier.fillMaxHeight().aspectRatio(1f)) {
-    Image(
-      bitmap = app.icon.toBitmap().asImageBitmap(),
-      contentDescription = app.label,
-      modifier = Modifier.matchParentSize(),
-      contentScale = ContentScale.Crop,
-    )
-  }
+  Image(
+    bitmap = app.icon.toBitmap().asImageBitmap(),
+    contentDescription = app.label,
+    contentScale = ContentScale.Fit,
+  )
 }
 
 @Composable
@@ -38,7 +31,7 @@ fun IconPackItem(
     { OneLineText(pack) },
     selected,
     shape,
-    onClick,
+    onClick = onClick,
   )
 }
 

@@ -2,14 +2,13 @@ package com.richardluo.globalIconPack.ui
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
@@ -25,7 +24,6 @@ import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PrimaryTabRow
@@ -47,19 +45,21 @@ import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.richardluo.globalIconPack.R
 import com.richardluo.globalIconPack.ui.components.IconButtonWithTooltip
 import com.richardluo.globalIconPack.ui.components.IconChooserSheet
 import com.richardluo.globalIconPack.ui.components.LazyImage
+import com.richardluo.globalIconPack.ui.components.ListItem
+import com.richardluo.globalIconPack.ui.components.ListItemPos
 import com.richardluo.globalIconPack.ui.components.LoadingCircle
 import com.richardluo.globalIconPack.ui.components.MyDropdownMenu
 import com.richardluo.globalIconPack.ui.components.OneLineText
 import com.richardluo.globalIconPack.ui.components.TwoLineText
 import com.richardluo.globalIconPack.ui.components.WithSearch
 import com.richardluo.globalIconPack.ui.components.sharedBounds
+import com.richardluo.globalIconPack.ui.components.toShape
 import com.richardluo.globalIconPack.ui.model.AnyCompIcon
 import com.richardluo.globalIconPack.ui.model.AppCompIcon
 import com.richardluo.globalIconPack.ui.model.to
@@ -115,40 +115,42 @@ fun AppIconListPage(onBack: () -> Unit, iconsHolder: IconsHolder, appIcon: AppCo
             },
             title = { expanded ->
               if (expanded)
-                Row(
-                  verticalAlignment = Alignment.CenterVertically,
-                  modifier = Modifier.padding(end = 18.dp),
-                ) {
-                  LazyImage(
-                    entry?.entry?.name,
-                    contentDescription = info.label,
-                    modifier =
-                      Modifier.size(86.dp).sharedBounds("AppIcon/$packageName").clickable {
-                        openChooser(compIcon)
-                      },
-                    contentScale = ContentScale.Crop,
-                    loadImage = { iconsHolder.loadIcon(compIcon) },
-                  )
-                  Spacer(modifier = Modifier.width(16.dp))
-                  Column {
+                ListItem(
+                  {
+                    LazyImage(
+                      entry?.entry?.name,
+                      contentDescription = info.label,
+                      modifier =
+                        Modifier.sharedBounds("AppIcon/$packageName").aspectRatio(1f).clickable {
+                          openChooser(compIcon)
+                        },
+                      contentScale = ContentScale.Fit,
+                      loadImage = { iconsHolder.loadIcon(compIcon) },
+                    )
+                  },
+                  {
                     TwoLineText(
                       info.label,
                       modifier = Modifier.sharedBounds("AppLabel/$packageName"),
+                      style = MaterialTheme.typography.headlineMedium,
                     )
+                  },
+                  {
                     OneLineText(
                       info.componentName.packageName,
-                      color = MaterialTheme.colorScheme.onSurfaceVariant,
                       style = MaterialTheme.typography.bodyMedium,
                     )
-                  }
-                }
+                  },
+                  shape = null,
+                  padding = PaddingValues.Zero,
+                )
               else
                 Row(verticalAlignment = Alignment.CenterVertically) {
                   LazyImage(
                     entry?.entry?.name,
                     contentDescription = info.label,
                     modifier = Modifier.size(36.dp).clickable { openChooser(compIcon) },
-                    contentScale = ContentScale.Crop,
+                    contentScale = ContentScale.Fit,
                     loadImage = { iconsHolder.loadIcon(compIcon) },
                   )
                   Spacer(modifier = Modifier.width(12.dp))
@@ -227,42 +229,29 @@ private fun IconList(
 ) {
   if (icons != null)
     LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = contentPadding) {
+      item { Spacer(Modifier.height(12.dp)) }
       itemsIndexed(icons, key = { _, it -> it.info.componentName.className }) { index, it ->
         val (info) = it
-        Row(
-          modifier =
-            Modifier.fillMaxWidth()
-              .height(IntrinsicSize.Min)
-              .clickable { onClick(it) }
-              .padding(horizontal = 8.dp, vertical = 8.dp),
-          verticalAlignment = Alignment.CenterVertically,
+        ListItem(
+          {
+            LazyImage(
+              it.entry?.entry?.name,
+              contentDescription = info.label,
+              modifier = Modifier.aspectRatio(1f),
+              contentScale = ContentScale.Fit,
+              loadImage = { loadIcon(it) },
+            )
+          },
+          { OneLineText(info.label) },
+          {
+            OneLineText(
+              info.componentName.shortClassName.ifEmpty { info.componentName.packageName }
+            )
+          },
+          shape = ListItemPos.from(index, icons.size).toShape(),
         ) {
-          LazyImage(
-            it.entry?.entry?.name,
-            contentDescription = info.label,
-            modifier = Modifier.size(47.dp),
-            contentScale = ContentScale.Crop,
-            loadImage = { loadIcon(it) },
-          )
-          Spacer(modifier = Modifier.width(12.dp))
-          Column(modifier = Modifier.weight(1f)) {
-            Text(
-              info.label,
-              color = MaterialTheme.colorScheme.onSurface,
-              style = MaterialTheme.typography.bodyLarge,
-              maxLines = 1,
-              overflow = TextOverflow.Ellipsis,
-            )
-            Text(
-              info.componentName.shortClassName.ifEmpty { info.componentName.packageName },
-              color = MaterialTheme.colorScheme.onSurfaceVariant,
-              style = MaterialTheme.typography.bodySmall,
-              maxLines = 1,
-              overflow = TextOverflow.Ellipsis,
-            )
-          }
+          onClick(it)
         }
-        if (index < icons.lastIndex) HorizontalDivider()
       }
     }
   else LoadingCircle()
