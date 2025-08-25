@@ -13,16 +13,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.outlined.Clear
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -36,14 +33,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import com.richardluo.globalIconPack.R
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RoundSearchBar(
   state: MutableState<String>,
@@ -53,10 +48,12 @@ fun RoundSearchBar(
   leadingIcon: @Composable () -> Unit,
 ) {
   val focusManager = LocalFocusManager.current
-  val keyboardController = LocalSoftwareKeyboardController.current
-  TextField(
-    value = state.value,
-    onValueChange = { state.value = it },
+  SearchBarDefaults.InputField(
+    query = state.value,
+    onQueryChange = { state.value = it },
+    onSearch = { focusManager.clearFocus() },
+    expanded = true,
+    onExpandedChange = {},
     placeholder = { Text(placeHolder) },
     leadingIcon = leadingIcon,
     trailingIcon = {
@@ -69,23 +66,7 @@ fun RoundSearchBar(
         trailingIcon?.invoke(this)
       }
     },
-    singleLine = true,
-    shape = MaterialTheme.shapes.extraLarge,
     modifier = modifier.fillMaxWidth().padding(horizontal = 12.dp),
-    colors =
-      TextFieldDefaults.colors(
-        focusedIndicatorColor = Color.Transparent,
-        unfocusedIndicatorColor = Color.Transparent,
-        disabledIndicatorColor = Color.Transparent,
-      ),
-    keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Search),
-    keyboardActions =
-      KeyboardActions(
-        onSearch = {
-          keyboardController?.hide()
-          focusManager.clearFocus()
-        }
-      ),
   )
 }
 

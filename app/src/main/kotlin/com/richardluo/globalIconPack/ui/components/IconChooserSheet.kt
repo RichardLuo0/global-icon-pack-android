@@ -30,6 +30,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.SearchBarDefaults.inputFieldShape
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -227,7 +228,7 @@ fun IconChooserSheet(
           RoundSearchBar(
             vm.searchText,
             stringResource(R.string.common_search),
-            modifier = Modifier.shadow(6.dp, MaterialTheme.shapes.extraLarge),
+            modifier = Modifier.shadow(6.dp, inputFieldShape),
             trailingIcon = {
               IconButtonWithTooltip(Icons.Outlined.FilterList, "By pack", IconButtonStyle.None) {
                 packDialogState.value = true
