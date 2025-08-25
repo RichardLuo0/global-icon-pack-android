@@ -226,11 +226,13 @@ fun IconChooserSheet(
       AnimatedContent(
         expandedScrollConnection.expanded,
         modifier = Modifier.padding(vertical = 8.dp),
+        contentAlignment = Alignment.CenterStart,
       ) {
         if (it)
           RoundSearchBar(
             vm.searchText,
             stringResource(R.string.common_search),
+            modifier = Modifier.shadow(6.dp, MaterialTheme.shapes.extraLarge),
             trailingIcon = {
               Row {
                 AnimatedVisibility(vm.searchText.value.isNotEmpty()) {
