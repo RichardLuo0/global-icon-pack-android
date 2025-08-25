@@ -53,7 +53,7 @@ fun <T> LazyListDialog(
   LazyDialog(openState, title, value, dismissible) { list ->
     if (list.isEmpty()) Nothing()
     else
-      ScrollIndicationBox(
+      ScrollIndicator(
         modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
         state =
           rememberSaveable(saver = LazyListState.Saver) {

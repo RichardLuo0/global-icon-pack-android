@@ -69,7 +69,7 @@ fun AutoFillDialog(vm: AutoFillState = rememberAutoFillState(), onOk: (List<Stri
       color = MaterialTheme.colorScheme.onSurfaceVariant,
     )
 
-    ScrollIndicationBox(
+    ScrollIndicator(
       modifier = Modifier.fillMaxWidth().weight(1f, false).padding(vertical = 8.dp),
       state = lazyListState,
     ) {

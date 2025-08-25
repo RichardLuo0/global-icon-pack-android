@@ -111,7 +111,7 @@ import com.richardluo.globalIconPack.ui.components.LoadingDialog
 import com.richardluo.globalIconPack.ui.components.LocalNavControllerWithArgs
 import com.richardluo.globalIconPack.ui.components.MyDropdownMenu
 import com.richardluo.globalIconPack.ui.components.SampleTheme
-import com.richardluo.globalIconPack.ui.components.ScrollIndicationBox
+import com.richardluo.globalIconPack.ui.components.ScrollIndicator
 import com.richardluo.globalIconPack.ui.components.WarnDialog
 import com.richardluo.globalIconPack.ui.components.WithSearch
 import com.richardluo.globalIconPack.ui.components.appFilterHeight
@@ -402,10 +402,7 @@ class IconPackMergerActivity : ComponentActivity() {
       value = vm.optionsFlow,
     ) {
       ProvidePreferenceLocals(flow = it, myPreferenceTheme()) {
-        ScrollIndicationBox(
-          modifier = Modifier.padding(top = 8.dp),
-          state = iconOptionScrollState,
-        ) {
+        ScrollIndicator(modifier = Modifier.padding(top = 8.dp), state = iconOptionScrollState) {
           MainPreference.Fallback(state = it)
         }
       }

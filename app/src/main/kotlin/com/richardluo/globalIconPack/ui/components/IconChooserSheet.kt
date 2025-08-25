@@ -46,6 +46,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -172,10 +173,10 @@ fun IconChooserSheet(
         val suggestIcons = vm.suggestIcons.getValue()
         val expandState = rememberSaveable { mutableStateOf(false) }
 
-        ScrollIndicationBox(
-          modifier = Modifier.clip(MaterialTheme.shapes.large),
+        ScrollIndicator(
           state = rememberLazyGridState(),
-          radius = 16.dp,
+          radius = 24f,
+          shape = MaterialTheme.shapes.large,
         ) { gridState ->
           if (icons != null && suggestIcons != null)
             LazyVerticalGrid(
@@ -205,10 +206,10 @@ fun IconChooserSheet(
         }
       } else {
         val filteredIcons = vm.filteredIcons.getValue()
-        ScrollIndicationBox(
-          modifier = Modifier.clip(MaterialTheme.shapes.large),
+        ScrollIndicator(
           state = rememberLazyGridState(),
-          radius = 16.dp,
+          radius = 24f,
+          shape = MaterialTheme.shapes.large,
         ) { gridState ->
           if (filteredIcons != null)
             LazyVerticalGrid(
