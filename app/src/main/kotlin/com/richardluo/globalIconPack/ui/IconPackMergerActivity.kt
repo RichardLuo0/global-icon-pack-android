@@ -41,6 +41,7 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -163,8 +164,9 @@ class IconPackMergerActivity : ComponentActivity() {
     val title: String,
     val actions: @Composable (RowScope.() -> Unit)? = null,
     val fab: @Composable (() -> Unit)? = null,
-    val animatedFab: FabDesc? = null,
-    val screen: @Composable (ConsumablePadding) -> Unit,
+    val animatedFab: (PagerState) -> FabDesc? = { null },
+    val userScrollEnabled: () -> Boolean = { true },
+    val screen: @Composable (ConsumablePadding, PagerState) -> Unit,
   )
 
   @OptIn(ExperimentalMaterial3Api::class)
@@ -175,13 +177,10 @@ class IconPackMergerActivity : ComponentActivity() {
     val warningDialogState = rememberSaveable { mutableStateOf(false) }
     val instructionDialogState = rememberSaveable { mutableStateOf(false) }
 
-    val pagerState = rememberPagerState(pageCount = { 3 })
-    val scrollBehavior = pinnedScrollBehaviorWithPager(pagerState)
     val expandedScrollConnection = remember { ExpandedScrollConnection() }
-    LaunchedEffect(pagerState.currentPage) { expandedScrollConnection.expanded = true }
-
     val coroutineScope = rememberCoroutineScope()
-    val nextStep = remember {
+
+    val nextStep = { pagerState: PagerState ->
       FabDesc(Icons.AutoMirrored.Outlined.ArrowForward, getString(R.string.merger_nextStep)) {
         coroutineScope.launch { pagerState.animateScrollToPage(pagerState.currentPage + 1) }
       }
@@ -194,8 +193,12 @@ class IconPackMergerActivity : ComponentActivity() {
 
     val pages = remember {
       arrayOf(
-        Page(getString(R.string.merger_basePack_title), animatedFab = nextStep) {
-          SelectBasePack(it) { coroutineScope.launch { pagerState.animateScrollToPage(1) } }
+        Page(
+          getString(R.string.merger_basePack_title),
+          animatedFab = { if (vm.basePack == null) null else nextStep(it) },
+          userScrollEnabled = { vm.basePack != null },
+        ) { it, pagerState ->
+          ChooseBasePack(it) { coroutineScope.launch { pagerState.animateScrollToPage(1) } }
         },
         Page(
           getString(R.string.merger_replaceIcons_title),
@@ -206,12 +209,19 @@ class IconPackMergerActivity : ComponentActivity() {
             }
           },
           animatedFab = nextStep,
-        ) {
+        ) { it, pagerState ->
           IconList(it, iconOptionDialogState, expandedScrollConnection)
         },
-        Page(getString(R.string.merger_newPack_title), animatedFab = done) { PackInfoForm(it) },
+        Page(getString(R.string.merger_newPack_title), animatedFab = { done }) { it, pagerState ->
+          PackInfoForm(it)
+        },
       )
     }
+
+    val pagerState = rememberPagerState(pageCount = { pages.size })
+    val scrollBehavior = pinnedScrollBehaviorWithPager(pagerState)
+
+    LaunchedEffect(pagerState.currentPage) { expandedScrollConnection.expanded = true }
 
     PredictiveBackHandler(enabled = pagerState.settledPage > 0) { progress ->
       val oriPage = pagerState.currentPage
@@ -284,8 +294,8 @@ class IconPackMergerActivity : ComponentActivity() {
               }
           }
 
-          val fabState = pages[pagerState.currentPage].animatedFab
-          if (fabState != null) AnimatedFab(fabState, expandedScrollConnection.expanded)
+          val fabDesc = pages[pagerState.currentPage].animatedFab(pagerState)
+          if (fabDesc != null) AnimatedFab(fabDesc, expandedScrollConnection.expanded)
         }
       },
     ) { contentPadding ->
@@ -297,9 +307,9 @@ class IconPackMergerActivity : ComponentActivity() {
         pagerState,
         contentPadding = consumablePadding.consume(),
         beyondViewportPageCount = 2,
-        userScrollEnabled = vm.basePack != null,
+        userScrollEnabled = pages[pagerState.currentPage].userScrollEnabled(),
       ) {
-        pages[it].screen(pagePadding)
+        pages[it].screen(pagePadding, pagerState)
       }
     }
 
@@ -333,7 +343,7 @@ class IconPackMergerActivity : ComponentActivity() {
   }
 
   @Composable
-  private fun SelectBasePack(consumablePadding: ConsumablePadding, scrollToNextPage: () -> Unit) {
+  private fun ChooseBasePack(consumablePadding: ConsumablePadding, scrollToNextPage: () -> Unit) {
     val valueMap = IconPackApps.flow.collectAsState(null).value
     if (valueMap == null) LoadingCircle()
     else
