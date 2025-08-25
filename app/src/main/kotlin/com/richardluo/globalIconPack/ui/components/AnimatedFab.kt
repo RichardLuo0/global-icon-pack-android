@@ -15,11 +15,11 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 
 class FabDesc(val icon: ImageVector, val text: String, val onClick: () -> Unit)
 
-open class ExpandedScrollConnection : NestedScrollConnection {
+open class ExpandedScrollConnection(val threshold: Float = 60f) : NestedScrollConnection {
   var expanded by mutableStateOf(true)
 
   override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-    if (available.y > 1) expanded = true else if (available.y < -1) expanded = false
+    if (available.y > 1) expanded = true else if (available.y < -threshold) expanded = false
     return Offset.Zero
   }
 }
