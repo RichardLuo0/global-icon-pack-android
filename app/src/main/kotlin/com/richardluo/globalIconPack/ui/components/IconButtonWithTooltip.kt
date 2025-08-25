@@ -37,9 +37,7 @@ fun IconButtonWithTooltip(
   ) {
     when (style) {
       IconButtonStyle.None ->
-        IconButton(onClick, shapes = IconButtonDefaults.shapes()) {
-          Icon(imageVector = icon, contentDescription = tooltip)
-        }
+        IconButton(onClick) { Icon(imageVector = icon, contentDescription = tooltip) }
       IconButtonStyle.Outlined ->
         OutlinedIconButton(onClick, shapes = IconButtonDefaults.shapes()) {
           Icon(imageVector = icon, contentDescription = tooltip)
