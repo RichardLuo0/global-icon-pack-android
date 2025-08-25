@@ -71,6 +71,8 @@ The list may not be latest.
 - French
   - MickMick21
   - Jules
+- Portuguese
+  - Cauã
 
 ## Disclaimer
 > [!WARNING]
