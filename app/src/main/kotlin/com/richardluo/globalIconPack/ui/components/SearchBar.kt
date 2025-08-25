@@ -2,9 +2,6 @@ package com.richardluo.globalIconPack.ui.components
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -15,7 +12,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
-import androidx.compose.material.icons.outlined.Clear
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SearchBarDefaults
@@ -58,11 +54,7 @@ fun RoundSearchBar(
     leadingIcon = leadingIcon,
     trailingIcon = {
       Row {
-        AnimatedVisibility(state.value.isNotEmpty(), enter = fadeIn(), exit = fadeOut()) {
-          IconButtonWithTooltip(Icons.Outlined.Clear, "Clear", IconButtonStyle.None) {
-            state.value = ""
-          }
-        }
+        ClearIconButton(state)
         trailingIcon?.invoke(this)
       }
     },

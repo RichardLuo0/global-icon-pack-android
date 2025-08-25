@@ -30,7 +30,6 @@ import androidx.compose.material.icons.automirrored.outlined.Shortcut
 import androidx.compose.material.icons.outlined.Apps
 import androidx.compose.material.icons.outlined.Backpack
 import androidx.compose.material.icons.outlined.CalendarMonth
-import androidx.compose.material.icons.outlined.Clear
 import androidx.compose.material.icons.outlined.ColorLens
 import androidx.compose.material.icons.outlined.CropOriginal
 import androidx.compose.material.icons.outlined.Edit
@@ -75,6 +74,8 @@ import com.richardluo.globalIconPack.MODE_SHARE
 import com.richardluo.globalIconPack.Pref
 import com.richardluo.globalIconPack.R
 import com.richardluo.globalIconPack.get
+import com.richardluo.globalIconPack.ui.components.ClearIconButton
+import com.richardluo.globalIconPack.ui.components.IconButtonStyle
 import com.richardluo.globalIconPack.ui.components.IconButtonWithTooltip
 import com.richardluo.globalIconPack.ui.components.IconPackItem
 import com.richardluo.globalIconPack.ui.components.ListItem
@@ -420,7 +421,7 @@ object MainPreference {
               }
           )
         },
-        trailingIcon = { IconButtonWithTooltip(Icons.Outlined.Clear, "Clear") { it.value = "" } },
+        trailingIcon = { ClearIconButton(it) },
         onCancel = dismiss,
       ) {
         runCatchingToastOnMain(context) {
@@ -464,7 +465,7 @@ object MainPreference {
           maxLines = 2,
           onCancel = dismiss,
           trailingIcon = {
-            IconButtonWithTooltip(Icons.Outlined.Restore, "Restore") {
+            IconButtonWithTooltip(Icons.Outlined.Restore, "Restore", IconButtonStyle.None) {
               it.value = Pref.PIXEL_LAUNCHER_PACKAGE.def
             }
           },
