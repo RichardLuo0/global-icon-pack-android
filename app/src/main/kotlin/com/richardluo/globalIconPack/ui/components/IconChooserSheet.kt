@@ -160,7 +160,7 @@ fun IconChooserSheet(
       }
     }
 
-    Box(modifier = Modifier.nestedScroll(expandedScrollConnection)) {
+    Box(modifier = Modifier.nestedScroll(expandedScrollConnection).clearFocusOnScroll()) {
       val searchBarHeight = 72.dp
 
       if (vm.searchText.value.isEmpty()) {

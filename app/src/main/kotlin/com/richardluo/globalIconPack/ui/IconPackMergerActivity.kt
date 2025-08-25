@@ -119,6 +119,7 @@ import com.richardluo.globalIconPack.ui.components.ScrollIndicator
 import com.richardluo.globalIconPack.ui.components.WarnDialog
 import com.richardluo.globalIconPack.ui.components.WithSearch
 import com.richardluo.globalIconPack.ui.components.appFilterHeight
+import com.richardluo.globalIconPack.ui.components.clearFocusOnScroll
 import com.richardluo.globalIconPack.ui.components.myPreferenceTheme
 import com.richardluo.globalIconPack.ui.components.navPage
 import com.richardluo.globalIconPack.ui.components.pinnedScrollBehaviorWithPager
@@ -251,7 +252,8 @@ class IconPackMergerActivity : ComponentActivity() {
             scaffoldBottom = with(density) { (it.positionInRoot().y + it.size.height).toDp() }
           }
           .nestedScroll(scrollBehavior.nestedScrollConnection)
-          .nestedScroll(expandedScrollConnection),
+          .nestedScroll(expandedScrollConnection)
+          .clearFocusOnScroll(),
       topBar = {
         WithSearch(expandSearchBar, vm.searchText) {
           TopAppBar(

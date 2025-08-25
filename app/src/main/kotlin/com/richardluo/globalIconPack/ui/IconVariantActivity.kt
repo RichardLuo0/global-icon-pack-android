@@ -66,6 +66,7 @@ import com.richardluo.globalIconPack.ui.components.SampleTheme
 import com.richardluo.globalIconPack.ui.components.WarnDialog
 import com.richardluo.globalIconPack.ui.components.WithSearch
 import com.richardluo.globalIconPack.ui.components.appFilterHeight
+import com.richardluo.globalIconPack.ui.components.clearFocusOnScroll
 import com.richardluo.globalIconPack.ui.components.navPage
 import com.richardluo.globalIconPack.ui.model.AppCompIcon
 import com.richardluo.globalIconPack.ui.state.rememberAutoFillState
@@ -117,7 +118,8 @@ class IconVariantActivity : ComponentActivity() {
       modifier =
         Modifier.fillMaxSize()
           .nestedScroll(scrollBehavior.nestedScrollConnection)
-          .nestedScroll(expandedScrollConnection),
+          .nestedScroll(expandedScrollConnection)
+          .clearFocusOnScroll(),
       topBar = {
         WithSearch(expandSearchBar, vm.searchText) {
           TopAppBar(
