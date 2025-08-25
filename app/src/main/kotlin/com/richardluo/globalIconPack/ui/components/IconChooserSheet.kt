@@ -2,7 +2,6 @@ package com.richardluo.globalIconPack.ui.components
 
 import android.widget.Toast
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -21,7 +20,6 @@ import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.Circle
-import androidx.compose.material.icons.outlined.Clear
 import androidx.compose.material.icons.outlined.ExpandLess
 import androidx.compose.material.icons.outlined.ExpandMore
 import androidx.compose.material.icons.outlined.FilterList
@@ -75,7 +73,6 @@ fun IconChooserSheet(
 ) {
   val context = LocalContext.current
   val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
-  val expandedScrollConnection = remember { ExpandedScrollConnection() }
   val scope = rememberCoroutineScope()
 
   fun onDismissRequest() {
@@ -85,11 +82,8 @@ fun IconChooserSheet(
 
   if (!vm.variantSheet) return
 
-  ModalBottomSheet(
-    sheetState = sheetState,
-    onDismissRequest = ::onDismissRequest,
-    modifier = Modifier.nestedScroll(expandedScrollConnection),
-  ) {
+  ModalBottomSheet(sheetState = sheetState, onDismissRequest = ::onDismissRequest) {
+    val expandedScrollConnection = remember { ExpandedScrollConnection() }
     val packDialogState = rememberSaveable { mutableStateOf(false) }
     val optionDialogState = remember { mutableStateOf(false) }
     val selectedIcon = remember { mutableStateOf<VariantIcon?>(null) }
@@ -165,7 +159,7 @@ fun IconChooserSheet(
       }
     }
 
-    Box {
+    Box(modifier = Modifier.nestedScroll(expandedScrollConnection)) {
       val searchBarHeight = 72.dp
 
       if (vm.searchText.value.isEmpty()) {
@@ -235,15 +229,8 @@ fun IconChooserSheet(
             stringResource(R.string.common_search),
             modifier = Modifier.shadow(6.dp, MaterialTheme.shapes.extraLarge),
             trailingIcon = {
-              Row {
-                AnimatedVisibility(vm.searchText.value.isNotEmpty()) {
-                  IconButtonWithTooltip(Icons.Outlined.Clear, "Clear", IconButtonStyle.None) {
-                    vm.searchText.value = ""
-                  }
-                }
-                IconButtonWithTooltip(Icons.Outlined.FilterList, "By pack", IconButtonStyle.None) {
-                  packDialogState.value = true
-                }
+              IconButtonWithTooltip(Icons.Outlined.FilterList, "By pack", IconButtonStyle.None) {
+                packDialogState.value = true
               }
             },
           ) {
