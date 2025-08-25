@@ -2,8 +2,13 @@ package com.richardluo.globalIconPack.ui.components
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -12,6 +17,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
+import androidx.compose.material.icons.outlined.Clear
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -43,7 +49,7 @@ fun RoundSearchBar(
   state: MutableState<String>,
   placeHolder: String,
   modifier: Modifier = Modifier,
-  trailingIcon: (@Composable () -> Unit)? = null,
+  trailingIcon: (@Composable RowScope.() -> Unit)? = null,
   leadingIcon: @Composable () -> Unit,
 ) {
   val focusManager = LocalFocusManager.current
@@ -53,7 +59,16 @@ fun RoundSearchBar(
     onValueChange = { state.value = it },
     placeholder = { Text(placeHolder) },
     leadingIcon = leadingIcon,
-    trailingIcon = trailingIcon,
+    trailingIcon = {
+      Row {
+        AnimatedVisibility(state.value.isNotEmpty(), enter = fadeIn(), exit = fadeOut()) {
+          IconButtonWithTooltip(Icons.Outlined.Clear, "Clear", IconButtonStyle.None) {
+            state.value = ""
+          }
+        }
+        trailingIcon?.invoke(this)
+      }
+    },
     singleLine = true,
     shape = MaterialTheme.shapes.extraLarge,
     modifier = modifier.fillMaxWidth().padding(horizontal = 12.dp),
