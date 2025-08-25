@@ -17,6 +17,8 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -60,6 +62,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -169,7 +172,7 @@ class IconPackMergerActivity : ComponentActivity() {
     val screen: @Composable (ConsumablePadding, PagerState) -> Unit,
   )
 
-  @OptIn(ExperimentalMaterial3Api::class)
+  @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
   @Composable
   private fun Screen() {
     val expandSearchBar = rememberSaveable { mutableStateOf(false) }
@@ -256,18 +259,33 @@ class IconPackMergerActivity : ComponentActivity() {
               IconButtonWithTooltip(Icons.AutoMirrored.Outlined.ArrowBack, "Back") { finish() }
             },
             title = {
-              AnimatedContent(targetState = pagerState.currentPage) { Text(pages[it].title) }
+              AnimatedContent(
+                targetState = pagerState.currentPage,
+                contentAlignment = Alignment.CenterStart,
+              ) {
+                Text(pages[it].title)
+              }
             },
             actions = {
-              pages.forEachIndexed { i, it ->
-                val actions = it.actions
+              val targetPage = pages[pagerState.targetPage]
+              val currentPage = pages[pagerState.currentPage]
+
+              val actions = targetPage.actions
+              AnimatedVisibility(
+                actions != null,
+                enter =
+                  fadeIn() +
+                    scaleIn(initialScale = 0.3f) +
+                    slideInHorizontally(MaterialTheme.motionScheme.fastEffectsSpec()) { it / 2 },
+                exit =
+                  fadeOut() +
+                    scaleOut(targetScale = 0.3f) +
+                    slideOutHorizontally(MaterialTheme.motionScheme.fastEffectsSpec()) { it / 2 },
+              ) {
+                val actions = actions ?: currentPage.actions
                 if (actions != null)
-                  AnimatedVisibility(
-                    pagerState.currentPage == i,
-                    enter = fadeIn(),
-                    exit = fadeOut(),
-                  ) {
-                    Row(content = actions)
+                  AnimatedContent(actions, contentAlignment = Alignment.Center) {
+                    Row(content = it)
                   }
               }
             },
@@ -279,23 +297,32 @@ class IconPackMergerActivity : ComponentActivity() {
       floatingActionButton = {
         Column(
           modifier =
-            Modifier.onGloballyPositioned { fabY = with(density) { it.positionInRoot().y.toDp() } }
+            Modifier.onGloballyPositioned { fabY = with(density) { it.positionInRoot().y.toDp() } },
+          horizontalAlignment = Alignment.End,
+          verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-          pages.forEachIndexed { i, it ->
-            val fab = it.fab
-            if (fab != null)
-              AnimatedVisibility(
-                pagerState.currentPage == i,
-                enter = scaleIn(),
-                exit = scaleOut(),
-                modifier = Modifier.align(Alignment.End).padding(bottom = 12.dp),
-              ) {
-                fab()
-              }
+          val targetPage = pages[pagerState.targetPage]
+          val currentPage = pages[pagerState.currentPage]
+
+          val fab = targetPage.fab
+          AnimatedVisibility(
+            fab != null,
+            enter = scaleIn(MaterialTheme.motionScheme.fastSpatialSpec()),
+            exit = scaleOut(MaterialTheme.motionScheme.fastSpatialSpec()),
+          ) {
+            val fab = fab ?: currentPage.fab
+            if (fab != null) AnimatedContent(fab, contentAlignment = Alignment.Center) { it() }
           }
 
-          val fabDesc = pages[pagerState.currentPage].animatedFab(pagerState)
-          if (fabDesc != null) AnimatedFab(fabDesc, expandedScrollConnection.expanded)
+          val fabDesc = targetPage.animatedFab(pagerState)
+          AnimatedVisibility(
+            fabDesc != null,
+            enter = scaleIn(MaterialTheme.motionScheme.fastSpatialSpec()),
+            exit = scaleOut(MaterialTheme.motionScheme.fastSpatialSpec()),
+          ) {
+            val fabDesc = fabDesc ?: currentPage.animatedFab(pagerState)
+            if (fabDesc != null) AnimatedFab(fabDesc, expandedScrollConnection.expanded)
+          }
         }
       },
     ) { contentPadding ->

@@ -12,6 +12,10 @@ import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandHorizontally
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkHorizontally
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -28,6 +32,7 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FloatingToolbarDefaults
 import androidx.compose.material3.HorizontalFloatingToolbar
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
@@ -178,7 +183,10 @@ class MainActivity : ComponentActivity() {
       topBar = {
         TopAppBar(
           title = {
-            AnimatedContent(targetState = pagerState.currentPage, label = "Title text change") {
+            AnimatedContent(
+              targetState = pagerState.currentPage,
+              contentAlignment = Alignment.CenterStart,
+            ) {
               pages.getOrNull(it)?.let { OneLineText(it.name) }
             }
           },
@@ -241,7 +249,11 @@ class MainActivity : ComponentActivity() {
               modifier = Modifier.padding(horizontal = 3.dp),
             ) {
               Icon(page.icon, contentDescription = page.name)
-              AnimatedVisibility(checked) {
+              AnimatedVisibility(
+                checked,
+                enter = fadeIn() + expandHorizontally(MaterialTheme.motionScheme.fastSpatialSpec()),
+                exit = fadeOut() + shrinkHorizontally(MaterialTheme.motionScheme.fastSpatialSpec()),
+              ) {
                 Text(page.name, modifier = Modifier.padding(start = 8.dp))
               }
             }

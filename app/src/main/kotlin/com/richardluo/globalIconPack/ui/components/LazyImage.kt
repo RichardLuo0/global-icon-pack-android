@@ -49,7 +49,8 @@ fun LazyImage(
     image = null
     image = loadImage()
   }
-  AnimatedContent(targetState = image, modifier = modifier, label = "Image loaded") { targetImage ->
+  AnimatedContent(targetState = image, modifier = modifier, contentAlignment = Alignment.Center) {
+    targetImage ->
     if (targetImage != null)
       Image(
         bitmap = targetImage,

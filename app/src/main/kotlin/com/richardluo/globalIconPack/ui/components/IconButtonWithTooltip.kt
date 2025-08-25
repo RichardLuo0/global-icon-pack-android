@@ -11,6 +11,7 @@ import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedIconButton
 import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Text
@@ -56,9 +57,14 @@ fun IconButtonWithTooltip(
   }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ClearIconButton(state: MutableState<String>) {
-  AnimatedVisibility(state.value.isNotEmpty(), enter = fadeIn(), exit = fadeOut()) {
+  AnimatedVisibility(
+    state.value.isNotEmpty(),
+    enter = fadeIn(MaterialTheme.motionScheme.fastEffectsSpec()),
+    exit = fadeOut(MaterialTheme.motionScheme.fastEffectsSpec()),
+  ) {
     IconButtonWithTooltip(Icons.Outlined.Clear, "Clear", IconButtonStyle.None) { state.value = "" }
   }
 }

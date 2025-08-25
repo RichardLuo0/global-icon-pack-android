@@ -8,6 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
@@ -27,8 +28,8 @@ open class ExpandedScrollConnection(val threshold: Float = 60f) : NestedScrollCo
 @Composable
 fun AnimatedFab(desc: FabDesc, expanded: Boolean = true) {
   ExtendedFloatingActionButton(
-    { AnimatedContent(targetState = desc.text, label = "Fab text change") { Text(text = it) } },
-    { AnimatedContent(targetState = desc.icon, label = "Fab icon change") { Icon(it, null) } },
+    { AnimatedContent(desc.text, contentAlignment = Alignment.Center) { Text(text = it) } },
+    { AnimatedContent(desc.icon, contentAlignment = Alignment.Center) { Icon(it, null) } },
     onClick = desc.onClick,
     expanded = expanded,
   )
