@@ -58,7 +58,7 @@ fun RoundSearchBar(
         trailingIcon?.invoke(this)
       }
     },
-    modifier = modifier.fillMaxWidth().padding(horizontal = 12.dp),
+    modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp).then(modifier),
   )
 }
 
