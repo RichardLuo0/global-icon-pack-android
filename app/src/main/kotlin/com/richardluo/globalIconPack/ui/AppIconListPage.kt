@@ -56,7 +56,6 @@ import com.richardluo.globalIconPack.ui.components.ListItemPos
 import com.richardluo.globalIconPack.ui.components.LoadingCircle
 import com.richardluo.globalIconPack.ui.components.MyDropdownMenu
 import com.richardluo.globalIconPack.ui.components.OneLineText
-import com.richardluo.globalIconPack.ui.components.TwoLineText
 import com.richardluo.globalIconPack.ui.components.WithSearch
 import com.richardluo.globalIconPack.ui.components.sharedBounds
 import com.richardluo.globalIconPack.ui.components.toShape
@@ -129,7 +128,7 @@ fun AppIconListPage(onBack: () -> Unit, iconsHolder: IconsHolder, appIcon: AppCo
                     )
                   },
                   {
-                    TwoLineText(
+                    OneLineText(
                       info.label,
                       modifier = Modifier.sharedBounds("AppLabel/$packageName"),
                       style = MaterialTheme.typography.headlineMedium,
