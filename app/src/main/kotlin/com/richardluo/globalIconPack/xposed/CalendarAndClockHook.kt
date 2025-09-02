@@ -16,6 +16,7 @@ import android.os.Process
 import android.os.UserManager
 import com.richardluo.globalIconPack.iconPack.getSC
 import com.richardluo.globalIconPack.iconPack.model.IconEntry
+import com.richardluo.globalIconPack.reflect.ClockDrawableWrapper
 import com.richardluo.globalIconPack.utils.allMethods
 import com.richardluo.globalIconPack.utils.asType
 import com.richardluo.globalIconPack.utils.callOriginalMethod
@@ -34,6 +35,9 @@ import java.util.Calendar
 
 class CalendarAndClockHook(private val clockUseFallbackMask: Boolean) : Hook {
   override fun onHookPixelLauncher(lpp: LoadPackageParam) {
+    // Needed by clock entry
+    ClockDrawableWrapper.initWithPixelLauncher(lpp)
+
     val calendars = mutableSetOf<String>()
     val clocks = mutableSetOf<String>()
 

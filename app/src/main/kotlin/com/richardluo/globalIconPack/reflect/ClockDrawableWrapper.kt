@@ -24,77 +24,90 @@ import java.lang.reflect.Method
 import java.util.Calendar
 
 object ClockDrawableWrapper {
-  private const val INVALID_VALUE: Int = -1
-
-  private var constructor: Constructor<*>? = null
-  private var mAnimationInfo: Field? = null
-  private var mThemeInfo: Field? = null
+  private var impl: IClockDrawableWrapper? = null
 
   fun initWithPixelLauncher(lpp: LoadPackageParam) {
-    classOf("com.android.launcher3.icons.ClockDrawableWrapper", lpp)?.also {
-      constructor = it.constructor(AdaptiveIconDrawable::class.java)
-      mAnimationInfo = it.field("mAnimationInfo")
-      mThemeInfo = it.field("mThemeInfo")
-    }
-    AnimationInfo.initWithPixelLauncher(lpp)
+    impl =
+      ClockDrawableWrapperPreAndroid16QPR2.from(lpp) ?: ClockDrawableWrapperAndroid16QPR2.from(lpp)
   }
 
-  fun from(drawable: Drawable, metadata: ClockMetadata): Drawable? {
+  fun from(drawable: Drawable, metadata: ClockMetadata): Drawable? = impl?.from(drawable, metadata)
+}
+
+private interface IClockDrawableWrapper {
+
+  fun from(drawable: Drawable, metadata: ClockMetadata): Drawable?
+}
+
+private const val INVALID_VALUE: Int = -1
+
+private class ClockDrawableWrapperPreAndroid16QPR2
+private constructor(
+  private val constructor: Constructor<*>,
+  private val mAnimationInfo: Field,
+  private val mThemeInfo: Field,
+  private val animationInfoReflect: AnimationInfo,
+) : IClockDrawableWrapper {
+
+  companion object {
+    fun from(lpp: LoadPackageParam): IClockDrawableWrapper? =
+      classOf("com.android.launcher3.icons.ClockDrawableWrapper", lpp)?.let {
+        val constructor = it.constructor(AdaptiveIconDrawable::class.java) ?: return null
+        val mAnimationInfo = it.field("mAnimationInfo") ?: return null
+        val mThemeInfo = it.field("mThemeInfo") ?: return null
+        val animationInfoClass =
+          classOf("com.android.launcher3.icons.ClockDrawableWrapper\$AnimationInfo", lpp)
+            ?: return null
+        ClockDrawableWrapperPreAndroid16QPR2(
+          constructor,
+          mAnimationInfo,
+          mThemeInfo,
+          AnimationInfo(animationInfoClass),
+        )
+      }
+  }
+
+  override fun from(drawable: Drawable, metadata: ClockMetadata): Drawable? {
     // https://cs.android.com/android/_/android/platform/frameworks/libs/systemui/+/main:iconloaderlib/src/com/android/launcher3/icons/ClockDrawableWrapper.java;l=123
     val drawable =
       drawable.mutate().let {
         it as? AdaptiveIconDrawable ?: AdaptiveIconDrawable(Color.WHITE.toDrawable(), it)
       }
 
-    val wrapper = constructor?.newInstance(drawable)?.asType<AdaptiveIconDrawable>() ?: return null
-    val animationInfo = mAnimationInfo?.get(wrapper) ?: return null
+    val wrapper = constructor.newInstance(drawable).asType<AdaptiveIconDrawable>() ?: return null
+    val animationInfo = mAnimationInfo.get(wrapper) ?: return null
     val foreground = wrapper.foreground.asType<LayerDrawable>() ?: return null
 
-    AnimationInfo.setup(animationInfo, drawable.constantState, metadata, foreground)
+    animationInfoReflect.setup(animationInfo, drawable.constantState, metadata, foreground)
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
       val monochrome = drawable.monochrome
       if (monochrome != null)
-        mThemeInfo?.set(
+        mThemeInfo.set(
           wrapper,
-          AnimationInfo.copyForIcon(
+          animationInfoReflect.copyForIcon(
             animationInfo,
             AdaptiveIconDrawable(Color.WHITE.toDrawable(), monochrome.mutate()),
           ),
         )
     }
 
-    AnimationInfo.applyTime(animationInfo, Calendar.getInstance(), foreground)
+    animationInfoReflect.applyTime(animationInfo, Calendar.getInstance(), foreground)
 
     return wrapper.asType()
   }
 
-  private object AnimationInfo {
-    private var baseDrawableState: Field? = null
-    private var hourLayerIndex: Field? = null
-    private var minuteLayerIndex: Field? = null
-    private var secondLayerIndex: Field? = null
-    private var defaultHour: Field? = null
-    private var defaultMinute: Field? = null
-    private var defaultSecond: Field? = null
+  private class AnimationInfo(clazz: Class<*>) {
+    private val baseDrawableState: Field? = clazz.field("baseDrawableState")
+    private var hourLayerIndex: Field? = clazz.field("hourLayerIndex")
+    private var minuteLayerIndex: Field? = clazz.field("minuteLayerIndex")
+    private var secondLayerIndex: Field? = clazz.field("secondLayerIndex")
+    private var defaultHour: Field? = clazz.field("defaultHour")
+    private var defaultMinute: Field? = clazz.field("defaultMinute")
+    private var defaultSecond: Field? = clazz.field("defaultSecond")
 
-    private var copyForIconM: Method? = null
-    private var applyTimeM: Method? = null
-
-    fun initWithPixelLauncher(lpp: LoadPackageParam) {
-      classOf("com.android.launcher3.icons.ClockDrawableWrapper\$AnimationInfo", lpp)?.also {
-        baseDrawableState = it.field("baseDrawableState")
-        hourLayerIndex = it.field("hourLayerIndex")
-        minuteLayerIndex = it.field("minuteLayerIndex")
-        secondLayerIndex = it.field("secondLayerIndex")
-        defaultHour = it.field("defaultHour")
-        defaultMinute = it.field("defaultMinute")
-        defaultSecond = it.field("defaultSecond")
-
-        copyForIconM = it.method("copyForIcon")
-        applyTimeM = it.method("applyTime")
-      }
-    }
+    private var copyForIconM: Method? = clazz.method("copyForIcon")
+    private var applyTimeM: Method? = clazz.method("applyTime")
 
     fun setup(
       info: Any,
@@ -127,5 +140,78 @@ object ClockDrawableWrapper {
 
     fun applyTime(animationInfo: Any, time: Calendar, foreground: LayerDrawable) =
       applyTimeM?.call<Boolean>(animationInfo, time, foreground)
+  }
+}
+
+private class ClockDrawableWrapperAndroid16QPR2
+private constructor(
+  private val constructor: Constructor<*>,
+  private val clockAnimationInfoReflect: ClockAnimationInfo,
+) : IClockDrawableWrapper {
+
+  companion object {
+    fun from(lpp: LoadPackageParam): IClockDrawableWrapper? =
+      classOf("com.android.launcher3.icons.ClockDrawableWrapper", lpp)?.let {
+        val constructor = it.constructor(AdaptiveIconDrawable::class.java) ?: return null
+        val clockAnimationInfoClass =
+          classOf("com.android.launcher3.icons.ClockDrawableWrapper\$ClockAnimationInfo", lpp)
+            ?: return null
+        ClockDrawableWrapperAndroid16QPR2(
+          constructor,
+          ClockAnimationInfo(
+            clockAnimationInfoClass.constructor() ?: return null,
+            clockAnimationInfoClass.method("applyTime") ?: return null,
+          ),
+        )
+      }
+  }
+
+  override fun from(drawable: Drawable, metadata: ClockMetadata): Drawable? {
+    val drawable =
+      drawable.mutate().let {
+        it as? AdaptiveIconDrawable ?: AdaptiveIconDrawable(Color.WHITE.toDrawable(), it)
+      }
+    val foreground = drawable.foreground.asType<LayerDrawable>() ?: return null
+
+    val clockAnimationInfo =
+      clockAnimationInfoReflect.newInstance(drawable.constantState, metadata, foreground).also {
+        clockAnimationInfoReflect.applyTime(it, Calendar.getInstance(), foreground)
+      }
+
+    return constructor.newInstance(drawable, clockAnimationInfo).asType()
+  }
+
+  private class ClockAnimationInfo(
+    private val constructor: Constructor<*>,
+    private val applyTimeM: Method,
+  ) {
+    fun newInstance(
+      cs: Drawable.ConstantState?,
+      metadata: ClockMetadata,
+      foreground: LayerDrawable,
+    ) {
+      val layerCount = foreground.numberOfLayers
+      val secondLayerIndex =
+        metadata.secondLayerIndex.takeIf { it in 0 until layerCount } ?: INVALID_VALUE
+      val disableSeconds = WorldPreference.get().get(Pref.DISABLE_CLOCK_SECONDS)
+
+      constructor.newInstance(
+        metadata.hourLayerIndex.takeIf { it in 0 until layerCount } ?: INVALID_VALUE,
+        metadata.minuteLayerIndex.takeIf { it in 0 until layerCount } ?: INVALID_VALUE,
+        if (disableSeconds) INVALID_VALUE else secondLayerIndex,
+        metadata.defaultHour,
+        metadata.defaultMinute,
+        metadata.defaultSecond,
+        cs,
+        0,
+        null,
+      )
+
+      if (disableSeconds && secondLayerIndex != INVALID_VALUE)
+        foreground.setDrawable(secondLayerIndex, null)
+    }
+
+    fun applyTime(animationInfo: Any, time: Calendar, foreground: LayerDrawable) =
+      applyTimeM.call<Boolean>(animationInfo, time, foreground)
   }
 }

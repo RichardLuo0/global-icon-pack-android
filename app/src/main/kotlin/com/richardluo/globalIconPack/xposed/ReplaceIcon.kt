@@ -24,7 +24,6 @@ import androidx.core.graphics.drawable.toDrawable
 import com.richardluo.globalIconPack.iconPack.getSC
 import com.richardluo.globalIconPack.iconPack.source.Source
 import com.richardluo.globalIconPack.iconPack.source.getComponentName
-import com.richardluo.globalIconPack.reflect.ClockDrawableWrapper
 import com.richardluo.globalIconPack.reflect.Resources.getDrawableForDensityM
 import com.richardluo.globalIconPack.utils.HookBuilder
 import com.richardluo.globalIconPack.utils.IconHelper
@@ -63,9 +62,6 @@ class ReplaceIcon(
   }
 
   override fun onHookPixelLauncher(lpp: LoadPackageParam) {
-    // Find needed class for clock
-    ClockDrawableWrapper.initWithPixelLauncher(lpp)
-
     // Replace icon in task description
     val taskIconCache = classOf("com.android.quickstep.TaskIconCache", lpp)
     if (forceActivityIconForTask) taskIconCache?.allMethods("getIcon")?.hook { replace { null } }
