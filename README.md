@@ -37,6 +37,7 @@ This module is designed to extend the icon packs throughout the entire system.
 * Use share mode whenever possible. The provider mode serves as a fallback if share mode doesn't work. Local mode is only reserved for testing and you can't use icon variants with this mode (However it maybe faster if there are only a few icon records).
 * If you are using share mode, after uninstallation, you must remove `/data/misc/com.richardluo.globalIconPack/iconPack.db` manually.
 * Sometimes system update may reset the permissions of share mode database. It is recommended that you deselect apps in LSPosed, after the update, select them again, and open GIP at least once (to setup the permissions), then click each of `Restart xxx`.
+* System update may also break the splash screen. The icons on it may be so large that they appear to be clipped. Go to lsposed, locate System UI, long press it and select reoptimize, then restart System UI. The splash screen should return to normal.
 ### Tips
 * You can long press icon in icon chooser bottom sheet to try as calendar icon.
 * In icon variant, the option `Modified` indicates that you have made changes to the icon variants. If enabled, when the icon pack updates, it will only add new icons instead of replacing all icons. Note that this could cause issues if any icon entry is missing in the new version!
