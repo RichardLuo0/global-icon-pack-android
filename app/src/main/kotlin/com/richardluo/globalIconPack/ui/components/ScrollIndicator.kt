@@ -129,11 +129,13 @@ fun <T : ScrollableState> ScrollIndicator(
           drawContent()
           drawIntoCanvas {
             it.run {
-              drawPath(topShadowPath, paint.apply { strokeWidth = offset * animatedTopShadow })
-              drawPath(
-                bottomShadowPath,
-                paint.apply { strokeWidth = offset * animatedBottomShadow },
-              )
+              if (animatedTopShadow != 0f)
+                drawPath(topShadowPath, paint.apply { strokeWidth = offset * animatedTopShadow })
+              if (animatedBottomShadow != 0f)
+                drawPath(
+                  bottomShadowPath,
+                  paint.apply { strokeWidth = offset * animatedBottomShadow },
+                )
             }
           }
         }
