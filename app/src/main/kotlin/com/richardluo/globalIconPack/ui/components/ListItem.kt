@@ -165,7 +165,7 @@ fun ListItemContent(
       val leading = measurables[0]
       val others = measurables.drop(1)
 
-      val estimatedHeight = others.maxOf { it.maxIntrinsicHeight(constraints.maxWidth) }
+      val estimatedHeight = others.maxOf { it.maxIntrinsicHeight(Int.MAX_VALUE) }
       val leadingWidth = leading.minIntrinsicWidth(estimatedHeight)
 
       var newOtherWidth = constraints.maxWidth - leadingWidth
