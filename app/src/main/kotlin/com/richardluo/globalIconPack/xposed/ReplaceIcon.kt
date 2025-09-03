@@ -1,6 +1,7 @@
 package com.richardluo.globalIconPack.xposed
 
 import android.accessibilityservice.AccessibilityServiceInfo
+import android.app.ActivityManager
 import android.app.ActivityManager.RecentTaskInfo
 import android.app.ActivityManager.RunningTaskInfo
 import android.app.TaskInfo
@@ -37,6 +38,7 @@ import com.richardluo.globalIconPack.utils.getAs
 import com.richardluo.globalIconPack.utils.hook
 import com.richardluo.globalIconPack.utils.isHighTwoByte
 import com.richardluo.globalIconPack.utils.logD
+import com.richardluo.globalIconPack.utils.method
 import com.richardluo.globalIconPack.utils.runSafe
 import com.richardluo.globalIconPack.utils.withHighByteSet
 import com.richardluo.globalIconPack.xposed.ReplaceIcon.Companion.ANDROID_DEFAULT
@@ -63,17 +65,24 @@ class ReplaceIcon(
 
   override fun onHookPixelLauncher(lpp: LoadPackageParam) {
     // Replace icon in task description
-    val taskIconCache = classOf("com.android.quickstep.TaskIconCache", lpp)
-    if (forceActivityIconForTask) taskIconCache?.allMethods("getIcon")?.hook { replace { null } }
+    val taskIconCache = classOf("com.android.quickstep.TaskIconCache", lpp) ?: return
+    val getIconM =
+      taskIconCache.method(
+        "getIcon",
+        ActivityManager.TaskDescription::class.java,
+        Int::class.javaPrimitiveType,
+      ) ?: return
+
+    if (forceActivityIconForTask) getIconM.hook { replace { null } }
     else {
       val tdBitmapSet = Collections.newSetFromMap<Bitmap>(WeakHashMap())
-      taskIconCache?.allMethods("getIcon")?.hook {
+      getIconM.hook {
         before {
           result = callOriginalMethod()
           tdBitmapSet.add(result.asType() ?: return@before)
         }
       }
-      taskIconCache?.allMethods("getBitmapInfo")?.hook {
+      taskIconCache.allMethods("getBitmapInfo").hook {
         before {
           val drawable = args[0].asType<BitmapDrawable>() ?: return@before
           if (tdBitmapSet.contains(drawable.bitmap)) {
