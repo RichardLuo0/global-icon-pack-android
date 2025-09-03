@@ -252,6 +252,9 @@ fun PaddingValues.consumable() =
     bottom = calculateBottomPadding(),
   )
 
+fun PaddingValues.newPadding(block: ConsumablePadding.() -> Unit) =
+  consumable().apply(block).consume()
+
 fun <Original, Saveable : Any> Saver<Original, Saveable>.nullable() =
   Saver<Original?, Saveable>(save = { it?.let { this.save(it) } }, restore = { this.restore(it) })
 

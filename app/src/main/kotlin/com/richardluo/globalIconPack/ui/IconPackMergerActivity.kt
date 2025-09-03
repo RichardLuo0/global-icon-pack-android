@@ -24,6 +24,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
@@ -86,9 +87,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInRoot
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
@@ -133,12 +131,16 @@ import com.richardluo.globalIconPack.ui.state.rememberAutoFillState
 import com.richardluo.globalIconPack.ui.viewModel.IconChooserVM
 import com.richardluo.globalIconPack.ui.viewModel.MergerVM
 import com.richardluo.globalIconPack.ui.viewModel.emptyImageBitmap
-import com.richardluo.globalIconPack.utils.ConsumablePadding
 import com.richardluo.globalIconPack.utils.consumable
 import com.richardluo.globalIconPack.utils.getValue
+import com.richardluo.globalIconPack.utils.newPadding
 import kotlinx.coroutines.launch
 import kotlinx.parcelize.Parcelize
 import me.zhanghai.compose.preference.ProvidePreferenceLocals
+
+private val fabsBottomSpacing = 16.dp
+private val fabHeight = 56.0.dp
+private val fabSpacing = 12.dp
 
 class IconPackMergerActivity : ComponentActivity() {
   private val vm: MergerVM by viewModels()
@@ -170,7 +172,7 @@ class IconPackMergerActivity : ComponentActivity() {
     val fab: @Composable (() -> Unit)? = null,
     val animatedFab: (PagerState) -> FabDesc? = { null },
     val userScrollEnabled: () -> Boolean = { true },
-    val screen: @Composable (ConsumablePadding, PagerState) -> Unit,
+    val screen: @Composable (PaddingValues, PagerState) -> Unit,
   )
 
   @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
@@ -201,8 +203,12 @@ class IconPackMergerActivity : ComponentActivity() {
           getString(R.string.merger_basePack_title),
           animatedFab = { if (vm.basePack == null) null else nextStep(it) },
           userScrollEnabled = { vm.basePack != null },
-        ) { it, pagerState ->
-          ChooseBasePack(it) { coroutineScope.launch { pagerState.animateScrollToPage(1) } }
+        ) { padding, pagerState ->
+          ChooseBasePack(
+            padding.newPadding { if (vm.basePack != null) bottom += fabsBottomSpacing + fabHeight }
+          ) {
+            coroutineScope.launch { pagerState.animateScrollToPage(1) }
+          }
         },
         Page(
           getString(R.string.merger_replaceIcons_title),
@@ -213,11 +219,16 @@ class IconPackMergerActivity : ComponentActivity() {
             }
           },
           animatedFab = nextStep,
-        ) { it, pagerState ->
-          IconList(it, iconOptionDialogState, expandedScrollConnection)
+        ) { padding, pagerState ->
+          IconList(
+            padding.newPadding { bottom += fabsBottomSpacing + fabHeight * 2 + fabSpacing },
+            iconOptionDialogState,
+            expandedScrollConnection,
+          )
         },
-        Page(getString(R.string.merger_newPack_title), animatedFab = { done }) { it, pagerState ->
-          PackInfoForm(it)
+        Page(getString(R.string.merger_newPack_title), animatedFab = { done }) { padding, pagerState
+          ->
+          PackInfoForm(padding.newPadding { bottom += fabsBottomSpacing + fabHeight })
         },
       )
     }
@@ -241,16 +252,9 @@ class IconPackMergerActivity : ComponentActivity() {
       }
     }
 
-    val density = LocalDensity.current
-    var scaffoldBottom by remember { mutableStateOf(0.dp) }
-    var fabY by remember { mutableStateOf(0.dp) }
-
     Scaffold(
       modifier =
         Modifier.fillMaxSize()
-          .onGloballyPositioned {
-            scaffoldBottom = with(density) { (it.positionInRoot().y + it.size.height).toDp() }
-          }
           .nestedScroll(scrollBehavior.nestedScrollConnection)
           .nestedScroll(expandedScrollConnection)
           .clearFocusOnScroll(),
@@ -298,10 +302,8 @@ class IconPackMergerActivity : ComponentActivity() {
       },
       floatingActionButton = {
         Column(
-          modifier =
-            Modifier.onGloballyPositioned { fabY = with(density) { it.positionInRoot().y.toDp() } },
           horizontalAlignment = Alignment.End,
-          verticalArrangement = Arrangement.spacedBy(12.dp),
+          verticalArrangement = Arrangement.spacedBy(fabSpacing),
         ) {
           val targetPage = pages[pagerState.targetPage]
           val currentPage = pages[pagerState.currentPage]
@@ -329,8 +331,7 @@ class IconPackMergerActivity : ComponentActivity() {
       },
     ) { contentPadding ->
       val consumablePadding = contentPadding.consumable()
-      val pagePadding =
-        ConsumablePadding(bottom = scaffoldBottom - fabY + consumablePadding.consumeBottomValue())
+      val pagePadding = consumablePadding.consumeBottom()
 
       HorizontalPager(
         pagerState,
@@ -372,14 +373,14 @@ class IconPackMergerActivity : ComponentActivity() {
   }
 
   @Composable
-  private fun ChooseBasePack(consumablePadding: ConsumablePadding, scrollToNextPage: () -> Unit) {
+  private fun ChooseBasePack(contentPadding: PaddingValues, scrollToNextPage: () -> Unit) {
     val valueMap = IconPackApps.flow.collectAsState(null).value
     if (valueMap == null) LoadingCircle()
     else
       Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
         LazyColumn(
           modifier = Modifier.widthIn(max = 400.dp).fillMaxHeight(),
-          contentPadding = consumablePadding.consume(),
+          contentPadding = contentPadding,
         ) {
           itemsIndexed(valueMap.toList()) { index, (pack, app) ->
             val selected = pack == vm.basePack
@@ -394,18 +395,18 @@ class IconPackMergerActivity : ComponentActivity() {
 
   @Composable
   private fun IconList(
-    consumablePadding: ConsumablePadding,
+    contentPadding: PaddingValues,
     iconOptionDialogState: MutableState<Boolean>,
     scrollConnection: ExpandedScrollConnection,
   ) {
     val navController = LocalNavControllerWithArgs.current!!
 
-    Box(modifier = Modifier.padding(consumablePadding.consumeTop())) {
+    Box {
       val icons = vm.filteredIconsFlow.getValue(null)
       if (icons != null)
         LazyVerticalGrid(
           modifier = Modifier.fillMaxSize().padding(horizontal = 2.dp),
-          contentPadding = consumablePadding.apply { top += appFilterHeight }.consume(),
+          contentPadding = contentPadding.consumable().apply { top += appFilterHeight }.consume(),
           columns = GridCells.Adaptive(minSize = 74.dp),
         ) {
           items(icons, key = { it.info.componentName }) {
@@ -490,7 +491,7 @@ class IconPackMergerActivity : ComponentActivity() {
   }
 
   @Composable
-  private fun PackInfoForm(consumablePadding: ConsumablePadding) {
+  private fun PackInfoForm(contentPadding: PaddingValues) {
     val iconChooser: IconChooserVM = viewModel(key = "newPackIconIconChooser")
 
     val symDefAppIcon = remember {
@@ -511,7 +512,7 @@ class IconPackMergerActivity : ComponentActivity() {
         },
       horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-      Spacer(modifier = Modifier.height(consumablePadding.top))
+      Spacer(modifier = Modifier.height(contentPadding.calculateTopPadding()))
       Card(
         modifier = Modifier.padding(8.dp).wrapContentHeight().widthIn(max = 400.dp),
         colors =
@@ -568,7 +569,7 @@ class IconPackMergerActivity : ComponentActivity() {
           }
         }
       }
-      Spacer(modifier = Modifier.height(consumablePadding.bottom))
+      Spacer(modifier = Modifier.height(contentPadding.calculateBottomPadding()))
     }
 
     IconChooserSheet(iconChooser, { symDefAppIcon }) { info, icon ->
