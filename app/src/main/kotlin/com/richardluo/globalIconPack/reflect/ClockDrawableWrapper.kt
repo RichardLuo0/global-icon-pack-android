@@ -27,8 +27,7 @@ object ClockDrawableWrapper {
   private var impl: IClockDrawableWrapper? = null
 
   fun initWithPixelLauncher(lpp: LoadPackageParam) {
-    impl =
-      ClockDrawableWrapperPreAndroid16QPR2.from(lpp) ?: ClockDrawableWrapperAndroid16QPR2.from(lpp)
+    impl = ClockDrawableWrapperPre16QPR2.from(lpp) ?: ClockDrawableWrapper16QPR2.from(lpp)
   }
 
   fun from(drawable: Drawable, metadata: ClockMetadata): Drawable? = impl?.from(drawable, metadata)
@@ -41,7 +40,7 @@ private interface IClockDrawableWrapper {
 
 private const val INVALID_VALUE: Int = -1
 
-private class ClockDrawableWrapperPreAndroid16QPR2
+private class ClockDrawableWrapperPre16QPR2
 private constructor(
   private val constructor: Constructor<*>,
   private val mAnimationInfo: Field,
@@ -58,7 +57,7 @@ private constructor(
         val animationInfoClass =
           classOf("com.android.launcher3.icons.ClockDrawableWrapper\$AnimationInfo", lpp)
             ?: return null
-        ClockDrawableWrapperPreAndroid16QPR2(
+        ClockDrawableWrapperPre16QPR2(
           constructor,
           mAnimationInfo,
           mThemeInfo,
@@ -143,7 +142,7 @@ private constructor(
   }
 }
 
-private class ClockDrawableWrapperAndroid16QPR2
+private class ClockDrawableWrapper16QPR2
 private constructor(
   private val constructor: Constructor<*>,
   private val clockAnimationInfoReflect: ClockAnimationInfo,
@@ -156,7 +155,7 @@ private constructor(
         val clockAnimationInfoClass =
           classOf("com.android.launcher3.icons.ClockDrawableWrapper\$ClockAnimationInfo", lpp)
             ?: return null
-        ClockDrawableWrapperAndroid16QPR2(
+        ClockDrawableWrapper16QPR2(
           constructor,
           ClockAnimationInfo(
             clockAnimationInfoClass.constructor() ?: return null,
@@ -189,13 +188,16 @@ private constructor(
       cs: Drawable.ConstantState?,
       metadata: ClockMetadata,
       foreground: LayerDrawable,
-    ) {
+    ): Any {
       val layerCount = foreground.numberOfLayers
       val secondLayerIndex =
         metadata.secondLayerIndex.takeIf { it in 0 until layerCount } ?: INVALID_VALUE
       val disableSeconds = WorldPreference.get().get(Pref.DISABLE_CLOCK_SECONDS)
 
-      constructor.newInstance(
+      if (disableSeconds && secondLayerIndex != INVALID_VALUE)
+        foreground.setDrawable(secondLayerIndex, null)
+
+      return constructor.newInstance(
         metadata.hourLayerIndex.takeIf { it in 0 until layerCount } ?: INVALID_VALUE,
         metadata.minuteLayerIndex.takeIf { it in 0 until layerCount } ?: INVALID_VALUE,
         if (disableSeconds) INVALID_VALUE else secondLayerIndex,
@@ -206,9 +208,6 @@ private constructor(
         0,
         null,
       )
-
-      if (disableSeconds && secondLayerIndex != INVALID_VALUE)
-        foreground.setDrawable(secondLayerIndex, null)
     }
 
     fun applyTime(animationInfo: Any, time: Calendar, foreground: LayerDrawable) =
