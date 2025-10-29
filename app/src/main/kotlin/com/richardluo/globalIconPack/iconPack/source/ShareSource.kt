@@ -55,12 +55,13 @@ class ShareSource(pack: String, config: IconPackConfig = defaultIconPackConfig) 
   override fun getId(cnList: List<ComponentName>) =
     runCatching {
         synchronized(indexMap) {
-          indexMap.getOrPut(cnList) { misses, getKey ->
+          indexMap.getOrPut(cnList) { misses ->
             db.getIcon(pack, misses, iconPackAsFallback).useMapToArray(misses.size) { i, c ->
-              if (c.getIntOrNull(GetIconCol.Fallback.ordinal) == 1) {
+              val cn = misses[i]
+              if (c.getIntOrNull(GetIconCol.Fallback.ordinal) == 1 || cn.className.isEmpty()) {
                 // Is fallback
-                val cn = getComponentName(getKey(i).packageName)
-                if (indexMap.contains(cn)) return@useMapToArray indexMap[cn]
+                val cn = getComponentName(cn.packageName)
+                if (indexMap.contains(cn)) indexMap[cn]
                 else {
                   iconEntryList.add(IconResolver.from(c))
                   (iconEntryList.size - 1).also { indexMap[cn] = it }
