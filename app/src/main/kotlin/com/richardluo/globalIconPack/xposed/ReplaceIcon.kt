@@ -11,6 +11,7 @@ import android.content.pm.ComponentInfo
 import android.content.pm.LauncherApps
 import android.content.pm.PackageInfo
 import android.content.pm.PackageItemInfo
+import android.content.pm.ProviderInfo
 import android.content.pm.ResolveInfo
 import android.content.pm.ServiceInfo
 import android.content.pm.ShortcutInfo
@@ -101,10 +102,27 @@ class ReplaceIcon(
   override fun onHookApp(lpp: LoadPackageParam) {
     ApplicationInfo::class.java.allConstructors().hook(HookBuilder::replaceIconHook)
     ActivityInfo::class.java.allConstructors().hook(HookBuilder::replaceIconHook)
+    ServiceInfo::class.java.allConstructors().hook(HookBuilder::replaceIconHook)
+    ProviderInfo::class.java.allConstructors().hook(HookBuilder::replaceIconHook)
     ResolveInfo::class.java.allConstructors().hook {
       after {
         if (blockReplaceIconResId.get() == true) return@after
         replaceIconInResolveInfo(thisObject.asType() ?: return@after)
+      }
+    }
+
+    PackageInfo::class.java.allConstructors().hook {
+      before {
+        if (blockReplaceIconResId.get() == true) return@before
+        blockReplaceIconResId.set(true)
+        runSafe {
+          result = callOriginalMethod<Unit>()
+          val info = thisObject as? PackageInfo ?: return@runSafe
+          val sc = getSC() ?: return@runSafe
+          replaceIconInItemInfos(packageInfoTransform(info), sc)
+          logD("Batch replaced PackageInfo: ${info.packageName}")
+        }
+        blockReplaceIconResId.set(false)
       }
     }
 
@@ -174,7 +192,7 @@ class ReplaceIcon(
                 batchReplacerMap[list.getOrNull(0)?.javaClass?.field("CREATOR")?.getAs()]
                   ?: return@runSafe
               } else return@runSafe
-          currentReplacer(list, sc)
+          currentReplacer(list.asSequence(), sc)
           logD("Batch replaced ParceledListSlice: " + list.size)
         }
         localPlsMap.remove(thisObject)
@@ -194,7 +212,7 @@ class ReplaceIcon(
   }
 }
 
-private typealias BatchReplacer = (list: Iterable<Any?>, sc: Source) -> Unit
+private typealias BatchReplacer = (seq: Sequence<Any?>, sc: Source) -> Unit
 
 private val blockReplaceIconResId = ThreadLocal.withInitial { false }
 
@@ -207,7 +225,7 @@ private fun HookBuilder.replaceIconHook() {
       info.packageName ?: return@runSafe
       val sc = getSC() ?: return@runSafe
       replaceIconInItemInfo(info, sc.getId(getComponentName(info)))
-      logD("Single replaced: " + info.packageName)
+      logD("Single replaced: ${info.packageName}/${info.name}")
     }
     blockReplaceIconResId.set(false)
   }
@@ -225,7 +243,7 @@ private inline fun HookBuilder.batchReplaceIconHook(
       val sc = getSC() ?: return@runSafe
       result = callOriginalMethod()
       val list = getList() ?: return@runSafe
-      replacer(list, sc)
+      replacer(list.asSequence(), sc)
       logD("Batch replaced: " + list.count())
     }
     blockReplaceIconResId.set(oldBlock)
@@ -233,92 +251,106 @@ private inline fun HookBuilder.batchReplaceIconHook(
 }
 
 private fun replaceIconInItemInfo(info: PackageItemInfo, id: Int?) {
-  logD("Replace in ItemInfo: " + info.packageName + "/" + info.name + ": " + id)
-  info.icon =
-    id?.let { withHighByteSet(it, IN_SC) }
-      ?: if (isHighTwoByte(info.icon, ANDROID_DEFAULT)) withHighByteSet(info.icon, NOT_IN_SC)
-      else info.icon
+  // logD("Replace in ItemInfo: ${info.packageName}/${info.name}: $id")
+  if (id != null) info.icon = withHighByteSet(id, IN_SC)
+  else if (isHighTwoByte(info.icon, ANDROID_DEFAULT))
+    info.icon = withHighByteSet(info.icon, NOT_IN_SC)
 }
 
 private val iconResourceIdF by lazy { ResolveInfo::class.java.field("iconResourceId") }
 
 private fun replaceIconInResolveInfo(ri: ResolveInfo) {
-  val icon = ri.getComponentInfo().icon.takeIf { it != 0 } ?: return
+  val icon = ri.getComponentInfo()?.icon.takeIf { it != 0 } ?: return
   ri.icon = icon
   iconResourceIdF?.set(ri, icon)
 }
 
-private fun replaceIconInItemInfoList(list: List<PackageItemInfo>, sc: Source) {
-  sc.getId(list.map { getComponentName(it) }).forEachIndexed { i, it ->
-    replaceIconInItemInfo(list[i], it)
-  }
+private fun replaceIconInItemInfos(seq: Sequence<PackageItemInfo>, sc: Source) {
+  val ids = sc.getId(seq.map { getComponentName(it) }.toList())
+  seq.forEachIndexed { i, info -> replaceIconInItemInfo(info, ids.getOrNull(i)) }
 }
 
-private fun ResolveInfo.getComponentInfo(): ComponentInfo {
+private fun ResolveInfo.getComponentInfo(): ComponentInfo? {
   if (activityInfo != null) return activityInfo
   if (serviceInfo != null) return serviceInfo
   if (providerInfo != null) return providerInfo
-  throw IllegalStateException("Missing ComponentInfo!")
+  return null
 }
 
-private val batchReplacerMap = run {
-  fun defaultReplacer(list: Iterable<Any?>, sc: Source) {
-    replaceIconInItemInfoList(list.mapNotNull { it.asType<PackageItemInfo>() }, sc)
-  }
-  fun componentInfoReplacer(list: Iterable<Any?>, sc: Source) {
-    defaultReplacer(list, sc)
-    replaceIconInItemInfoList(list.mapNotNull { it.asType<ComponentInfo>()?.applicationInfo }, sc)
-  }
-  fun resolveInfoReplacer(list: Iterable<Any?>, sc: Source) {
-    val riList = list.mapNotNull { it.asType<ResolveInfo>() }
-    componentInfoReplacer(riList.map { it.getComponentInfo() }, sc)
-    riList.forEach(::replaceIconInResolveInfo)
-  }
+fun itemInfosTransform(seq: Sequence<Any?>) = seq.mapNotNull { it.asType<PackageItemInfo>() }
 
+fun componentInfosTransform(seq: Sequence<Any?>) =
+  itemInfosTransform(seq) + seq.mapNotNull { it.asType<ComponentInfo>()?.applicationInfo }
+
+fun packageInfoTransform(pi: PackageInfo) = sequence {
+  pi.applicationInfo?.let { yield(it) }
+  pi.activities?.let { yieldAll(componentInfosTransform(it.asSequence())) }
+  pi.services?.let { yieldAll(componentInfosTransform(it.asSequence())) }
+  pi.providers?.let { yieldAll(componentInfosTransform(it.asSequence())) }
+}
+
+fun resolveInfoReplacer(seq: Sequence<Any?>, sc: Source) {
+  val riSeq = seq.mapNotNull { it.asType<ResolveInfo>() }
+  replaceIconInItemInfos(componentInfosTransform(riSeq.map { it.getComponentInfo() }), sc)
+  riSeq.forEach(::replaceIconInResolveInfo)
+}
+
+private val batchReplacerMap =
   buildMap<Parcelable.Creator<*>, BatchReplacer> {
-    fun setCreator(parcelableC: Class<*>, replacer: BatchReplacer) {
+    fun setWithCreator(parcelableC: Class<*>, replacer: BatchReplacer) {
       set(parcelableC.field("CREATOR")?.getAs() ?: return, replacer)
     }
 
-    setCreator(ApplicationInfo::class.java, ::defaultReplacer)
-    setCreator(ActivityInfo::class.java, ::componentInfoReplacer)
-    setCreator(ServiceInfo::class.java, ::componentInfoReplacer)
-    setCreator(ResolveInfo::class.java, ::resolveInfoReplacer)
-    setCreator(PackageInfo::class.java) { list, sc ->
-      val piList = list.mapNotNull { it.asType<PackageInfo>() }
-      defaultReplacer(piList.mapNotNull { it.applicationInfo }, sc)
-      piList.forEach { pi -> pi.activities?.let { componentInfoReplacer(it.toList(), sc) } }
+    fun setWithCreatorItemInfo(
+      parcelableC: Class<*>,
+      transform: (Sequence<Any?>) -> Sequence<PackageItemInfo>,
+    ) {
+      setWithCreator(parcelableC) { seq, sc -> replaceIconInItemInfos(transform(seq), sc) }
     }
+
+    setWithCreatorItemInfo(ApplicationInfo::class.java, ::itemInfosTransform)
+    setWithCreatorItemInfo(ActivityInfo::class.java, ::componentInfosTransform)
+    setWithCreatorItemInfo(ServiceInfo::class.java, ::componentInfosTransform)
+    setWithCreatorItemInfo(ProviderInfo::class.java, ::componentInfosTransform)
+
+    setWithCreator(ResolveInfo::class.java, ::resolveInfoReplacer)
+
+    setWithCreatorItemInfo(PackageInfo::class.java) { seq ->
+      seq.mapNotNull { it.asType<PackageInfo>() }.flatMap { pi -> packageInfoTransform(pi) }
+    }
+
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
       runSafe {
         val topActivityInfoF = TaskInfo::class.java.field("topActivityInfo") ?: return@runSafe
-        val taskInfoReplacer: BatchReplacer = { list, sc ->
-          defaultReplacer(list.mapNotNull { it?.let { topActivityInfoF.get(it) } }, sc)
-        }
-        setCreator(RunningTaskInfo::class.java, taskInfoReplacer)
-        setCreator(RecentTaskInfo::class.java, taskInfoReplacer)
+        fun taskInfoTransform(seq: Sequence<Any?>) =
+          componentInfosTransform(seq.mapNotNull { it?.let { topActivityInfoF.get(it) } })
+
+        setWithCreatorItemInfo(RunningTaskInfo::class.java, ::taskInfoTransform)
+        setWithCreatorItemInfo(RecentTaskInfo::class.java, ::taskInfoTransform)
       }
+
     runSafe {
       val launcherActivityInfo =
         classOf("android.content.pm.LauncherActivityInfoInternal") ?: return@runSafe
       val mActivityInfoF = launcherActivityInfo.field("mActivityInfo") ?: return@runSafe
-      setCreator(launcherActivityInfo) { list, sc ->
-        componentInfoReplacer(list.mapNotNull { it?.let { mActivityInfoF.get(it) } }, sc)
+      setWithCreatorItemInfo(launcherActivityInfo) { list ->
+        componentInfosTransform(list.mapNotNull { it?.let { mActivityInfoF.get(it) } })
       }
     }
+
     runSafe {
       val launchActivityItem =
         classOf("android.app.servertransaction.LaunchActivityItem") ?: return@runSafe
       val mInfoF = launchActivityItem.field("mInfo") ?: return@runSafe
-      setCreator(launchActivityItem) { list, sc ->
-        componentInfoReplacer(list.mapNotNull { it?.let { mInfoF.get(it) } }, sc)
+      setWithCreatorItemInfo(launchActivityItem) { list ->
+        componentInfosTransform(list.mapNotNull { it?.let { mInfoF.get(it) } })
       }
     }
-    setCreator(AccessibilityServiceInfo::class.java) { list, sc ->
+
+    setWithCreator(AccessibilityServiceInfo::class.java) { list, sc ->
       resolveInfoReplacer(
         list.mapNotNull { it.asType<AccessibilityServiceInfo>()?.resolveInfo },
         sc,
       )
     }
   }
-}
