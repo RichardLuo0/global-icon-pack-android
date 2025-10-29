@@ -17,7 +17,7 @@ import com.richardluo.globalIconPack.utils.log
 
 fun getSC(): Source? {
   if (sc == null) {
-    synchronized(LocalSource::class) {
+    synchronized(Source::class) {
       if (sc == null) {
         initSC()
       }
