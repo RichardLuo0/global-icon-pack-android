@@ -5,6 +5,7 @@
     <string name="info_iconPackApplied">Le pack d\'icônes a été appliqué. Veuillez cliquer sur \"Redémarrer XXX\" manuellement.</string>
     <string name="setup_chooseMode">Choisir un mode</string>
     <string name="general_settings">Général</string>
+    <string name="general_mode">Mode</string>
     <string name="general_mode_shareMode">Mode Partage</string>
     <string name="general_mode_shareMode_summary">Charger depuis une base de données partagée à /data/misc/com.\u200Brichardluo.\u200BglobalIconPack. SELinux peut bloquer l\'accès sur certains systèmes.</string>
     <string name="general_mode_providerMode">Mode Fournisseur</string>
@@ -35,6 +36,7 @@
     <string name="iconPack_iconPackShape">Forme</string>
     <string name="iconPack_iconPackShape_customize">Personnaliser</string>
     <string name="iconPack_iconPackEnableUpon">Activer l\'avant-plan</string>
+    <string name="pixel_settings">Pixel</string>
     <string name="pixel_pixelLauncherPackage">Nom du package du lanceur</string>
     <string name="pixel_pixelLauncherPackage_summary">Utilisé pour identifier un lanceur basé sur le lanceur 3, mais les fonctionnalités ci-dessous ne sont pas garanties.</string>
     <string name="pixel_noShadow">Retirer l\'ombre en dessous</string>
@@ -50,8 +52,10 @@
     <string name="common_moreOptions">Plus d\'options</string>
     <string name="common_warning">Avertissement</string>
     <string name="common_search">Recherche</string>
+    <string name="common_options">Options</string>
     <string name="common_empty">Vide</string>
     <string name="icons_restoreDefault">Restaurer valeur par défaut</string>
+    <string name="icons_clearAll">Tout effacer</string>
     <string name="icons_warn_restoreDefault">Êtes-vous sûr de vouloir rétablir les icônes par défaut ?</string>
     <string name="icons_filter_user">Applications utilisateur</string>
     <string name="icons_filter_system">Applications système</string>

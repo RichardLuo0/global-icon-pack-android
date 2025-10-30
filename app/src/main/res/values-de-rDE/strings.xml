@@ -44,6 +44,8 @@
     <string name="pixel_noShadow">Schatten unterhalb entfernen</string>
     <string name="pixel_noShadow_summary">Entfernen Sie den Schatten generiert für die System-Symbolmaske.</string>
     <string name="pixel_forceLoadClockAndCalendar">Laden des Uhr- und Kalendersymbols erzwingen</string>
+    <string name="pixel_clockUseFallbackMask">Uhr verwendet Fallback Maske</string>
+    <string name="pixel_disableClockSeconds">Uhr Sekunden deaktivieren</string>
     <string name="pixel_forceActivityIconForTask">Aktivitätssymbol für Aufgabe laden</string>
     <string name="pixel_forceActivityIconForTask_summary">Einige Apps setzen beim Ausführen ein Tasksymbol. Erzwingen Sie das Laden des Aktivitätssymbols unabhängig davon, was passiert.</string>
     <string name="mainMenu_restartSystemUI">SystemUI neustarten</string>
