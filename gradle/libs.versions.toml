@@ -1,20 +1,20 @@
 [libraries]
 api = { module = "de.robv.android.xposed:api", version = "82" }
 core-ktx = { group = "androidx.core", name = "core-ktx", version = "1.17.0" }
-activity = { group = "androidx.activity", name = "activity-compose", version = "1.10.1" }
-viewmodel = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose", version = "2.9.3" }
-viewmodel-savedstate = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-savedstate", version = "2.9.3" }
-compose-foundation = { group = "androidx.compose.foundation", name = "foundation", version = "1.9.0" }
+activity = { group = "androidx.activity", name = "activity-compose", version = "1.11.0" }
+viewmodel = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose", version = "2.9.4" }
+viewmodel-savedstate = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-savedstate", version = "2.9.4" }
+compose-foundation = { group = "androidx.compose.foundation", name = "foundation", version = "1.9.4" }
 preference = { group = "me.zhanghai.compose.preference", name = "library", version = "1.1.1" }
-material3 = { group = "androidx.compose.material3", name = "material3", version = "1.5.0-alpha03" }
+material3 = { group = "androidx.compose.material3", name = "material3", version = "1.5.0-alpha07" }
 material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended", version = "1.7.8" }
 libsu = { group = "com.github.topjohnwu.libsu", name = "core", version = "6.0.0" }
 documentfile = { group = "androidx.documentfile", name = "documentfile", version = "1.1.0" }
 hiddenapibypass = { group = "org.lsposed.hiddenapibypass", name = "hiddenapibypass", version = "+" }
-navigation = { group = "androidx.navigation", name = "navigation-compose", version = "2.9.3" }
+navigation = { group = "androidx.navigation", name = "navigation-compose", version = "2.9.5" }
 reorderable = { module = "sh.calvin.reorderable:reorderable", version = "3.0.0" }
-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview", version = "1.9.0" }
-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling", version = "1.9.0" }
+ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview", version = "1.9.4" }
+ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling", version = "1.9.4" }
 
 #junit = { group = "junit", name = "junit", version.ref = "junit" }
 #ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
@@ -22,6 +22,6 @@ ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling", version = "1.
 
 [plugins]
 android-application = { id = "com.android.application", version = "8.13.0" }
-kotlin-android = { id = "org.jetbrains.kotlin.android", version = "2.2.10" }
-compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version = "2.2.10" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version = "2.2.21" }
+compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version = "2.2.21" }
 dependency-license-report = { id = "com.github.jk1.dependency-license-report", version = "2.9" }
