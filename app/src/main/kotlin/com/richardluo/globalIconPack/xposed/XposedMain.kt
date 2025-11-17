@@ -18,6 +18,7 @@ class XposedMain : IXposedHookLoadPackage {
 
     if (lpp.packageName == "android") {
       BypassShortcutPermission.onHookSystem(lpp)
+      BypassQueryPackage.onHookSystem(lpp)
       return
     }
 
