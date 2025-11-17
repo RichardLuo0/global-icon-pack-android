@@ -61,8 +61,8 @@ fun RoundSearchBar(
     modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp).then(modifier),
     colors =
       inputFieldColors(
-        focusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
-        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+        focusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
+        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainerHighest,
       ),
   )
 }
