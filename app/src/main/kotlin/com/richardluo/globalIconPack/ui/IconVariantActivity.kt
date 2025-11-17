@@ -6,11 +6,9 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
@@ -56,7 +54,6 @@ import com.richardluo.globalIconPack.ui.components.AnimatedNavHost
 import com.richardluo.globalIconPack.ui.components.AppFilterButtonGroup
 import com.richardluo.globalIconPack.ui.components.AppIcon
 import com.richardluo.globalIconPack.ui.components.AutoFillDialog
-import com.richardluo.globalIconPack.ui.components.ExpandedScrollConnection
 import com.richardluo.globalIconPack.ui.components.IconButtonWithTooltip
 import com.richardluo.globalIconPack.ui.components.LoadingCircle
 import com.richardluo.globalIconPack.ui.components.LoadingDialog
@@ -109,8 +106,7 @@ class IconVariantActivity : ComponentActivity() {
   @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
   @Composable
   private fun Screen() {
-    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
-    val expandedScrollConnection = remember { ExpandedScrollConnection() }
+    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
     val expandSearchBar = rememberSaveable { mutableStateOf(false) }
     val resetWarnDialogState = rememberSaveable { mutableStateOf(false) }
 
@@ -118,7 +114,6 @@ class IconVariantActivity : ComponentActivity() {
       modifier =
         Modifier.fillMaxSize()
           .nestedScroll(scrollBehavior.nestedScrollConnection)
-          .nestedScroll(expandedScrollConnection)
           .clearFocusOnScroll(),
       topBar = {
         WithSearch(expandSearchBar, vm.searchText) {
@@ -202,14 +197,7 @@ class IconVariantActivity : ComponentActivity() {
           }
         else LoadingCircle()
 
-        val animatedFloat by
-          animateFloatAsState(targetValue = if (expandedScrollConnection.expanded) 0f else 1f)
-        AppFilterButtonGroup(
-          Modifier.padding(horizontal = 8.dp)
-            .fillMaxWidth()
-            .offset(y = -appFilterHeight * animatedFloat),
-          vm.filterType,
-        )
+        AppFilterButtonGroup(Modifier.padding(horizontal = 8.dp).fillMaxWidth(), vm.filterType)
 
         var expandedFabMenu by rememberSaveable { mutableStateOf(false) }
         FloatingActionButtonMenu(

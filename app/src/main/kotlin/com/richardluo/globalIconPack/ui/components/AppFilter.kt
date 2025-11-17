@@ -42,7 +42,7 @@ fun AppFilterButtonGroup(modifier: Modifier = Modifier, typeState: MutableState<
     )
 
   var type by typeState
-  ButtonGroup(overflowIndicator = { menuState -> }, modifier = modifier) {
+  ButtonGroup(overflowIndicator = { _ -> }, modifier = modifier) {
     buttons.forEach { button ->
       val checked = type == button.type
       toggleableItem(

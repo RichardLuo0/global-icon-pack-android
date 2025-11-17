@@ -12,7 +12,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
@@ -32,7 +31,6 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -71,6 +69,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
@@ -120,7 +119,6 @@ import com.richardluo.globalIconPack.ui.components.appFilterHeight
 import com.richardluo.globalIconPack.ui.components.clearFocusOnScroll
 import com.richardluo.globalIconPack.ui.components.myPreferenceTheme
 import com.richardluo.globalIconPack.ui.components.navPage
-import com.richardluo.globalIconPack.ui.components.pinnedScrollBehaviorWithPager
 import com.richardluo.globalIconPack.ui.components.toShape
 import com.richardluo.globalIconPack.ui.model.AppCompIcon
 import com.richardluo.globalIconPack.ui.model.CompInfo
@@ -219,22 +217,20 @@ class IconPackMergerActivity : ComponentActivity() {
             }
           },
           animatedFab = nextStep,
-        ) { padding, pagerState ->
+        ) { padding, _ ->
           IconList(
             padding.newPadding { bottom += fabsBottomSpacing + fabHeight * 2 + fabSpacing },
             iconOptionDialogState,
-            expandedScrollConnection,
           )
         },
-        Page(getString(R.string.merger_newPack_title), animatedFab = { done }) { padding, pagerState
-          ->
+        Page(getString(R.string.merger_newPack_title), animatedFab = { done }) { padding, _ ->
           PackInfoForm(padding.newPadding { bottom += fabsBottomSpacing + fabHeight })
         },
       )
     }
 
     val pagerState = rememberPagerState(pageCount = { pages.size })
-    val scrollBehavior = pinnedScrollBehaviorWithPager(pagerState)
+    val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
 
     LaunchedEffect(pagerState.currentPage) { expandedScrollConnection.expanded = true }
 
@@ -397,11 +393,10 @@ class IconPackMergerActivity : ComponentActivity() {
   private fun IconList(
     contentPadding: PaddingValues,
     iconOptionDialogState: MutableState<Boolean>,
-    scrollConnection: ExpandedScrollConnection,
   ) {
     val navController = LocalNavControllerWithArgs.current!!
 
-    Box {
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
       val icons = vm.filteredIconsFlow.getValue(null)
       if (icons != null)
         LazyVerticalGrid(
@@ -425,14 +420,7 @@ class IconPackMergerActivity : ComponentActivity() {
         }
       else LoadingCircle()
 
-      val animatedFloat by
-        animateFloatAsState(targetValue = if (scrollConnection.expanded) 0f else 1f)
-      AppFilterButtonGroup(
-        Modifier.padding(horizontal = 8.dp)
-          .fillMaxWidth()
-          .offset(y = -appFilterHeight * animatedFloat),
-        vm.filterType,
-      )
+      AppFilterButtonGroup(Modifier.padding(horizontal = 8.dp).fillMaxWidth(), vm.filterType)
     }
 
     val iconOptionScrollState = rememberLazyListState()
@@ -572,7 +560,7 @@ class IconPackMergerActivity : ComponentActivity() {
       Spacer(modifier = Modifier.height(contentPadding.calculateBottomPadding()))
     }
 
-    IconChooserSheet(iconChooser, { symDefAppIcon }) { info, icon ->
+    IconChooserSheet(iconChooser, { symDefAppIcon }) { _, icon ->
       vm.newPackIcon =
         if (icon is VariantPackIcon) IconEntryWithPack(icon.entry, icon.pack) else null
     }

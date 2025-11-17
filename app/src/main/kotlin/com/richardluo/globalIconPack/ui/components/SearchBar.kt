@@ -2,7 +2,6 @@ package com.richardluo.globalIconPack.ui.components
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -15,6 +14,7 @@ import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SearchBarDefaults
+import androidx.compose.material3.SearchBarDefaults.inputFieldColors
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -59,6 +59,11 @@ fun RoundSearchBar(
       }
     },
     modifier = Modifier.fillMaxWidth().padding(horizontal = 12.dp).then(modifier),
+    colors =
+      inputFieldColors(
+        focusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+        unfocusedContainerColor = MaterialTheme.colorScheme.surfaceContainer,
+      ),
   )
 }
 
@@ -75,11 +80,7 @@ fun WithSearch(
   val focusRequester = remember { FocusRequester() }
   LaunchedEffect(expand) { if (expand) focusRequester.requestFocus() }
 
-  AnimatedContent(
-    expand,
-    modifier = Modifier.background(MaterialTheme.colorScheme.surfaceContainer),
-    contentAlignment = Alignment.TopCenter,
-  ) {
+  AnimatedContent(expand, contentAlignment = Alignment.TopCenter) {
     if (!it) content()
     else
       Box(

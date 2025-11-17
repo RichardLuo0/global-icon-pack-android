@@ -27,6 +27,7 @@ fun pinnedScrollBehaviorWithPager(
         override val isPinned: Boolean = true
         override val snapAnimationSpec: AnimationSpec<Float>? = null
         override val flingAnimationSpec: DecayAnimationSpec<Float>? = null
+
         private val pageContentOffsets = Array(pagerState.pageCount) { state.contentOffset }
 
         fun onPageChange() {
