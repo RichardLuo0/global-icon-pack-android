@@ -150,6 +150,7 @@ class MergerVM(context: Application, savedStateHandle: SavedStateHandle) :
   }
 
   override fun clearAll(info: AppCompInfo) {
+    changedIcons.entries.removeIf { it.key.isSamePackage(info.componentName) }
     baseIconPack?.iconEntryMap?.forEach {
       if (it.key.isSamePackage(info.componentName)) changedIcons[it.key] = null
     }
