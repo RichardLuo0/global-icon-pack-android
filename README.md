@@ -41,6 +41,7 @@ This module is designed to extend the icon packs throughout the entire system.
 ### Tips
 * You can long press icon in icon chooser bottom sheet to try as calendar icon.
 * In icon variant, the option `Modified` indicates that you have made changes to the icon variants. If enabled, when the icon pack updates, it will only add new icons instead of replacing all icons. Note that this could cause issues if any icon entry is missing in the new version!
+* If the target app can not query the icon pack app, you can try to hook system framework to bypass the permission check.
 ### Launcher 3
 * If you are using a different launcher3 based launcher, please input its package name into the launcher package name in pixel settings. If it is not launcher3 based, some functions may not work.
 * Recent screen will use your default launcher unless you use quickswitch, so you will need to select pixel launcher for that to work.
