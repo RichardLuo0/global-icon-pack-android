@@ -6,12 +6,12 @@ viewmodel = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose"
 viewmodel-savedstate = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-savedstate", version = "2.9.4" }
 compose-foundation = { group = "androidx.compose.foundation", name = "foundation", version = "1.9.4" }
 preference = { group = "me.zhanghai.compose.preference", name = "library", version = "1.1.1" }
-material3 = { group = "androidx.compose.material3", name = "material3", version = "1.5.0-alpha07" }
+material3 = { group = "androidx.compose.material3", name = "material3", version = "1.5.0-alpha08" }
 material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended", version = "1.7.8" }
 libsu = { group = "com.github.topjohnwu.libsu", name = "core", version = "6.0.0" }
 documentfile = { group = "androidx.documentfile", name = "documentfile", version = "1.1.0" }
 hiddenapibypass = { group = "org.lsposed.hiddenapibypass", name = "hiddenapibypass", version = "+" }
-navigation = { group = "androidx.navigation", name = "navigation-compose", version = "2.9.5" }
+navigation = { group = "androidx.navigation", name = "navigation-compose", version = "2.9.6" }
 reorderable = { module = "sh.calvin.reorderable:reorderable", version = "3.0.0" }
 ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview", version = "1.9.4" }
 ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling", version = "1.9.4" }
@@ -21,7 +21,7 @@ ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling", version = "1.
 #espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
 
 [plugins]
-android-application = { id = "com.android.application", version = "8.13.0" }
+android-application = { id = "com.android.application", version = "8.13.1" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version = "2.2.21" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version = "2.2.21" }
-dependency-license-report = { id = "com.github.jk1.dependency-license-report", version = "2.9" }
+dependency-license-report = { id = "com.github.jk1.dependency-license-report", version = "3.0.1" }
