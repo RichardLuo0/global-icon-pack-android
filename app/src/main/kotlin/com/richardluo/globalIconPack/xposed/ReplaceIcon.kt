@@ -252,6 +252,13 @@ private inline fun HookBuilder.batchReplaceIconHook(
 
 private fun replaceIconInItemInfo(info: PackageItemInfo, id: Int?) {
   // logD("Replace in ItemInfo: ${info.packageName}/${info.name}: $id")
+
+  // Bypass quick settings tile icon
+  if (
+    info is ServiceInfo && info.permission == android.Manifest.permission.BIND_QUICK_SETTINGS_TILE
+  )
+    return
+
   if (id != null) info.icon = withHighByteSet(id, IN_SC)
   else if (isHighTwoByte(info.icon, ANDROID_DEFAULT))
     info.icon = withHighByteSet(info.icon, NOT_IN_SC)
