@@ -7,9 +7,11 @@ import com.richardluo.globalIconPack.utils.allMethods
 import com.richardluo.globalIconPack.utils.asType
 import com.richardluo.globalIconPack.utils.classOf
 import com.richardluo.globalIconPack.utils.deoptimize
+import com.richardluo.globalIconPack.utils.field
 import com.richardluo.globalIconPack.utils.hook
 import com.richardluo.globalIconPack.utils.rGet
 import com.richardluo.globalIconPack.utils.rSet
+import com.richardluo.globalIconPack.utils.runSafe
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 
 class NoShadow : Hook {
@@ -34,20 +36,30 @@ class NoShadow : Hook {
   override fun onHookSettings(lpp: LoadPackageParam) = removeIconShadow(lpp)
 
   private fun removeIconShadow(lpp: LoadPackageParam) {
-    classOf("android.util.LauncherIcons")?.allMethods("wrapIconDrawableWithShadow")?.hook {
-      replace { args[0] }
+    runSafe {
+      classOf("android.util.LauncherIcons")?.allMethods("wrapIconDrawableWithShadow")?.hook {
+        replace { args[0] }
+      }
+      BaseIconFactory.getClass(lpp)?.allMethods("drawIconBitmap")?.hook {
+        before {
+          val bitmapGenerationMode = args.rGet(-2) as? Int ?: return@before
+          args.rSet(
+            -2,
+            when (bitmapGenerationMode) {
+              MODE_WITH_SHADOW -> MODE_DEFAULT
+              MODE_HARDWARE_WITH_SHADOW -> MODE_HARDWARE
+              else -> bitmapGenerationMode
+            },
+          )
+        }
+      }
     }
-    BaseIconFactory.getClazz(lpp)?.allMethods("drawIconBitmap")?.hook {
-      before {
-        val bitmapGenerationMode = args.rGet(-2) as? Int ?: return@before
-        args.rSet(
-          -2,
-          when (bitmapGenerationMode) {
-            MODE_WITH_SHADOW -> MODE_DEFAULT
-            MODE_HARDWARE_WITH_SHADOW -> MODE_HARDWARE
-            else -> bitmapGenerationMode
-          },
-        )
+
+    runSafe {
+      val iconOptions = BaseIconFactory.getIconOptionsClass(lpp) ?: return@runSafe
+      val addShadowsF = iconOptions.field("addShadows") ?: return@runSafe
+      BaseIconFactory.getClass(lpp)?.allMethods("createBadgedIconBitmap")?.hook {
+        before { addShadowsF.set(args[1], false) }
       }
     }
   }

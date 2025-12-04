@@ -55,7 +55,7 @@ private constructor(
         val mAnimationInfo = it.field("mAnimationInfo") ?: return null
         val mThemeInfo = it.field("mThemeInfo") ?: return null
         val animationInfoClass =
-          classOf("com.android.launcher3.icons.ClockDrawableWrapper\$AnimationInfo", lpp)
+          classOf($$"com.android.launcher3.icons.ClockDrawableWrapper$AnimationInfo", lpp)
             ?: return null
         ClockDrawableWrapperPre16QPR2(
           constructor,
