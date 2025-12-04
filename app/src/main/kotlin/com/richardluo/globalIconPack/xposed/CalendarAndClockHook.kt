@@ -129,11 +129,11 @@ class CalendarAndClockHook(private val clockUseFallbackMask: Boolean) : Hook {
     }
 
     val iconChangeReceiver =
-      classOf("com.android.launcher3.icons.IconProvider\$IconChangeReceiver", lpp) ?: return
+      classOf($$"com.android.launcher3.icons.IconProvider$IconChangeReceiver", lpp) ?: return
     val mCallbackF = iconChangeReceiver.field("mCallback") ?: return
 
     val onAppIconChangedM =
-      classOf("com.android.launcher3.icons.IconProvider\$IconChangeListener", lpp)
+      classOf($$"com.android.launcher3.icons.IconProvider$IconChangeListener", lpp)
         ?.method("onAppIconChanged") ?: return
 
     fun changeClockIcon(mCallback: Any) {
