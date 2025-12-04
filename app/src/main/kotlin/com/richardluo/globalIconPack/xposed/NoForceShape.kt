@@ -22,7 +22,7 @@ class NoForceShape(private val drawWholeIconForTransparentBackgroundInSplashScre
     if (drawWholeIconForTransparentBackgroundInSplashScreen) {
       val iconColor =
         classOf(
-          "com.android.wm.shell.startingsurface.SplashscreenContentDrawer\$ColorCache\$IconColor",
+          $$"com.android.wm.shell.startingsurface.SplashscreenContentDrawer$ColorCache$IconColor",
           lpp,
         )
       val mBgColorF = iconColor?.field("mBgColor") ?: return

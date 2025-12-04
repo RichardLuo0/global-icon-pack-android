@@ -138,6 +138,16 @@ inline fun <R> runSafe(crossinline block: () -> R) = run { block() }
 
 inline fun <T, R> T.runSafe(crossinline block: T.() -> R) = run { block() }
 
+class RunSafeResult(val isSuccess: Boolean)
+
+inline fun <T> T.runSafeIf(crossinline block: T.() -> Any?) = run {
+  val result = block()
+  if (result != null) RunSafeResult(true) else RunSafeResult(false)
+}
+
+inline fun RunSafeResult.elseIf(crossinline action: () -> Any?) =
+  if (!isSuccess) runSafeIf { action() } else this
+
 suspend inline fun <R> runCatchingToast(
   context: Context,
   crossinline message: (Throwable) -> String = { it.toString() },

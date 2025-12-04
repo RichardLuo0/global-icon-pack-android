@@ -27,7 +27,7 @@ object ClockDrawableWrapper {
   private var impl: IClockDrawableWrapper? = null
 
   fun initWithPixelLauncher(lpp: LoadPackageParam) {
-    impl = ClockDrawableWrapperPre16QPR2.from(lpp) ?: ClockDrawableWrapper16QPR2.from(lpp)
+    impl = ClockDrawableWrapper16QPR2.from(lpp) ?: ClockDrawableWrapperPre16QPR2.from(lpp)
   }
 
   fun from(drawable: Drawable, metadata: ClockMetadata): Drawable? = impl?.from(drawable, metadata)
@@ -150,19 +150,21 @@ private constructor(
 
   companion object {
     fun from(lpp: LoadPackageParam): IClockDrawableWrapper? =
-      classOf("com.android.launcher3.icons.ClockDrawableWrapper", lpp)?.let {
-        val constructor = it.constructor(AdaptiveIconDrawable::class.java) ?: return null
-        val clockAnimationInfoClass =
-          classOf("com.android.launcher3.icons.ClockDrawableWrapper\$ClockAnimationInfo", lpp)
-            ?: return null
-        ClockDrawableWrapper16QPR2(
-          constructor,
-          ClockAnimationInfo(
-            clockAnimationInfoClass.constructor() ?: return null,
-            clockAnimationInfoClass.method("applyTime") ?: return null,
-          ),
-        )
-      }
+      if (Build.VERSION.SDK_INT < Build.VERSION_CODES.BAKLAVA) null
+      else
+        classOf("com.android.launcher3.icons.ClockDrawableWrapper", lpp)?.let {
+          val constructor = it.constructor(AdaptiveIconDrawable::class.java) ?: return null
+          val clockAnimationInfoClass =
+            classOf($$"com.android.launcher3.icons.ClockDrawableWrapper$ClockAnimationInfo", lpp)
+              ?: return null
+          ClockDrawableWrapper16QPR2(
+            constructor,
+            ClockAnimationInfo(
+              clockAnimationInfoClass.constructor() ?: return null,
+              clockAnimationInfoClass.method("applyTime") ?: return null,
+            ),
+          )
+        }
   }
 
   override fun from(drawable: Drawable, metadata: ClockMetadata): Drawable? {
