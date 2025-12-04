@@ -8,7 +8,7 @@ import java.lang.reflect.Method
 
 object BaseIconFactory {
   private var clazz: Class<*>? = null
-  private var iconOptions: Class<*>? = null
+  private var iconOptionsClazz: Class<*>? = null
 
   private var getNormalizer: Method? = null
 
@@ -16,9 +16,9 @@ object BaseIconFactory {
     clazz ?: classOf("com.android.launcher3.icons.BaseIconFactory", lpp).also { clazz = it }
 
   fun getIconOptionsClass(lpp: LoadPackageParam) =
-    clazz
+    iconOptionsClazz
       ?: classOf($$"com.android.launcher3.icons.BaseIconFactory$IconOptions", lpp).also {
-        iconOptions = it
+        iconOptionsClazz = it
       }
 
   fun getNormalizer(lpp: LoadPackageParam, factory: Any?): Any? {
