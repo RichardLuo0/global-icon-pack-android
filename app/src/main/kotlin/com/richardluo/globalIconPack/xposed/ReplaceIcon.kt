@@ -26,6 +26,7 @@ import androidx.core.graphics.drawable.toDrawable
 import com.richardluo.globalIconPack.iconPack.getSC
 import com.richardluo.globalIconPack.iconPack.source.Source
 import com.richardluo.globalIconPack.iconPack.source.getComponentName
+import com.richardluo.globalIconPack.reflect.BaseIconFactory
 import com.richardluo.globalIconPack.reflect.Resources.getDrawableForDensityM
 import com.richardluo.globalIconPack.utils.HookBuilder
 import com.richardluo.globalIconPack.utils.IconHelper
@@ -65,36 +66,46 @@ class ReplaceIcon(
   }
 
   override fun onHookPixelLauncher(lpp: LoadPackageParam) {
-    // Replace icon in task description
-    val taskIconCache = classOf("com.android.quickstep.TaskIconCache", lpp) ?: return
-    val getIconM =
-      taskIconCache.method(
-        "getIcon",
-        ActivityManager.TaskDescription::class.java,
-        Int::class.javaPrimitiveType,
-      ) ?: return
+    runSafe {
+      // Replace icon in task description
+      val taskIconCache = classOf("com.android.quickstep.TaskIconCache", lpp) ?: return@runSafe
+      val getIconM =
+        taskIconCache.method(
+          "getIcon",
+          ActivityManager.TaskDescription::class.java,
+          Int::class.javaPrimitiveType,
+        ) ?: return@runSafe
 
-    if (forceActivityIconForTask) getIconM.hook { replace { null } }
-    else {
-      val tdBitmapSet = Collections.newSetFromMap<Bitmap>(WeakHashMap())
-      getIconM.hook {
-        before {
-          result = callOriginalMethod()
-          tdBitmapSet.add(result.asType() ?: return@before)
+      if (forceActivityIconForTask) getIconM.hook { replace { null } }
+      else {
+        val tdBitmapSet = Collections.newSetFromMap<Bitmap>(WeakHashMap())
+        getIconM.hook {
+          before {
+            result = callOriginalMethod()
+            tdBitmapSet.add(result.asType() ?: return@before)
+          }
         }
-      }
-      taskIconCache.allMethods("getBitmapInfo").hook {
-        before {
-          val drawable = args[0].asType<BitmapDrawable>() ?: return@before
-          if (tdBitmapSet.contains(drawable.bitmap)) {
-            val background =
-              args[2].asType<Int>()?.let { Color.valueOf(it).toDrawable() }
-                ?: Color.TRANSPARENT.toDrawable()
-            getSC()?.run {
-              args[0] = genIconFrom(IconHelper.makeAdaptive(drawable, background, taskIconScale))
+        taskIconCache.allMethods("getBitmapInfo").hook {
+          before {
+            val drawable = args[0].asType<BitmapDrawable>() ?: return@before
+            if (tdBitmapSet.contains(drawable.bitmap)) {
+              val background =
+                args[2].asType<Int>()?.let { Color.valueOf(it).toDrawable() }
+                  ?: Color.TRANSPARENT.toDrawable()
+              getSC()?.run {
+                args[0] = genIconFrom(IconHelper.makeAdaptive(drawable, background, taskIconScale))
+              }
             }
           }
         }
+      }
+    }
+
+    runSafe {
+      val iconOptions = BaseIconFactory.getIconOptionsClass(lpp) ?: return@runSafe
+      val isFullBleedF = iconOptions.field("isFullBleed") ?: return@runSafe
+      BaseIconFactory.getClass(lpp)?.allMethods("createBadgedIconBitmap")?.hook {
+        before { isFullBleedF.set(args[1], false) }
       }
     }
   }
