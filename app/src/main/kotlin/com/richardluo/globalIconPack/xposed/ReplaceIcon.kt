@@ -103,9 +103,9 @@ class ReplaceIcon(
 
     runSafe {
       val iconOptions = BaseIconFactory.getIconOptionsClass(lpp) ?: return@runSafe
-      val isFullBleedF = iconOptions.field("isFullBleed") ?: return@runSafe
+      val drawFullBleedF = iconOptions.field("drawFullBleed") ?: return@runSafe
       BaseIconFactory.getClass(lpp)?.allMethods("createBadgedIconBitmap")?.hook {
-        before { isFullBleedF.set(args[1], false) }
+        before { drawFullBleedF.set(args[1], false) }
       }
     }
   }
