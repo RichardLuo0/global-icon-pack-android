@@ -8,12 +8,11 @@ import com.richardluo.globalIconPack.utils.allMethods
 import com.richardluo.globalIconPack.utils.asType
 import com.richardluo.globalIconPack.utils.classOf
 import com.richardluo.globalIconPack.utils.deoptimize
-import com.richardluo.globalIconPack.utils.elseIf
 import com.richardluo.globalIconPack.utils.field
 import com.richardluo.globalIconPack.utils.hook
 import com.richardluo.globalIconPack.utils.rGet
 import com.richardluo.globalIconPack.utils.rSet
-import com.richardluo.globalIconPack.utils.runSafeIf
+import com.richardluo.globalIconPack.utils.runUntilDone
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 
 class NoShadow : Hook {
@@ -38,16 +37,18 @@ class NoShadow : Hook {
   override fun onHookSettings(lpp: LoadPackageParam) = removeIconShadow(lpp)
 
   private fun removeIconShadow(lpp: LoadPackageParam) {
-    runSafeIf {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.BAKLAVA) return@runSafeIf null
+    runUntilDone {
+      tryDo {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.BAKLAVA) return@tryDo fail()
         // Android 16 qpr2
-        val iconOptions = BaseIconFactory.getIconOptionsClass(lpp) ?: return@runSafeIf null
-        val addShadowsF = iconOptions.field("addShadows") ?: return@runSafeIf null
+        val iconOptions = BaseIconFactory.getIconOptionsClass(lpp) ?: return@tryDo fail()
+        val addShadowsF = iconOptions.field("addShadows") ?: return@tryDo fail()
         BaseIconFactory.getClass(lpp)?.allMethods("createBadgedIconBitmap")?.hook {
           before { addShadowsF.set(args[1], false) }
         }
       }
-      .elseIf {
+
+      tryDo {
         classOf("android.util.LauncherIcons")?.allMethods("wrapIconDrawableWithShadow")?.hook {
           replace { args[0] }
         }
@@ -65,5 +66,6 @@ class NoShadow : Hook {
           }
         }
       }
+    }
   }
 }

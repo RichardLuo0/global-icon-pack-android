@@ -57,7 +57,7 @@ fun unflattenFromString(str: String): ComponentName? {
   if (sep < 0) {
     return null
   }
-  val pkg = str.substring(0, sep)
+  val pkg = str.take(sep)
   var cls = str.substring(sep + 1)
   if (cls.isNotEmpty() && cls[0] == '.') {
     cls = pkg + cls
@@ -138,15 +138,23 @@ inline fun <R> runSafe(crossinline block: () -> R) = run { block() }
 
 inline fun <T, R> T.runSafe(crossinline block: T.() -> R) = run { block() }
 
-class RunSafeResult(val isSuccess: Boolean)
+class RunUntilDoneContext<T> {
+  var isDone = false
+  var result: T? = null
 
-inline fun <T> T.runSafeIf(crossinline block: T.() -> Any?) = run {
-  val result = block()
-  if (result != null) RunSafeResult(true) else RunSafeResult(false)
+  fun fail() {
+    isDone = false
+  }
+
+  inline fun tryDo(crossinline block: () -> T) {
+    if (isDone) return
+    isDone = true
+    result = block()
+  }
 }
 
-inline fun RunSafeResult.elseIf(crossinline action: () -> Any?) =
-  if (!isSuccess) runSafeIf { action() } else this
+inline fun <T> runUntilDone(crossinline block: RunUntilDoneContext<T>.() -> T) =
+  RunUntilDoneContext<T>().apply { block() }.result
 
 suspend inline fun <R> runCatchingToast(
   context: Context,
