@@ -26,7 +26,7 @@ interface IconEntry {
   fun copyTo(
     component: String,
     newName: String,
-    xml: StringBuilder,
+    addAppfilter: (String) -> Unit,
     copyRes: (String, String) -> Unit,
   ) {}
 
@@ -51,10 +51,10 @@ class NormalIconEntry(override val name: String) : IconEntry {
   override fun copyTo(
     component: String,
     newName: String,
-    xml: StringBuilder,
+    addAppfilter: (String) -> Unit,
     copyRes: (String, String) -> Unit,
   ) {
-    xml.append("<item component=\"${component}\" drawable=\"${newName}\"/>")
+    addAppfilter("<item component=\"${component}\" drawable=\"${newName}\"/>")
     copyRes(name, newName)
   }
 
@@ -86,10 +86,10 @@ class CalendarIconEntry(override val name: String) : IconEntry {
   override fun copyTo(
     component: String,
     newName: String,
-    xml: StringBuilder,
+    addAppfilter: (String) -> Unit,
     copyRes: (String, String) -> Unit,
   ) {
-    xml.append("<calendar component=\"${component}\" prefix=\"${newName}_\"/>")
+    addAppfilter("<calendar component=\"${component}\" prefix=\"${newName}_\"/>")
     (1..31).mapNotNull { copyRes("$name${it}", "${newName}_$it") }
   }
 
@@ -130,10 +130,10 @@ class ClockIconEntry(override val name: String, private val metadata: ClockMetad
   override fun copyTo(
     component: String,
     newName: String,
-    xml: StringBuilder,
+    addAppfilter: (String) -> Unit,
     copyRes: (String, String) -> Unit,
   ) {
-    xml.append(
+    addAppfilter(
       "<dynamic-clock drawable=\"${newName}\" " +
         "hourLayerIndex=\"${metadata.hourLayerIndex}\" " +
         "minuteLayerIndex=\"${metadata.minuteLayerIndex}\" " +
@@ -142,7 +142,7 @@ class ClockIconEntry(override val name: String, private val metadata: ClockMetad
         "defaultMinute=\"${metadata.defaultMinute}\" " +
         "defaultSecond=\"${metadata.defaultSecond}\" />"
     )
-    xml.append("<item component=\"${component}\" drawable=\"${newName}\"/>")
+    addAppfilter("<item component=\"${component}\" drawable=\"${newName}\"/>")
     copyRes(name, newName)
   }
 

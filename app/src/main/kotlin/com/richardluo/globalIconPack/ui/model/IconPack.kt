@@ -92,39 +92,45 @@ class IconPack(val pack: String, val res: Resources) : Parcelable {
     entry: IconEntry,
     component: String,
     name: String,
-    appfilterXML: StringBuilder,
+    idMap: MutableMap<Int, Int>,
     apkBuilder: ApkBuilder,
   ) =
-    entry.copyTo(component, name, appfilterXML) { resName, newName ->
-      addAllFiles(getDrawableId(resName), newName, apkBuilder)
+    entry.copyTo(component, name, apkBuilder::addAppfilter) { resName, newName ->
+      copyDrawable(getDrawableId(resName), newName, idMap, apkBuilder)
     }
 
-  private fun addAllFiles(resId: Int, name: String, apkBuilder: ApkBuilder): Int {
+  private fun copyDrawable(
+    resId: Int,
+    name: String,
+    idMap: MutableMap<Int, Int>,
+    apkBuilder: ApkBuilder,
+  ): Int {
     if (resId == 0) return 0
     val stream = res.openRawResource(resId)
-    return if (AXMLEditor.isAXML(stream)) {
-      val editor = AXMLEditor(stream)
-      var i = 0
-      editor.replaceResourceId { id ->
-        if (!isHighTwoByte(id, 0x7f000000)) return@replaceResourceId null
-        when (res.getResourceTypeName(id)) {
-          "drawable",
-          "mipmap" -> addAllFiles(id, "${name}_${i++}", apkBuilder)
-          "color" -> apkBuilder.addColor(res.getColor(id, null))
-          "dimen" -> apkBuilder.addDimen(res.getDimension(id))
-          else -> null
+    return (if (AXMLEditor.isAXML(stream)) {
+        val editor = AXMLEditor(stream)
+        var i = 0
+        editor.replaceResourceId { id ->
+          if (!isHighTwoByte(id, 0x7f000000)) return@replaceResourceId null
+          when (res.getResourceTypeName(id)) {
+            "drawable",
+            "mipmap" -> idMap.getOrPut(id) { copyDrawable(id, "${name}_${i++}", idMap, apkBuilder) }
+            "color" -> apkBuilder.addColor(res.getColor(id, null))
+            "dimen" -> apkBuilder.addDimen(res.getDimension(id))
+            else -> null
+          }
         }
-      }
-      apkBuilder.addDrawable(editor.toStream(), name, ".compiledXML")
-    } else apkBuilder.addDrawable(stream, name)
+        apkBuilder.addDrawable(editor.toStream(), name, ".compiledXML")
+      } else apkBuilder.addDrawable(stream, name))
+      .also { idMap[resId] = it }
   }
 
-  fun copyFallbacks(name: String, xml: StringBuilder, apkBuilder: ApkBuilder) {
+  fun copyFallbacks(name: String, idMap: MutableMap<Int, Int>, apkBuilder: ApkBuilder) {
     info.apply {
-      copyFallback(iconBacks, "iconback", "${name}_0", xml, apkBuilder)
-      copyFallback(iconUpons, "iconupon", "${name}_1", xml, apkBuilder)
-      copyFallback(iconMasks, "iconmask", "${name}_2", xml, apkBuilder)
-      xml.append("<scale factor=\"$iconScale\" />")
+      copyFallback(iconBacks, "iconback", "${name}_0", idMap, apkBuilder)
+      copyFallback(iconUpons, "iconupon", "${name}_1", idMap, apkBuilder)
+      copyFallback(iconMasks, "iconmask", "${name}_2", idMap, apkBuilder)
+      apkBuilder.addAppfilter("<scale factor=\"$iconScale\" />")
     }
   }
 
@@ -132,17 +138,18 @@ class IconPack(val pack: String, val res: Resources) : Parcelable {
     imgNameList: List<String>,
     tag: String,
     name: String,
-    xml: StringBuilder,
+    idMap: MutableMap<Int, Int>,
     apkBuilder: ApkBuilder,
   ) {
     if (imgNameList.isEmpty()) return
-    xml.append("<$tag")
+    val xml = StringBuilder("<$tag")
     imgNameList.forEachIndexed { i, imgName ->
       val newName = "${name}_$i"
       xml.append(" img$i=\"$newName\" ")
-      addAllFiles(getDrawableId(imgName), newName, apkBuilder)
+      copyDrawable(getDrawableId(imgName), newName, idMap, apkBuilder)
     }
     xml.append("/>")
+    apkBuilder.addAppfilter(xml.toString())
   }
 
   override fun equals(other: Any?) = other is IconPack && other.pack == pack

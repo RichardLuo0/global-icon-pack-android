@@ -21,6 +21,8 @@ object IconPackCreator {
     fun addDrawable(input: InputStream, name: String, suffix: String = ""): Int
 
     fun addDimen(dimen: Float): Int
+
+    fun addAppfilter(record: String)
   }
 
   @OptIn(ExperimentalStdlibApi::class)
@@ -37,6 +39,8 @@ object IconPackCreator {
 
     private val resIds = StringBuilder()
     private val valuesXML = StringBuilder("<?xml version=\"1.0\" encoding=\"UTF-8\"?><resources>")
+    private val appfilterXML =
+      StringBuilder("<?xml version=\"1.0\" encoding=\"UTF-8\"?><resources>")
 
     private class Ref(val id: Int, val name: String)
 
@@ -78,13 +82,14 @@ object IconPackCreator {
 
     override fun addDimen(dimen: Float) = dimenMap.getOrPut(dimen).id
 
-    fun addXML(content: String) {
-      xml.createFileAndOpenStream(contentResolver, "text/xml", "appfilter.xml").writeText(content)
+    override fun addAppfilter(record: String) {
+      appfilterXML.append(record)
     }
 
     fun build(label: String, icon: String = "@android:drawable/sym_def_app_icon") {
       colorMap.build()
       dimenMap.build()
+
       values
         .createFileAndOpenStream(contentResolver, "text/xml", "values.xml")
         .writeText(valuesXML.append("</resources>").toString())
@@ -92,6 +97,10 @@ object IconPackCreator {
       workDir
         .createFileAndOpenStream(contentResolver, "text/plain", "resIds.txt")
         .writeText(resIds.toString())
+
+      xml
+        .createFileAndOpenStream(contentResolver, "text/xml", "appfilter.xml")
+        .writeText(appfilterXML.append("</resources>").toString())
 
       context.resources
         .openRawResource(R.raw.icon_pack_manifest)
@@ -143,7 +152,6 @@ object IconPackCreator {
 
     val apkBuilder = IconPackApkBuilder(packageName, context, workDir)
 
-    val appfilterXML = StringBuilder("<?xml version=\"1.0\" encoding=\"UTF-8\"?><resources>")
     val total =
       1 +
         (if (installedAppsOnly) newIcons.entries.size else baseIconPack.iconEntryMap.size) +
@@ -155,37 +163,42 @@ object IconPackCreator {
       progress = progress.advance(info).also { onProgress(it) }
     }
 
+    val packIdMapMap = mutableMapOf<IconPack, MutableMap<Int, Int>>()
+    fun IconEntryWithPack.copyIcon(cn: ComponentName, iconName: String) =
+      pack.copyIcon(
+        entry,
+        cn.flattenToString(),
+        iconName,
+        packIdMapMap.getOrPut(pack) { mutableMapOf() },
+        apkBuilder,
+      )
+
     advanceProgressAndReport("icon_fallback")
-    baseIconPack.copyFallbacks("icon_fallback", appfilterXML, apkBuilder)
+    baseIconPack.copyFallbacks(
+      "icon_fallback",
+      packIdMapMap.getOrPut(baseIconPack) { mutableMapOf() },
+      apkBuilder,
+    )
 
     var i = 0
     if (installedAppsOnly)
-      newIcons.entries.forEach { (cn, entry) ->
+      newIcons.forEach { (cn, entry) ->
         advanceProgressAndReport(cn.packageName)
         if (entry == null) return@forEach
-        val iconName = "icon_${i++}"
-        entry.pack.copyIcon(entry.entry, cn.flattenToString(), iconName, appfilterXML, apkBuilder)
+        entry.copyIcon(cn, "icon_${i++}")
       }
     else
       baseIconPack.iconEntryMap.forEach { (cn, entry) ->
         advanceProgressAndReport(cn.packageName)
-        val iconName = "icon_${i++}"
-        val newEntry = if (newIcons.containsKey(cn)) newIcons[cn] ?: return@forEach else null
-        val entry = newEntry?.entry ?: entry
-        val pack = newEntry?.pack ?: baseIconPack
-        pack.copyIcon(entry, cn.flattenToString(), iconName, appfilterXML, apkBuilder)
+        val newEntry =
+          if (newIcons.containsKey(cn)) newIcons[cn] ?: return@forEach
+          else IconEntryWithPack(entry, baseIconPack)
+        newEntry.copyIcon(cn, "icon_${i++}")
       }
-    apkBuilder.addXML(appfilterXML.append("</resources>").toString())
 
     if (icon != null) {
       advanceProgressAndReport("ic_launcher")
-      icon.pack.copyIcon(
-        icon.entry,
-        ComponentName(packageName, "").flattenToString(),
-        "ic_launcher",
-        appfilterXML,
-        apkBuilder,
-      )
+      icon.copyIcon(ComponentName(packageName, ""), "ic_launcher")
       advanceProgressAndReport("building...")
       apkBuilder.build(label, "@drawable/ic_launcher")
     } else {
