@@ -294,10 +294,8 @@ fun <K, V> Map<K, V>.toMutableStateMap() = SnapshotStateMap<K, V>().also { it.pu
 fun parseXML(res: Resources, name: String, pack: String) =
   runCatching {
       res.getIdentifier(name, "xml", pack).takeIf { 0 != it }?.let { res.getXml(it) }
-        ?: run {
-          XmlPullParserFactory.newInstance().newPullParser().apply {
-            setInput(res.assets.open(name), Xml.Encoding.UTF_8.toString())
-          }
+        ?: XmlPullParserFactory.newInstance().newPullParser().apply {
+          setInput(res.assets.open("$name.xml"), Xml.Encoding.UTF_8.toString())
         }
     }
     .getOrNull { log(it) }
