@@ -82,6 +82,10 @@ fun <T> Array<T>.rSet(i: Int, obj: T) {
 
 inline fun <reified T> Any?.asType() = this as? T
 
+inline fun Boolean.ifTrue(block: () -> Unit) = if (this) block() else this
+
+inline fun List<*>?.ifNullOrEmpty(block: () -> Unit) = if (isNullOrEmpty()) block() else this
+
 inline fun <T> Result<T>.getOrNull(block: (Throwable) -> Unit) = getOrElse {
   block(it)
   null
@@ -153,8 +157,19 @@ class RunUntilDoneContext<T> {
   }
 }
 
-inline fun <T> runUntilDone(crossinline block: RunUntilDoneContext<T>.() -> T) =
-  RunUntilDoneContext<T>().apply { block() }.result
+inline fun <T> runUntilDone(
+  action: String = "something",
+  crossinline block: RunUntilDoneContext<T>.() -> Unit,
+) =
+  RunUntilDoneContext<T>()
+    .apply { block() }
+    .let {
+      if (it.isDone) it.result
+      else {
+        log("$action is not done!")
+        null
+      }
+    }
 
 suspend inline fun <R> runCatchingToast(
   context: Context,
