@@ -150,6 +150,8 @@ class RunUntilDoneContext<T> {
     isDone = false
   }
 
+  fun <T> T?.failOnNull() = this.also { if (it == null) fail() }
+
   inline fun tryDo(crossinline block: () -> T) {
     if (isDone) return
     isDone = true

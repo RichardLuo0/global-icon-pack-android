@@ -102,6 +102,7 @@ class ReplaceIcon(
     }
 
     runSafe {
+      if (Build.VERSION.SDK_INT < Build.VERSION_CODES.BAKLAVA) return@runSafe
       val iconOptions = BaseIconFactory.getIconOptionsClass(lpp) ?: return@runSafe
       val drawFullBleedF = iconOptions.field("drawFullBleed") ?: return@runSafe
       BaseIconFactory.getClass(lpp)?.allMethods("createBadgedIconBitmap")?.hook {

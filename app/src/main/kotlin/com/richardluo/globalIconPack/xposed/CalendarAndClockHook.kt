@@ -116,7 +116,7 @@ class CalendarAndClockHook(private val clockUseFallbackMask: Boolean) : Hook {
           }
         }
       }
-    }
+    } ?: return fail()
   }
 
   fun RunUntilDoneContext<Unit>.onHookPixelLauncherPre16QPR2(lpp: LoadPackageParam) {
@@ -161,7 +161,7 @@ class CalendarAndClockHook(private val clockUseFallbackMask: Boolean) : Hook {
           }
         }
       }
-    }
+    } ?: return fail()
   }
 
   private fun hookCollectCC(iconProvider: Class<*>) {

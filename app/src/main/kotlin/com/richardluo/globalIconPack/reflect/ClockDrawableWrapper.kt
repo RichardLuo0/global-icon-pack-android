@@ -30,9 +30,9 @@ object ClockDrawableWrapper {
   fun initWithPixelLauncher(lpp: LoadPackageParam) {
     impl =
       runUntilDone("init ClockDrawableWrapper") {
-        tryDo { ClockDrawableWrapper16QPR2New.from(lpp) }
-        tryDo { ClockDrawableWrapper16QPR2.from(lpp) }
-        tryDo { ClockDrawableWrapperPre16QPR2.from(lpp) }
+        tryDo { ClockDrawableWrapper16QPR2New.from(lpp).failOnNull() }
+        tryDo { ClockDrawableWrapper16QPR2.from(lpp).failOnNull() }
+        tryDo { ClockDrawableWrapperPre16QPR2.from(lpp).failOnNull() }
       }
   }
 
