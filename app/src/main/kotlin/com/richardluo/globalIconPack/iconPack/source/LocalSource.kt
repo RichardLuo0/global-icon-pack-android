@@ -98,6 +98,9 @@ fun loadIconPack(resources: Resources, pack: String): IconPackInfo {
   fun addIcon(parseXml: XmlPullParser, iconEntry: IconEntry) {
     val cnString = parseXml["component"]?.removeSurrounding(compPrefix, compSuffix) ?: return
     val cn = unflattenFromString(cnString) ?: return
+    // If a calendar icon entry has been set, skip it
+    if (iconEntryMap[cn]?.type == IconEntry.Type.Calendar) return
+    // Set new icon entry
     iconEntryMap[cn] = iconEntry
     // Use the first icon as app icon. I don't see a better way.
     iconEntryMap.putIfAbsent(getComponentName(cn.packageName), iconEntry)

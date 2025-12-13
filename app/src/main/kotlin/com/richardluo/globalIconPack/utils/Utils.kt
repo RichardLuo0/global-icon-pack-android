@@ -57,7 +57,7 @@ fun unflattenFromString(str: String): ComponentName? {
   if (sep < 0) {
     return null
   }
-  val pkg = str.substring(0, sep)
+  val pkg = str.take(sep)
   var cls = str.substring(sep + 1)
   if (cls.isNotEmpty() && cls[0] == '.') {
     cls = pkg + cls
@@ -81,6 +81,10 @@ fun <T> Array<T>.rSet(i: Int, obj: T) {
 }
 
 inline fun <reified T> Any?.asType() = this as? T
+
+inline fun Boolean.ifTrue(block: () -> Unit) = if (this) block() else this
+
+inline fun List<*>?.ifNullOrEmpty(block: () -> Unit) = if (isNullOrEmpty()) block() else this
 
 inline fun <T> Result<T>.getOrNull(block: (Throwable) -> Unit) = getOrElse {
   block(it)
@@ -137,6 +141,37 @@ fun MutableSharedFlow<Unit>.tryEmit() = tryEmit(Unit)
 inline fun <R> runSafe(crossinline block: () -> R) = run { block() }
 
 inline fun <T, R> T.runSafe(crossinline block: T.() -> R) = run { block() }
+
+class RunUntilDoneContext<T> {
+  var isDone = false
+  var result: T? = null
+
+  fun fail() {
+    isDone = false
+  }
+
+  fun <T> T?.failOnNull() = this.also { if (it == null) fail() }
+
+  inline fun tryDo(crossinline block: () -> T) {
+    if (isDone) return
+    isDone = true
+    result = block()
+  }
+}
+
+inline fun <T> runUntilDone(
+  name: String = "runUntilDone",
+  crossinline block: RunUntilDoneContext<T>.() -> Unit,
+) =
+  RunUntilDoneContext<T>()
+    .apply { block() }
+    .let {
+      if (it.isDone) it.result
+      else {
+        log("$name failed!")
+        null
+      }
+    }
 
 suspend inline fun <R> runCatchingToast(
   context: Context,

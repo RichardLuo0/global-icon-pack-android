@@ -1,9 +1,9 @@
 package com.richardluo.globalIconPack.iconPack.model
 
+import android.content.pm.PackageItemInfo
 import android.graphics.drawable.Drawable
 import android.os.Parcel
 import com.richardluo.globalIconPack.iconPack.model.IconEntry.Type
-import com.richardluo.globalIconPack.reflect.ClockDrawableWrapper
 import java.io.ByteArrayInputStream
 import java.io.ByteArrayOutputStream
 import java.io.DataInputStream
@@ -22,6 +22,8 @@ interface IconEntry {
   val type: Type
 
   fun getIcon(getIcon: (String) -> Drawable?): Drawable?
+
+  fun addExtraTo(info: PackageItemInfo, id: Int) {}
 
   fun copyTo(
     component: String,
@@ -124,8 +126,21 @@ data class ClockMetadata(
 class ClockIconEntry(override val name: String, private val metadata: ClockMetadata) : IconEntry {
   override val type = Type.Clock
 
-  override fun getIcon(getIcon: (String) -> Drawable?) =
-    getIcon(name)?.let { ClockDrawableWrapper.from(it, metadata) ?: it }
+  override fun getIcon(getIcon: (String) -> Drawable?) = getIcon(name)
+
+  override fun addExtraTo(info: PackageItemInfo, id: Int) {
+    info.metaData?.apply {
+      putInt(ROUND_ICON_METADATA_KEY, id)
+
+      putInt(HOUR_INDEX_METADATA_KEY, metadata.hourLayerIndex)
+      putInt(MINUTE_INDEX_METADATA_KEY, metadata.minuteLayerIndex)
+      putInt(SECOND_INDEX_METADATA_KEY, metadata.secondLayerIndex)
+
+      putInt(DEFAULT_HOUR_METADATA_KEY, metadata.defaultHour)
+      putInt(DEFAULT_MINUTE_METADATA_KEY, metadata.defaultMinute)
+      putInt(DEFAULT_SECOND_METADATA_KEY, metadata.defaultSecond)
+    }
+  }
 
   override fun copyTo(
     component: String,
@@ -163,6 +178,15 @@ class ClockIconEntry(override val name: String, private val metadata: ClockMetad
       .toByteArray()
 
   companion object {
+    private const val LAUNCHER_PACKAGE = "com.android.launcher3"
+    private const val ROUND_ICON_METADATA_KEY = "$LAUNCHER_PACKAGE.LEVEL_PER_TICK_ICON_ROUND"
+    private const val HOUR_INDEX_METADATA_KEY = "$LAUNCHER_PACKAGE.HOUR_LAYER_INDEX"
+    private const val MINUTE_INDEX_METADATA_KEY = "$LAUNCHER_PACKAGE.MINUTE_LAYER_INDEX"
+    private const val SECOND_INDEX_METADATA_KEY = "$LAUNCHER_PACKAGE.SECOND_LAYER_INDEX"
+    private const val DEFAULT_HOUR_METADATA_KEY = "$LAUNCHER_PACKAGE.DEFAULT_HOUR"
+    private const val DEFAULT_MINUTE_METADATA_KEY = "$LAUNCHER_PACKAGE.DEFAULT_MINUTE"
+    private const val DEFAULT_SECOND_METADATA_KEY = "$LAUNCHER_PACKAGE.DEFAULT_SECOND"
+
     fun from(data: ByteArray) =
       DataInputStream(ByteArrayInputStream(data)).use {
         it.readByte()
