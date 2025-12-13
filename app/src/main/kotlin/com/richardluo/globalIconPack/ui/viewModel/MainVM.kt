@@ -123,13 +123,12 @@ class MainVM(context: Application) : ContextVM(context), ILoadable by Loadable()
     AppPreference.get().edit(commit = true) {}
     val prefPath = AppPreference.getFile()?.takeIf { it.exists() }?.path ?: ""
 
-    val uid = android.os.Process.myUid()
     Shell.cmd(
         "set -e",
         "if ! [ -f $db ]; then touch $db; fi",
         "[ -n \"$prefPath\" ] && context=$(ls -Z $prefPath | cut -d: -f1-4) || context=\"u:object_r:magisk_file:s0\"",
-        "chown $uid:$uid $parent && chmod 0777 $parent && chcon \$context $parent",
-        "for file in $parent/*; do chown $uid:$uid \$file && chmod 0666 \$file && chcon \$context \$file; done",
+        "chown 9999:9999 $parent && chmod 0777 $parent && chcon \$context $parent",
+        $$"for file in $$parent/*; do chown 9999:9999 $file && chmod 0666 $file && chcon $context $file; done",
       )
       .exec()
       .throwOnFail("Database permission setting failed")
