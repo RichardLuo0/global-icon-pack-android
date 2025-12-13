@@ -160,7 +160,7 @@ class RunUntilDoneContext<T> {
 }
 
 inline fun <T> runUntilDone(
-  action: String = "something",
+  name: String = "runUntilDone",
   crossinline block: RunUntilDoneContext<T>.() -> Unit,
 ) =
   RunUntilDoneContext<T>()
@@ -168,7 +168,7 @@ inline fun <T> runUntilDone(
     .let {
       if (it.isDone) it.result
       else {
-        log("$action is not done!")
+        log("$name failed!")
         null
       }
     }

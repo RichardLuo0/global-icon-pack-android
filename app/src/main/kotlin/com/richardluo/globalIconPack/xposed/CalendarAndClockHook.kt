@@ -17,7 +17,7 @@ import android.os.UserHandle
 import android.os.UserManager
 import com.richardluo.globalIconPack.iconPack.getSC
 import com.richardluo.globalIconPack.iconPack.model.IconEntry
-import com.richardluo.globalIconPack.reflect.ClockDrawableWrapper
+import com.richardluo.globalIconPack.iconPack.source.getComponentName
 import com.richardluo.globalIconPack.utils.RunUntilDoneContext
 import com.richardluo.globalIconPack.utils.allMethods
 import com.richardluo.globalIconPack.utils.asType
@@ -44,9 +44,6 @@ class CalendarAndClockHook(private val clockUseFallbackMask: Boolean) : Hook {
   private val clocks = mutableSetOf<String>()
 
   override fun onHookPixelLauncher(lpp: LoadPackageParam) {
-    // Needed by clock entry
-    ClockDrawableWrapper.initWithPixelLauncher(lpp)
-
     runUntilDone("onHookPixelLauncher") {
       tryDo { onHookPixelLauncher16QPR2(lpp) }
       tryDo { onHookPixelLauncherPre16QPR2(lpp) }
@@ -188,15 +185,23 @@ class CalendarAndClockHook(private val clockUseFallbackMask: Boolean) : Hook {
 
       when (entry.type) {
         IconEntry.Type.Calendar -> calendars.add(packageName)
-        IconEntry.Type.Clock -> clocks.add(packageName)
+        IconEntry.Type.Clock -> {
+          clocks.add(packageName)
+          // Run the ClockDrawableWrapper.forPackage() logic
+          val oldClock = mClock?.getAs<ComponentName>(thisObject)
+          return try {
+            mClock?.set(thisObject, getComponentName(packageName))
+            callOriginalMethod<Drawable>()?.let {
+              if (clockUseFallbackMask) sc.maskIconFrom(it) else it
+            }
+          } finally {
+            mClock?.set(thisObject, oldClock)
+          }
+        }
         else -> {}
       }
 
-      return sc.getIcon(entry, density ?: 0).let {
-        if (clockUseFallbackMask && it != null && entry.type == IconEntry.Type.Clock)
-          sc.maskIconFrom(it)
-        else it
-      }
+      return sc.getIcon(entry, density ?: 0)
     }
 
     runUntilDone("hookGetIcon") {

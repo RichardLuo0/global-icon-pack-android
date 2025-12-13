@@ -224,6 +224,23 @@ class ReplaceIcon(
   }
 }
 
+private fun replaceIconInItemInfo(info: PackageItemInfo, id: Int?, sc: Source) {
+  // logD("Replace in ItemInfo: ${info.packageName}/${info.name}: $id")
+
+  // Bypass quick settings tile icon
+  if (
+    info is ServiceInfo && info.permission == android.Manifest.permission.BIND_QUICK_SETTINGS_TILE
+  )
+    return
+
+  if (id != null) info.icon = withHighByteSet(id, IN_SC)
+  else if (isHighTwoByte(info.icon, ANDROID_DEFAULT))
+    info.icon = withHighByteSet(info.icon, NOT_IN_SC)
+
+  // Populate clock metadata
+  id?.let { sc.getIconEntry(it) }?.addExtraTo(info, info.icon)
+}
+
 private typealias BatchReplacer = (seq: Sequence<Any?>, sc: Source) -> Unit
 
 private val blockReplaceIconResId = ThreadLocal.withInitial { false }
@@ -236,7 +253,7 @@ private fun HookBuilder.replaceIconHook() {
       val info = thisObject as? PackageItemInfo ?: return@runSafe
       info.packageName ?: return@runSafe
       val sc = getSC() ?: return@runSafe
-      replaceIconInItemInfo(info, sc.getId(getComponentName(info)))
+      replaceIconInItemInfo(info, sc.getId(getComponentName(info)), sc)
       logD("Single replaced: ${info.packageName}/${info.name}")
     }
     blockReplaceIconResId.set(false)
@@ -262,20 +279,6 @@ private inline fun HookBuilder.batchReplaceIconHook(
   }
 }
 
-private fun replaceIconInItemInfo(info: PackageItemInfo, id: Int?) {
-  // logD("Replace in ItemInfo: ${info.packageName}/${info.name}: $id")
-
-  // Bypass quick settings tile icon
-  if (
-    info is ServiceInfo && info.permission == android.Manifest.permission.BIND_QUICK_SETTINGS_TILE
-  )
-    return
-
-  if (id != null) info.icon = withHighByteSet(id, IN_SC)
-  else if (isHighTwoByte(info.icon, ANDROID_DEFAULT))
-    info.icon = withHighByteSet(info.icon, NOT_IN_SC)
-}
-
 private val iconResourceIdF by lazy { ResolveInfo::class.java.field("iconResourceId") }
 
 private fun replaceIconInResolveInfo(ri: ResolveInfo) {
@@ -286,7 +289,7 @@ private fun replaceIconInResolveInfo(ri: ResolveInfo) {
 
 private fun replaceIconInItemInfos(seq: Sequence<PackageItemInfo>, sc: Source) {
   val ids = sc.getId(seq.map { getComponentName(it) }.toList())
-  seq.forEachIndexed { i, info -> replaceIconInItemInfo(info, ids.getOrNull(i)) }
+  seq.forEachIndexed { i, info -> replaceIconInItemInfo(info, ids.getOrNull(i), sc) }
 }
 
 private fun ResolveInfo.getComponentInfo(): ComponentInfo? {
