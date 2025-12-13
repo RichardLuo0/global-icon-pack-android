@@ -246,7 +246,7 @@ class MainActivity : ComponentActivity() {
             TonalToggleButton(
               checked,
               { coroutineScope.launch { pagerState.animateScrollToPage(i) } },
-              modifier = Modifier.padding(horizontal = 3.dp),
+              modifier = Modifier.padding(horizontal = 4.dp),
             ) {
               Icon(page.icon, contentDescription = page.name)
               AnimatedVisibility(
