@@ -21,3 +21,6 @@
 #-renamesourcefileattribute SourceFile
 
 -keep class com.richardluo.globalIconPack.xposed.XposedMain
+-keep class com.richardluo.globalIconPack.xposed.XposedMain {
+    public <init>();
+}

@@ -1,17 +1,18 @@
+import com.android.build.api.dsl.ApplicationExtension
 import com.github.jk1.license.render.SimpleHtmlReportRenderer
 import java.io.FileInputStream
 import java.util.Properties
+import org.gradle.kotlin.dsl.configure
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
   alias(libs.plugins.android.application)
-  alias(libs.plugins.kotlin.android)
   alias(libs.plugins.compose.compiler)
   alias(libs.plugins.dependency.license.report)
   id("kotlin-parcelize")
 }
 
-android {
+extensions.configure<ApplicationExtension> {
   namespace = "com.richardluo.globalIconPack"
   compileSdk = 36
 
@@ -60,7 +61,6 @@ android {
     sourceCompatibility = JavaVersion.VERSION_17
     targetCompatibility = JavaVersion.VERSION_17
   }
-  kotlin { compilerOptions { jvmTarget.set(JvmTarget.JVM_17) } }
 
   buildFeatures {
     buildConfig = true
@@ -79,7 +79,14 @@ android {
   }
 }
 
-tasks.register("printVersion") { doLast { println(android.defaultConfig.versionName) } }
+kotlin { compilerOptions { jvmTarget = JvmTarget.JVM_17 } }
+
+tasks.register("printVersion") {
+  doLast {
+    val android = extensions.getByType<ApplicationExtension>()
+    println(android.defaultConfig.versionName)
+  }
+}
 
 dependencies {
   compileOnly(libs.api)
