@@ -60,53 +60,71 @@ class IconPackDB(
   override fun onCreate(db: SQLiteDatabase) {}
 
   fun onIconPackChange(iconPack: IconPack, installedPacks: Set<String>) {
-    update(iconPack, installedPacks)
-  }
-
-  private fun update(iconPack: IconPack, installedPacks: Set<String>) {
-    val pack = iconPack.pack
     writableDatabase.transaction {
-      execSQL(
-        "CREATE TABLE IF NOT EXISTS 'iconPack' (pack TEXT PRIMARY KEY NOT NULL, fallback BLOB NOT NULL, updateAt NUMERIC NOT NULL, modified INTEGER NOT NULL DEFAULT FALSE)"
-      )
-      // Delete uninstalled packs
-      val packSet = installedPacks.joinToString(", ") { "'$it'" }
-      delete("iconPack", "pack not in ($packSet)", null)
-      // Drop uninstalled pack tables
-      val packTables = installedPacks.map { pt(it) }.toSet()
-      foreachPackTable { if (!packTables.contains("'$it'")) execSQL("DROP TABLE '$it'") }
-      // Update pack
-      val packTable = pt(pack)
-      // Check update time
-      val lastUpdateTime =
-        runCatching { context.packageManager.getPackageInfo(pack, 0) }.getOrNull()?.lastUpdateTime
-          ?: return@transaction
-      val modified =
-        rawQuery("select DISTINCT updateAt, modified from iconPack where pack=?", arrayOf(pack))
-          .useFirstRow {
-            if (lastUpdateTime < it.getLong(0)) return@transaction
-            it.getInt(1) != 0
-          } == true
-      // Create tables
-      execSQL(
-        "CREATE TABLE IF NOT EXISTS $packTable (packageName TEXT NOT NULL, className TEXT NOT NULL, entry BLOB NOT NULL, pack TEXT NOT NULL DEFAULT '', id INTEGER NOT NULL DEFAULT 0)"
-      )
-      execSQL(
-        "CREATE UNIQUE INDEX IF NOT EXISTS '${pack}_componentName' ON $packTable (packageName, className)"
-      )
-      execSQL("CREATE INDEX IF NOT EXISTS '${pack}_packageName' ON $packTable (packageName)")
-      // If not modified, delete everything
-      if (!modified) delete(pt(pack), null, null)
-      // Insert icons
-      insertIcons(this, pack, iconPack.iconEntryMap.asIterable())
-      // Update id
-      updateIconId(this, iconPack)
-      // Insert fallback
-      insertFallbackSettings(this, pack, FallbackSettings(iconPack.info))
+      ensureTable()
+      update(installedPacks)
+      update(iconPack)
       // Send update
-      log("Database: $pack updated")
+      log("Database: ${iconPack.pack} updated")
       mIconsUpdateFlow.tryEmit()
     }
+  }
+
+  fun onIconPackChange(iconPack: IconPack) {
+    writableDatabase.transaction {
+      ensureTable()
+      update(iconPack)
+      // Send update
+      log("Database: ${iconPack.pack} updated")
+      mIconsUpdateFlow.tryEmit()
+    }
+  }
+
+  private fun SQLiteDatabase.ensureTable() {
+    execSQL(
+      "CREATE TABLE IF NOT EXISTS 'iconPack' (pack TEXT PRIMARY KEY NOT NULL, fallback BLOB NOT NULL, updateAt NUMERIC NOT NULL, modified INTEGER NOT NULL DEFAULT FALSE)"
+    )
+  }
+
+  private fun SQLiteDatabase.update(installedPacks: Set<String>) {
+    // Delete uninstalled packs
+    val packSet = installedPacks.joinToString(", ") { "'$it'" }
+    delete("iconPack", "pack not in ($packSet)", null)
+    // Drop uninstalled pack tables
+    val packTables = installedPacks.map { pt(it) }.toSet()
+    foreachPackTable { if (!packTables.contains("'$it'")) execSQL("DROP TABLE '$it'") }
+  }
+
+  private fun SQLiteDatabase.update(iconPack: IconPack) {
+    val pack = iconPack.pack
+    // Update pack
+    val packTable = pt(pack)
+    // Check update time
+    val lastUpdateTime =
+      runCatching { context.packageManager.getPackageInfo(pack, 0) }.getOrNull()?.lastUpdateTime
+        ?: return
+    val modified =
+      rawQuery("select DISTINCT updateAt, modified from iconPack where pack=?", arrayOf(pack))
+        .useFirstRow {
+          if (lastUpdateTime < it.getLong(0)) return
+          it.getInt(1) != 0
+        } == true
+    // Create tables
+    execSQL(
+      "CREATE TABLE IF NOT EXISTS $packTable (packageName TEXT NOT NULL, className TEXT NOT NULL, entry BLOB NOT NULL, pack TEXT NOT NULL DEFAULT '', id INTEGER NOT NULL DEFAULT 0)"
+    )
+    execSQL(
+      "CREATE UNIQUE INDEX IF NOT EXISTS '${pack}_componentName' ON $packTable (packageName, className)"
+    )
+    execSQL("CREATE INDEX IF NOT EXISTS '${pack}_packageName' ON $packTable (packageName)")
+    // If not modified, delete everything
+    if (!modified) delete(pt(pack), null, null)
+    // Insert icons
+    insertIcons(this, pack, iconPack.iconEntryMap.asIterable())
+    // Update id
+    updateIconId(this, iconPack)
+    // Insert fallback
+    insertFallbackSettings(this, pack, FallbackSettings(iconPack.info))
   }
 
   fun getFallbackSettings(pack: String) =

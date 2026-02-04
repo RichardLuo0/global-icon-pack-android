@@ -13,6 +13,7 @@ import com.richardluo.globalIconPack.R
 import com.richardluo.globalIconPack.get
 import com.richardluo.globalIconPack.iconPack.BootReceiver
 import com.richardluo.globalIconPack.iconPack.IconPackDB
+import com.richardluo.globalIconPack.iconPack.IconPackUpdateReceiver
 import com.richardluo.globalIconPack.iconPack.KeepAliveService
 import com.richardluo.globalIconPack.iconPack.source.ShareSource
 import com.richardluo.globalIconPack.ui.repo.IconPackApps
@@ -52,6 +53,7 @@ class MainVM(context: Application) : ContextVM(context), ILoadable by Loadable()
               MODE_SHARE -> {
                 KeepAliveService.stopForeground(context)
                 startOnBoot(false)
+                updateDBIfPackUpdated(true)
                 runCatchingToast(
                   context,
                   { context.getString(R.string.general_error_onShareMode) },
@@ -68,6 +70,7 @@ class MainVM(context: Application) : ContextVM(context), ILoadable by Loadable()
               MODE_PROVIDER -> {
                 KeepAliveService.startForeground(context)
                 startOnBoot(true)
+                updateDBIfPackUpdated(true)
                 runCatchingToast(
                   context,
                   onFailure = {
@@ -83,6 +86,7 @@ class MainVM(context: Application) : ContextVM(context), ILoadable by Loadable()
               else -> {
                 KeepAliveService.stopForeground(context)
                 startOnBoot(false)
+                updateDBIfPackUpdated(false)
               }
             }
           }
@@ -145,6 +149,15 @@ class MainVM(context: Application) : ContextVM(context), ILoadable by Loadable()
   private fun startOnBoot(enable: Boolean = true) {
     context.packageManager.setComponentEnabledSetting(
       ComponentName(context, BootReceiver::class.java),
+      if (enable) PackageManager.COMPONENT_ENABLED_STATE_ENABLED
+      else PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
+      PackageManager.DONT_KILL_APP,
+    )
+  }
+
+  private fun updateDBIfPackUpdated(enable: Boolean = true) {
+    context.packageManager.setComponentEnabledSetting(
+      ComponentName(context, IconPackUpdateReceiver::class.java),
       if (enable) PackageManager.COMPONENT_ENABLED_STATE_ENABLED
       else PackageManager.COMPONENT_ENABLED_STATE_DISABLED,
       PackageManager.DONT_KILL_APP,
