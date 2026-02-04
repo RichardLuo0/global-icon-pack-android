@@ -59,8 +59,8 @@ class ReplaceIcon(
   private val taskIconScale: Float,
 ) : Hook {
   companion object {
-    const val IN_SC = 0xff000000.toInt()
-    const val NOT_IN_SC = 0xfe000000.toInt()
+    const val IN_SC = 0x6f000000
+    const val NOT_IN_SC = 0x6e000000
     const val ANDROID_DEFAULT = 0x7f000000
     const val SC_DEFAULT = 0x00000000
   }
