@@ -13,7 +13,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -25,7 +24,7 @@ import com.richardluo.globalIconPack.utils.chain
 fun AppIcon(
   label: String,
   key: Any? = label,
-  loadImage: suspend () -> ImageBitmap,
+  imageHolder: ImageHolder,
   shareKey: Any? = null,
   onLongClick: (() -> Unit)? = null,
   onClick: () -> Unit,
@@ -45,7 +44,7 @@ fun AppIcon(
           shareKey?.let { sharedBounds("AppIcon/$it") }
         },
       contentScale = ContentScale.Crop,
-      loadImage = loadImage,
+      imageHolder = imageHolder,
     )
     Spacer(modifier = Modifier.height(12.dp))
     Text(

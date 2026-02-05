@@ -113,6 +113,7 @@ import com.richardluo.globalIconPack.ui.components.LocalNavControllerWithArgs
 import com.richardluo.globalIconPack.ui.components.MyDropdownMenu
 import com.richardluo.globalIconPack.ui.components.SampleTheme
 import com.richardluo.globalIconPack.ui.components.ScrollIndicator
+import com.richardluo.globalIconPack.ui.components.StaticImageHolder
 import com.richardluo.globalIconPack.ui.components.WarnDialog
 import com.richardluo.globalIconPack.ui.components.WithSearch
 import com.richardluo.globalIconPack.ui.components.appFilterHeight
@@ -411,7 +412,7 @@ class IconPackMergerActivity : ComponentActivity() {
               key =
                 if (entry != null) "${entry.pack.pack}/icon/${entry.entry.name}"
                 else "${vm.basePack}/fallback/${vm.iconCacheToken}",
-              loadImage = { vm.loadIcon(it) },
+              imageHolder = vm.getImageHolder(it),
               shareKey = info.componentName.packageName,
             ) {
               navController.navigate("AppIconList", it)
@@ -482,9 +483,11 @@ class IconPackMergerActivity : ComponentActivity() {
   private fun PackInfoForm(contentPadding: PaddingValues) {
     val iconChooser: IconChooserVM = viewModel(key = "newPackIconIconChooser")
 
-    val symDefAppIcon = remember {
-      getDrawable(android.R.drawable.sym_def_app_icon)?.toBitmap()?.asImageBitmap()
-        ?: emptyImageBitmap
+    val symDefAppIconHolder = remember {
+      StaticImageHolder(
+        getDrawable(android.R.drawable.sym_def_app_icon)?.toBitmap()?.asImageBitmap()
+          ?: emptyImageBitmap
+      )
     }
 
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -523,7 +526,7 @@ class IconPackMergerActivity : ComponentActivity() {
                 .padding(12.dp)
                 .size(72.dp),
             contentScale = ContentScale.Crop,
-            loadImage = { vm.newPackIcon?.let { vm.loadIcon(it) } ?: symDefAppIcon },
+            imageHolder = vm.newPackIcon?.let { vm.getImageHolder(it) } ?: symDefAppIconHolder,
           )
           OutlinedTextField(
             value = vm.newPackName,
@@ -560,7 +563,7 @@ class IconPackMergerActivity : ComponentActivity() {
       Spacer(modifier = Modifier.height(contentPadding.calculateBottomPadding()))
     }
 
-    IconChooserSheet(iconChooser, { symDefAppIcon }) { _, icon ->
+    IconChooserSheet(iconChooser, { symDefAppIconHolder }) { _, icon ->
       vm.newPackIcon =
         if (icon is VariantPackIcon) IconEntryWithPack(icon.entry, icon.pack) else null
     }

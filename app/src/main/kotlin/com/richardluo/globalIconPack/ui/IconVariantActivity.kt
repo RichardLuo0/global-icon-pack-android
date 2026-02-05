@@ -188,7 +188,7 @@ class IconVariantActivity : ComponentActivity() {
               AppIcon(
                 info.label,
                 key = entry?.entry?.name,
-                loadImage = { vm.loadIcon(it) },
+                imageHolder = vm.getImageHolder(it),
                 shareKey = info.componentName.packageName,
               ) {
                 navController.navigate("AppIconList", it)

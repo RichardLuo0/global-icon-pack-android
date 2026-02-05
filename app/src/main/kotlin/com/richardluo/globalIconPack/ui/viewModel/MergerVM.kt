@@ -18,6 +18,7 @@ import com.richardluo.globalIconPack.R
 import com.richardluo.globalIconPack.iconPack.model.IconPackConfig
 import com.richardluo.globalIconPack.iconPack.model.defaultIconPackConfig
 import com.richardluo.globalIconPack.iconPack.source.isSamePackage
+import com.richardluo.globalIconPack.ui.components.ImageHolder
 import com.richardluo.globalIconPack.ui.model.AnyCompIcon
 import com.richardluo.globalIconPack.ui.model.AppCompInfo
 import com.richardluo.globalIconPack.ui.model.CompIcon
@@ -122,16 +123,33 @@ class MergerVM(context: Application, savedStateHandle: SavedStateHandle) :
 
   override fun mapIconEntry(cnList: List<ComponentName>) = cnList.map(::getIconEntry)
 
-  override suspend fun loadIcon(compIcon: AnyCompIcon): ImageBitmap {
-    return (if (compIcon.entry != null) iconCache else fallbackIconCache).loadIcon(
-      compIcon.info,
-      compIcon.entry,
-      baseIconPack ?: return emptyImageBitmap,
-      iconPackConfigFlow.value,
-    )
-  }
+  override fun getImageHolder(compIcon: AnyCompIcon): ImageHolder =
+    object : ImageHolder {
+      override fun getImage(): ImageBitmap? {
+        return (if (compIcon.entry != null) iconCache else fallbackIconCache).getIcon(
+          compIcon.info,
+          compIcon.entry,
+          baseIconPack ?: return emptyImageBitmap,
+        )
+      }
 
-  suspend fun loadIcon(entry: IconEntryWithPack) = iconCache.loadIcon(entry.entry, entry.pack)
+      override suspend fun loadImage(): ImageBitmap {
+        return (if (compIcon.entry != null) iconCache else fallbackIconCache).loadIcon(
+          compIcon.info,
+          compIcon.entry,
+          baseIconPack ?: return emptyImageBitmap,
+          iconPackConfigFlow.value,
+        )
+      }
+    }
+
+  fun getImageHolder(entry: IconEntryWithPack): ImageHolder =
+    object : ImageHolder {
+      override fun getImage(): ImageBitmap? = iconCache.getPackIcon(entry.entry, entry.pack)
+
+      override suspend fun loadImage(): ImageBitmap =
+        iconCache.loadPackIcon(entry.entry, entry.pack)
+    }
 
   override fun saveIcon(info: CompInfo, icon: VariantIcon) {
     changedIcons[info.componentName] =

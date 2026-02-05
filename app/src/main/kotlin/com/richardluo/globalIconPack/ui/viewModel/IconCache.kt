@@ -31,17 +31,28 @@ private class BitmapLruCache<K : Any>(bytes: Long) :
 class IconCache(private val context: Application, factor: Int = 4) {
   private val bitmapCache = BitmapLruCache<String>(Runtime.getRuntime().maxMemory() / factor)
 
+  fun getIcon(info: CompInfo, entry: IconEntryWithPack?, basePack: IconPack): ImageBitmap? {
+    return if (entry != null) getPackIcon(entry.entry, entry.pack)
+    else getFallbackIcon(info, basePack)
+  }
+
+  fun getFallbackIcon(info: CompInfo, basePack: IconPack) =
+    bitmapCache["${basePack.pack}/fallback/${info.componentName}"]
+
+  fun getPackIcon(entry: IconEntry, iconPack: IconPack) =
+    bitmapCache["${iconPack.pack}/icon/${entry.name}"]
+
   suspend fun loadIcon(
     info: CompInfo,
     entry: IconEntryWithPack?,
     basePack: IconPack,
     config: IconPackConfig,
   ): ImageBitmap {
-    return if (entry != null) loadIcon(entry.entry, entry.pack)
-    else loadIcon(info, basePack.iconFallback, basePack, config)
+    return if (entry != null) loadPackIcon(entry.entry, entry.pack)
+    else loadFallbackIcon(info, basePack.iconFallback, basePack, config)
   }
 
-  suspend fun loadIcon(
+  suspend fun loadFallbackIcon(
     info: CompInfo,
     iconFallback: IconFallback?,
     basePack: IconPack,
@@ -50,7 +61,7 @@ class IconCache(private val context: Application, factor: Int = 4) {
     bitmapCache.getOrPut("${basePack.pack}/fallback/${info.componentName}") {
       // If ActivityIconInfo does not have an icon, return application icon directly
       if (info is ActivityCompInfo && info.info.icon == 0)
-        loadIcon(
+        loadFallbackIcon(
           AppCompInfo(
             ComponentName(info.componentName.packageName, ""),
             "",
@@ -68,7 +79,7 @@ class IconCache(private val context: Application, factor: Int = 4) {
         } ?: emptyImageBitmap
     }
 
-  suspend fun loadIcon(entry: IconEntry, iconPack: IconPack) =
+  suspend fun loadPackIcon(entry: IconEntry, iconPack: IconPack) =
     bitmapCache.getOrPut("${iconPack.pack}/icon/${entry.name}") {
       withContext(Dispatchers.IO) {
         iconPack.getIcon(entry, 0)?.toSafeBitmap()?.asImageBitmap() ?: emptyImageBitmap

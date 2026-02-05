@@ -1,5 +1,6 @@
 package com.richardluo.globalIconPack.ui.components
 
+import android.annotation.SuppressLint
 import android.widget.Toast
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.background
@@ -46,7 +47,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
-import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
@@ -60,16 +60,16 @@ import com.richardluo.globalIconPack.ui.model.VariantIcon
 import com.richardluo.globalIconPack.ui.model.VariantPackIcon
 import com.richardluo.globalIconPack.ui.repo.IconPackApps
 import com.richardluo.globalIconPack.ui.viewModel.IconChooserVM
-import com.richardluo.globalIconPack.ui.viewModel.emptyImageBitmap
 import com.richardluo.globalIconPack.utils.getValue
 import kotlinx.coroutines.launch
 import me.zhanghai.compose.preference.Preference
 
+@SuppressLint("LocalContextGetResourceValueCall")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun IconChooserSheet(
   vm: IconChooserVM = viewModel(),
-  loadOriginalIcon: suspend (CompInfo) -> ImageBitmap,
+  getOriginalIconImageHolder: (CompInfo) -> ImageHolder,
   replaceIcon: (CompInfo, VariantIcon) -> Unit,
 ) {
   val context = LocalContext.current
@@ -144,13 +144,12 @@ fun IconChooserSheet(
             is VariantPackIcon -> icon.entry.name
             else -> ""
           },
-          loadImage = {
+          imageHolder =
             when (icon) {
-              is OriginalIcon -> vm.compInfo?.let { loadOriginalIcon(it) }
-              is VariantPackIcon -> vm.loadIcon(icon)
+              is OriginalIcon -> vm.compInfo?.let { getOriginalIconImageHolder(it) }
+              is VariantPackIcon -> vm.getImageHolder(icon)
               else -> null
-            } ?: emptyImageBitmap
-          },
+            } ?: emptyImageHolder,
           onLongClick = {
             selectedIcon.value = icon
             optionDialogState.value = true

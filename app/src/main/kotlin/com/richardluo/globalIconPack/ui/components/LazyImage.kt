@@ -31,6 +31,21 @@ import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.drawscope.DrawScope.Companion.DefaultFilterQuality
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import com.richardluo.globalIconPack.ui.viewModel.emptyImageBitmap
+
+interface ImageHolder {
+  fun getImage(): ImageBitmap?
+
+  suspend fun loadImage(): ImageBitmap
+}
+
+open class StaticImageHolder(private val image: ImageBitmap) : ImageHolder {
+  override fun getImage(): ImageBitmap = image
+
+  override suspend fun loadImage(): ImageBitmap = image
+}
+
+val emptyImageHolder = StaticImageHolder(emptyImageBitmap)
 
 @Composable
 fun LazyImage(
@@ -42,12 +57,16 @@ fun LazyImage(
   alpha: Float = DefaultAlpha,
   colorFilter: ColorFilter? = null,
   filterQuality: FilterQuality = DefaultFilterQuality,
-  loadImage: suspend () -> ImageBitmap,
+  imageHolder: ImageHolder,
 ) {
-  var image by remember { mutableStateOf<ImageBitmap?>(null) }
+  var first by remember { mutableStateOf(true) }
+  var image by remember { mutableStateOf(imageHolder.getImage()) }
   LaunchedEffect(key) {
-    image = null
-    image = loadImage()
+    if (!first || image == null) {
+      image = null
+      image = imageHolder.loadImage()
+    }
+    first = false
   }
   AnimatedContent(targetState = image, modifier = modifier, contentAlignment = Alignment.Center) {
     targetImage ->

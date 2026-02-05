@@ -3,12 +3,14 @@ package com.richardluo.globalIconPack.ui.viewModel
 import android.app.Application
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshotFlow
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.serialization.saved
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.SavedStateHandleSaveableApi
 import androidx.lifecycle.viewmodel.compose.saveable
 import com.richardluo.globalIconPack.iconPack.model.CalendarIconEntry
+import com.richardluo.globalIconPack.ui.components.ImageHolder
 import com.richardluo.globalIconPack.ui.model.CompInfo
 import com.richardluo.globalIconPack.ui.model.IconPack
 import com.richardluo.globalIconPack.ui.model.OriginalIcon
@@ -78,7 +80,12 @@ class IconChooserVM(context: Application, savedStateHandle: SavedStateHandle) : 
       }
       .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
 
-  suspend fun loadIcon(icon: VariantPackIcon) = iconCache.loadIcon(icon.entry, icon.pack)
+  fun getImageHolder(icon: VariantPackIcon): ImageHolder =
+    object : ImageHolder {
+      override fun getImage(): ImageBitmap? = iconCache.getPackIcon(icon.entry, icon.pack)
+
+      override suspend fun loadImage(): ImageBitmap = iconCache.loadPackIcon(icon.entry, icon.pack)
+    }
 
   fun setPack(pack: String) {
     this.iconPack = iconPackCache[pack]

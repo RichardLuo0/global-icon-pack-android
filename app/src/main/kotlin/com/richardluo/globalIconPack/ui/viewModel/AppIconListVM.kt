@@ -10,12 +10,12 @@ import android.os.Build
 import android.os.Process
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshotFlow
-import androidx.compose.ui.graphics.ImageBitmap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
 import com.richardluo.globalIconPack.R
+import com.richardluo.globalIconPack.ui.components.ImageHolder
 import com.richardluo.globalIconPack.ui.model.ActivityCompInfo
 import com.richardluo.globalIconPack.ui.model.AnyCompIcon
 import com.richardluo.globalIconPack.ui.model.AppCompIcon
@@ -43,7 +43,7 @@ interface IconsHolder {
 
   val currentIconPack: IconPack?
 
-  suspend fun loadIcon(compIcon: AnyCompIcon): ImageBitmap
+  fun getImageHolder(compIcon: AnyCompIcon): ImageHolder
 
   fun mapIconEntry(cnList: List<ComponentName>): List<IconEntryWithPack?>
 

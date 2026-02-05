@@ -41,7 +41,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
@@ -50,6 +49,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.richardluo.globalIconPack.R
 import com.richardluo.globalIconPack.ui.components.IconButtonWithTooltip
 import com.richardluo.globalIconPack.ui.components.IconChooserSheet
+import com.richardluo.globalIconPack.ui.components.ImageHolder
 import com.richardluo.globalIconPack.ui.components.LazyImage
 import com.richardluo.globalIconPack.ui.components.ListItem
 import com.richardluo.globalIconPack.ui.components.ListItemPos
@@ -124,7 +124,7 @@ fun AppIconListPage(onBack: () -> Unit, iconsHolder: IconsHolder, appIcon: AppCo
                           openChooser(compIcon)
                         },
                       contentScale = ContentScale.Fit,
-                      loadImage = { iconsHolder.loadIcon(compIcon) },
+                      imageHolder = iconsHolder.getImageHolder(compIcon),
                     )
                   },
                   {
@@ -150,7 +150,7 @@ fun AppIconListPage(onBack: () -> Unit, iconsHolder: IconsHolder, appIcon: AppCo
                     contentDescription = info.label,
                     modifier = Modifier.size(36.dp).clickable { openChooser(compIcon) },
                     contentScale = ContentScale.Fit,
-                    loadImage = { iconsHolder.loadIcon(compIcon) },
+                    imageHolder = iconsHolder.getImageHolder(compIcon),
                   )
                   Spacer(modifier = Modifier.width(12.dp))
                   OneLineText(info.label)
@@ -212,10 +212,15 @@ fun AppIconListPage(onBack: () -> Unit, iconsHolder: IconsHolder, appIcon: AppCo
       contentPadding = consumablePadding.consume(),
       beyondViewportPageCount = 0,
     ) {
-      IconList(tabs[it].flow.getValue(null), pagePadding, iconsHolder::loadIcon, ::openChooser)
+      IconList(
+        tabs[it].flow.getValue(null),
+        pagePadding,
+        iconsHolder::getImageHolder,
+        ::openChooser,
+      )
     }
 
-    IconChooserSheet(iconChooser, { iconsHolder.loadIcon(it to null) }, iconsHolder::saveIcon)
+    IconChooserSheet(iconChooser, { iconsHolder.getImageHolder(it to null) }, iconsHolder::saveIcon)
   }
 }
 
@@ -223,7 +228,7 @@ fun AppIconListPage(onBack: () -> Unit, iconsHolder: IconsHolder, appIcon: AppCo
 private fun IconList(
   icons: List<AnyCompIcon>?,
   contentPadding: PaddingValues,
-  loadIcon: suspend (AnyCompIcon) -> ImageBitmap,
+  getImageHolder: (AnyCompIcon) -> ImageHolder,
   onClick: (AnyCompIcon) -> Unit,
 ) {
   if (icons != null)
@@ -238,7 +243,7 @@ private fun IconList(
               contentDescription = info.label,
               modifier = Modifier.aspectRatio(1f),
               contentScale = ContentScale.Fit,
-              loadImage = { loadIcon(it) },
+              imageHolder = getImageHolder(it),
             )
           },
           { OneLineText(info.label) },

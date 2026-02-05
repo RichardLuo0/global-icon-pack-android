@@ -5,6 +5,7 @@ import android.content.ComponentName
 import android.net.Uri
 import android.util.Xml
 import android.widget.Toast
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.lifecycle.viewModelScope
 import com.richardluo.globalIconPack.Pref
 import com.richardluo.globalIconPack.R
@@ -25,6 +26,7 @@ import com.richardluo.globalIconPack.iconPack.model.defaultIconPackConfig
 import com.richardluo.globalIconPack.iconPack.useEachRow
 import com.richardluo.globalIconPack.iconPack.useFirstRow
 import com.richardluo.globalIconPack.iconPack.useMapToArray
+import com.richardluo.globalIconPack.ui.components.ImageHolder
 import com.richardluo.globalIconPack.ui.model.AnyCompIcon
 import com.richardluo.globalIconPack.ui.model.AppCompInfo
 import com.richardluo.globalIconPack.ui.model.CompInfo
@@ -114,10 +116,17 @@ class IconVariantVM(context: Application) :
 
   override fun mapIconEntry(cnList: List<ComponentName>) = getIconEntry(cnList)
 
-  override suspend fun loadIcon(compIcon: AnyCompIcon) =
-    if (compIcon.entry != null)
-      iconCache.loadIcon(compIcon.info, compIcon.entry, iconPack, iconPackConfig)
-    else fallbackIconCache.loadIcon(compIcon.info, iconFallback, iconPack, iconPackConfig)
+  override fun getImageHolder(compIcon: AnyCompIcon): ImageHolder =
+    object : ImageHolder {
+      override fun getImage(): ImageBitmap? =
+        if (compIcon.entry != null) iconCache.getPackIcon(compIcon.entry.entry, iconPack)
+        else fallbackIconCache.getFallbackIcon(compIcon.info, iconPack)
+
+      override suspend fun loadImage(): ImageBitmap =
+        if (compIcon.entry != null) iconCache.loadPackIcon(compIcon.entry.entry, iconPack)
+        else
+          fallbackIconCache.loadFallbackIcon(compIcon.info, iconFallback, iconPack, iconPackConfig)
+    }
 
   fun restoreDefault() {
     viewModelScope.launch(Dispatchers.IO) {
