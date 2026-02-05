@@ -103,7 +103,6 @@ import com.richardluo.globalIconPack.utils.DrawablePainter
 import com.richardluo.globalIconPack.utils.PathDrawable
 import com.richardluo.globalIconPack.utils.runCatchingToastOnMain
 import me.zhanghai.compose.preference.LocalPreferenceTheme
-import me.zhanghai.compose.preference.preference
 
 object MainPreference {
 
@@ -175,7 +174,7 @@ object MainPreference {
         defaultValue = Pref.SHORTCUT.def,
         title = { TwoLineText(stringResource(R.string.general_shortcut)) },
       )
-      preference(
+      myPreference(
         modifier = listModifiers.bottom,
         icon = { Icon(Icons.Outlined.Merge, "openMerger") },
         key = "openMerger",

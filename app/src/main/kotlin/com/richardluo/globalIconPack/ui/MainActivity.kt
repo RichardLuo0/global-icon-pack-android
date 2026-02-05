@@ -25,6 +25,8 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Backpack
+import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.material.icons.outlined.LockOpen
 import androidx.compose.material.icons.outlined.PhoneAndroid
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -40,12 +42,15 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TonalToggleButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -64,8 +69,11 @@ import com.richardluo.globalIconPack.R
 import com.richardluo.globalIconPack.get
 import com.richardluo.globalIconPack.ui.MainPreference.ModeItem
 import com.richardluo.globalIconPack.ui.components.CustomSnackbar
+import com.richardluo.globalIconPack.ui.components.IconButtonStyle
+import com.richardluo.globalIconPack.ui.components.IconButtonWithTooltip
 import com.richardluo.globalIconPack.ui.components.LazyListDialog
 import com.richardluo.globalIconPack.ui.components.LoadingDialog
+import com.richardluo.globalIconPack.ui.components.LocalPreferenceLock
 import com.richardluo.globalIconPack.ui.components.OneLineText
 import com.richardluo.globalIconPack.ui.components.SampleTheme
 import com.richardluo.globalIconPack.ui.components.WarnDialog
@@ -178,6 +186,8 @@ class MainActivity : ComponentActivity() {
     val scrollBehavior = pinnedScrollBehaviorWithPager(pagerState)
     val snackbarState = remember { SnackbarHostState() }
 
+    var preferenceLock by rememberSaveable { mutableStateOf(false) }
+
     Scaffold(
       modifier = Modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
       topBar = {
@@ -192,7 +202,19 @@ class MainActivity : ComponentActivity() {
           },
           modifier = Modifier.fillMaxWidth(),
           scrollBehavior = scrollBehavior,
-          actions = { MainDropdownMenu(snackbarState) },
+          actions = {
+            IconButtonWithTooltip(
+              if (preferenceLock) Icons.Outlined.Lock else Icons.Outlined.LockOpen,
+              stringResource(
+                if (preferenceLock) R.string.common_settings_locked
+                else R.string.common_settings_unlocked
+              ),
+              style = if (preferenceLock) IconButtonStyle.Filled else IconButtonStyle.None,
+            ) {
+              preferenceLock = !preferenceLock
+            }
+            MainDropdownMenu(snackbarState)
+          },
         )
       },
       snackbarHost = { SnackbarHost(hostState = snackbarState, snackbar = { CustomSnackbar(it) }) },
@@ -226,12 +248,14 @@ class MainActivity : ComponentActivity() {
                 FloatingToolbarDefaults.ContainerSize
           )
 
-        HorizontalPager(
-          pagerState,
-          contentPadding = consumablePadding.consume(),
-          beyondViewportPageCount = 2,
-        ) {
-          Box(modifier = Modifier.fillMaxSize()) { pages.getOrNull(it)?.screen(pagePadding) }
+        CompositionLocalProvider(LocalPreferenceLock provides preferenceLock) {
+          HorizontalPager(
+            pagerState,
+            contentPadding = consumablePadding.consume(),
+            beyondViewportPageCount = 2,
+          ) {
+            Box(modifier = Modifier.fillMaxSize()) { pages.getOrNull(it)?.screen(pagePadding) }
+          }
         }
 
         val coroutineScope = rememberCoroutineScope()

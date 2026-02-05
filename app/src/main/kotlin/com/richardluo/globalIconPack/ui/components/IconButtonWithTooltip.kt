@@ -1,6 +1,7 @@
 package com.richardluo.globalIconPack.ui.components
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.Crossfade
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.material.icons.Icons
@@ -42,17 +43,19 @@ fun IconButtonWithTooltip(
     tooltip = { PlainTooltip { Text(tooltip) } },
     state = rememberTooltipState(isPersistent = false),
   ) {
-    when (style) {
-      IconButtonStyle.None ->
-        IconButton(onClick) { Icon(imageVector = icon, contentDescription = tooltip) }
-      IconButtonStyle.Outlined ->
-        OutlinedIconButton(onClick, shapes = IconButtonDefaults.shapes()) {
-          Icon(imageVector = icon, contentDescription = tooltip)
-        }
-      IconButtonStyle.Filled ->
-        FilledTonalIconButton(onClick, shapes = IconButtonDefaults.shapes()) {
-          Icon(imageVector = icon, contentDescription = tooltip)
-        }
+    Crossfade(style) {
+      when (it) {
+        IconButtonStyle.None ->
+          IconButton(onClick) { Icon(imageVector = icon, contentDescription = tooltip) }
+        IconButtonStyle.Outlined ->
+          OutlinedIconButton(onClick, shapes = IconButtonDefaults.shapes()) {
+            Icon(imageVector = icon, contentDescription = tooltip)
+          }
+        IconButtonStyle.Filled ->
+          FilledTonalIconButton(onClick, shapes = IconButtonDefaults.shapes()) {
+            Icon(imageVector = icon, contentDescription = tooltip)
+          }
+      }
     }
   }
 }

@@ -60,6 +60,8 @@
     <string name="mainMenu_buyMeACoffee">Buy me a coffee</string>
     <string name="mainMenu_info_restarted">Restarted successfully</string>
 
+    <string name="common_settings_locked">Locked</string>
+    <string name="common_settings_unlocked">Unlocked</string>
     <string name="common_moreOptions">More options</string>
     <string name="common_warning">Warning</string>
     <string name="common_notice">Notice</string>

@@ -25,6 +25,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.SideEffect
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -53,6 +54,8 @@ fun ProvideMyPreferenceTheme(
   theme: PreferenceTheme = myPreferenceTheme(),
   content: @Composable (() -> Unit),
 ) = ProvidePreferenceTheme(theme, content)
+
+val LocalPreferenceLock = compositionLocalOf { false }
 
 fun LazyListScope.myPreference(
   key: String,
@@ -110,7 +113,7 @@ inline fun <T> LazyListScope.myListPreference(
     Preference(
       title = title,
       modifier = modifier,
-      enabled = enabled(LocalPreferenceFlow.current.getValue()),
+      enabled = !LocalPreferenceLock.current && enabled(LocalPreferenceFlow.current.getValue()),
       icon = icon?.let { { it(value) } },
       summary = summary?.let { { it(value) } },
     ) {
@@ -153,7 +156,7 @@ inline fun <T, U> LazyListScope.mapListPreference(
     Preference(
       title = title,
       modifier = modifier,
-      enabled = enabled(LocalPreferenceFlow.current.getValue()),
+      enabled = !LocalPreferenceLock.current && enabled(LocalPreferenceFlow.current.getValue()),
       icon = icon?.let { { it(valueKey) } },
       summary = summary?.let { { it(valueKey, valueMap?.get(valueKey)) } },
     ) {
@@ -184,7 +187,7 @@ inline fun <T> LazyListScope.dialogPreference(
     Preference(
       title = title,
       modifier = modifier,
-      enabled = enabled(LocalPreferenceFlow.current.getValue()),
+      enabled = !LocalPreferenceLock.current && enabled(LocalPreferenceFlow.current.getValue()),
       icon = icon?.let { { it(value) } },
       summary = summary?.let { { it(value) } },
     ) {
@@ -226,7 +229,7 @@ inline fun LazyListScope.mySliderPreference(
       modifier = modifier,
       valueRange = valueRange,
       valueSteps = valueSteps,
-      enabled = enabled(LocalPreferenceFlow.current.getValue()),
+      enabled = !LocalPreferenceLock.current && enabled(LocalPreferenceFlow.current.getValue()),
       icon = icon?.let { { it(sliderValue) } },
       summary = summary?.let { { it(sliderValue) } },
       valueToText = valueToText,
@@ -333,7 +336,7 @@ inline fun LazyListScope.mySwitchPreference(
       state = state,
       title = { title(value) },
       modifier = modifier,
-      enabled = enabled(LocalPreferenceFlow.current.getValue()),
+      enabled = !LocalPreferenceLock.current && enabled(LocalPreferenceFlow.current.getValue()),
       icon = icon?.let { { it(value) } },
       summary = summary?.let { { it(value) } },
     )
