@@ -83,8 +83,8 @@ kotlin { compilerOptions { jvmTarget = JvmTarget.JVM_17 } }
 
 tasks.register("printVersion") {
   doLast {
-    val android = extensions.getByType<ApplicationExtension>()
-    println(android.defaultConfig.versionName)
+    val androidExt = project.extensions.getByType(ApplicationExtension::class.java)
+    println(androidExt.defaultConfig.versionName)
   }
 }
 
