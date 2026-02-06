@@ -62,8 +62,8 @@ class IconPackDB(
   fun onIconPackChange(iconPack: IconPack, installedPacks: Set<String>) {
     writableDatabase.transaction {
       ensureTable()
-      update(installedPacks)
-      update(iconPack)
+      if (!update(installedPacks)) return@transaction
+      if (!update(iconPack)) return@transaction
       // Send update
       log("Database: ${iconPack.pack} updated")
       mIconsUpdateFlow.tryEmit()
@@ -73,7 +73,7 @@ class IconPackDB(
   fun onIconPackChange(iconPack: IconPack) {
     writableDatabase.transaction {
       ensureTable()
-      update(iconPack)
+      if (!update(iconPack)) return@transaction
       // Send update
       log("Database: ${iconPack.pack} updated")
       mIconsUpdateFlow.tryEmit()
@@ -86,27 +86,32 @@ class IconPackDB(
     )
   }
 
-  private fun SQLiteDatabase.update(installedPacks: Set<String>) {
+  private fun SQLiteDatabase.update(installedPacks: Set<String>): Boolean {
     // Delete uninstalled packs
     val packSet = installedPacks.joinToString(", ") { "'$it'" }
     delete("iconPack", "pack not in ($packSet)", null)
     // Drop uninstalled pack tables
     val packTables = installedPacks.map { pt(it) }.toSet()
     foreachPackTable { if (!packTables.contains("'$it'")) execSQL("DROP TABLE '$it'") }
+    return true
   }
 
-  private fun SQLiteDatabase.update(iconPack: IconPack) {
+  private fun SQLiteDatabase.update(iconPack: IconPack): Boolean {
     val pack = iconPack.pack
     // Update pack
     val packTable = pt(pack)
     // Check update time
     val lastUpdateTime =
       runCatching { context.packageManager.getPackageInfo(pack, 0) }.getOrNull()?.lastUpdateTime
-        ?: return
+    if (lastUpdateTime == null) {
+      log("can not get lastUpdateTime for $pack")
+      return false
+    }
+    // Is modified
     val modified =
       rawQuery("select DISTINCT updateAt, modified from iconPack where pack=?", arrayOf(pack))
         .useFirstRow {
-          if (lastUpdateTime < it.getLong(0)) return
+          if (lastUpdateTime < it.getLong(0)) return false
           it.getInt(1) != 0
         } == true
     // Create tables
@@ -125,6 +130,7 @@ class IconPackDB(
     updateIconId(this, iconPack)
     // Insert fallback
     insertFallbackSettings(this, pack, FallbackSettings(iconPack.info))
+    return true
   }
 
   fun getFallbackSettings(pack: String) =
