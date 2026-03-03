@@ -266,7 +266,7 @@ fun MySliderPreference(
 
   Preference(
     title = title,
-    modifier = modifier.clickable { dialogState.value = true },
+    modifier = if (enabled) modifier.clickable { dialogState.value = true } else modifier,
     enabled = enabled,
     icon = icon,
     summary = {
