@@ -92,6 +92,7 @@ import kotlinx.coroutines.launch
 import me.zhanghai.compose.preference.LocalPreferenceFlow
 import me.zhanghai.compose.preference.Preferences
 import me.zhanghai.compose.preference.ProvidePreferenceLocals
+import me.zhanghai.compose.preference.rememberPreferenceState
 
 class MainActivity : ComponentActivity() {
   private val vm: MainVM by viewModels()
@@ -186,7 +187,8 @@ class MainActivity : ComponentActivity() {
     val scrollBehavior = pinnedScrollBehaviorWithPager(pagerState)
     val snackbarState = remember { SnackbarHostState() }
 
-    var preferenceLock by rememberSaveable { mutableStateOf(false) }
+    var preferenceLock by
+      rememberPreferenceState(AppPref.LOCK_SETTINGS.key, AppPref.LOCK_SETTINGS.def)
 
     Scaffold(
       modifier = Modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),

@@ -41,6 +41,7 @@ object Pref {
 object AppPref {
   val NEED_SETUP = "needSetup" defaultTo true
   val PATH = "PATH" defaultTo "iconPack.db"
+  val LOCK_SETTINGS = "lockSettings" defaultTo false
 }
 
 fun SharedPreferences.get(pair: PrefEntry<String>) = getString(pair.key, pair.def) as String
