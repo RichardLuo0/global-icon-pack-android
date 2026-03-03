@@ -13,6 +13,7 @@ import com.richardluo.globalIconPack.iconPack.model.IconEntry
 import com.richardluo.globalIconPack.iconPack.model.IconFallback
 import com.richardluo.globalIconPack.iconPack.model.IconPackConfig
 import com.richardluo.globalIconPack.ui.MyApplication
+import com.richardluo.globalIconPack.ui.components.StaticImageHolder
 import com.richardluo.globalIconPack.ui.model.ActivityCompInfo
 import com.richardluo.globalIconPack.ui.model.AppCompInfo
 import com.richardluo.globalIconPack.ui.model.CompInfo
@@ -103,3 +104,5 @@ val emptyImageBitmap by lazy {
   MyApplication.context.getDrawable(R.drawable.broken_image)?.toSafeBitmap()?.asImageBitmap()
     ?: ImageBitmap(1, 1)
 }
+
+val emptyImageHolder by lazy { StaticImageHolder(emptyImageBitmap) }
