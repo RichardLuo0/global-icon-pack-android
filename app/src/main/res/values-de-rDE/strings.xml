@@ -55,6 +55,8 @@
     <string name="mainMenu_openGithub">Github</string>
     <string name="mainMenu_buyMeACoffee">Spendiere mir einen Kaffee</string>
     <string name="mainMenu_info_restarted">Neustart erfolgreich</string>
+    <string name="common_settings_locked">Gesperrt</string>
+    <string name="common_settings_unlocked">Entsperrt</string>
     <string name="common_moreOptions">Weitere Optionen</string>
     <string name="common_warning">Warnung</string>
     <string name="common_notice">Hinweis</string>

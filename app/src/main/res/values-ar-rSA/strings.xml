@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
+    <string name="appName">حزمة الأيقونات العالمية</string>
     <string name="warn_enableModule">الرجاء التأكد من أن وحدة Xposed تمّ تمكينها أولاً.</string>
     <string name="info_iconPackApplied">تم تطبيق حزمة الأيقونات. الرجاء النقر على \"إعادة تشغيل XXX\" يدوياً.</string>
     <string name="setup_chooseMode">اختر الوضع</string>
