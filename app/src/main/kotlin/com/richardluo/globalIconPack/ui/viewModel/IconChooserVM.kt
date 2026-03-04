@@ -63,10 +63,14 @@ class IconChooserVM(context: Application, savedStateHandle: SavedStateHandle) : 
             }
 
         emit(
-          buildList {
-            add(OriginalIcon())
-            icons.filterTo(this) { it.entry.name.contains(keyword, ignoreCase = true) }
-          }
+          sequence {
+              yield(OriginalIcon())
+              yieldAll(
+                icons.asSequence().filter { it.entry.name.contains(keyword, ignoreCase = true) }
+              )
+            }
+            .take(20)
+            .toList()
         )
       }
       .flowOn(Dispatchers.Default)
