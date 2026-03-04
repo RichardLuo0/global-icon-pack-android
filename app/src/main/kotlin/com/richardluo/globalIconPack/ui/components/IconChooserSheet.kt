@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.widget.Toast
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -28,7 +29,6 @@ import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SearchBarDefaults.inputFieldShape
@@ -47,6 +47,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
@@ -61,6 +63,7 @@ import com.richardluo.globalIconPack.ui.model.VariantPackIcon
 import com.richardluo.globalIconPack.ui.repo.IconPackApps
 import com.richardluo.globalIconPack.ui.viewModel.IconChooserVM
 import com.richardluo.globalIconPack.utils.getValue
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import me.zhanghai.compose.preference.Preference
 
@@ -231,6 +234,7 @@ fun IconChooserSheet(
         }
       }
 
+      val focusRequester = remember { FocusRequester() }
       AnimatedContent(
         expandedScrollConnection.expanded,
         modifier = Modifier.padding(vertical = 8.dp),
@@ -240,7 +244,7 @@ fun IconChooserSheet(
           RoundSearchBar(
             vm.searchText,
             stringResource(R.string.common_search),
-            modifier = Modifier.shadow(6.dp, inputFieldShape),
+            modifier = Modifier.shadow(6.dp, inputFieldShape).focusRequester(focusRequester),
             trailingIcon = {
               IconButtonWithTooltip(Icons.Outlined.FilterList, "By pack", IconButtonStyle.None) {
                 packDialogState.value = true
@@ -251,7 +255,13 @@ fun IconChooserSheet(
           }
         else
           FloatingActionButton(
-            { expandedScrollConnection.expanded = true },
+            {
+              expandedScrollConnection.expanded = true
+              scope.launch {
+                delay(100)
+                focusRequester.requestFocus()
+              }
+            },
             Modifier.padding(horizontal = 12.dp),
             containerColor = MaterialTheme.colorScheme.secondaryContainer,
           ) {
