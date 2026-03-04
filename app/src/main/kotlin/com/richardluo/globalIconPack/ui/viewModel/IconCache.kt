@@ -20,8 +20,10 @@ import com.richardluo.globalIconPack.ui.model.CompInfo
 import com.richardluo.globalIconPack.ui.model.IconEntryWithPack
 import com.richardluo.globalIconPack.ui.model.IconPack
 import com.richardluo.globalIconPack.utils.getOrPut
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.async
 
 private class BitmapLruCache<K : Any>(bytes: Long) :
   LruCache<K, ImageBitmap>((bytes / 1024).toInt()) {
@@ -31,6 +33,7 @@ private class BitmapLruCache<K : Any>(bytes: Long) :
 
 class IconCache(private val context: Application, factor: Int = 4) {
   private val bitmapCache = BitmapLruCache<String>(Runtime.getRuntime().maxMemory() / factor)
+  private val taskMap = mutableMapOf<String, Deferred<ImageBitmap>>()
 
   fun getIcon(info: CompInfo, entry: IconEntryWithPack?, basePack: IconPack): ImageBitmap? {
     return if (entry != null) getPackIcon(entry.entry, entry.pack)
@@ -38,7 +41,9 @@ class IconCache(private val context: Application, factor: Int = 4) {
   }
 
   fun getFallbackIcon(info: CompInfo, basePack: IconPack) =
-    bitmapCache["${basePack.pack}/fallback/${info.componentName}"]
+    if (info is ActivityCompInfo && info.info.icon == 0)
+      bitmapCache["${basePack.pack}/fallback/${ComponentName(info.componentName.packageName, "")}"]
+    else bitmapCache["${basePack.pack}/fallback/${info.componentName}"]
 
   fun getPackIcon(entry: IconEntry, iconPack: IconPack) =
     bitmapCache["${iconPack.pack}/icon/${entry.name}"]
@@ -59,36 +64,35 @@ class IconCache(private val context: Application, factor: Int = 4) {
     basePack: IconPack,
     config: IconPackConfig,
   ): ImageBitmap =
-    bitmapCache.getOrPut("${basePack.pack}/fallback/${info.componentName}") {
-      // If ActivityIconInfo does not have an icon, return application icon directly
-      if (info is ActivityCompInfo && info.info.icon == 0)
-        loadFallbackIcon(
-          AppCompInfo(
-            ComponentName(info.componentName.packageName, ""),
-            "",
-            info.info.applicationInfo,
-          ),
-          iconFallback,
-          basePack,
-          config,
-        )
-      else
-        getBaseIcon(info)?.let {
-          IconPack.genIconFrom(basePack.res, it, iconFallback, config)
-            .toSafeBitmap()
-            .asImageBitmap()
-        } ?: emptyImageBitmap
-    }
+    // If ActivityIconInfo does not have an icon, return application icon directly
+    if (info is ActivityCompInfo && info.info.icon == 0)
+      loadFallbackIcon(
+        AppCompInfo(
+          ComponentName(info.componentName.packageName, ""),
+          "",
+          info.info.applicationInfo,
+        ),
+        iconFallback,
+        basePack,
+        config,
+      )
+    else
+      bitmapCache.getOrPut("${basePack.pack}/fallback/${info.componentName}", taskMap) {
+        CoroutineScope(Dispatchers.IO).async {
+          info.getIcon(context)?.let {
+            IconPack.genIconFrom(basePack.res, it, iconFallback, config)
+              .toSafeBitmap()
+              .asImageBitmap()
+          } ?: emptyImageBitmap
+        }
+      }
 
   suspend fun loadPackIcon(entry: IconEntry, iconPack: IconPack) =
-    bitmapCache.getOrPut("${iconPack.pack}/icon/${entry.name}") {
-      withContext(Dispatchers.IO) {
+    bitmapCache.getOrPut("${iconPack.pack}/icon/${entry.name}", taskMap) {
+      CoroutineScope(Dispatchers.IO).async {
         iconPack.getIcon(entry, 0)?.toSafeBitmap()?.asImageBitmap() ?: emptyImageBitmap
       }
     }
-
-  private suspend fun getBaseIcon(info: CompInfo) =
-    withContext(Dispatchers.IO) { info.getIcon(context) }
 
   fun clear() {
     bitmapCache.evictAll()

@@ -28,6 +28,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.richardluo.globalIconPack.BuildConfig
 import com.richardluo.globalIconPack.ui.MyApplication.Companion.context
 import com.topjohnwu.superuser.Shell
+import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.BufferOverflow
@@ -111,13 +112,25 @@ fun String.ifNotEmpty(block: (String) -> String) = if (isNotEmpty()) block(this)
 
 operator fun XmlPullParser.get(key: String): String? = this.getAttributeValue(null, key)
 
-inline fun <K : Any, V : Any> LruCache<K, V>.getOrPut(key: K, defaultValue: () -> V): V {
-  val value = get(key)
-  return if (value == null) {
-    val answer = defaultValue()
-    put(key, answer)
-    answer
-  } else value
+suspend inline fun <K : Any, V : Any> LruCache<K, V>.getOrPut(
+  key: K,
+  taskMap: MutableMap<K, Deferred<V>>,
+  defaultValue: () -> Deferred<V>,
+): V {
+  val value =
+    synchronized(this) {
+        val value = get(key)
+        if (value != null) return value
+
+        taskMap.getOrPut(key) { defaultValue() }
+      }
+      .await()
+
+  return synchronized(this) {
+    put(key, value)
+    taskMap.remove(key)
+    value
+  }
 }
 
 @Composable fun <T> StateFlow<T>.getState() = collectAsStateWithLifecycle()
