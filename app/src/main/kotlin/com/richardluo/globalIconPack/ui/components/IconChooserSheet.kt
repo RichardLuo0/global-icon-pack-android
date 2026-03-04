@@ -116,21 +116,34 @@ fun IconChooserSheet(
 
     fun LazyGridScope.variantIconTitle(text: String, expandState: MutableState<Boolean>? = null) {
       item(span = { GridItemSpan(maxLineSpan) }, contentType = "Title") {
-        Row(horizontalArrangement = Arrangement.SpaceBetween) {
-          Text(
-            text,
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.padding(top = 12.dp, start = 12.dp, end = 12.dp),
-          )
-          if (expandState != null) {
-            var isExpanded by expandState
-            IconButton(onClick = { isExpanded = !isExpanded }) {
-              Icon(
-                imageVector =
-                  if (isExpanded) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore,
-                contentDescription = "Expand",
-              )
-            }
+        if (expandState != null) {
+          var isExpanded by expandState
+          Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.clickable { isExpanded = !isExpanded },
+          ) {
+            Text(
+              text,
+              style = MaterialTheme.typography.titleMedium,
+              modifier = Modifier.padding(vertical = 6.dp, horizontal = 12.dp),
+            )
+            Icon(
+              imageVector =
+                if (isExpanded) Icons.Outlined.ExpandLess else Icons.Outlined.ExpandMore,
+              contentDescription = "Expand",
+            )
+          }
+        } else {
+          Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+          ) {
+            Text(
+              text,
+              style = MaterialTheme.typography.titleMedium,
+              modifier = Modifier.padding(vertical = 6.dp, horizontal = 12.dp),
+            )
           }
         }
       }
