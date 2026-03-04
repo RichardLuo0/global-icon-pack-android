@@ -62,6 +62,7 @@ import com.richardluo.globalIconPack.ui.model.VariantIcon
 import com.richardluo.globalIconPack.ui.model.VariantPackIcon
 import com.richardluo.globalIconPack.ui.repo.IconPackApps
 import com.richardluo.globalIconPack.ui.viewModel.IconChooserVM
+import com.richardluo.globalIconPack.ui.viewModel.emptyImageHolder
 import com.richardluo.globalIconPack.utils.getValue
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -161,11 +162,13 @@ fun IconChooserSheet(
             else -> ""
           },
           imageHolder =
-            when (icon) {
-              is OriginalIcon -> vm.compInfo?.let { getOriginalIconImageHolder(it) }
-              is VariantPackIcon -> vm.getImageHolder(icon)
-              else -> null
-            } ?: emptyImageHolder,
+            remember(icon) {
+              when (icon) {
+                is OriginalIcon -> vm.compInfo?.let { getOriginalIconImageHolder(it) }
+                is VariantPackIcon -> vm.getImageHolder(icon)
+                else -> null
+              } ?: emptyImageHolder
+            },
           onLongClick = {
             selectedIcon.value = icon
             optionDialogState.value = true

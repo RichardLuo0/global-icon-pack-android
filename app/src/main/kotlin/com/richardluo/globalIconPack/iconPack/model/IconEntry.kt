@@ -9,6 +9,7 @@ import java.io.ByteArrayOutputStream
 import java.io.DataInputStream
 import java.io.DataOutputStream
 import java.util.Calendar
+import java.util.Objects
 import kotlinx.parcelize.Parceler
 
 interface IconEntry {
@@ -45,7 +46,14 @@ interface IconEntry {
   }
 }
 
-class NormalIconEntry(override val name: String) : IconEntry {
+abstract class BasicIconEntry : IconEntry {
+  override fun equals(other: Any?): Boolean =
+    other is IconEntry && type == other.type && name == other.name
+
+  override fun hashCode(): Int = Objects.hash(type, name)
+}
+
+class NormalIconEntry(override val name: String) : BasicIconEntry() {
   override val type = Type.Normal
 
   override fun getIcon(getIcon: (String) -> Drawable?) = getIcon(name)
@@ -79,7 +87,7 @@ class NormalIconEntry(override val name: String) : IconEntry {
   }
 }
 
-class CalendarIconEntry(override val name: String) : IconEntry {
+class CalendarIconEntry(override val name: String) : BasicIconEntry() {
   override val type = Type.Calendar
 
   override fun getIcon(getIcon: (String) -> Drawable?) =
@@ -123,7 +131,8 @@ data class ClockMetadata(
   val defaultSecond: Int,
 )
 
-class ClockIconEntry(override val name: String, private val metadata: ClockMetadata) : IconEntry {
+class ClockIconEntry(override val name: String, private val metadata: ClockMetadata) :
+  BasicIconEntry() {
   override val type = Type.Clock
 
   override fun getIcon(getIcon: (String) -> Drawable?) = getIcon(name)

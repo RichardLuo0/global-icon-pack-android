@@ -22,6 +22,7 @@ import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.PaintingStyle
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.nativePaint
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.LayoutDirection.Ltr
 
@@ -41,7 +42,7 @@ fun <T : ScrollableState> ScrollIndicator(
       Paint().apply {
         color = if (darkTheme) Color.Black else Color.DarkGray
         style = PaintingStyle.Stroke
-        asFrameworkPaint().apply { maskFilter = BlurMaskFilter(radius, BlurMaskFilter.Blur.NORMAL) }
+        nativePaint.maskFilter = BlurMaskFilter(radius, BlurMaskFilter.Blur.NORMAL)
       }
     }
 

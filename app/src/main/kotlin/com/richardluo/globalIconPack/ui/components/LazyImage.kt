@@ -1,6 +1,6 @@
 package com.richardluo.globalIconPack.ui.components
 
-import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
@@ -11,11 +11,8 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.produceState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
@@ -31,7 +28,6 @@ import androidx.compose.ui.graphics.TileMode
 import androidx.compose.ui.graphics.drawscope.DrawScope.Companion.DefaultFilterQuality
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
-import com.richardluo.globalIconPack.ui.viewModel.emptyImageBitmap
 
 interface ImageHolder {
   fun getImage(): ImageBitmap?
@@ -39,17 +35,20 @@ interface ImageHolder {
   suspend fun loadImage(): ImageBitmap
 }
 
-open class StaticImageHolder(private val image: ImageBitmap) : ImageHolder {
+class StaticImageHolder(private val image: ImageBitmap) : ImageHolder {
   override fun getImage(): ImageBitmap = image
 
   override suspend fun loadImage(): ImageBitmap = image
-}
 
-val emptyImageHolder = StaticImageHolder(emptyImageBitmap)
+  override fun equals(other: Any?): Boolean = other is StaticImageHolder && image == other.image
+
+  override fun hashCode(): Int {
+    return image.hashCode()
+  }
+}
 
 @Composable
 fun LazyImage(
-  key: Any?,
   contentDescription: String?,
   modifier: Modifier = Modifier,
   alignment: Alignment = Alignment.Center,
@@ -59,17 +58,16 @@ fun LazyImage(
   filterQuality: FilterQuality = DefaultFilterQuality,
   imageHolder: ImageHolder,
 ) {
-  var first by remember { mutableStateOf(true) }
-  var image by remember { mutableStateOf(imageHolder.getImage()) }
-  LaunchedEffect(key) {
-    if (!first || image == null) {
-      image = null
-      image = imageHolder.loadImage()
+  val image by
+    produceState(imageHolder.getImage(), imageHolder) {
+      val image = imageHolder.getImage()
+      if (image != null) value = image
+      else {
+        value = null
+        value = imageHolder.loadImage()
+      }
     }
-    first = false
-  }
-  AnimatedContent(targetState = image, modifier = modifier, contentAlignment = Alignment.Center) {
-    targetImage ->
+  Crossfade(targetState = image, modifier = modifier) { targetImage ->
     if (targetImage != null)
       Image(
         bitmap = targetImage,

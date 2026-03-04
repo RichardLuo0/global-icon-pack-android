@@ -409,10 +409,13 @@ class IconPackMergerActivity : ComponentActivity() {
             val (info, entry) = it
             AppIcon(
               info.label,
-              key =
-                if (entry != null) "${entry.pack.pack}/icon/${entry.entry.name}"
-                else "${vm.basePack}/fallback/${vm.iconCacheToken}",
-              imageHolder = vm.getImageHolder(it),
+              imageHolder =
+                remember(
+                  if (entry != null) "${entry.pack.pack}/icon/${entry.entry.name}"
+                  else "${vm.basePack}/fallback/${vm.iconCacheToken}"
+                ) {
+                  vm.getImageHolder(it)
+                },
               shareKey = info.componentName.packageName,
             ) {
               navController.navigate("AppIconList", it)
@@ -515,7 +518,6 @@ class IconPackMergerActivity : ComponentActivity() {
           verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
           LazyImage(
-            key = vm.newPackIcon,
             contentDescription = "newPackIcon",
             modifier =
               Modifier.align(Alignment.CenterHorizontally)
@@ -526,7 +528,10 @@ class IconPackMergerActivity : ComponentActivity() {
                 .padding(12.dp)
                 .size(72.dp),
             contentScale = ContentScale.Crop,
-            imageHolder = vm.newPackIcon?.let { vm.getImageHolder(it) } ?: symDefAppIconHolder,
+            imageHolder =
+              remember(vm.newPackIcon) {
+                vm.newPackIcon?.let { vm.getImageHolder(it) } ?: symDefAppIconHolder
+              },
           )
           OutlinedTextField(
             value = vm.newPackName,

@@ -23,7 +23,6 @@ import com.richardluo.globalIconPack.utils.chain
 @Composable
 fun AppIcon(
   label: String,
-  key: Any? = label,
   imageHolder: ImageHolder,
   shareKey: Any? = null,
   onLongClick: (() -> Unit)? = null,
@@ -37,10 +36,9 @@ fun AppIcon(
         .padding(vertical = 8.dp, horizontal = 4.dp)
   ) {
     LazyImage(
-      key,
       contentDescription = label,
       modifier =
-        Modifier.padding(horizontal = 12.dp).aspectRatio(1f).chain {
+        Modifier.padding(horizontal = 8.dp).aspectRatio(1f).chain {
           shareKey?.let { sharedBounds("AppIcon/$it") }
         },
       contentScale = ContentScale.Crop,

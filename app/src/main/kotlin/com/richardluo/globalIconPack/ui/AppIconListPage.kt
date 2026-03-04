@@ -117,14 +117,14 @@ fun AppIconListPage(onBack: () -> Unit, iconsHolder: IconsHolder, appIcon: AppCo
                 ListItem(
                   {
                     LazyImage(
-                      entry?.entry?.name,
                       contentDescription = info.label,
                       modifier =
                         Modifier.sharedBounds("AppIcon/$packageName").aspectRatio(1f).clickable {
                           openChooser(compIcon)
                         },
                       contentScale = ContentScale.Fit,
-                      imageHolder = iconsHolder.getImageHolder(compIcon),
+                      imageHolder =
+                        remember(entry?.entry?.name) { iconsHolder.getImageHolder(compIcon) },
                     )
                   },
                   {
@@ -146,11 +146,11 @@ fun AppIconListPage(onBack: () -> Unit, iconsHolder: IconsHolder, appIcon: AppCo
               else
                 Row(verticalAlignment = Alignment.CenterVertically) {
                   LazyImage(
-                    entry?.entry?.name,
                     contentDescription = info.label,
                     modifier = Modifier.size(36.dp).clickable { openChooser(compIcon) },
                     contentScale = ContentScale.Fit,
-                    imageHolder = iconsHolder.getImageHolder(compIcon),
+                    imageHolder =
+                      remember(entry?.entry?.name) { iconsHolder.getImageHolder(compIcon) },
                   )
                   Spacer(modifier = Modifier.width(12.dp))
                   OneLineText(info.label)
@@ -239,11 +239,10 @@ private fun IconList(
         ListItem(
           {
             LazyImage(
-              it.entry?.entry?.name,
               contentDescription = info.label,
               modifier = Modifier.aspectRatio(1f),
               contentScale = ContentScale.Fit,
-              imageHolder = getImageHolder(it),
+              imageHolder = remember(it.entry?.entry?.name) { getImageHolder(it) },
             )
           },
           { OneLineText(info.label) },
