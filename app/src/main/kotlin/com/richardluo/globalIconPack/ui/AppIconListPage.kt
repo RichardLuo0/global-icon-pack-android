@@ -54,6 +54,7 @@ import com.richardluo.globalIconPack.ui.components.LazyImage
 import com.richardluo.globalIconPack.ui.components.ListItem
 import com.richardluo.globalIconPack.ui.components.ListItemPos
 import com.richardluo.globalIconPack.ui.components.LoadingCircle
+import com.richardluo.globalIconPack.ui.components.LocalNavControllerWithArgs
 import com.richardluo.globalIconPack.ui.components.MyDropdownMenu
 import com.richardluo.globalIconPack.ui.components.OneLineText
 import com.richardluo.globalIconPack.ui.components.WithSearch
@@ -76,7 +77,7 @@ private class TabItem(val name: Int, val flow: Flow<List<AnyCompIcon>?>)
 // https://issuetracker.google.com/issues/435980400
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun AppIconListPage(onBack: () -> Unit, iconsHolder: IconsHolder, appIcon: AppCompIcon) {
+fun AppIconListPage(iconsHolder: IconsHolder, appIcon: AppCompIcon) {
   val vm: AppIconListVM = viewModel { with(AppIconListVM) { initializer(iconsHolder, appIcon) } }
 
   val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
@@ -110,7 +111,10 @@ fun AppIconListPage(onBack: () -> Unit, iconsHolder: IconsHolder, appIcon: AppCo
         WithSearch(expandSearchBar, vm.searchText) {
           TwoRowsTopAppBar(
             navigationIcon = {
-              IconButtonWithTooltip(Icons.AutoMirrored.Outlined.ArrowBack, "Back", onClick = onBack)
+              val navController = LocalNavControllerWithArgs.current!!
+              IconButtonWithTooltip(Icons.AutoMirrored.Outlined.ArrowBack, "Back") {
+                navController.popBackStack()
+              }
             },
             title = { expanded ->
               if (expanded)

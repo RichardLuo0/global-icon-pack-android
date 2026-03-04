@@ -155,10 +155,7 @@ class IconPackMergerActivity : ComponentActivity() {
           pages =
             arrayOf(
               navPage("Main") { Screen() },
-              navPage<AppCompIcon>("AppIconList") {
-                val navController = LocalNavControllerWithArgs.current!!
-                AppIconListPage({ navController.popBackStack() }, vm, it)
-              },
+              navPage<AppCompIcon>("AppIconList") { AppIconListPage(vm, it) },
             ),
         )
       }
