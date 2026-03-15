@@ -29,6 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -76,9 +77,10 @@ fun WithSearch(
   content: @Composable () -> Unit,
 ) {
   var expand by state
-
-  val focusRequester = remember { FocusRequester() }
-  LaunchedEffect(expand) { if (expand) focusRequester.requestFocus() }
+  fun closeSearchBar() {
+    expand = false
+    searchText.value = ""
+  }
 
   AnimatedContent(expand, contentAlignment = Alignment.TopCenter) {
     if (!it) content()
@@ -89,23 +91,28 @@ fun WithSearch(
             .height(TopAppBarDefaults.TopAppBarExpandedHeight),
         contentAlignment = Alignment.Center,
       ) {
-        BackHandler {
-          expand = false
-          searchText.value = ""
-        }
+        BackHandler(onBack = ::closeSearchBar)
+
+        val focusRequester = remember { FocusRequester() }
+        LaunchedEffect(Unit) { focusRequester.requestFocus() }
+
+        var willBeFocused by remember { mutableStateOf(true) }
+
         RoundSearchBar(
           searchText,
           placeHolder,
-          modifier = Modifier.focusRequester(focusRequester),
+          modifier =
+            Modifier.focusRequester(focusRequester).onFocusChanged { state ->
+              if (state.hasFocus) willBeFocused = false
+              else if (!willBeFocused && searchText.value.isEmpty()) closeSearchBar()
+            },
         ) {
           IconButtonWithTooltip(
             Icons.AutoMirrored.Outlined.ArrowBack,
             "Back",
             IconButtonStyle.None,
-          ) {
-            expand = false
-            searchText.value = ""
-          }
+            onClick = ::closeSearchBar,
+          )
         }
       }
   }
