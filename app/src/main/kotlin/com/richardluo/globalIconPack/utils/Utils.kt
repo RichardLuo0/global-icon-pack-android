@@ -126,11 +126,14 @@ suspend inline fun <K : Any, V : Any> LruCache<K, V>.getOrPut(
       }
       .await()
 
-  return synchronized(this) {
-    put(key, value)
-    taskMap.remove(key)
-    value
+  synchronized(this) {
+    val oldValue = get(key)
+    if (oldValue == null) {
+      put(key, value)
+      taskMap.remove(key)
+    }
   }
+  return value
 }
 
 @Composable fun <T> StateFlow<T>.getState() = collectAsStateWithLifecycle()

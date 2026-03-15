@@ -11,8 +11,11 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.produceState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
@@ -58,15 +61,8 @@ fun LazyImage(
   filterQuality: FilterQuality = DefaultFilterQuality,
   imageHolder: ImageHolder,
 ) {
-  val image by
-    produceState(imageHolder.getImage(), imageHolder) {
-      val image = imageHolder.getImage()
-      if (image != null) value = image
-      else {
-        value = null
-        value = imageHolder.loadImage()
-      }
-    }
+  var image by remember(imageHolder) { mutableStateOf(imageHolder.getImage()) }
+  if (image == null) LaunchedEffect(imageHolder) { image = imageHolder.loadImage() }
   Crossfade(targetState = image, modifier = modifier) { targetImage ->
     if (targetImage != null)
       Image(
