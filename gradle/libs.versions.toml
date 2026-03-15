@@ -1,10 +1,10 @@
 [libraries]
 api = { module = "de.robv.android.xposed:api", version = "82" }
-core-ktx = { group = "androidx.core", name = "core-ktx", version = "1.17.0" }
-activity = { group = "androidx.activity", name = "activity-compose", version = "1.12.4" }
+core-ktx = { group = "androidx.core", name = "core-ktx", version = "1.18.0" }
+activity = { group = "androidx.activity", name = "activity-compose", version = "1.13.0" }
 viewmodel = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose", version = "2.10.0" }
 viewmodel-savedstate = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-savedstate", version = "2.10.0" }
-compose-foundation = { group = "androidx.compose.foundation", name = "foundation", version = "1.10.4" }
+compose-foundation = { group = "androidx.compose.foundation", name = "foundation", version = "1.10.5" }
 preference = { group = "me.zhanghai.compose.preference", name = "library", version = "1.1.1" }
 material3 = { group = "androidx.compose.material3", name = "material3", version = "1.5.0-alpha15" }
 material-icons-extended = { group = "androidx.compose.material", name = "material-icons-extended", version = "1.7.8" }
@@ -13,15 +13,15 @@ documentfile = { group = "androidx.documentfile", name = "documentfile", version
 hiddenapibypass = { group = "org.lsposed.hiddenapibypass", name = "hiddenapibypass", version = "+" }
 navigation = { group = "androidx.navigation", name = "navigation-compose", version = "2.9.7" }
 reorderable = { module = "sh.calvin.reorderable:reorderable", version = "3.0.0" }
-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview", version = "1.10.4" }
-ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling", version = "1.10.4" }
+ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-tooling-preview", version = "1.10.5" }
+ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling", version = "1.10.5" }
 
 #junit = { group = "junit", name = "junit", version.ref = "junit" }
 #ext-junit = { group = "androidx.test.ext", name = "junit", version.ref = "junitVersion" }
 #espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
 
 [plugins]
-android-application = { id = "com.android.application", version = "9.0.1" }
+android-application = { id = "com.android.application", version = "9.1.0" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version = "2.3.10" }
 compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version = "2.3.10" }
 dependency-license-report = { id = "com.github.jk1.dependency-license-report", version = "3.1.1" }
