@@ -136,7 +136,7 @@ abstract class SQLiteOpenHelper(
   )
 
   init {
-    Objects.requireNonNull<OpenParams.Builder?>(mOpenParamsBuilder)
+    Objects.requireNonNull(mOpenParamsBuilder)
     require(version >= 1) { "Version must be >= 1, was $version" }
     this.databaseName = name
     mNewVersion = version
@@ -149,7 +149,10 @@ abstract class SQLiteOpenHelper(
       if (it.getOrNull(0) == File.separatorChar) File(it) else context.getDatabasePath(it)
     }
 
-  fun usable() = getDatabaseFile()?.let { !it.exists() || (it.canRead() && it.canWrite()) } == true
+  fun writable() =
+    getDatabaseFile()?.let { !it.exists() || (it.canRead() && it.canWrite()) } == true
+
+  fun readable() = getDatabaseFile()?.let { !it.exists() || it.canRead() } == true
 
   fun migrate(name: String, block: (File?) -> Unit) {
     synchronized(this) {
@@ -308,7 +311,7 @@ abstract class SQLiteOpenHelper(
           )
         }
 
-        if (version > 0 && version < mMinimumSupportedVersion) {
+        if (version in 1..<mMinimumSupportedVersion) {
           val databaseFile = File(db.path)
           onBeforeDelete(db)
           db.close()

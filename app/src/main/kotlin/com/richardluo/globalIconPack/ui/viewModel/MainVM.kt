@@ -131,7 +131,7 @@ class MainVM(context: Application) : ContextVM(context), ILoadable by Loadable()
         "set -e",
         "if ! [ -f $db ]; then touch $db; fi",
         "[ -n \"$prefPath\" ] && context=$(ls -Z $prefPath | cut -d: -f1-4) || context=\"u:object_r:magisk_file:s0\"",
-        "chown 9999:9999 $parent && chmod 0777 $parent && chcon \$context $parent",
+        $$"chown 9999:9999 $$parent && chmod 0777 $$parent && chcon $context $$parent",
         $$"for file in $$parent/*; do chown 9999:9999 $file && chmod 0666 $file && chcon $context $file; done",
       )
       .exec()

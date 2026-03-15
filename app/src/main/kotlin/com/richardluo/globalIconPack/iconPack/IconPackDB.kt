@@ -34,13 +34,14 @@ import kotlinx.coroutines.withContext
 class IconPackDB(
   private val context: Application,
   path: String = AppPreference.get().get(AppPref.PATH),
+  openFlags: Int = SQLiteDatabase.OPEN_READWRITE,
 ) :
   SQLiteOpenHelper(
     context.createDeviceProtectedStorageContext(),
     path,
     8,
     0,
-    OpenParams.Builder().apply {
+    OpenParams.Builder().setOpenFlags(openFlags).apply {
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) setJournalMode("MEMORY")
     },
   ) {
@@ -54,7 +55,11 @@ class IconPackDB(
     get() = mModifiedUpdateFlow
 
   init {
-    if (!usable()) throw Exception("DB file can not be read and write: $path")
+    when (openFlags) {
+      SQLiteDatabase.OPEN_READONLY ->
+        if (!readable()) throw Exception("DB file can not be read: $path")
+      else -> if (!writable()) throw Exception("DB file can not be read and write: $path")
+    }
   }
 
   override fun onCreate(db: SQLiteDatabase) {}

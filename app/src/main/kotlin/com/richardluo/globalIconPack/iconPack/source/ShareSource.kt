@@ -2,6 +2,7 @@ package com.richardluo.globalIconPack.iconPack.source
 
 import android.app.AndroidAppHelper
 import android.content.ComponentName
+import android.database.sqlite.SQLiteDatabase
 import android.graphics.drawable.Drawable
 import androidx.core.database.getIntOrNull
 import com.richardluo.globalIconPack.AppPref
@@ -25,7 +26,7 @@ import java.util.Collections
 class ShareSource(pack: String, config: IconPackConfig = defaultIconPackConfig) :
   Source, ResourceOwner(pack) {
   companion object {
-    const val DATABASE_PATH = "/data/misc/${BuildConfig.APPLICATION_ID}/iconPack.db"
+    const val DATABASE_PATH = "/data/misc_de/${BuildConfig.APPLICATION_ID}/iconPack.db"
   }
 
   private val iconPackAsFallback = config.iconPackAsFallback
@@ -38,6 +39,7 @@ class ShareSource(pack: String, config: IconPackConfig = defaultIconPackConfig) 
     IconPackDB(
       AndroidAppHelper.currentApplication(),
       AppPreference.get().getString(AppPref.PATH.key, DATABASE_PATH)!!,
+      SQLiteDatabase.OPEN_READONLY,
     )
   private val resourcesMap = mutableMapOf<String, ResourceOwner>()
 
