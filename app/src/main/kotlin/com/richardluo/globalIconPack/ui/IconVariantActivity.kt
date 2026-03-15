@@ -6,10 +6,18 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -30,6 +38,7 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FloatingActionButtonMenu
 import androidx.compose.material3.FloatingActionButtonMenuItem
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.ToggleFloatingActionButton
@@ -108,6 +117,7 @@ class IconVariantActivity : ComponentActivity() {
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
     val expandSearchBar = rememberSaveable { mutableStateOf(false) }
     val resetWarnDialogState = rememberSaveable { mutableStateOf(false) }
+    var expandFabMenu by rememberSaveable { mutableStateOf(false) }
 
     Scaffold(
       modifier =
@@ -197,63 +207,68 @@ class IconVariantActivity : ComponentActivity() {
         else LoadingCircle()
 
         AppFilterButtonGroup(Modifier.padding(horizontal = 8.dp).fillMaxWidth(), vm.filterType)
+      }
+    }
 
-        var expandedFabMenu by rememberSaveable { mutableStateOf(false) }
-        FloatingActionButtonMenu(
-          expandedFabMenu,
-          modifier =
-            Modifier.align(Alignment.BottomEnd)
-              .padding(bottom = contentPadding.calculateBottomPadding()),
-          button = {
-            ToggleFloatingActionButton(
-              checked = expandedFabMenu,
-              onCheckedChange = { expandedFabMenu = !expandedFabMenu },
-            ) {
-              val icon by remember {
-                derivedStateOf {
-                  if (checkedProgress > 0.5f) Icons.Outlined.Close else Icons.Outlined.ImportExport
-                }
+    AnimatedVisibility(expandFabMenu, enter = fadeIn(), exit = fadeOut()) {
+      Box(
+        Modifier.fillMaxSize()
+          .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.32f))
+          .clickable { expandFabMenu = false }
+      )
+    }
+
+    Box(modifier = Modifier.windowInsetsPadding(WindowInsets.systemBars).fillMaxSize()) {
+      FloatingActionButtonMenu(
+        expandFabMenu,
+        modifier = Modifier.align(Alignment.BottomEnd),
+        button = {
+          ToggleFloatingActionButton(
+            checked = expandFabMenu,
+            onCheckedChange = { expandFabMenu = !expandFabMenu },
+          ) {
+            val icon by remember {
+              derivedStateOf {
+                if (checkedProgress > 0.5f) Icons.Outlined.Close else Icons.Outlined.ImportExport
               }
-              Icon(
-                imageVector = icon,
-                contentDescription = "Import/Export",
-                modifier = Modifier.animateIcon({ checkedProgress }),
-              )
             }
-          },
-        ) {
-          FloatingActionButtonMenuItem(
-            {
-              exportLauncher.launch("${vm.pack}.xml")
-              expandedFabMenu = false
-            },
-            icon = {
-              Icon(Icons.Outlined.Upload, stringResource(R.string.iconVariant_menu_export))
-            },
-            text = { Text(stringResource(R.string.iconVariant_menu_export)) },
-          )
-          FloatingActionButtonMenuItem(
-            {
-              importLauncher.launch(arrayOf("text/xml"))
-              expandedFabMenu = false
-            },
-            icon = {
-              Icon(Icons.Outlined.Download, stringResource(R.string.iconVariant_menu_import))
-            },
-            text = { Text(stringResource(R.string.iconVariant_menu_import)) },
-          )
-        }
-      }
-
-      if (vm.loading > 0) LoadingDialog()
-
-      WarnDialog(
-        resetWarnDialogState,
-        title = { Text(getString(R.string.icons_restoreDefault)) },
-        onOk = { vm.restoreDefault() },
+            Icon(
+              imageVector = icon,
+              contentDescription = "Import/Export",
+              modifier = Modifier.animateIcon({ checkedProgress }),
+            )
+          }
+        },
       ) {
-        Text(getString(R.string.icons_warn_restoreDefault))
+        FloatingActionButtonMenuItem(
+          {
+            exportLauncher.launch("${vm.pack}.xml")
+            expandFabMenu = false
+          },
+          icon = { Icon(Icons.Outlined.Upload, stringResource(R.string.iconVariant_menu_export)) },
+          text = { Text(stringResource(R.string.iconVariant_menu_export)) },
+        )
+        FloatingActionButtonMenuItem(
+          {
+            importLauncher.launch(arrayOf("text/xml"))
+            expandFabMenu = false
+          },
+          icon = {
+            Icon(Icons.Outlined.Download, stringResource(R.string.iconVariant_menu_import))
+          },
+          text = { Text(stringResource(R.string.iconVariant_menu_import)) },
+        )
       }
+    }
+
+    if (vm.loading > 0) LoadingDialog()
+
+    WarnDialog(
+      resetWarnDialogState,
+      title = { Text(getString(R.string.icons_restoreDefault)) },
+      onOk = { vm.restoreDefault() },
+    ) {
+      Text(getString(R.string.icons_warn_restoreDefault))
     }
   }
 
