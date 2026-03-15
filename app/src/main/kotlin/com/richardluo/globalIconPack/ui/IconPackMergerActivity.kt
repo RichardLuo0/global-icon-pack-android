@@ -248,7 +248,10 @@ class IconPackMergerActivity : ComponentActivity() {
     Scaffold(
       modifier =
         Modifier.fillMaxSize()
-          .nestedScroll(scrollBehavior.nestedScrollConnection)
+          .then(
+            if (!expandSearchBar.value) Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
+            else Modifier
+          )
           .nestedScroll(expandedScrollConnection)
           .clearFocusOnScroll(),
       topBar = {

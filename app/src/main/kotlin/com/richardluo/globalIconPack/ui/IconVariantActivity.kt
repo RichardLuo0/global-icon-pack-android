@@ -122,7 +122,10 @@ class IconVariantActivity : ComponentActivity() {
     Scaffold(
       modifier =
         Modifier.fillMaxSize()
-          .nestedScroll(scrollBehavior.nestedScrollConnection)
+          .then(
+            if (!expandSearchBar.value) Modifier.nestedScroll(scrollBehavior.nestedScrollConnection)
+            else Modifier
+          )
           .clearFocusOnScroll(),
       topBar = {
         WithSearch(expandSearchBar, vm.searchText) {
