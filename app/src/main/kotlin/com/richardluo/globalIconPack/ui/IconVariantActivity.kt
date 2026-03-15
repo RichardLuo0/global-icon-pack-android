@@ -64,6 +64,8 @@ import com.richardluo.globalIconPack.ui.components.WarnDialog
 import com.richardluo.globalIconPack.ui.components.WithSearch
 import com.richardluo.globalIconPack.ui.components.appFilterHeight
 import com.richardluo.globalIconPack.ui.components.clearFocusOnScroll
+import com.richardluo.globalIconPack.ui.components.fabHeight
+import com.richardluo.globalIconPack.ui.components.fabsBottomSpacing
 import com.richardluo.globalIconPack.ui.components.navPage
 import com.richardluo.globalIconPack.ui.model.AppCompIcon
 import com.richardluo.globalIconPack.ui.state.rememberAutoFillState
@@ -170,7 +172,8 @@ class IconVariantActivity : ComponentActivity() {
       },
     ) { contentPadding ->
       val navController = LocalNavControllerWithArgs.current!!
-      val consumablePadding = contentPadding.consumable()
+      val consumablePadding =
+        contentPadding.consumable().apply { bottom += fabsBottomSpacing + fabHeight }
 
       Box(modifier = Modifier.padding(consumablePadding.consumeTop())) {
         val icons = vm.filteredIcons.getValue()

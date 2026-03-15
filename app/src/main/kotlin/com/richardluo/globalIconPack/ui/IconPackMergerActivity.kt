@@ -118,6 +118,9 @@ import com.richardluo.globalIconPack.ui.components.WarnDialog
 import com.richardluo.globalIconPack.ui.components.WithSearch
 import com.richardluo.globalIconPack.ui.components.appFilterHeight
 import com.richardluo.globalIconPack.ui.components.clearFocusOnScroll
+import com.richardluo.globalIconPack.ui.components.fabHeight
+import com.richardluo.globalIconPack.ui.components.fabSpacing
+import com.richardluo.globalIconPack.ui.components.fabsBottomSpacing
 import com.richardluo.globalIconPack.ui.components.myPreferenceTheme
 import com.richardluo.globalIconPack.ui.components.navPage
 import com.richardluo.globalIconPack.ui.components.toShape
@@ -136,10 +139,6 @@ import com.richardluo.globalIconPack.utils.newPadding
 import kotlinx.coroutines.launch
 import kotlinx.parcelize.Parcelize
 import me.zhanghai.compose.preference.ProvidePreferenceLocals
-
-private val fabsBottomSpacing = 16.dp
-private val fabHeight = 56.0.dp
-private val fabSpacing = 12.dp
 
 class IconPackMergerActivity : ComponentActivity() {
   private val vm: MergerVM by viewModels()

@@ -7,6 +7,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.unit.dp
+
+val fabsBottomSpacing = 16.dp
+val fabHeight = 56.0.dp
+val fabSpacing = 12.dp
 
 class FabDesc(val icon: ImageVector, val text: String, val onClick: () -> Unit)
 
