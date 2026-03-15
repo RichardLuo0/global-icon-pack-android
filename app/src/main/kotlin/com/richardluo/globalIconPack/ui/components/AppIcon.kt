@@ -17,7 +17,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.richardluo.globalIconPack.utils.chain
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -38,9 +37,9 @@ fun AppIcon(
     LazyImage(
       contentDescription = label,
       modifier =
-        Modifier.padding(horizontal = 8.dp).aspectRatio(1f).chain {
-          shareKey?.let { sharedBounds("AppIcon/$it") }
-        },
+        Modifier.padding(horizontal = 8.dp)
+          .aspectRatio(1f)
+          .then(shareKey?.let { Modifier.sharedBounds("AppIcon/$it") } ?: Modifier),
       contentScale = ContentScale.Crop,
       imageHolder = imageHolder,
     )
@@ -52,7 +51,9 @@ fun AppIcon(
       maxLines = 2,
       overflow = TextOverflow.Ellipsis,
       textAlign = TextAlign.Center,
-      modifier = Modifier.fillMaxWidth().chain { shareKey?.let { sharedBounds("AppLabel/$it") } },
+      modifier =
+        Modifier.fillMaxWidth()
+          .then(shareKey?.let { Modifier.sharedBounds("AppLabel/$it") } ?: Modifier),
     )
   }
 }

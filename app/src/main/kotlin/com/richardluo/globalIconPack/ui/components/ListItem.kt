@@ -19,20 +19,16 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MaterialTheme.shapes
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.Layout
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.core.graphics.drawable.toBitmap
 import com.richardluo.globalIconPack.R
-import com.richardluo.globalIconPack.utils.chain
 
 enum class ListItemPos {
   Top,
@@ -103,16 +99,19 @@ fun ListItem(
     modifier =
       Modifier.fillMaxWidth()
         .padding(padding)
-        .chain {
+        .then(
           shape?.let {
-            clip(it)
+            Modifier.clip(it)
               .background(
                 if (selected) MaterialTheme.colorScheme.primaryFixedDim
                 else MaterialTheme.colorScheme.surfaceContainerLow
               )
-          }
-        }
-        .chain { onClick?.let { selectable(selected, true, Role.RadioButton, onClick = onClick) } }
+          } ?: Modifier
+        )
+        .then(
+          onClick?.let { Modifier.selectable(selected, true, Role.RadioButton, onClick = onClick) }
+            ?: Modifier
+        )
         .padding(horizontal = 12.dp, vertical = 10.dp)
   ) {
     ListItemContent(leading, headline, supporting, selected)
@@ -193,14 +192,12 @@ fun ListItemContent(
 @Preview(showBackground = true)
 @Composable
 fun ListItemPreview() {
-  val context = LocalContext.current
-  val image =
-    remember(context) { context.getDrawable(R.drawable.broken_image)!!.toBitmap().asImageBitmap() }
+  val image = painterResource(R.drawable.broken_image)
   val leading =
     @Composable {
       Box(modifier = Modifier.fillMaxHeight().aspectRatio(1f)) {
         Image(
-          bitmap = image,
+          painter = image,
           contentDescription = "Test",
           modifier = Modifier.matchParentSize(),
           contentScale = ContentScale.Crop,
