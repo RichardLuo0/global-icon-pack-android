@@ -40,7 +40,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.richardluo.globalIconPack.R
 import kotlinx.coroutines.flow.dropWhile
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.first
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -102,11 +101,12 @@ fun WithSearch(
       ) {
         val focusRequester = remember { FocusRequester() }
         var initialized by rememberSaveable { mutableStateOf(false) }
-        if (!initialized)
-          LaunchedEffect(Unit) {
+        LaunchedEffect(Unit) {
+          if (expand && !initialized) {
             focusRequester.requestFocus()
             initialized = true
           }
+        }
 
         fun closeSearchBar() {
           expand = false
@@ -120,8 +120,7 @@ fun WithSearch(
         LaunchedEffect(Unit) {
           snapshotFlow { imeVisibleState.value }
             .dropWhile { !it }
-            .filter { !it && searchText.value.isEmpty() }
-            .first()
+            .first { !it && searchText.value.isEmpty() && expand }
           closeSearchBar()
         }
 
@@ -133,7 +132,7 @@ fun WithSearch(
           modifier =
             Modifier.focusRequester(focusRequester).onFocusChanged { state ->
               if (state.hasFocus) willBeFocused = false
-              else if (!willBeFocused && searchText.value.isEmpty()) closeSearchBar()
+              else if (!willBeFocused && searchText.value.isEmpty() && expand) closeSearchBar()
             },
         ) {
           IconButtonWithTooltip(
