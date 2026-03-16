@@ -1,5 +1,6 @@
 package com.richardluo.globalIconPack.ui
 
+import android.os.Parcelable
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -46,6 +47,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation3.runtime.NavKey
 import com.richardluo.globalIconPack.R
 import com.richardluo.globalIconPack.ui.components.IconButtonWithTooltip
 import com.richardluo.globalIconPack.ui.components.IconChooserSheet
@@ -54,7 +56,7 @@ import com.richardluo.globalIconPack.ui.components.LazyImage
 import com.richardluo.globalIconPack.ui.components.ListItem
 import com.richardluo.globalIconPack.ui.components.ListItemPos
 import com.richardluo.globalIconPack.ui.components.LoadingCircle
-import com.richardluo.globalIconPack.ui.components.LocalNavControllerWithArgs
+import com.richardluo.globalIconPack.ui.components.LocalBackStack
 import com.richardluo.globalIconPack.ui.components.MyDropdownMenu
 import com.richardluo.globalIconPack.ui.components.OneLineText
 import com.richardluo.globalIconPack.ui.components.WithSearch
@@ -70,6 +72,9 @@ import com.richardluo.globalIconPack.utils.consumable
 import com.richardluo.globalIconPack.utils.getValue
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
+import kotlinx.parcelize.Parcelize
+
+@Parcelize data class AppIconListPageNavKey(val icon: AppCompIcon) : NavKey, Parcelable
 
 private class TabItem(val name: Int, val flow: Flow<List<AnyCompIcon>?>)
 
@@ -78,11 +83,10 @@ private class TabItem(val name: Int, val flow: Flow<List<AnyCompIcon>?>)
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun AppIconListPage(iconsHolder: IconsHolder, appIcon: AppCompIcon) {
-  val vm: AppIconListVM = viewModel { with(AppIconListVM) { initializer(iconsHolder, appIcon) } }
-
-  val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
+  val vm: AppIconListVM = viewModel { AppIconListVM.initializer(iconsHolder, appIcon) }
   val iconChooser: IconChooserVM = viewModel(key = "IconsListPageIconChooser")
 
+  val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
   val expandSearchBar = rememberSaveable { mutableStateOf(false) }
 
   val tabs = remember {
@@ -111,9 +115,9 @@ fun AppIconListPage(iconsHolder: IconsHolder, appIcon: AppCompIcon) {
         WithSearch(expandSearchBar, vm.searchText) {
           TwoRowsTopAppBar(
             navigationIcon = {
-              val navController = LocalNavControllerWithArgs.current!!
+              val backStack = LocalBackStack.current!!
               IconButtonWithTooltip(Icons.AutoMirrored.Outlined.ArrowBack, "Back") {
-                navController.popBackStack()
+                backStack.removeLastOrNull()
               }
             },
             title = { expanded ->

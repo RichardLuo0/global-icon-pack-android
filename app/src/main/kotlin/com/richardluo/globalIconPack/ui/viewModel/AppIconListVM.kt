@@ -11,10 +11,9 @@ import android.os.Process
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.CreationExtras
 import com.richardluo.globalIconPack.R
+import com.richardluo.globalIconPack.ui.MyApplication
 import com.richardluo.globalIconPack.ui.components.ImageHolder
 import com.richardluo.globalIconPack.ui.model.ActivityCompInfo
 import com.richardluo.globalIconPack.ui.model.AnyCompIcon
@@ -123,7 +122,7 @@ class AppIconListVM(context: Application, iconsHolder: IconsHolder, appIcon: App
       .stateIn(viewModelScope, SharingStarted.Lazily, null)
 
   companion object {
-    fun CreationExtras.initializer(iconsHolder: IconsHolder, appCompIcon: AppCompIcon) =
-      AppIconListVM(this[APPLICATION_KEY]!!, iconsHolder, appCompIcon)
+    fun initializer(iconsHolder: IconsHolder, appCompIcon: AppCompIcon) =
+      AppIconListVM(MyApplication.context, iconsHolder, appCompIcon)
   }
 }

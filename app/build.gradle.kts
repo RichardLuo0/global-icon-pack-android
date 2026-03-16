@@ -9,6 +9,7 @@ plugins {
   alias(libs.plugins.android.application)
   alias(libs.plugins.compose.compiler)
   alias(libs.plugins.dependency.license.report)
+  alias(libs.plugins.jetbrains.kotlin.serialization)
   id("kotlin-parcelize")
 }
 
@@ -101,7 +102,9 @@ dependencies {
   implementation(libs.libsu)
   implementation(libs.documentfile)
   implementation(libs.hiddenapibypass)
-  implementation(libs.navigation)
+  implementation(libs.navigation3.ui)
+  implementation(libs.navigation3.runtime)
+  implementation(libs.lifecycle.viewmodel.navigation3)
   implementation(libs.reorderable)
   implementation(libs.ui.tooling.preview)
   "debugAppImplementation"(libs.ui.tooling)

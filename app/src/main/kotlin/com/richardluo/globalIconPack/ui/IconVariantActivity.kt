@@ -58,6 +58,7 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
+import androidx.navigation3.runtime.NavKey
 import com.richardluo.globalIconPack.R
 import com.richardluo.globalIconPack.ui.components.AnimatedNavHost
 import com.richardluo.globalIconPack.ui.components.AppFilterButtonGroup
@@ -66,7 +67,7 @@ import com.richardluo.globalIconPack.ui.components.AutoFillDialog
 import com.richardluo.globalIconPack.ui.components.IconButtonWithTooltip
 import com.richardluo.globalIconPack.ui.components.LoadingCircle
 import com.richardluo.globalIconPack.ui.components.LoadingDialog
-import com.richardluo.globalIconPack.ui.components.LocalNavControllerWithArgs
+import com.richardluo.globalIconPack.ui.components.LocalBackStack
 import com.richardluo.globalIconPack.ui.components.MyDropdownMenu
 import com.richardluo.globalIconPack.ui.components.SampleTheme
 import com.richardluo.globalIconPack.ui.components.WarnDialog
@@ -75,14 +76,15 @@ import com.richardluo.globalIconPack.ui.components.appFilterHeight
 import com.richardluo.globalIconPack.ui.components.clearFocusOnScroll
 import com.richardluo.globalIconPack.ui.components.fabHeight
 import com.richardluo.globalIconPack.ui.components.fabsBottomSpacing
-import com.richardluo.globalIconPack.ui.components.navPage
-import com.richardluo.globalIconPack.ui.model.AppCompIcon
 import com.richardluo.globalIconPack.ui.state.rememberAutoFillState
 import com.richardluo.globalIconPack.ui.viewModel.IconVariantVM
 import com.richardluo.globalIconPack.utils.consumable
 import com.richardluo.globalIconPack.utils.getValue
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.serialization.Serializable
+
+@Serializable private object IconVariantActivityNavKey : NavKey
 
 class IconVariantActivity : ComponentActivity() {
   private val vm: IconVariantVM by viewModels()
@@ -99,14 +101,10 @@ class IconVariantActivity : ComponentActivity() {
 
     setContent {
       SampleTheme {
-        AnimatedNavHost(
-          startDestination = "Main",
-          pages =
-            arrayOf(
-              navPage("Main") { Screen() },
-              navPage<AppCompIcon>("AppIconList") { AppIconListPage(vm, it) },
-            ),
-        )
+        AnimatedNavHost(IconVariantActivityNavKey) {
+          entry(IconVariantActivityNavKey) { Screen() }
+          entry<AppIconListPageNavKey> { AppIconListPage(vm, it.icon) }
+        }
       }
     }
   }
@@ -184,15 +182,17 @@ class IconVariantActivity : ComponentActivity() {
         }
       },
     ) { contentPadding ->
-      val navController = LocalNavControllerWithArgs.current!!
+      val backStack = LocalBackStack.current!!
       val consumablePadding =
         contentPadding.consumable().apply { bottom += fabsBottomSpacing + fabHeight }
+      val appFilterVPadding = 4.dp
 
       Box(modifier = Modifier.padding(consumablePadding.consumeTop())) {
         val icons = vm.filteredIcons.getValue()
         if (icons != null)
           LazyVerticalGrid(
-            contentPadding = consumablePadding.apply { top += appFilterHeight }.consume(),
+            contentPadding =
+              consumablePadding.apply { top += appFilterHeight + appFilterVPadding * 2 }.consume(),
             modifier = Modifier.fillMaxSize().padding(horizontal = 2.dp),
             columns = GridCells.Adaptive(minSize = 74.dp),
           ) {
@@ -203,13 +203,16 @@ class IconVariantActivity : ComponentActivity() {
                 imageHolder = remember(entry?.entry?.name) { vm.getImageHolder(it) },
                 shareKey = info.componentName.packageName,
               ) {
-                navController.navigate("AppIconList", it)
+                backStack.add(AppIconListPageNavKey(it))
               }
             }
           }
         else LoadingCircle()
 
-        AppFilterButtonGroup(Modifier.padding(horizontal = 8.dp).fillMaxWidth(), vm.filterType)
+        AppFilterButtonGroup(
+          Modifier.padding(vertical = appFilterVPadding, horizontal = 8.dp).fillMaxWidth(),
+          vm.filterType,
+        )
       }
     }
 

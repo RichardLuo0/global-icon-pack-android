@@ -92,6 +92,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation3.runtime.NavKey
 import com.richardluo.globalIconPack.R
 import com.richardluo.globalIconPack.ui.components.AnimatedFab
 import com.richardluo.globalIconPack.ui.components.AnimatedNavHost
@@ -109,7 +110,7 @@ import com.richardluo.globalIconPack.ui.components.LazyImage
 import com.richardluo.globalIconPack.ui.components.ListItemPos
 import com.richardluo.globalIconPack.ui.components.LoadingCircle
 import com.richardluo.globalIconPack.ui.components.LoadingDialog
-import com.richardluo.globalIconPack.ui.components.LocalNavControllerWithArgs
+import com.richardluo.globalIconPack.ui.components.LocalBackStack
 import com.richardluo.globalIconPack.ui.components.MyDropdownMenu
 import com.richardluo.globalIconPack.ui.components.SampleTheme
 import com.richardluo.globalIconPack.ui.components.ScrollIndicator
@@ -122,9 +123,7 @@ import com.richardluo.globalIconPack.ui.components.fabHeight
 import com.richardluo.globalIconPack.ui.components.fabSpacing
 import com.richardluo.globalIconPack.ui.components.fabsBottomSpacing
 import com.richardluo.globalIconPack.ui.components.myPreferenceTheme
-import com.richardluo.globalIconPack.ui.components.navPage
 import com.richardluo.globalIconPack.ui.components.toShape
-import com.richardluo.globalIconPack.ui.model.AppCompIcon
 import com.richardluo.globalIconPack.ui.model.CompInfo
 import com.richardluo.globalIconPack.ui.model.IconEntryWithPack
 import com.richardluo.globalIconPack.ui.model.VariantPackIcon
@@ -138,7 +137,10 @@ import com.richardluo.globalIconPack.utils.getValue
 import com.richardluo.globalIconPack.utils.newPadding
 import kotlinx.coroutines.launch
 import kotlinx.parcelize.Parcelize
+import kotlinx.serialization.Serializable
 import me.zhanghai.compose.preference.ProvidePreferenceLocals
+
+@Serializable private object IconPackMergerActivityNavKey : NavKey
 
 class IconPackMergerActivity : ComponentActivity() {
   private val vm: MergerVM by viewModels()
@@ -149,14 +151,10 @@ class IconPackMergerActivity : ComponentActivity() {
 
     setContent {
       SampleTheme {
-        AnimatedNavHost(
-          startDestination = "Main",
-          pages =
-            arrayOf(
-              navPage("Main") { Screen() },
-              navPage<AppCompIcon>("AppIconList") { AppIconListPage(vm, it) },
-            ),
-        )
+        AnimatedNavHost(IconPackMergerActivityNavKey) {
+          entry(IconPackMergerActivityNavKey) { Screen() }
+          entry<AppIconListPageNavKey> { AppIconListPage(vm, it.icon) }
+        }
       }
     }
   }
@@ -207,7 +205,7 @@ class IconPackMergerActivity : ComponentActivity() {
         },
         Page(
           getString(R.string.merger_replaceIcons_title),
-          actions = { IconListActions(expandSearchBar) },
+          actions = { IconListActions { expandSearchBar.value = true } },
           fab = {
             FloatingActionButton(onClick = { iconOptionDialogState.value = true }) {
               Icon(Icons.Outlined.Settings, getString(R.string.common_options))
@@ -394,14 +392,19 @@ class IconPackMergerActivity : ComponentActivity() {
     contentPadding: PaddingValues,
     iconOptionDialogState: MutableState<Boolean>,
   ) {
-    val navController = LocalNavControllerWithArgs.current!!
+    val backStack = LocalBackStack.current!!
+    val appFilterVPadding = 4.dp
 
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
       val icons = vm.filteredIconsFlow.getValue(null)
       if (icons != null)
         LazyVerticalGrid(
           modifier = Modifier.fillMaxSize().padding(horizontal = 2.dp),
-          contentPadding = contentPadding.consumable().apply { top += appFilterHeight }.consume(),
+          contentPadding =
+            contentPadding
+              .consumable()
+              .apply { top += appFilterHeight + appFilterVPadding * 2 }
+              .consume(),
           columns = GridCells.Adaptive(minSize = 74.dp),
         ) {
           items(icons, key = { it.info.componentName }) {
@@ -417,13 +420,16 @@ class IconPackMergerActivity : ComponentActivity() {
                 },
               shareKey = info.componentName.packageName,
             ) {
-              navController.navigate("AppIconList", it)
+              backStack.add(AppIconListPageNavKey(it))
             }
           }
         }
       else LoadingCircle()
 
-      AppFilterButtonGroup(Modifier.padding(horizontal = 8.dp).fillMaxWidth(), vm.filterType)
+      AppFilterButtonGroup(
+        Modifier.padding(vertical = appFilterVPadding, horizontal = 8.dp).fillMaxWidth(),
+        vm.filterType,
+      )
     }
 
     val iconOptionScrollState = rememberLazyListState()
@@ -441,10 +447,12 @@ class IconPackMergerActivity : ComponentActivity() {
   }
 
   @Composable
-  private fun IconListActions(expandSearchBar: MutableState<Boolean>) {
-    IconButtonWithTooltip(Icons.Outlined.Search, stringResource(R.string.common_search)) {
-      expandSearchBar.value = true
-    }
+  private fun IconListActions(onSearch: () -> Unit) {
+    IconButtonWithTooltip(
+      Icons.Outlined.Search,
+      stringResource(R.string.common_search),
+      onClick = onSearch,
+    )
     var expand by rememberSaveable { mutableStateOf(false) }
     val autoFillState = rememberAutoFillState()
     IconButtonWithTooltip(Icons.Outlined.MoreVert, stringResource(R.string.common_moreOptions)) {

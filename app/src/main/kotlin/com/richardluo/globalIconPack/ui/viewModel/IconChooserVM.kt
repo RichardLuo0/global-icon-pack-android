@@ -1,22 +1,22 @@
 package com.richardluo.globalIconPack.ui.viewModel
 
-import android.app.Application
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.serialization.saved
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.SavedStateHandleSaveableApi
 import androidx.lifecycle.viewmodel.compose.saveable
 import com.richardluo.globalIconPack.iconPack.model.CalendarIconEntry
+import com.richardluo.globalIconPack.ui.MyApplication
 import com.richardluo.globalIconPack.ui.components.ImageHolder
 import com.richardluo.globalIconPack.ui.model.CompInfo
 import com.richardluo.globalIconPack.ui.model.IconPack
 import com.richardluo.globalIconPack.ui.model.OriginalIcon
 import com.richardluo.globalIconPack.ui.model.VariantIcon
 import com.richardluo.globalIconPack.ui.model.VariantPackIcon
-import com.richardluo.globalIconPack.utils.ContextVM
 import com.richardluo.globalIconPack.utils.SingletonManager.get
 import com.richardluo.globalIconPack.utils.filter
 import kotlinx.coroutines.Dispatchers
@@ -27,7 +27,8 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.transform
 
 @OptIn(SavedStateHandleSaveableApi::class)
-class IconChooserVM(context: Application, savedStateHandle: SavedStateHandle) : ContextVM(context) {
+class IconChooserVM(savedStateHandle: SavedStateHandle) : ViewModel() {
+  private val context = MyApplication.context
   private val iconPackCache by get { IconPackCache(context) }
   private val iconCache by get { IconCache(context) }
 
