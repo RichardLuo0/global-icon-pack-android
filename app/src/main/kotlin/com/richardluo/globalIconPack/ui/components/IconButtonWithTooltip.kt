@@ -62,12 +62,15 @@ fun IconButtonWithTooltip(
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun ClearIconButton(state: MutableState<String>) {
+fun ClearIconButton(state: MutableState<String>, onClear: () -> Unit = {}) {
   AnimatedVisibility(
     state.value.isNotEmpty(),
     enter = fadeIn(MaterialTheme.motionScheme.fastEffectsSpec()),
     exit = fadeOut(MaterialTheme.motionScheme.fastEffectsSpec()),
   ) {
-    IconButtonWithTooltip(Icons.Outlined.Clear, "Clear", IconButtonStyle.None) { state.value = "" }
+    IconButtonWithTooltip(Icons.Outlined.Clear, "Clear", IconButtonStyle.None) {
+      state.value = ""
+      onClear()
+    }
   }
 }
