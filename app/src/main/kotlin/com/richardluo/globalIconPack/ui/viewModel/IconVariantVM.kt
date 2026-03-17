@@ -119,11 +119,11 @@ class IconVariantVM(context: Application) :
   override fun getImageHolder(compIcon: AnyCompIcon): ImageHolder =
     object : ImageHolder {
       override fun getImage(): ImageBitmap? =
-        if (compIcon.entry != null) iconCache.getPackIcon(compIcon.entry.entry, iconPack)
+        if (compIcon.entry != null) iconCache.getPackIcon(compIcon.entry)
         else fallbackIconCache.getFallbackIcon(compIcon.info, iconPack)
 
       override suspend fun loadImage(): ImageBitmap =
-        if (compIcon.entry != null) iconCache.loadPackIcon(compIcon.entry.entry, iconPack)
+        if (compIcon.entry != null) iconCache.loadPackIcon(compIcon.entry)
         else
           fallbackIconCache.loadFallbackIcon(compIcon.info, iconFallback, iconPack, iconPackConfig)
     }

@@ -35,15 +35,15 @@ class IconCache(private val context: Application, factor: Int = 4) {
   private val bitmapCache = BitmapLruCache<String>(Runtime.getRuntime().maxMemory() / factor)
   private val taskMap = mutableMapOf<String, Deferred<ImageBitmap>>()
 
-  fun getIcon(info: CompInfo, entry: IconEntryWithPack?, basePack: IconPack): ImageBitmap? {
-    return if (entry != null) getPackIcon(entry.entry, entry.pack)
-    else getFallbackIcon(info, basePack)
-  }
+  fun getIcon(info: CompInfo, entry: IconEntryWithPack?, basePack: IconPack) =
+    if (entry != null) getPackIcon(entry) else getFallbackIcon(info, basePack)
 
   fun getFallbackIcon(info: CompInfo, basePack: IconPack) =
     if (info is ActivityCompInfo && info.info.icon == 0)
       bitmapCache["${basePack.pack}/fallback/${ComponentName(info.componentName.packageName, "")}"]
     else bitmapCache["${basePack.pack}/fallback/${info.componentName}"]
+
+  fun getPackIcon(entry: IconEntryWithPack) = getPackIcon(entry.entry, entry.pack)
 
   fun getPackIcon(entry: IconEntry, iconPack: IconPack) =
     bitmapCache["${iconPack.pack}/icon/${entry.name}"]
@@ -53,10 +53,9 @@ class IconCache(private val context: Application, factor: Int = 4) {
     entry: IconEntryWithPack?,
     basePack: IconPack,
     config: IconPackConfig,
-  ): ImageBitmap {
-    return if (entry != null) loadPackIcon(entry.entry, entry.pack)
+  ) =
+    if (entry != null) loadPackIcon(entry)
     else loadFallbackIcon(info, basePack.iconFallback, basePack, config)
-  }
 
   suspend fun loadFallbackIcon(
     info: CompInfo,
@@ -86,6 +85,8 @@ class IconCache(private val context: Application, factor: Int = 4) {
           } ?: emptyImageBitmap
         }
       }
+
+  suspend fun loadPackIcon(entry: IconEntryWithPack) = loadPackIcon(entry.entry, entry.pack)
 
   suspend fun loadPackIcon(entry: IconEntry, iconPack: IconPack) =
     bitmapCache.getOrPut("${iconPack.pack}/icon/${entry.name}", taskMap) {
