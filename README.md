@@ -50,7 +50,7 @@ This module is designed to extend the icon packs throughout the entire system.
 * You can create a shortcut record by appending `@` to the end of package name, and shortcut id as classname.
 
 ## Known Issues
-* If the module does not appear to be working after reboot, and LSPosed shows `DB file can not be read and write: /data/misc/com.richardluo.globalIconPack/iconPack.db`, try to install [this magisk module](https://github.com/RichardLuo0/global-icon-pack-android/blob/master/GIP_FIX.zip) created by @Hanhanawa.
+* If the module does not appear to be working after reboot, and LSPosed shows `DB file can not be read and write: /data/misc/com.richardluo.globalIconPack/iconPack.db`, try to install [this magisk module](https://github.com/RichardLuo0/global-icon-pack-android/raw/refs/heads/master/GIP_FIX.zip) created by @Hanhanawa.
 * If the launcher is slow to boot or crashes, switch to 'local' mode.
 * If it says "Please ensure the Xposed module has been enabled first" and you have the module enabled already, try to force stop then restart the app.
 * Regardless of the minimum SDK version, you must test compatibility with android versions below 14 by yourself.
