@@ -18,7 +18,7 @@ import android.os.UserManager
 import com.richardluo.globalIconPack.iconPack.getSC
 import com.richardluo.globalIconPack.iconPack.model.IconEntry
 import com.richardluo.globalIconPack.iconPack.source.getComponentName
-import com.richardluo.globalIconPack.utils.RunUntilDoneContext
+import com.richardluo.globalIconPack.utils.TransactionalHookScope
 import com.richardluo.globalIconPack.utils.allMethods
 import com.richardluo.globalIconPack.utils.asType
 import com.richardluo.globalIconPack.utils.call
@@ -28,10 +28,9 @@ import com.richardluo.globalIconPack.utils.constructor
 import com.richardluo.globalIconPack.utils.field
 import com.richardluo.globalIconPack.utils.getAs
 import com.richardluo.globalIconPack.utils.hook
-import com.richardluo.globalIconPack.utils.ifNullOrEmpty
 import com.richardluo.globalIconPack.utils.isHighTwoByte
 import com.richardluo.globalIconPack.utils.method
-import com.richardluo.globalIconPack.utils.runUntilDone
+import com.richardluo.globalIconPack.utils.transactionalHook
 import com.richardluo.globalIconPack.utils.withHighByteSet
 import com.richardluo.globalIconPack.xposed.ReplaceIcon.Companion.IN_SC
 import com.richardluo.globalIconPack.xposed.ReplaceIcon.Companion.SC_DEFAULT
@@ -44,19 +43,24 @@ class CalendarAndClockHook(private val clockUseFallbackMask: Boolean) : Hook {
   private val clocks = mutableSetOf<String>()
 
   override fun onHookPixelLauncher(lpp: LoadPackageParam) {
-    runUntilDone("onHookPixelLauncher") {
-      tryDo { onHookPixelLauncher16QPR2(lpp) }
-      tryDo { onHookPixelLauncherPre16QPR2(lpp) }
+    transactionalHook {
+      tryDo {
+        val iconProvider =
+          classOf("com.android.launcher3.icons.IconProvider", lpp) ?: return@tryDo fail()
+        hookCollectCC(iconProvider)
+        hookGetState(iconProvider)
+
+        transactionalHook("onHookPixelLauncher") {
+            tryDo { onHookPixelLauncher16QPR2(lpp) }
+            tryDo { onHookPixelLauncherPre16QPR2(lpp) }
+          }
+          .failOnFail()
+      }
     }
   }
 
-  fun RunUntilDoneContext<Unit>.onHookPixelLauncher16QPR2(lpp: LoadPackageParam) {
-    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.BAKLAVA) return fail()
-
-    val iconProvider = classOf("com.android.launcher3.icons.IconProvider", lpp) ?: return fail()
-
-    hookCollectCC(iconProvider)
-    hookGetState(iconProvider)
+  fun TransactionalHookScope<Unit>.onHookPixelLauncher16QPR2(lpp: LoadPackageParam) {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.BAKLAVA) fail()
 
     val iconChangeTracker =
       classOf("com.android.launcher3.icons.IconChangeTracker", lpp) ?: return fail()
@@ -94,34 +98,32 @@ class CalendarAndClockHook(private val clockUseFallbackMask: Boolean) : Hook {
       }
     }
 
-    iconChangeTrackerReceiver.method("accept")?.hook {
-      before {
-        val iconChangeTracker = iconChangeTrackerF.get(thisObject) ?: return@before
-        val changes = changesF.get(iconChangeTracker) ?: return@before
-        val userCache = userCacheF.get(iconChangeTracker) ?: return@before
-        val intent = args[0] as? Intent ?: return@before
-        when (intent.action) {
-          ACTION_TIMEZONE_CHANGED -> {
-            changeClockIcon(changes)
-            changeCalendarIcon(changes, userCache)
-            result = null
-          }
-          ACTION_DATE_CHANGED,
-          ACTION_TIME_CHANGED -> {
-            changeCalendarIcon(changes, userCache)
-            result = null
+    iconChangeTrackerReceiver
+      .method("accept")
+      ?.hook {
+        before {
+          val iconChangeTracker = iconChangeTrackerF.get(thisObject) ?: return@before
+          val changes = changesF.get(iconChangeTracker) ?: return@before
+          val userCache = userCacheF.get(iconChangeTracker) ?: return@before
+          val intent = args[0] as? Intent ?: return@before
+          when (intent.action) {
+            ACTION_TIMEZONE_CHANGED -> {
+              changeClockIcon(changes)
+              changeCalendarIcon(changes, userCache)
+              result = null
+            }
+            ACTION_DATE_CHANGED,
+            ACTION_TIME_CHANGED -> {
+              changeCalendarIcon(changes, userCache)
+              result = null
+            }
           }
         }
       }
-    } ?: return fail()
+      .registerToScopeOrFail()
   }
 
-  fun RunUntilDoneContext<Unit>.onHookPixelLauncherPre16QPR2(lpp: LoadPackageParam) {
-    val iconProvider = classOf("com.android.launcher3.icons.IconProvider", lpp) ?: return fail()
-
-    hookCollectCC(iconProvider)
-    hookGetState(iconProvider)
-
+  fun TransactionalHookScope<Unit>.onHookPixelLauncherPre16QPR2(lpp: LoadPackageParam) {
     val iconChangeReceiver =
       classOf($$"com.android.launcher3.icons.IconProvider$IconChangeReceiver", lpp) ?: return fail()
     val mCallbackF = iconChangeReceiver.field("mCallback") ?: return fail()
@@ -140,28 +142,31 @@ class CalendarAndClockHook(private val clockUseFallbackMask: Boolean) : Hook {
       }
     }
 
-    iconChangeReceiver.allMethods("onReceive").hook {
-      before {
-        val context = args[0] as? Context ?: return@before
-        val intent = args[1] as? Intent ?: return@before
-        val mCallback = mCallbackF.get(thisObject) ?: return@before
-        when (intent.action) {
-          ACTION_TIMEZONE_CHANGED -> {
-            changeClockIcon(mCallback)
-            changeCalendarIcon(context, mCallback)
-            result = null
-          }
-          ACTION_DATE_CHANGED,
-          ACTION_TIME_CHANGED -> {
-            changeCalendarIcon(context, mCallback)
-            result = null
+    iconChangeReceiver
+      .allMethods("onReceive")
+      .hook {
+        before {
+          val context = args[0] as? Context ?: return@before
+          val intent = args[1] as? Intent ?: return@before
+          val mCallback = mCallbackF.get(thisObject) ?: return@before
+          when (intent.action) {
+            ACTION_TIMEZONE_CHANGED -> {
+              changeClockIcon(mCallback)
+              changeCalendarIcon(context, mCallback)
+              result = null
+            }
+            ACTION_DATE_CHANGED,
+            ACTION_TIME_CHANGED -> {
+              changeCalendarIcon(context, mCallback)
+              result = null
+            }
           }
         }
       }
-    } ?: return fail()
+      .registerToScopeOrFail()
   }
 
-  private fun hookCollectCC(iconProvider: Class<*>) {
+  private fun TransactionalHookScope<Unit>.hookCollectCC(iconProvider: Class<*>) {
     val mCalendar = iconProvider.field("mCalendar")
     val mClock = iconProvider.field("mClock")
 
@@ -204,85 +209,77 @@ class CalendarAndClockHook(private val clockUseFallbackMask: Boolean) : Hook {
       return sc.getIcon(entry, density ?: 0)
     }
 
-    runUntilDone("hookGetIcon") {
-      tryDo {
-        iconProvider
-          .allMethods(
-            "getIcon",
-            PackageItemInfo::class.java,
-            ApplicationInfo::class.java,
-            Int::class.javaPrimitiveType,
-          )
-          .hook { replace { collectCCHook(args[0].asType(), args[2].asType()) } }
-          .ifNullOrEmpty {
-            return@tryDo fail()
-          }
-      }
+    transactionalHook("hookGetIcon") {
+        tryDo {
+          iconProvider
+            .allMethods(
+              "getIcon",
+              PackageItemInfo::class.java,
+              ApplicationInfo::class.java,
+              Int::class.javaPrimitiveType,
+            )
+            .hook { replace { collectCCHook(args[0].asType(), args[2].asType()) } }
+            .registerToScopeOrFail()
+        }
 
-      tryDo {
-        iconProvider
-          .allMethods("getIcon", ActivityInfo::class.java)
-          .hook { replace { collectCCHook(args[0].asType(), args.getOrNull(1).asType()) } }
-          .ifNullOrEmpty {
-            return@tryDo fail()
-          }
-        iconProvider
-          .allMethods("getIcon", LauncherActivityInfo::class.java)
-          .hook {
-            replace {
-              val activityInfo = args[0].asType<LauncherActivityInfo>()
-              val info =
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) activityInfo?.activityInfo
-                else activityInfo?.applicationInfo
-              collectCCHook(info, args.getOrNull(1).asType())
+        tryDo {
+          iconProvider
+            .allMethods("getIcon", ActivityInfo::class.java)
+            .hook { replace { collectCCHook(args[0].asType(), args.getOrNull(1).asType()) } }
+            .registerToScopeOrFail()
+          iconProvider
+            .allMethods("getIcon", LauncherActivityInfo::class.java)
+            .hook {
+              replace {
+                val activityInfo = args[0].asType<LauncherActivityInfo>()
+                val info =
+                  if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) activityInfo?.activityInfo
+                  else activityInfo?.applicationInfo
+                collectCCHook(info, args.getOrNull(1).asType())
+              }
             }
-          }
-          .ifNullOrEmpty {
-            return@tryDo fail()
-          }
+            .registerToScopeOrFail()
+        }
       }
-    }
+      .failOnFail()
   }
 
-  private fun hookGetState(iconProvider: Class<*>) {
+  private fun TransactionalHookScope<Unit>.hookGetState(iconProvider: Class<*>) {
     // Change calendar state so it updates
-    runUntilDone("hookGetState") {
-      tryDo {
-        // https://cs.android.com/android/platform/superproject/+/android-15.0.0_r20:frameworks/libs/systemui/iconloaderlib/src/com/android/launcher3/icons/IconProvider.java;l=97
-        iconProvider
-          .allMethods("getStateForApp", ApplicationInfo::class.java)
-          .hook {
-            replace {
-              val info = args[0].asType<ApplicationInfo>() ?: return@replace callOriginalMethod()
-              return@replace if (calendars.contains(info.packageName))
-                (callOriginalMethod<String>() +
-                  " " +
-                  (Calendar.getInstance().get(Calendar.DAY_OF_MONTH) - 1))
-              else callOriginalMethod()
+    transactionalHook("hookGetState") {
+        tryDo {
+          // https://cs.android.com/android/platform/superproject/+/android-15.0.0_r20:frameworks/libs/systemui/iconloaderlib/src/com/android/launcher3/icons/IconProvider.java;l=97
+          iconProvider
+            .allMethods("getStateForApp", ApplicationInfo::class.java)
+            .hook {
+              replace {
+                val info = args[0].asType<ApplicationInfo>() ?: return@replace callOriginalMethod()
+                return@replace if (calendars.contains(info.packageName))
+                  (callOriginalMethod<String>() +
+                    " " +
+                    (Calendar.getInstance().get(Calendar.DAY_OF_MONTH) - 1))
+                else callOriginalMethod()
+              }
             }
-          }
-          .ifNullOrEmpty {
-            return@tryDo fail()
-          }
-      }
+            .registerToScopeOrFail()
+        }
 
-      tryDo {
-        // https://cs.android.com/android/platform/superproject/+/android15-qpr1-release:frameworks/libs/systemui/iconloaderlib/src/com/android/launcher3/icons/IconProvider.java;l=89
-        iconProvider
-          .allMethods("getSystemStateForPackage", String::class.java, String::class.java)
-          .hook {
-            before {
-              val systemState = args[0].asType<String>()
-              result =
-                if (calendars.contains(args[1]))
-                  systemState + (Calendar.getInstance().get(Calendar.DAY_OF_MONTH) - 1)
-                else systemState
+        tryDo {
+          // https://cs.android.com/android/platform/superproject/+/android15-qpr1-release:frameworks/libs/systemui/iconloaderlib/src/com/android/launcher3/icons/IconProvider.java;l=89
+          iconProvider
+            .allMethods("getSystemStateForPackage", String::class.java, String::class.java)
+            .hook {
+              before {
+                val systemState = args[0].asType<String>()
+                result =
+                  if (calendars.contains(args[1]))
+                    systemState + (Calendar.getInstance().get(Calendar.DAY_OF_MONTH) - 1)
+                  else systemState
+              }
             }
-          }
-          .ifNullOrEmpty {
-            return@tryDo fail()
-          }
+            .registerToScopeOrFail()
+        }
       }
-    }
+      .failOnFail()
   }
 }

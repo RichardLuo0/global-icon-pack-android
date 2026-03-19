@@ -101,3 +101,53 @@ private val deoptimizeMethodM by lazy {
 fun Executable.deoptimize() = apply { deoptimizeMethodM?.invoke(null, this) }
 
 fun List<Executable>.deoptimize() = apply { forEach { deoptimizeMethodM?.invoke(null, it) } }
+
+interface TransactionalHookResult<T> {
+  val isDone: Boolean
+  val result: T?
+}
+
+class TransactionalHookScope<T> : TransactionalHookResult<T> {
+  override var isDone = false
+  override var result: T? = null
+
+  private val unhookRegistry = mutableListOf<XC_MethodHook.Unhook>()
+
+  fun XC_MethodHook.Unhook?.registerToScopeOrFail() {
+    this?.let { unhookRegistry.add(it) } ?: fail()
+  }
+
+  fun List<XC_MethodHook.Unhook>?.registerToScopeOrFail() {
+    if (isNullOrEmpty()) fail() else unhookRegistry.addAll(this)
+  }
+
+  fun fail() {
+    throw Exception("TransactionalHookScope failed")
+  }
+
+  fun <T> T?.failOnNull() {
+    if (this == null) fail()
+  }
+
+  fun <T> TransactionalHookResult<T>.failOnFail() {
+    if (!isDone) fail()
+  }
+
+  fun tryDo(block: () -> T) {
+    if (isDone) return
+    try {
+      result = block()
+      isDone = true
+    } catch (_: Exception) {
+      unhookRegistry.forEach { it.unhook() }
+    } finally {
+      unhookRegistry.clear()
+    }
+  }
+}
+
+inline fun <T> transactionalHook(
+  name: String = "transactionalHook",
+  crossinline block: TransactionalHookScope<T>.() -> Unit,
+): TransactionalHookScope<T> =
+  TransactionalHookScope<T>().apply { block() }.also { if (!it.isDone) log("$name failed!") }
