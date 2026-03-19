@@ -26,7 +26,7 @@ import java.util.Collections
 class ShareSource(pack: String, config: IconPackConfig = defaultIconPackConfig) :
   Source, ResourceOwner(pack) {
   companion object {
-    const val DATABASE_PATH = "/data/misc_de/${BuildConfig.APPLICATION_ID}/iconPack.db"
+    const val DATABASE_PATH = "/data/misc/${BuildConfig.APPLICATION_ID}/iconPack.db"
   }
 
   private val iconPackAsFallback = config.iconPackAsFallback
