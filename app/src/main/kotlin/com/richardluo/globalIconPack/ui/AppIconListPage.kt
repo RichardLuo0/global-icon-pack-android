@@ -1,5 +1,6 @@
 package com.richardluo.globalIconPack.ui
 
+import android.os.Parcel
 import android.os.Parcelable
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -73,8 +74,46 @@ import com.richardluo.globalIconPack.utils.getValue
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.launch
 import kotlinx.parcelize.Parcelize
+import kotlinx.parcelize.parcelableCreator
+import kotlinx.serialization.KSerializer
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.builtins.ByteArraySerializer
+import kotlinx.serialization.descriptors.PrimitiveKind
+import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
+import kotlinx.serialization.encoding.Decoder
+import kotlinx.serialization.encoding.Encoder
 
-@Parcelize data class AppIconListPageNavKey(val icon: AppCompIcon) : NavKey, Parcelable
+class AppIconListPageNavKeySerializer : KSerializer<AppIconListPageNavKey> {
+
+  override val descriptor = PrimitiveSerialDescriptor("AppIconListPageNavKey", PrimitiveKind.BYTE)
+
+  override fun serialize(encoder: Encoder, value: AppIconListPageNavKey) {
+    val parcel = Parcel.obtain()
+    try {
+      value.writeToParcel(parcel, 0)
+      val bytes = parcel.marshall()
+      encoder.encodeSerializableValue(ByteArraySerializer(), bytes)
+    } finally {
+      parcel.recycle()
+    }
+  }
+
+  override fun deserialize(decoder: Decoder): AppIconListPageNavKey {
+    val bytes = decoder.decodeSerializableValue(ByteArraySerializer())
+    val parcel = Parcel.obtain()
+    try {
+      parcel.unmarshall(bytes, 0, bytes.size)
+      parcel.setDataPosition(0)
+      return parcelableCreator<AppIconListPageNavKey>().createFromParcel(parcel)
+    } finally {
+      parcel.recycle()
+    }
+  }
+}
+
+@Serializable(with = AppIconListPageNavKeySerializer::class)
+@Parcelize
+data class AppIconListPageNavKey(val icon: AppCompIcon) : NavKey, Parcelable
 
 private class TabItem(val name: Int, val flow: Flow<List<AnyCompIcon>?>)
 
