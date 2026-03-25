@@ -17,7 +17,7 @@ import com.richardluo.globalIconPack.utils.constructor
 import com.richardluo.globalIconPack.utils.field
 import com.richardluo.globalIconPack.utils.getAs
 import com.richardluo.globalIconPack.utils.method
-import com.richardluo.globalIconPack.utils.transactionalHook
+import com.richardluo.globalIconPack.utils.tryHook
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 import java.lang.reflect.Constructor
 import java.lang.reflect.Field
@@ -30,7 +30,7 @@ object ClockDrawableWrapper {
 
   fun initWithPixelLauncher(lpp: LoadPackageParam) {
     impl =
-      transactionalHook("init ClockDrawableWrapper") {
+      tryHook("init ClockDrawableWrapper") {
           tryDo { ClockDrawableWrapper16QPR2New.from(lpp).also { failOnNull() } }
           tryDo { ClockDrawableWrapper16QPR2.from(lpp).also { failOnNull() } }
           tryDo { ClockDrawableWrapperPre16QPR2.from(lpp).also { failOnNull() } }

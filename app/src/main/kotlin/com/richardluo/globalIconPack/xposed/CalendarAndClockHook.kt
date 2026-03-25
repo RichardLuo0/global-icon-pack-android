@@ -18,7 +18,7 @@ import android.os.UserManager
 import com.richardluo.globalIconPack.iconPack.getSC
 import com.richardluo.globalIconPack.iconPack.model.IconEntry
 import com.richardluo.globalIconPack.iconPack.source.getComponentName
-import com.richardluo.globalIconPack.utils.TransactionalHookScope
+import com.richardluo.globalIconPack.utils.TryHookScope
 import com.richardluo.globalIconPack.utils.allMethods
 import com.richardluo.globalIconPack.utils.asType
 import com.richardluo.globalIconPack.utils.call
@@ -30,7 +30,7 @@ import com.richardluo.globalIconPack.utils.getAs
 import com.richardluo.globalIconPack.utils.hook
 import com.richardluo.globalIconPack.utils.isHighTwoByte
 import com.richardluo.globalIconPack.utils.method
-import com.richardluo.globalIconPack.utils.transactionalHook
+import com.richardluo.globalIconPack.utils.tryHook
 import com.richardluo.globalIconPack.utils.withHighByteSet
 import com.richardluo.globalIconPack.xposed.ReplaceIcon.Companion.IN_SC
 import com.richardluo.globalIconPack.xposed.ReplaceIcon.Companion.SC_DEFAULT
@@ -43,14 +43,14 @@ class CalendarAndClockHook(private val clockUseFallbackMask: Boolean) : Hook {
   private val clocks = mutableSetOf<String>()
 
   override fun onHookPixelLauncher(lpp: LoadPackageParam) {
-    transactionalHook {
+    tryHook {
       tryDo {
         val iconProvider =
           classOf("com.android.launcher3.icons.IconProvider", lpp) ?: return@tryDo fail()
         hookCollectCC(iconProvider)
         hookGetState(iconProvider)
 
-        transactionalHook("onHookPixelLauncher") {
+        tryHook("onHookPixelLauncher") {
             tryDo { onHookPixelLauncher16QPR2(lpp) }
             tryDo { onHookPixelLauncherPre16QPR2(lpp) }
           }
@@ -59,7 +59,7 @@ class CalendarAndClockHook(private val clockUseFallbackMask: Boolean) : Hook {
     }
   }
 
-  fun TransactionalHookScope<Unit>.onHookPixelLauncher16QPR2(lpp: LoadPackageParam) {
+  fun TryHookScope<Unit>.onHookPixelLauncher16QPR2(lpp: LoadPackageParam) {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.BAKLAVA) fail()
 
     val iconChangeTracker =
@@ -123,7 +123,7 @@ class CalendarAndClockHook(private val clockUseFallbackMask: Boolean) : Hook {
       .registerToScopeOrFail()
   }
 
-  fun TransactionalHookScope<Unit>.onHookPixelLauncherPre16QPR2(lpp: LoadPackageParam) {
+  fun TryHookScope<Unit>.onHookPixelLauncherPre16QPR2(lpp: LoadPackageParam) {
     val iconChangeReceiver =
       classOf($$"com.android.launcher3.icons.IconProvider$IconChangeReceiver", lpp) ?: return fail()
     val mCallbackF = iconChangeReceiver.field("mCallback") ?: return fail()
@@ -166,7 +166,7 @@ class CalendarAndClockHook(private val clockUseFallbackMask: Boolean) : Hook {
       .registerToScopeOrFail()
   }
 
-  private fun TransactionalHookScope<Unit>.hookCollectCC(iconProvider: Class<*>) {
+  private fun TryHookScope<Unit>.hookCollectCC(iconProvider: Class<*>) {
     val mCalendar = iconProvider.field("mCalendar")
     val mClock = iconProvider.field("mClock")
 
@@ -209,7 +209,7 @@ class CalendarAndClockHook(private val clockUseFallbackMask: Boolean) : Hook {
       return sc.getIcon(entry, density ?: 0)
     }
 
-    transactionalHook("hookGetIcon") {
+    tryHook("hookGetIcon") {
         tryDo {
           iconProvider
             .allMethods(
@@ -244,9 +244,9 @@ class CalendarAndClockHook(private val clockUseFallbackMask: Boolean) : Hook {
       .failOnFail()
   }
 
-  private fun TransactionalHookScope<Unit>.hookGetState(iconProvider: Class<*>) {
+  private fun TryHookScope<Unit>.hookGetState(iconProvider: Class<*>) {
     // Change calendar state so it updates
-    transactionalHook("hookGetState") {
+    tryHook("hookGetState") {
         tryDo {
           // https://cs.android.com/android/platform/superproject/+/android-15.0.0_r20:frameworks/libs/systemui/iconloaderlib/src/com/android/launcher3/icons/IconProvider.java;l=97
           iconProvider

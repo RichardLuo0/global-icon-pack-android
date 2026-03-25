@@ -57,8 +57,19 @@ fun Class<*>.allConstructors(vararg parameterTypes: Class<*>?) =
     .also { if (it.isEmpty()) log("No constructors are found on class ${this.name}") }
 
 fun Class<*>.field(name: String) =
-  runCatching { getDeclaredField(name).apply { isAccessible = true } }
+  runCatching {
+      var clazz: Class<*>? = this
+      while (clazz != null && clazz != Any::class.java) {
+        try {
+          return@runCatching clazz.getDeclaredField(name)
+        } catch (_: NoSuchFieldException) {
+          clazz = clazz.superclass
+        }
+      }
+      null
+    }
     .getOrNull()
+    ?.apply { isAccessible = true }
     .also { if (it == null) log("No field $name is found on class ${this.name}") }
 
 class HookBuilder : XC_MethodHook() {
@@ -102,12 +113,12 @@ fun Executable.deoptimize() = apply { deoptimizeMethodM?.invoke(null, this) }
 
 fun List<Executable>.deoptimize() = apply { forEach { deoptimizeMethodM?.invoke(null, it) } }
 
-interface TransactionalHookResult<T> {
+interface TryHookResult<T> {
   val isDone: Boolean
   val result: T?
 }
 
-class TransactionalHookScope<T> : TransactionalHookResult<T> {
+class TryHookScope<T> : TryHookResult<T> {
   override var isDone = false
   override var result: T? = null
 
@@ -129,7 +140,7 @@ class TransactionalHookScope<T> : TransactionalHookResult<T> {
     if (this == null) fail()
   }
 
-  fun <T> TransactionalHookResult<T>.failOnFail() {
+  fun <T> TryHookResult<T>.failOnFail() {
     if (!isDone) fail()
   }
 
@@ -146,8 +157,8 @@ class TransactionalHookScope<T> : TransactionalHookResult<T> {
   }
 }
 
-inline fun <T> transactionalHook(
-  name: String = "transactionalHook",
-  crossinline block: TransactionalHookScope<T>.() -> Unit,
-): TransactionalHookScope<T> =
-  TransactionalHookScope<T>().apply { block() }.also { if (!it.isDone) log("$name failed!") }
+inline fun <T> tryHook(
+  name: String = "tryHook",
+  crossinline block: TryHookScope<T>.() -> Unit,
+): TryHookScope<T> =
+  TryHookScope<T>().apply { block() }.also { if (!it.isDone) log("$name failed!") }

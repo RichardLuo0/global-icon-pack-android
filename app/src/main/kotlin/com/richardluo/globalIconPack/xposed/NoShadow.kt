@@ -12,7 +12,7 @@ import com.richardluo.globalIconPack.utils.field
 import com.richardluo.globalIconPack.utils.hook
 import com.richardluo.globalIconPack.utils.rGet
 import com.richardluo.globalIconPack.utils.rSet
-import com.richardluo.globalIconPack.utils.transactionalHook
+import com.richardluo.globalIconPack.utils.tryHook
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 
 class NoShadow : Hook {
@@ -37,7 +37,7 @@ class NoShadow : Hook {
   override fun onHookSettings(lpp: LoadPackageParam) = removeIconShadow(lpp)
 
   private fun removeIconShadow(lpp: LoadPackageParam) {
-    transactionalHook("removeIconShadow") {
+    tryHook("removeIconShadow") {
       tryDo {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.BAKLAVA) return@tryDo fail()
         // Android 16 qpr2

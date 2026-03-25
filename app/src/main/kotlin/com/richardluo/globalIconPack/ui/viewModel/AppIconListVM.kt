@@ -27,6 +27,8 @@ import com.richardluo.globalIconPack.ui.model.VariantIcon
 import com.richardluo.globalIconPack.ui.model.to
 import com.richardluo.globalIconPack.utils.asType
 import com.richardluo.globalIconPack.utils.filter
+import com.richardluo.globalIconPack.utils.getOrNull
+import com.richardluo.globalIconPack.utils.log
 import com.richardluo.globalIconPack.utils.runCatchingToast
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -67,10 +69,15 @@ class AppIconListVM(context: Application, iconsHolder: IconsHolder, appIcon: App
 
   val activityIcons =
     createFilteredIconsFlow(iconsHolder) {
-      context.packageManager
-        .getPackageInfo(appIcon.info.componentName.packageName, PackageManager.GET_ACTIVITIES)
-        .activities
-        ?.map { ActivityCompInfo(context, it) } ?: listOf()
+      runCatching {
+          context.packageManager.getPackageInfo(
+            appIcon.info.componentName.packageName,
+            PackageManager.GET_ACTIVITIES,
+          )
+        }
+        .getOrNull { log(it) }
+        ?.activities
+        ?.map { ActivityCompInfo(context, it) } ?: emptyList()
     }
 
   val shortcutIcons =
