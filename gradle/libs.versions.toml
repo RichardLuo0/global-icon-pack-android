@@ -24,7 +24,7 @@ ui-tooling = { group = "androidx.compose.ui", name = "ui-tooling", version = "1.
 
 [plugins]
 android-application = { id = "com.android.application", version = "9.1.0" }
-kotlin-android = { id = "org.jetbrains.kotlin.android", version = "2.3.10" }
-compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version = "2.3.10" }
+kotlin-android = { id = "org.jetbrains.kotlin.android", version = "2.3.20" }
+compose-compiler = { id = "org.jetbrains.kotlin.plugin.compose", version = "2.3.20" }
 dependency-license-report = { id = "com.github.jk1.dependency-license-report", version = "3.1.1" }
-jetbrains-kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version = "2.3.10" }
+jetbrains-kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version = "2.3.20" }
