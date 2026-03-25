@@ -60,12 +60,12 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation3.runtime.NavKey
 import com.richardluo.globalIconPack.R
+import com.richardluo.globalIconPack.ui.components.AnimatedLoadingCircle
 import com.richardluo.globalIconPack.ui.components.AnimatedNavHost
 import com.richardluo.globalIconPack.ui.components.AppFilterButtonGroup
 import com.richardluo.globalIconPack.ui.components.AppIcon
 import com.richardluo.globalIconPack.ui.components.AutoFillDialog
 import com.richardluo.globalIconPack.ui.components.IconButtonWithTooltip
-import com.richardluo.globalIconPack.ui.components.LoadingCircle
 import com.richardluo.globalIconPack.ui.components.LoadingDialog
 import com.richardluo.globalIconPack.ui.components.LocalBackStack
 import com.richardluo.globalIconPack.ui.components.MyDropdownMenu
@@ -189,7 +189,7 @@ class IconVariantActivity : ComponentActivity() {
 
       Box(modifier = Modifier.padding(consumablePadding.consumeTop())) {
         val icons = vm.filteredIcons.getValue()
-        if (icons != null)
+        AnimatedLoadingCircle(icons) { icons ->
           LazyVerticalGrid(
             contentPadding =
               consumablePadding.apply { top += appFilterHeight + appFilterVPadding * 2 }.consume(),
@@ -207,7 +207,7 @@ class IconVariantActivity : ComponentActivity() {
               }
             }
           }
-        else LoadingCircle()
+        }
 
         AppFilterButtonGroup(
           Modifier.padding(vertical = appFilterVPadding, horizontal = 8.dp).fillMaxWidth(),

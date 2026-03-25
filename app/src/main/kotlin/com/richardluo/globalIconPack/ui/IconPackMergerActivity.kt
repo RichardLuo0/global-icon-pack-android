@@ -95,6 +95,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.NavKey
 import com.richardluo.globalIconPack.R
 import com.richardluo.globalIconPack.ui.components.AnimatedFab
+import com.richardluo.globalIconPack.ui.components.AnimatedLoadingCircle
 import com.richardluo.globalIconPack.ui.components.AnimatedNavHost
 import com.richardluo.globalIconPack.ui.components.AppFilterButtonGroup
 import com.richardluo.globalIconPack.ui.components.AppIcon
@@ -108,7 +109,6 @@ import com.richardluo.globalIconPack.ui.components.InfoDialog
 import com.richardluo.globalIconPack.ui.components.LazyDialog
 import com.richardluo.globalIconPack.ui.components.LazyImage
 import com.richardluo.globalIconPack.ui.components.ListItemPos
-import com.richardluo.globalIconPack.ui.components.LoadingCircle
 import com.richardluo.globalIconPack.ui.components.LoadingDialog
 import com.richardluo.globalIconPack.ui.components.LocalBackStack
 import com.richardluo.globalIconPack.ui.components.MyDropdownMenu
@@ -369,8 +369,7 @@ class IconPackMergerActivity : ComponentActivity() {
   @Composable
   private fun ChooseBasePack(contentPadding: PaddingValues, scrollToNextPage: () -> Unit) {
     val valueMap = IconPackApps.flow.collectAsState(null).value
-    if (valueMap == null) LoadingCircle()
-    else
+    AnimatedLoadingCircle(valueMap) { valueMap ->
       Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
         LazyColumn(
           modifier = Modifier.widthIn(max = 400.dp).fillMaxHeight(),
@@ -385,6 +384,7 @@ class IconPackMergerActivity : ComponentActivity() {
           }
         }
       }
+    }
   }
 
   @Composable
@@ -397,7 +397,7 @@ class IconPackMergerActivity : ComponentActivity() {
 
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
       val icons = vm.filteredIconsFlow.getValue(null)
-      if (icons != null)
+      AnimatedLoadingCircle(icons) { icons ->
         LazyVerticalGrid(
           modifier = Modifier.fillMaxSize().padding(horizontal = 2.dp),
           contentPadding =
@@ -424,7 +424,7 @@ class IconPackMergerActivity : ComponentActivity() {
             }
           }
         }
-      else LoadingCircle()
+      }
 
       AppFilterButtonGroup(
         Modifier.padding(vertical = appFilterVPadding, horizontal = 8.dp).fillMaxWidth(),

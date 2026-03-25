@@ -1,6 +1,7 @@
 package com.richardluo.globalIconPack.ui.components
 
 import android.annotation.SuppressLint
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -47,4 +48,11 @@ fun LoadingCircle(modifier: Modifier = Modifier.fillMaxSize()) {
 fun LoadingLine(modifier: Modifier = Modifier.fillMaxWidth(), progress: Float? = null) {
   if (progress != null) LinearWavyProgressIndicator(modifier = modifier, progress = { progress })
   else LinearWavyProgressIndicator(modifier = modifier)
+}
+
+@Composable
+fun <T> AnimatedLoadingCircle(data: T?, content: @Composable (T) -> Unit) {
+  AnimatedContent(data, contentAlignment = Alignment.Center) {
+    if (it != null) content(it) else LoadingCircle()
+  }
 }

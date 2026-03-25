@@ -50,13 +50,13 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation3.runtime.NavKey
 import com.richardluo.globalIconPack.R
+import com.richardluo.globalIconPack.ui.components.AnimatedLoadingCircle
 import com.richardluo.globalIconPack.ui.components.IconButtonWithTooltip
 import com.richardluo.globalIconPack.ui.components.IconChooserSheet
 import com.richardluo.globalIconPack.ui.components.ImageHolder
 import com.richardluo.globalIconPack.ui.components.LazyImage
 import com.richardluo.globalIconPack.ui.components.ListItem
 import com.richardluo.globalIconPack.ui.components.ListItemPos
-import com.richardluo.globalIconPack.ui.components.LoadingCircle
 import com.richardluo.globalIconPack.ui.components.LocalBackStack
 import com.richardluo.globalIconPack.ui.components.MyDropdownMenu
 import com.richardluo.globalIconPack.ui.components.OneLineText
@@ -278,7 +278,7 @@ private fun IconList(
   getImageHolder: (AnyCompIcon) -> ImageHolder,
   onClick: (AnyCompIcon) -> Unit,
 ) {
-  if (icons != null)
+  AnimatedLoadingCircle(icons) { icons ->
     LazyColumn(modifier = Modifier.fillMaxSize(), contentPadding = contentPadding) {
       item { Spacer(Modifier.height(12.dp)) }
       itemsIndexed(icons, key = { _, it -> it.info.componentName.className }) { index, it ->
@@ -304,5 +304,5 @@ private fun IconList(
         }
       }
     }
-  else LoadingCircle()
+  }
 }
