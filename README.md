@@ -41,7 +41,7 @@ This module is designed to extend the icon packs throughout the entire system.
 ### Tips
 * You can long press icon in icon chooser bottom sheet to try as calendar icon.
 * In icon variant, the option `Modified` indicates that you have made changes to the icon variants. If enabled, when the icon pack updates, it will only add new icons instead of replacing all icons. Note that this could cause issues if any icon entry is missing in the new version!
-* If the target app can not query the icon pack app, you can try to hook system framework to bypass the permission check.
+* You can hook system framework to bypass the query package permission check (for the target app to access the icon pack app), access shortcuts in icon variants and access apps from other users in icon variants.
 ### Launcher 3
 * If you are using a different launcher3 based launcher, please input its package name into the launcher package name in pixel settings. If it is not launcher3 based, some functions may not work.
 * Recent screen will use your default launcher unless you use quickswitch, so you will need to select pixel launcher for that to work.
@@ -50,7 +50,7 @@ This module is designed to extend the icon packs throughout the entire system.
 * You can create a shortcut record by appending `@` to the end of package name, and shortcut id as classname.
 
 ## Known Issues
-* If the module does not appear to be working after reboot, and LSPosed shows `DB file can not be read and write: /data/misc/com.richardluo.globalIconPack/iconPack.db`, try to install [this magisk module](https://github.com/RichardLuo0/global-icon-pack-android/raw/refs/heads/master/GIP_FIX.zip) created by @Hanhanawa.
+* If the module does not appear to be working after reboot, and LSPosed log shows `DB file can not be read and write: /data/misc/com.richardluo.globalIconPack/iconPack.db`, try to install [this magisk module](https://github.com/RichardLuo0/global-icon-pack-android/raw/refs/heads/master/GIP_FIX.zip) created by @Hanhanawa (The lsposed selinux context may not be `u:object_r:lsposed_file:s0`, if so, change it in service.sh).
 * If the launcher is slow to boot or crashes, switch to 'local' mode.
 * If it says "Please ensure the Xposed module has been enabled first" and you have the module enabled already, try to force stop then restart the app.
 * Regardless of the minimum SDK version, you must test compatibility with android versions below 14 by yourself.
