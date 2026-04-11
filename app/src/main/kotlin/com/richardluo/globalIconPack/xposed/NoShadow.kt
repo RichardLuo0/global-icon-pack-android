@@ -10,18 +10,11 @@ import com.richardluo.globalIconPack.utils.classOf
 import com.richardluo.globalIconPack.utils.deoptimize
 import com.richardluo.globalIconPack.utils.field
 import com.richardluo.globalIconPack.utils.hook
-import com.richardluo.globalIconPack.utils.rGet
-import com.richardluo.globalIconPack.utils.rSet
+import com.richardluo.globalIconPack.utils.method
 import com.richardluo.globalIconPack.utils.tryHook
 import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
 
 class NoShadow : Hook {
-  companion object {
-    const val MODE_DEFAULT = 0
-    const val MODE_WITH_SHADOW = 2
-    const val MODE_HARDWARE = 3
-    const val MODE_HARDWARE_WITH_SHADOW = 4
-  }
 
   override fun onHookPixelLauncher(lpp: LoadPackageParam) = removeIconShadow(lpp)
 
@@ -50,26 +43,25 @@ class NoShadow : Hook {
       }
 
       tryDo {
-        classOf("android.util.LauncherIcons")
-          ?.allMethods("wrapIconDrawableWithShadow")
-          ?.hook { replace { args[0] } }
-          .registerToScopeOrFail()
-        BaseIconFactory.getClass(lpp)
-          ?.allMethods("drawIconBitmap")
-          ?.hook {
-            before {
-              val bitmapGenerationMode = args.rGet(-2) as? Int ?: return@before
-              args.rSet(
-                -2,
-                when (bitmapGenerationMode) {
-                  MODE_WITH_SHADOW -> MODE_DEFAULT
-                  MODE_HARDWARE_WITH_SHADOW -> MODE_HARDWARE
-                  else -> bitmapGenerationMode
-                },
-              )
+        tryHook("remove LauncherIcons shadows") {
+            tryDo {
+              classOf("android.util.LauncherIcons", lpp)
+                ?.allMethods("wrapIconDrawableWithShadow")
+                ?.hook { replace { args[0] } }
+                .registerToScopeOrFail()
+            }
+            tryDo {
+              classOf("com.android.launcher3.Flags", lpp)
+                ?.allMethods("enableLauncherIconShapes")
+                ?.hook { replace { false } }
+                .registerToScopeOrFail()
             }
           }
-          .registerToScopeOrFail()
+          .failOnFail()
+
+        classOf("com.android.launcher3.icons.ShadowGenerator", lpp)?.method("addPathShadow")?.hook {
+          before { result = null }
+        }
       }
     }
   }

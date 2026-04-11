@@ -2,9 +2,8 @@ package com.richardluo.globalIconPack.xposed
 
 import android.graphics.Color
 import android.graphics.drawable.Drawable
-import android.graphics.drawable.LayerDrawable
 import android.os.Build
-import com.richardluo.globalIconPack.utils.HookBuilder
+import com.richardluo.globalIconPack.utils.IconHelper
 import com.richardluo.globalIconPack.utils.allConstructors
 import com.richardluo.globalIconPack.utils.allMethods
 import com.richardluo.globalIconPack.utils.asType
@@ -40,21 +39,11 @@ class NoForceShape(private val drawWholeIconForTransparentBackgroundInSplashScre
   override fun onHookSettings(lpp: LoadPackageParam) {
     // Fix accessibility
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.VANILLA_ICE_CREAM) return
-    val adaptiveIcon = classOf("com.android.settingslib.widget.AdaptiveIcon", lpp) ?: return
-    fun HookBuilder.extractOriIcon() {
-      after {
-        val icon = result.asType<Drawable?>() ?: return@after
-        if (adaptiveIcon.isAssignableFrom(icon::class.java))
-          icon.asType<LayerDrawable>()?.getDrawable(1)?.let { result = it }
+    classOf("com.android.settings.Utils", lpp)?.allMethods("getAdaptiveIcon")?.deoptimize()?.hook {
+      before {
+        val icon = args[1].asType<Drawable>() ?: return@before
+        args[1] = IconHelper.makeAdaptive(icon)
       }
     }
-    classOf("com.android.settings.accessibility.AccessibilityActivityPreference", lpp)
-      ?.allMethods("getA11yActivityIcon")
-      ?.deoptimize()
-      ?.hook(HookBuilder::extractOriIcon)
-    classOf("com.android.settings.accessibility.AccessibilityServicePreference", lpp)
-      ?.allMethods("getA11yServiceIcon")
-      ?.deoptimize()
-      ?.hook(HookBuilder::extractOriIcon)
   }
 }

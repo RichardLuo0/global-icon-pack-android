@@ -30,7 +30,8 @@ inline fun <reified T> Method.call(thisObj: Any? = null, vararg param: Any?) =
   invoke(thisObj, *param) as? T
 
 fun classOf(name: String, lpp: LoadPackageParam? = null) =
-  runCatching { XposedHelpers.findClass(name, lpp?.classLoader) }.getOrNull { log(it) }
+  runCatching { XposedHelpers.findClass(name, lpp?.classLoader) }
+    .getOrNull { log("No class $name is found") }
 
 fun Class<*>.method(name: String, vararg parameterTypes: Class<*>?) =
   (runCatching { getDeclaredMethod(name, *parameterTypes) }.getOrNull()
