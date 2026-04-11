@@ -17,6 +17,7 @@ import android.content.pm.ServiceInfo
 import android.content.pm.ShortcutInfo
 import android.graphics.Bitmap
 import android.graphics.Color
+import android.graphics.drawable.AdaptiveIconDrawable
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.os.Build
@@ -37,12 +38,13 @@ import com.richardluo.globalIconPack.utils.callOriginalMethod
 import com.richardluo.globalIconPack.utils.classOf
 import com.richardluo.globalIconPack.utils.field
 import com.richardluo.globalIconPack.utils.getAs
+import com.richardluo.globalIconPack.utils.highByte
 import com.richardluo.globalIconPack.utils.hook
-import com.richardluo.globalIconPack.utils.isHighTwoByte
+import com.richardluo.globalIconPack.utils.isHighByte
 import com.richardluo.globalIconPack.utils.logD
 import com.richardluo.globalIconPack.utils.method
 import com.richardluo.globalIconPack.utils.runSafe
-import com.richardluo.globalIconPack.utils.withHighByteSet
+import com.richardluo.globalIconPack.utils.withHighByte
 import com.richardluo.globalIconPack.xposed.ReplaceIcon.Companion.ANDROID_DEFAULT
 import com.richardluo.globalIconPack.xposed.ReplaceIcon.Companion.IN_SC
 import com.richardluo.globalIconPack.xposed.ReplaceIcon.Companion.NOT_IN_SC
@@ -57,6 +59,7 @@ class ReplaceIcon(
   private val shortcut: Boolean,
   private val forceActivityIconForTask: Boolean,
   private val taskIconScale: Float,
+  private val useMonochrome: Boolean,
 ) : Hook {
   companion object {
     const val IN_SC = 0x6f000000
@@ -156,16 +159,18 @@ class ReplaceIcon(
       before {
         val resId = args[0] as? Int ?: return@before
         val density = args[1] as? Int ?: return@before
+        if (resId == android.R.drawable.sym_def_app_icon) {
+          result = callOriginalMethod<Drawable?>()?.let { getSC()?.genIconFrom(it) ?: it }
+          return@before
+        }
         result =
-          when {
-            isHighTwoByte(resId, IN_SC) ->
-              getSC()?.getIcon(withHighByteSet(resId, SC_DEFAULT), density)
-            isHighTwoByte(resId, NOT_IN_SC) -> {
-              args[0] = withHighByteSet(resId, ANDROID_DEFAULT)
-              callOriginalMethod<Drawable?>()?.let { getSC()?.genIconFrom(it) ?: it }
+          when (resId.highByte()) {
+            IN_SC -> getSC()?.getIcon(resId.withHighByte(SC_DEFAULT), density)
+            NOT_IN_SC -> {
+              args[0] = resId.withHighByte(ANDROID_DEFAULT)
+              val drawable = callOriginalMethod<Drawable?>()
+              drawable?.let { getSC()?.genIconFrom(it) ?: it }
             }
-            resId == android.R.drawable.sym_def_app_icon ->
-              callOriginalMethod<Drawable?>()?.let { getSC()?.genIconFrom(it) ?: it }
             else -> return@before
           }
       }
@@ -233,9 +238,8 @@ private fun replaceIconInItemInfo(info: PackageItemInfo, id: Int?, sc: Source) {
   )
     return
 
-  if (id != null) info.icon = withHighByteSet(id, IN_SC)
-  else if (isHighTwoByte(info.icon, ANDROID_DEFAULT))
-    info.icon = withHighByteSet(info.icon, NOT_IN_SC)
+  if (id != null) info.icon = id.withHighByte(IN_SC)
+  else if (info.icon.isHighByte(ANDROID_DEFAULT)) info.icon = info.icon.withHighByte(NOT_IN_SC)
 
   // Populate clock metadata
   id?.let { sc.getIconEntry(it) }?.addExtraTo(info, info.icon)

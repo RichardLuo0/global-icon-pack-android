@@ -22,7 +22,7 @@ import com.richardluo.globalIconPack.utils.IconHelper
 import com.richardluo.globalIconPack.utils.IconPackCreator.ApkBuilder
 import com.richardluo.globalIconPack.utils.SingletonManager.get
 import com.richardluo.globalIconPack.utils.get
-import com.richardluo.globalIconPack.utils.isHighTwoByte
+import com.richardluo.globalIconPack.utils.isHighByte
 import com.richardluo.globalIconPack.utils.parseXML
 import kotlin.getValue
 import kotlinx.parcelize.Parceler
@@ -111,7 +111,7 @@ class IconPack(val pack: String, val res: Resources) : Parcelable {
         val editor = AXMLEditor(stream)
         var i = 0
         editor.replaceResourceId { id ->
-          if (!isHighTwoByte(id, 0x7f000000)) return@replaceResourceId null
+          if (!id.isHighByte(0x7f000000)) return@replaceResourceId null
           when (res.getResourceTypeName(id)) {
             "drawable",
             "mipmap" -> idMap.getOrPut(id) { copyDrawable(id, "${name}_${i++}", idMap, apkBuilder) }

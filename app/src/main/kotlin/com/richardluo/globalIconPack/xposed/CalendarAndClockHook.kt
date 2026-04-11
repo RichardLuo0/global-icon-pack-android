@@ -28,10 +28,10 @@ import com.richardluo.globalIconPack.utils.constructor
 import com.richardluo.globalIconPack.utils.field
 import com.richardluo.globalIconPack.utils.getAs
 import com.richardluo.globalIconPack.utils.hook
-import com.richardluo.globalIconPack.utils.isHighTwoByte
+import com.richardluo.globalIconPack.utils.isHighByte
 import com.richardluo.globalIconPack.utils.method
 import com.richardluo.globalIconPack.utils.tryHook
-import com.richardluo.globalIconPack.utils.withHighByteSet
+import com.richardluo.globalIconPack.utils.withHighByte
 import com.richardluo.globalIconPack.xposed.ReplaceIcon.Companion.IN_SC
 import com.richardluo.globalIconPack.xposed.ReplaceIcon.Companion.SC_DEFAULT
 import de.robv.android.xposed.XC_MethodHook.MethodHookParam
@@ -176,8 +176,7 @@ class CalendarAndClockHook(private val clockUseFallbackMask: Boolean) : Hook {
       val sc = getSC() ?: return callOriginalMethod()
       val packageName = pi.packageName
       val entry =
-        if (isHighTwoByte(pi.icon, IN_SC)) sc.getIconEntry(withHighByteSet(pi.icon, SC_DEFAULT))
-        else null
+        if (pi.icon.isHighByte(IN_SC)) sc.getIconEntry(pi.icon.withHighByte(SC_DEFAULT)) else null
 
       if (entry == null) {
         // Not in icon pack, update the original package

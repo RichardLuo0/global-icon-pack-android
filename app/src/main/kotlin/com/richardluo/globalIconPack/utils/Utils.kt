@@ -44,12 +44,16 @@ import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserFactory
 
 @CheckResult
-fun withHighByteSet(id: Int, flag: Int): Int {
-  return id and 0x00ffffff or flag
+fun Int.withHighByte(flag: Int): Int {
+  return this and 0x00ffffff or flag
 }
 
-fun isHighTwoByte(id: Int, flag: Int): Boolean {
-  return (id and 0xff000000.toInt()) == flag
+fun Int.highByte(): Int {
+  return this and 0xff000000.toInt()
+}
+
+fun Int.isHighByte(flag: Int): Boolean {
+  return highByte() == flag
 }
 
 // Fix when classname is empty
@@ -230,8 +234,9 @@ fun Array<ConstantState?>.newDrawables() = map { it?.newDrawable() }
 fun Array<ConstantState?>.getChangingConfigurations() =
   fold(0) { last, dr -> last or (dr?.changingConfigurations ?: 0) }
 
-fun createCSS(vararg drawables: Drawable?): Array<ConstantState?>? =
-  drawables.map { if (it == null) null else it.constantState ?: return@createCSS null }
+fun createCSS(vararg drawables: Drawable?): Array<ConstantState?>? = drawables.map {
+  if (it == null) null else it.constantState ?: return@createCSS null
+}
 
 val Shell.Result.msg: String
   get() = "code: $code err: ${err.joinToString("\n")} out: ${out.joinToString("\n")}"
