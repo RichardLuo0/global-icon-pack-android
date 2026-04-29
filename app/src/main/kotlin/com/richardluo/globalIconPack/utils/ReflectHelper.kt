@@ -134,7 +134,7 @@ class TryHookScope<T> : TryHookResult<T> {
   }
 
   fun fail() {
-    throw Exception("TransactionalHookScope failed")
+    throw Exception("try hook failed")
   }
 
   fun <T> T?.failOnNull() {

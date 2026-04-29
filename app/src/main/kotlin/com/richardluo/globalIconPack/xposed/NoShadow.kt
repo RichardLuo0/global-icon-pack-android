@@ -44,20 +44,19 @@ class NoShadow : Hook {
 
       tryDo {
         tryHook("remove LauncherIcons shadows") {
-            tryDo {
-              classOf("android.util.LauncherIcons", lpp)
-                ?.allMethods("wrapIconDrawableWithShadow")
-                ?.hook { replace { args[0] } }
-                .registerToScopeOrFail()
-            }
-            tryDo {
-              classOf("com.android.launcher3.Flags", lpp)
-                ?.allMethods("enableLauncherIconShapes")
-                ?.hook { replace { false } }
-                .registerToScopeOrFail()
-            }
+          tryDo {
+            classOf("android.util.LauncherIcons", lpp)
+              ?.allMethods("wrapIconDrawableWithShadow")
+              ?.hook { replace { args[0] } }
+              .registerToScopeOrFail()
           }
-          .failOnFail()
+          tryDo {
+            classOf("com.android.launcher3.Flags", lpp)
+              ?.allMethods("enableLauncherIconShapes")
+              ?.hook { replace { false } }
+              .registerToScopeOrFail()
+          }
+        }
 
         classOf("com.android.launcher3.icons.ShadowGenerator", lpp)?.method("addPathShadow")?.hook {
           before { result = null }
