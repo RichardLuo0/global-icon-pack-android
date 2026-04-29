@@ -59,7 +59,6 @@ class ReplaceIcon(
   private val shortcut: Boolean,
   private val forceActivityIconForTask: Boolean,
   private val taskIconScale: Float,
-  private val useMonochrome: Boolean,
 ) : Hook {
   companion object {
     const val IN_SC = 0x6f000000
