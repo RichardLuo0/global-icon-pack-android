@@ -1,2 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation"></resources>
+<resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
+    <string name="appName">Global Icon Pack</string>
+    <string name="warn_enableModule">Upewnij się, że moduł Xposed jest włączony.</string>
+    <string name="info_iconPackApplied">Pakiet ikon został zastosowany. Proszę kliknąć \"Restartuj XXX\" ręcznie.</string>
+    <string name="setup_chooseMode">Wybierz tryb</string>
+    <string name="general_settings">Główne</string>
+    <string name="general_mode">Tryb</string>
+    <string name="general_mode_shareMode">Tryb udostępniany</string>
+    <string name="general_mode_shareMode_summary">Ładuj ze współdzielonej bazy danych pod /data/mieć/com.richardluo.globalIconPack. SELinux może zapobiegać dostępu na niektórych systemach.</string>
+    <string name="general_mode_providerMode">Tryb providera</string>
+    <string name="general_mode_providerMode_summary">Aplikacja podaje dane zhookowanym aplikacjom I musi działać w tle.</string>
+</resources>
