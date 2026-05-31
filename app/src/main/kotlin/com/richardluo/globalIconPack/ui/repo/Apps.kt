@@ -1,6 +1,7 @@
 package com.richardluo.globalIconPack.ui.repo
 
 import android.content.pm.ApplicationInfo
+import android.content.pm.PackageManager
 import com.richardluo.globalIconPack.ui.MyApplication
 import com.richardluo.globalIconPack.ui.model.AppCompInfo
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -22,11 +23,13 @@ object Apps {
         val userApps = mutableListOf<AppCompInfo>()
         val systemApps = mutableListOf<AppCompInfo>()
 
-        app.packageManager.getInstalledApplications(0).forEach { info ->
-          if ((info.flags and ApplicationInfo.FLAG_SYSTEM) == ApplicationInfo.FLAG_SYSTEM)
-            systemApps.add(AppCompInfo(app, info))
-          else userApps.add(AppCompInfo(app, info))
-        }
+        app.packageManager
+          .getInstalledApplications(PackageManager.MATCH_UNINSTALLED_PACKAGES)
+          .forEach { info ->
+            if ((info.flags and ApplicationInfo.FLAG_SYSTEM) == ApplicationInfo.FLAG_SYSTEM)
+              systemApps.add(AppCompInfo(app, info))
+            else userApps.add(AppCompInfo(app, info))
+          }
 
         arrayOf(
           userApps.distinct().sortedBy { it.label },
