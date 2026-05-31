@@ -117,13 +117,13 @@ fun List<Executable>.deoptimize() = apply { forEach { deoptimizeMethodM?.invoke(
 interface TryHookResult<T> {
   val isDone: Boolean
   val result: T?
+  val unhookRegistry: List<XC_MethodHook.Unhook>
 }
 
 class TryHookScope<T> : TryHookResult<T> {
   override var isDone = false
   override var result: T? = null
-
-  private val unhookRegistry = mutableListOf<XC_MethodHook.Unhook>()
+  override val unhookRegistry = mutableListOf<XC_MethodHook.Unhook>()
 
   fun XC_MethodHook.Unhook?.registerToScopeOrFail() {
     this?.let { unhookRegistry.add(it) } ?: fail()
@@ -143,6 +143,7 @@ class TryHookScope<T> : TryHookResult<T> {
 
   fun <T> TryHookResult<T>.failOnFail() {
     if (!isDone) fail()
+    this@TryHookScope.unhookRegistry.addAll(this.unhookRegistry)
   }
 
   fun tryDo(block: () -> T) {

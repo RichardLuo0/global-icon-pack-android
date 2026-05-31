@@ -43,23 +43,23 @@ class CalendarAndClockHook(private val clockUseFallbackMask: Boolean) : Hook {
   private val clocks = mutableSetOf<String>()
 
   override fun onHookPixelLauncher(lpp: LoadPackageParam) {
-    tryHook {
+    tryHook("CalendarAndClockHook") {
       tryDo {
         val iconProvider =
           classOf("com.android.launcher3.icons.IconProvider", lpp) ?: return@tryDo fail()
         hookCollectCC(iconProvider)
         hookGetState(iconProvider)
 
-        tryHook("onHookPixelLauncher") {
-            tryDo { onHookPixelLauncher16QPR2(lpp) }
-            tryDo { onHookPixelLauncherPre16QPR2(lpp) }
+        tryHook("hook calendar and clock change") {
+            tryDo { hookCCChange16QPR2(lpp) }
+            tryDo { hookCCChangePre16QPR2(lpp) }
           }
           .failOnFail()
       }
     }
   }
 
-  fun TryHookScope<Unit>.onHookPixelLauncher16QPR2(lpp: LoadPackageParam) {
+  fun TryHookScope<Unit>.hookCCChange16QPR2(lpp: LoadPackageParam) {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.BAKLAVA) fail()
 
     val iconChangeTracker =
@@ -123,7 +123,7 @@ class CalendarAndClockHook(private val clockUseFallbackMask: Boolean) : Hook {
       .registerToScopeOrFail()
   }
 
-  fun TryHookScope<Unit>.onHookPixelLauncherPre16QPR2(lpp: LoadPackageParam) {
+  fun TryHookScope<Unit>.hookCCChangePre16QPR2(lpp: LoadPackageParam) {
     val iconChangeReceiver =
       classOf($$"com.android.launcher3.icons.IconProvider$IconChangeReceiver", lpp) ?: return fail()
     val mCallbackF = iconChangeReceiver.field("mCallback") ?: return fail()
@@ -191,6 +191,7 @@ class CalendarAndClockHook(private val clockUseFallbackMask: Boolean) : Hook {
         IconEntry.Type.Calendar -> calendars.add(packageName)
         IconEntry.Type.Clock -> {
           clocks.add(packageName)
+          // https://cs.android.com/android/platform/superproject/+/android-latest-release:frameworks/libs/systemui/iconloaderlib/src/com/android/launcher3/icons/ClockDrawableWrapper.kt;l=45?q=ClockDrawableWrapper&sq=
           // Run the ClockDrawableWrapper.forPackage() logic
           val oldClock = mClock?.getAs<ComponentName>(thisObject)
           return try {
