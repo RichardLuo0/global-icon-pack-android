@@ -249,16 +249,23 @@ class CalendarAndClockHook(private val clockUseFallbackMask: Boolean) : Hook {
     tryHook("hookGetState") {
         tryDo {
           // https://cs.android.com/android/platform/superproject/+/android-15.0.0_r20:frameworks/libs/systemui/iconloaderlib/src/com/android/launcher3/icons/IconProvider.java;l=97
+          // getStateForApp may return String (old) or PersistedItemState (new >= Android 16)
+          // In the PersistedItemState case, the original method already handles calendar state
+          // internally via withAdditionalValues, so we only modify the String case.
           iconProvider
             .allMethods("getStateForApp", ApplicationInfo::class.java)
             .hook {
-              replace {
-                val info = args[0].asType<ApplicationInfo>() ?: return@replace callOriginalMethod()
-                return@replace if (calendars.contains(info.packageName))
-                  (callOriginalMethod<String>() +
+              after {
+                val info = args[0].asType<ApplicationInfo>() ?: return@after
+                val originalResult = result ?: return@after
+                // If the method already returns a non-String (e.g. PersistedItemState),
+                // the original implementation already handles calendar state — skip.
+                if (originalResult !is String) return@after
+                if (calendars.contains(info.packageName)) {
+                  result = originalResult +
                     " " +
-                    (Calendar.getInstance().get(Calendar.DAY_OF_MONTH) - 1))
-                else callOriginalMethod()
+                    (Calendar.getInstance().get(Calendar.DAY_OF_MONTH) - 1)
+                }
               }
             }
             .registerToScopeOrFail()
