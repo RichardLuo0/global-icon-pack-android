@@ -32,8 +32,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.SearchBarDefaults.inputFieldShape
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.rememberBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
@@ -77,7 +78,7 @@ fun IconChooserSheet(
   replaceIcon: (CompInfo, VariantIcon) -> Unit,
 ) {
   val context = LocalContext.current
-  val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = false)
+  val sheetState = rememberBottomSheetState(SheetValue.Hidden)
   val scope = rememberCoroutineScope()
 
   fun onDismissRequest() {

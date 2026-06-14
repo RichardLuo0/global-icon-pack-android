@@ -52,7 +52,7 @@ fun LoadingLine(modifier: Modifier = Modifier.fillMaxWidth(), progress: Float? =
 
 @Composable
 fun <T> AnimatedLoadingCircle(data: T?, content: @Composable (T) -> Unit) {
-  AnimatedContent(data, contentAlignment = Alignment.Center) {
-    if (it != null) content(it) else LoadingCircle()
+  AnimatedContent(data != null, contentAlignment = Alignment.Center) { hasData ->
+    if (hasData && data != null) content(data) else LoadingCircle()
   }
 }

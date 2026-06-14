@@ -15,7 +15,7 @@ plugins {
 
 extensions.configure<ApplicationExtension> {
   namespace = "com.richardluo.globalIconPack"
-  compileSdk = 36
+  compileSdk = 37
 
   val versionProps =
     Properties().apply { load(FileInputStream("${project.rootDir}/version.properties")) }
@@ -26,7 +26,7 @@ extensions.configure<ApplicationExtension> {
   defaultConfig {
     applicationId = "com.richardluo.globalIconPack"
     minSdk = 27
-    targetSdk = 36
+    targetSdk = 37
     versionCode = major * 10000 + minor * 100 + patch
     versionName = "$major.$minor.$patch"
 
