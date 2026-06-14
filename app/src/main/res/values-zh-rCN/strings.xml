@@ -17,6 +17,7 @@
     <string name="general_iconPackAsFallback">使用图标包作为回退选项</string>
     <string name="general_iconPackAsFallback_summary">即使类名称不匹配，仍然使用图标包。</string>
     <string name="general_shortcut">生成快捷方式图标</string>
+    <string name="general_forceMonochrome">强制使用单色图标</string>
     <string name="general_mergeIconPack">合并图标包</string>
     <string name="general_mergeIconPack_summary">从多个图标包生成一个新的图标包。</string>
     <string name="general_error_onShareMode">启用共享模式时出错，回退到提供器模式。</string>

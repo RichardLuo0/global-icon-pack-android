@@ -31,6 +31,7 @@ import androidx.compose.material.icons.outlined.Apps
 import androidx.compose.material.icons.outlined.Backpack
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.ColorLens
+import androidx.compose.material.icons.outlined.Contrast
 import androidx.compose.material.icons.outlined.CropOriginal
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.FlipToFront
@@ -173,6 +174,13 @@ object MainPreference {
         key = Pref.SHORTCUT.key,
         defaultValue = Pref.SHORTCUT.def,
         title = { TwoLineText(stringResource(R.string.general_shortcut)) },
+      )
+      mySwitchPreference(
+        modifier = listModifiers.middle,
+        icon = { Icon(Icons.Outlined.Contrast, Pref.FORCE_MONOCHROME.key) },
+        key = Pref.FORCE_MONOCHROME.key,
+        defaultValue = Pref.FORCE_MONOCHROME.def,
+        title = { TwoLineText(stringResource(R.string.general_forceMonochrome)) },
       )
       myPreference(
         modifier = listModifiers.bottom,

@@ -18,6 +18,7 @@
     <string name="general_iconPackAsFallback">Icon pack as fallback</string>
     <string name="general_iconPackAsFallback_summary">Use icon pack even if class name does not match.</string>
     <string name="general_shortcut">Generate icons for shortcuts</string>
+    <string name="general_forceMonochrome">Force monochrome</string>
     <string name="general_mergeIconPack">Merge icon pack</string>
     <string name="general_mergeIconPack_summary">Generate a new icon pack from various icon packs.</string>
     <string name="general_error_onShareMode">Error occurs when enabling share mode, fallback to provider mode.</string>

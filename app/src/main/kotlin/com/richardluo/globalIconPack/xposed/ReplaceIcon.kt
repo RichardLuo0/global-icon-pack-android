@@ -17,6 +17,7 @@ import android.content.pm.ServiceInfo
 import android.content.pm.ShortcutInfo
 import android.graphics.Bitmap
 import android.graphics.Color
+import android.graphics.drawable.AdaptiveIconDrawable
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.os.Build
@@ -30,6 +31,7 @@ import com.richardluo.globalIconPack.reflect.BaseIconFactory
 import com.richardluo.globalIconPack.reflect.Resources.getDrawableForDensityM
 import com.richardluo.globalIconPack.utils.HookBuilder
 import com.richardluo.globalIconPack.utils.IconHelper
+import com.richardluo.globalIconPack.utils.MonochromeDrawable
 import com.richardluo.globalIconPack.utils.allConstructors
 import com.richardluo.globalIconPack.utils.allMethods
 import com.richardluo.globalIconPack.utils.asType
@@ -58,6 +60,7 @@ class ReplaceIcon(
   private val shortcut: Boolean,
   private val forceActivityIconForTask: Boolean,
   private val taskIconScale: Float,
+  private val forceMonochrome: Boolean,
 ) : Hook {
   companion object {
     const val IN_SC = 0x6f000000
@@ -127,7 +130,17 @@ class ReplaceIcon(
             IN_SC -> getSC()?.getIcon(resId.withHighByte(SC_DEFAULT), density)
             NOT_IN_SC -> {
               args[0] = resId.withHighByte(ANDROID_DEFAULT)
-              val drawable = callOriginalMethod<Drawable?>()
+              var drawable = callOriginalMethod<Drawable?>()
+
+              if (
+                forceMonochrome &&
+                  Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                  drawable is AdaptiveIconDrawable
+              )
+                drawable.monochrome?.let {
+                  drawable = MonochromeDrawable(thisObject.asType()!!, it)
+                }
+
               drawable?.let { getSC()?.genIconFrom(it) ?: it }
             }
             else -> return@before

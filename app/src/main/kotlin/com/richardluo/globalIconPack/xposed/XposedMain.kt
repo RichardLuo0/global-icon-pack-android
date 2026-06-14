@@ -30,6 +30,7 @@ class XposedMain : IXposedHookLoadPackage {
           pref.get(Pref.SHORTCUT),
           pref.get(Pref.FORCE_ACTIVITY_ICON_FOR_TASK),
           pref.get(Pref.NON_ADAPTIVE_SCALE),
+          pref.get(Pref.FORCE_MONOCHROME),
         ),
         NoForceShape(true),
         if (pref.get(Pref.NO_SHADOW)) NoShadow() else null,

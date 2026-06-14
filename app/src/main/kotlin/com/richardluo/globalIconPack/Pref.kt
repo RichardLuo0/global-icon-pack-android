@@ -17,6 +17,7 @@ object Pref {
   val ICON_PACK = "iconPack" defaultTo ""
   val ICON_PACK_AS_FALLBACK = "iconPackAsFallback" defaultTo true
   val SHORTCUT = "shortcut" defaultTo true
+  val FORCE_MONOCHROME = "forceMonochrome" defaultTo false
 
   val ICON_FALLBACK = "iconFallback" defaultTo true
   val SCALE_ONLY_FOREGROUND = "scaleOnlyForeground" defaultTo false
