@@ -250,21 +250,24 @@ class CalendarAndClockHook(private val clockUseFallbackMask: Boolean) : Hook {
         tryDo {
           // https://cs.android.com/android/platform/superproject/+/android-15.0.0_r20:frameworks/libs/systemui/iconloaderlib/src/com/android/launcher3/icons/IconProvider.java;l=97
           // getStateForApp may return String (old) or PersistedItemState (new >= Android 16)
-          // In the PersistedItemState case, the original method already handles calendar state
-          // internally via withAdditionalValues, so we only modify the String case.
+          // The original only adds day-of-month for mCalendar.getPackageName() (hardcoded
+          // com.google.android.calendar). For icon-pack calendar icons mapped to other
+          // packages, we must append the day offset ourselves.
           iconProvider
             .allMethods("getStateForApp", ApplicationInfo::class.java)
             .hook {
               after {
                 val info = args[0].asType<ApplicationInfo>() ?: return@after
+                if (!calendars.contains(info.packageName)) return@after
+                val dayOffset = Calendar.getInstance().get(Calendar.DAY_OF_MONTH) - 1
                 val originalResult = result ?: return@after
-                // If the method already returns a non-String (e.g. PersistedItemState),
-                // the original implementation already handles calendar state — skip.
-                if (originalResult !is String) return@after
-                if (calendars.contains(info.packageName)) {
-                  result = originalResult +
-                    " " +
-                    (Calendar.getInstance().get(Calendar.DAY_OF_MONTH) - 1)
+                result = when (originalResult) {
+                  is String -> "$originalResult $dayOffset"
+                  // PersistedItemState: call withAdditionalValues to append the day
+                  else -> originalResult.javaClass.method(
+                    "withAdditionalValues",
+                    Array<String>::class.java
+                  )?.invoke(originalResult, arrayOf(dayOffset.toString())) ?: originalResult
                 }
               }
             }
