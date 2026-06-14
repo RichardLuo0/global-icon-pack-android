@@ -249,16 +249,26 @@ class CalendarAndClockHook(private val clockUseFallbackMask: Boolean) : Hook {
     tryHook("hookGetState") {
         tryDo {
           // https://cs.android.com/android/platform/superproject/+/android-15.0.0_r20:frameworks/libs/systemui/iconloaderlib/src/com/android/launcher3/icons/IconProvider.java;l=97
+          // getStateForApp may return String (old) or PersistedItemState (new >= Android 16)
+          // The original only adds day-of-month for mCalendar.getPackageName() (hardcoded
+          // com.google.android.calendar). For icon-pack calendar icons mapped to other
+          // packages, we must append the day offset ourselves.
           iconProvider
             .allMethods("getStateForApp", ApplicationInfo::class.java)
             .hook {
-              replace {
-                val info = args[0].asType<ApplicationInfo>() ?: return@replace callOriginalMethod()
-                return@replace if (calendars.contains(info.packageName))
-                  (callOriginalMethod<String>() +
-                    " " +
-                    (Calendar.getInstance().get(Calendar.DAY_OF_MONTH) - 1))
-                else callOriginalMethod()
+              after {
+                val info = args[0].asType<ApplicationInfo>() ?: return@after
+                if (!calendars.contains(info.packageName)) return@after
+                val dayOffset = Calendar.getInstance().get(Calendar.DAY_OF_MONTH) - 1
+                val originalResult = result ?: return@after
+                result = when (originalResult) {
+                  is String -> "$originalResult $dayOffset"
+                  // PersistedItemState: call withAdditionalValues to append the day
+                  else -> originalResult.javaClass.method(
+                    "withAdditionalValues",
+                    Array<String>::class.java
+                  )?.invoke(originalResult, arrayOf(dayOffset.toString())) ?: originalResult
+                }
               }
             }
             .registerToScopeOrFail()
