@@ -23,6 +23,7 @@ import com.richardluo.globalIconPack.utils.SQLiteOpenHelper
 import com.richardluo.globalIconPack.utils.SingletonManager
 import com.richardluo.globalIconPack.utils.flowTrigger
 import com.richardluo.globalIconPack.utils.log
+import com.richardluo.globalIconPack.utils.logE
 import com.richardluo.globalIconPack.utils.tryEmit
 import java.io.ByteArrayInputStream
 import java.io.DataInputStream
@@ -418,7 +419,7 @@ inline fun SQLiteDatabase.transaction(crossinline block: SQLiteDatabase.() -> Un
     block()
     setTransactionSuccessful()
   } catch (e: Exception) {
-    log(e)
+    logE(e)
     throw e
   } finally {
     endTransaction()

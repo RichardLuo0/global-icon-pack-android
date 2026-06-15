@@ -14,8 +14,13 @@ fun log(text: String) {
   else Log.i("LSPosed-Bridge", "$TAG $text")
 }
 
-fun log(t: Throwable) {
-  if (isInMod) XposedBridge.log("$TAG $currentPackageName: ${t.stackTraceToString()}")
+fun logE(text: String) {
+  if (isInMod) XposedBridge.log("$TAG $currentPackageName error: $text")
+  else Log.e("LSPosed-Bridge", "$TAG $text")
+}
+
+fun logE(t: Throwable) {
+  if (isInMod) XposedBridge.log("$TAG $currentPackageName error: ${t.stackTraceToString()}")
   else Log.e("LSPosed-Bridge", "$TAG ${t.stackTraceToString()}")
 }
 

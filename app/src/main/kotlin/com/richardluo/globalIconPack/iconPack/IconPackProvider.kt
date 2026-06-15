@@ -10,7 +10,7 @@ import com.richardluo.globalIconPack.BuildConfig
 import com.richardluo.globalIconPack.ui.MyApplication
 import com.richardluo.globalIconPack.utils.SingletonManager.get
 import com.richardluo.globalIconPack.utils.getOrNull
-import com.richardluo.globalIconPack.utils.log
+import com.richardluo.globalIconPack.utils.logE
 import com.richardluo.globalIconPack.utils.unflattenFromString
 
 class IconPackProvider : ContentProvider() {
@@ -21,7 +21,7 @@ class IconPackProvider : ContentProvider() {
   }
 
   private val iconPackDB: IconPackDB? by get {
-    runCatching { IconPackDB(MyApplication.context) }.getOrNull { log(it) }
+    runCatching { IconPackDB(MyApplication.context) }.getOrNull { logE(it) }
   }
 
   override fun onCreate() = true
@@ -52,7 +52,7 @@ class IconPackProvider : ContentProvider() {
             else -> null
           }
         }
-        .getOrNull { log(it) }
+        .getOrNull { logE(it) }
     }
   }
 

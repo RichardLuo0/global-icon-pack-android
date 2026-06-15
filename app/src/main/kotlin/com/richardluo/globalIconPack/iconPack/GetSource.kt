@@ -13,6 +13,7 @@ import com.richardluo.globalIconPack.iconPack.source.ShareSource
 import com.richardluo.globalIconPack.iconPack.source.Source
 import com.richardluo.globalIconPack.utils.WorldPreference
 import com.richardluo.globalIconPack.utils.log
+import com.richardluo.globalIconPack.utils.logE
 
 @Volatile private var sc: Source? = null
 
@@ -44,5 +45,5 @@ private fun initSC() {
             else -> LocalSource(pack, config)
           }
     }
-    .onFailure { log(it) }
+    .onFailure { logE(it) }
 }

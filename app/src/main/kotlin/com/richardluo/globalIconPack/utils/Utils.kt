@@ -176,7 +176,7 @@ suspend inline fun <R> runCatchingToast(
       Result.failure(e)
     }
     .onFailure {
-      log(it)
+      logE(it)
       withContext(Dispatchers.Main) {
         Toast.makeText(context, message(it), Toast.LENGTH_LONG).show()
       }
@@ -189,7 +189,7 @@ inline fun <R> runCatchingToastOnMain(
   block: () -> R,
 ) =
   runCatching(block).onFailure {
-    log(it)
+    logE(it)
     Toast.makeText(context, message(it), Toast.LENGTH_LONG).show()
   }
 
@@ -323,4 +323,4 @@ fun parseXML(res: Resources, name: String, pack: String) =
           setInput(res.assets.open("$name.xml"), Xml.Encoding.UTF_8.toString())
         }
     }
-    .getOrNull { log(it) }
+    .getOrNull { logE(it) }

@@ -100,11 +100,11 @@ class HookBuilder : XC_MethodHook() {
 
 inline fun Executable.hook(crossinline block: HookBuilder.() -> Unit) =
   runCatching { XposedBridge.hookMethod(this, HookBuilder().apply { block() }) }
-    .getOrNull { log(it) }
+    .getOrNull { logE(it) }
 
 inline fun List<Executable>.hook(crossinline block: HookBuilder.() -> Unit) =
   runCatching { map { XposedBridge.hookMethod(it, HookBuilder().apply { block() }) } }
-    .getOrNull { log(it) }
+    .getOrNull { logE(it) }
 
 private val deoptimizeMethodM by lazy {
   XposedBridge::class.java.method("deoptimizeMethod", Member::class.java)

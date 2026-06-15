@@ -28,7 +28,7 @@ import com.richardluo.globalIconPack.ui.model.to
 import com.richardluo.globalIconPack.utils.asType
 import com.richardluo.globalIconPack.utils.filter
 import com.richardluo.globalIconPack.utils.getOrNull
-import com.richardluo.globalIconPack.utils.log
+import com.richardluo.globalIconPack.utils.logE
 import com.richardluo.globalIconPack.utils.runCatchingToast
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -75,7 +75,7 @@ class AppIconListVM(context: Application, iconsHolder: IconsHolder, appIcon: App
             PackageManager.GET_ACTIVITIES,
           )
         }
-        .getOrNull { log(it) }
+        .getOrNull { logE(it) }
         ?.activities
         ?.map { ActivityCompInfo(context, it) } ?: emptyList()
     }

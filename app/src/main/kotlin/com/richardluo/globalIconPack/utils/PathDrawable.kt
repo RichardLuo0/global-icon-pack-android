@@ -32,7 +32,7 @@ class PathDrawable(private val state: CState) : Drawable() {
   ) : this(
     Unit.runCatching { PathParser.createPathFromPathData(pathData) }
       .getOrElse {
-        log(it)
+        logE(it)
         Path()
       },
     color,

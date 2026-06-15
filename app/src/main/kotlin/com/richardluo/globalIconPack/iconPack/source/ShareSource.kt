@@ -20,7 +20,7 @@ import com.richardluo.globalIconPack.iconPack.useFirstRow
 import com.richardluo.globalIconPack.iconPack.useMapToArray
 import com.richardluo.globalIconPack.utils.AppPreference
 import com.richardluo.globalIconPack.utils.getOrPut
-import com.richardluo.globalIconPack.utils.log
+import com.richardluo.globalIconPack.utils.logE
 import java.util.Collections
 
 class ShareSource(pack: String, config: IconPackConfig = defaultIconPackConfig) :
@@ -77,7 +77,7 @@ class ShareSource(pack: String, config: IconPackConfig = defaultIconPackConfig) 
         }
       }
       .getOrElse {
-        log(it)
+        logE(it)
         List(cnList.size) { null }
       }
 

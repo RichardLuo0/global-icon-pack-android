@@ -9,7 +9,7 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import com.richardluo.globalIconPack.R
-import com.richardluo.globalIconPack.utils.log
+import com.richardluo.globalIconPack.utils.logE
 
 private const val CHANNEL_ID: String = "IconPackProvider"
 
@@ -20,7 +20,7 @@ class KeepAliveService : Service() {
       try {
         context.startForegroundService(Intent(context, KeepAliveService::class.java))
       } catch (e: Exception) {
-        log(e)
+        logE(e)
       }
     }
 

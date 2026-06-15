@@ -15,7 +15,7 @@ import com.richardluo.globalIconPack.iconPack.model.NormalIconEntry
 import com.richardluo.globalIconPack.iconPack.model.ResourceOwner
 import com.richardluo.globalIconPack.iconPack.model.defaultIconPackConfig
 import com.richardluo.globalIconPack.utils.get
-import com.richardluo.globalIconPack.utils.log
+import com.richardluo.globalIconPack.utils.logE
 import com.richardluo.globalIconPack.utils.parseXML
 import com.richardluo.globalIconPack.utils.unflattenFromString
 import org.xmlpull.v1.XmlPullParser
@@ -25,7 +25,7 @@ class LocalSource(pack: String, config: IconPackConfig = defaultIconPackConfig) 
   private val iconPackAsFallback = config.iconPackAsFallback
   private val iconFallback: IconFallback?
 
-  private val indexMap: Map<ComponentName, Int>
+  private val indexMap = mutableMapOf<ComponentName, Int>()
   private val iconEntryList: List<IconEntry>
 
   init {
@@ -34,7 +34,6 @@ class LocalSource(pack: String, config: IconPackConfig = defaultIconPackConfig) 
       if (config.iconFallback)
         IconFallback(FallbackSettings(info), ::getIcon, config).orNullIfEmpty()
       else null
-    indexMap = mutableMapOf<ComponentName, Int>()
     var i = 0
     iconEntryList =
       info.iconEntryMap.map { (cn, entry) ->
@@ -50,8 +49,9 @@ class LocalSource(pack: String, config: IconPackConfig = defaultIconPackConfig) 
 
   override fun getIconEntry(id: Int): IconEntry? = iconEntryList.getOrNull(id)
 
-  override fun getIconNotAdaptive(entry: IconEntry, iconDpi: Int) =
-    entry.getIcon { getIcon(it, iconDpi) }
+  override fun getIconNotAdaptive(entry: IconEntry, iconDpi: Int) = entry.getIcon {
+    getIcon(it, iconDpi)
+  }
 
   override fun getIcon(name: String, iconDpi: Int) = getIconById(getDrawableId(name), iconDpi)
 
@@ -138,7 +138,7 @@ fun loadIconPack(resources: Resources, pack: String): IconPackInfo {
     if (clockIconEntryMap.isNotEmpty())
       iconEntryMap.replaceAll { _, entry -> clockIconEntryMap[entry.name] ?: entry }
   } catch (e: Exception) {
-    log(e)
+    logE(e)
   }
 
   if (parser is XmlResourceParser) parser.close()
