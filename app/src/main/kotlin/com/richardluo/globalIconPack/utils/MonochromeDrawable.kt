@@ -41,7 +41,7 @@ private class MonoForegroundDrawable(private val mono: Drawable, @ColorInt color
   }
 }
 
-@RequiresApi(Build.VERSION_CODES.S)
+@RequiresApi(Build.VERSION_CODES.TIRAMISU)
 class MonochromeDrawable(
   res: Resources, // app resource
   private val mono: Drawable,
@@ -58,6 +58,7 @@ class MonochromeDrawable(
       if (isDarkTheme) res.getColor(android.R.color.system_accent1_200, null)
       else res.getColor(android.R.color.system_accent1_700, null),
     ),
+    mono,
   ) {
 
   override fun getChangingConfigurations(): Int =
