@@ -19,7 +19,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.core.net.toUri
 import com.richardluo.globalIconPack.Pref
@@ -37,7 +36,7 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun MainDropdownMenu(snackbarState: SnackbarHostState) {
-  val context = LocalContext.current
+  val context = MyApplication.context
   val scope = rememberCoroutineScope()
   var expand by rememberSaveable { mutableStateOf(false) }
 
