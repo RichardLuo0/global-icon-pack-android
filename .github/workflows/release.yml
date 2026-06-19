@@ -43,12 +43,17 @@ jobs:
         run: |
           VERSION_NAME=$(./gradlew printVersion -q)
           echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_OUTPUT
+          LATEST_TAG=$(gh release view --json tagName -q .tagName)
+          echo "LATEST_TAG=$LATEST_TAG" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Build Changelog
         id: build_changelog
         uses: mikepenz/release-changelog-builder-action@v5
         with:
           mode: "HYBRID"
+          fromTag: ${{ steps.save_version.outputs.LATEST_TAG }}
           toTag: ${{ github.sha }}
           configurationJson: |
             {
