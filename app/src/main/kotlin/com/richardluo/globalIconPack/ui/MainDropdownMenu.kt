@@ -20,6 +20,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.core.net.toUri
 import com.richardluo.globalIconPack.Pref
@@ -41,6 +42,7 @@ fun MainDropdownMenu(snackbarState: SnackbarHostState) {
   val scope = rememberCoroutineScope()
   var expand by rememberSaveable { mutableStateOf(false) }
 
+  val res = LocalResources.current
   val onShellResult = remember {
     Shell.ResultCallback { result ->
       scope.launch {
@@ -48,7 +50,7 @@ fun MainDropdownMenu(snackbarState: SnackbarHostState) {
           snackbarState.showSnackbar(
             CustomSnackbarVisuals(
               SnackbarType.Success,
-              context.getString(R.string.mainMenu_info_restarted),
+              res.getString(R.string.mainMenu_info_restarted),
               withDismissAction = true,
               duration = SnackbarDuration.Long,
             )
