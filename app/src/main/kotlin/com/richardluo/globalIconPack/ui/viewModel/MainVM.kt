@@ -120,8 +120,9 @@ class MainVM(context: Application) : ContextVM(context), ILoadable by Loadable()
 
   private fun resetDBPermission(db: String) {
     if (!db.isShareDB()) return
-    val parent = File(db).parent!!
-    if (isAllFilesUsable(parent)) return
+    val dbFile = File(db)
+    val parent = dbFile.parent!!
+    if (dbFile.exists() && isAllFilesUsable(parent)) return
 
     // Make sure the file exists and try to get its selinux context
     AppPreference.get().edit(commit = true) {}
