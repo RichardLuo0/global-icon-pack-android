@@ -144,10 +144,9 @@ abstract class SQLiteOpenHelper(
     mOpenParamsBuilder.addOpenFlags(SQLiteDatabase.CREATE_IF_NECESSARY)
   }
 
-  private fun getDatabaseFile() =
-    databaseName?.let {
-      if (it.getOrNull(0) == File.separatorChar) File(it) else context.getDatabasePath(it)
-    }
+  private fun getDatabaseFile() = databaseName?.let {
+    if (it.getOrNull(0) == File.separatorChar) File(it) else context.getDatabasePath(it)
+  }
 
   fun writable() =
     getDatabaseFile()?.let { !it.exists() || (it.canRead() && it.canWrite()) } == true
@@ -277,7 +276,7 @@ abstract class SQLiteOpenHelper(
         }
       } else {
         val filePath = getDatabaseFile()
-        if (filePath == null) db = SQLiteDatabase.createInMemory(mOpenParamsBuilder.build())
+        if (filePath == null) throw Exception("db file is null!")
         else {
           val params = mOpenParamsBuilder.build()
           try {
@@ -347,6 +346,8 @@ abstract class SQLiteOpenHelper(
       onOpen(db)
       mDatabase = db
       return db
+    } catch (e: Exception) {
+      throw e
     } finally {
       mIsInitializing = false
       if (db != null && db != mDatabase) {

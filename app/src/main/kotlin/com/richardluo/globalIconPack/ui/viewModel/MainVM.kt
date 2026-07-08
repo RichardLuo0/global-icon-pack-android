@@ -138,7 +138,7 @@ class MainVM(context: Application) : ContextVM(context), ILoadable by Loadable()
       .exec()
       .throwOnFail("Database permission setting failed")
     // Check again
-    if (!isAllFilesUsable(parent))
+    if (!dbFile.exists() || !isAllFilesUsable(parent))
       throw Exception("Unable to read and write after resetting permission!")
   }
 
