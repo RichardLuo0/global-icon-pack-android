@@ -107,8 +107,11 @@ class IconPackDB(
     // Update pack
     val packTable = pt(pack)
     // Check update time
-    val lastUpdateTime =
-      runCatching { context.packageManager.getPackageInfo(pack, 0) }.getOrNull()?.lastUpdateTime
+    val lastUpdateTime = runCatching {
+      context.packageManager.getPackageInfo(pack, 0)
+    }
+      .getOrNull()
+      ?.lastUpdateTime
     if (lastUpdateTime == null) {
       log("can not get lastUpdateTime for $pack")
       return false
@@ -303,7 +306,11 @@ class IconPackDB(
               Type.entries[it.readByte().toInt()],
               it.readUTF(),
               if (pack.isNotEmpty()) iconPackCache[pack] else iconPack,
-            ) ?: return@use
+            )
+          if (id == null) {
+            db.delete(packTable, "ROWID=?", arrayOf(rowId.toString()))
+            return@use
+          }
           updateId.apply {
             clearBindings()
             bindLong(1, id.toLong())
@@ -381,8 +388,9 @@ class IconPackDB(
     }
   }
 
-  inline fun transaction(crossinline block: IconPackDB.() -> Unit) =
-    writableDatabase.transaction { block() }
+  inline fun transaction(crossinline block: IconPackDB.() -> Unit) = writableDatabase.transaction {
+    block()
+  }
 
   private fun pt(pack: String) = "'pack/$pack'"
 
