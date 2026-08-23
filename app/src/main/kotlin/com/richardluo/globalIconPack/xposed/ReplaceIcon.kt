@@ -148,6 +148,20 @@ class ReplaceIcon(
       }
     }
 
+    classOf("android.app.ApplicationPackageManager")?.allMethods("getArchivedAppIcon")?.hook {
+      before {
+        val packageName = args[0] as? String ?: return@before
+        val sc = getSC() ?: return@before
+        val entry = sc.getIconEntry(getComponentName(packageName)) ?: return@before
+        val icon = sc.getIcon(entry, 0)
+        if (icon != null) result = icon
+      }
+
+      after {
+        result = result.asType<Drawable>()?.let { getSC()?.genIconFrom(it) ?: it }
+      }
+    }
+
     hookSingleReplaceIcon()
     hookBatchReplaceIcon()
     hookPackageInfoCommonUtils()
