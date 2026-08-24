@@ -148,6 +148,7 @@ class ReplaceIcon(
       }
     }
 
+    // ArchivedAppIcon
     classOf("android.app.ApplicationPackageManager")?.allMethods("getArchivedAppIcon")?.hook {
       before {
         val packageName = args[0] as? String ?: return@before

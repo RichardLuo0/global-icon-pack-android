@@ -156,8 +156,10 @@ object IconHelper {
       val iconScale = iconScale * nonAdaptiveScale
       fun makeIcon(back: Drawable?) =
         scale(baseIcon, iconScale).let {
-          if (baseIcon is BitmapDrawable) CustomBitmapDrawable(res, it, back, upon, mask)
-          else CustomDrawable(it, back, upon, mask)
+          if (baseIcon is BitmapDrawable) {
+            baseIcon.setTargetDensity(res.displayMetrics)
+            CustomBitmapDrawable(res, it, back, upon, mask)
+          } else CustomDrawable(it, back, upon, mask)
         }
       if (mask != null || convertToAdaptive) makeAdaptiveBack(backAsAdaptiveBack, back, ::makeIcon)
       else makeIcon(back)
