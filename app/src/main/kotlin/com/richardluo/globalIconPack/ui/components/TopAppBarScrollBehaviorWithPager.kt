@@ -15,11 +15,14 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.unit.Velocity
 
+object EmptyNestedScrollConnection : NestedScrollConnection
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun pinnedScrollBehaviorWithPager(
   pagerState: PagerState,
   topAppBarState: TopAppBarState = rememberTopAppBarState(),
+  scrollConnection: NestedScrollConnection = EmptyNestedScrollConnection,
 ) =
   remember(pagerState, topAppBarState) {
       object : TopAppBarScrollBehavior {
@@ -35,7 +38,7 @@ fun pinnedScrollBehaviorWithPager(
         }
 
         override val nestedScrollConnection =
-          object : NestedScrollConnection {
+          object : NestedScrollConnection by scrollConnection {
             override fun onPostScroll(
               consumed: Offset,
               available: Offset,
@@ -43,7 +46,7 @@ fun pinnedScrollBehaviorWithPager(
             ): Offset {
               pageContentOffsets[pagerState.currentPage] += consumed.y
               state.contentOffset = pageContentOffsets[pagerState.currentPage]
-              return Offset.Zero
+              return super.onPostScroll(consumed, available, source)
             }
 
             override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity {

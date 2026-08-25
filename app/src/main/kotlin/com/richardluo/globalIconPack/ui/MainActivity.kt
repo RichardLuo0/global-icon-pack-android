@@ -16,6 +16,8 @@ import androidx.compose.animation.expandHorizontally
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkHorizontally
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -53,6 +55,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
@@ -69,6 +72,7 @@ import com.richardluo.globalIconPack.R
 import com.richardluo.globalIconPack.get
 import com.richardluo.globalIconPack.ui.MainPreference.ModeItem
 import com.richardluo.globalIconPack.ui.components.CustomSnackbar
+import com.richardluo.globalIconPack.ui.components.ExpandedScrollConnection
 import com.richardluo.globalIconPack.ui.components.IconButtonStyle
 import com.richardluo.globalIconPack.ui.components.IconButtonWithTooltip
 import com.richardluo.globalIconPack.ui.components.LazyListDialog
@@ -184,7 +188,9 @@ class MainActivity : ComponentActivity() {
     }
 
     val pagerState = rememberPagerState(pageCount = { pages.size })
-    val scrollBehavior = pinnedScrollBehaviorWithPager(pagerState)
+    val scrollConnection = remember { ExpandedScrollConnection() }
+    val scrollBehavior =
+      pinnedScrollBehaviorWithPager(pagerState, scrollConnection = scrollConnection)
     val snackbarState = remember { SnackbarHostState() }
 
     var preferenceLock by
@@ -261,26 +267,36 @@ class MainActivity : ComponentActivity() {
         }
 
         val coroutineScope = rememberCoroutineScope()
-        HorizontalFloatingToolbar(
-          modifier =
-            Modifier.align(Alignment.BottomCenter)
-              .padding(bottom = contentPadding.calculateBottomPadding() + toolBarBottomPadding),
-          expanded = true,
+        AnimatedVisibility(
+          scrollConnection.expanded,
+          modifier = Modifier.align(Alignment.BottomCenter),
+          enter = slideInVertically(MaterialTheme.motionScheme.fastSpatialSpec()) { it },
+          exit = slideOutVertically(MaterialTheme.motionScheme.fastSpatialSpec()) { it },
         ) {
-          pages.forEachIndexed { i, page ->
-            val checked = pagerState.currentPage == i
-            TonalToggleButton(
-              checked,
-              { coroutineScope.launch { pagerState.animateScrollToPage(i) } },
-              modifier = Modifier.padding(horizontal = 4.dp),
-            ) {
-              Icon(page.icon, contentDescription = page.name)
-              AnimatedVisibility(
+          HorizontalFloatingToolbar(
+            modifier =
+              Modifier.align(Alignment.Center)
+                .padding(bottom = contentPadding.calculateBottomPadding() + toolBarBottomPadding)
+                .shadow(4.dp, FloatingToolbarDefaults.ContainerShape),
+            expanded = true,
+          ) {
+            pages.forEachIndexed { i, page ->
+              val checked = pagerState.currentPage == i
+              TonalToggleButton(
                 checked,
-                enter = fadeIn() + expandHorizontally(MaterialTheme.motionScheme.fastSpatialSpec()),
-                exit = fadeOut() + shrinkHorizontally(MaterialTheme.motionScheme.fastSpatialSpec()),
+                { coroutineScope.launch { pagerState.animateScrollToPage(i) } },
+                modifier = Modifier.padding(horizontal = 4.dp),
               ) {
-                Text(page.name, modifier = Modifier.padding(start = 8.dp))
+                Icon(page.icon, contentDescription = page.name)
+                AnimatedVisibility(
+                  checked,
+                  enter =
+                    fadeIn() + expandHorizontally(MaterialTheme.motionScheme.fastSpatialSpec()),
+                  exit =
+                    fadeOut() + shrinkHorizontally(MaterialTheme.motionScheme.fastSpatialSpec()),
+                ) {
+                  Text(page.name, modifier = Modifier.padding(start = 8.dp))
+                }
               }
             }
           }
