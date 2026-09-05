@@ -150,7 +150,7 @@ class MainVM(context: Application) : ContextVM(context), ILoadable by Loadable()
     Shell.cmd(
         "set -e",
         "if ! [ -f $db ]; then touch $db; fi",
-        "context=\"u:object_r:magisk_file:s0\"",
+        "context=\"u:object_r:lsposed_file:s0\"",
         $$"chown 9999:9999 $$parent && chmod 0777 $$parent && chcon $context $$parent",
         $$"for file in $$parent/*; do chown 9999:9999 $file && chmod 0666 $file && chcon $context $file; done",
       )
