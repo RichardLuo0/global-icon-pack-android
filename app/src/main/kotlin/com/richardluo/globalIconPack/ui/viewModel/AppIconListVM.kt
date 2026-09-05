@@ -8,6 +8,7 @@ import android.content.pm.LauncherApps.ShortcutQuery
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Process
+import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
@@ -25,10 +26,10 @@ import com.richardluo.globalIconPack.ui.model.IconPack
 import com.richardluo.globalIconPack.ui.model.ShortcutCompInfo
 import com.richardluo.globalIconPack.ui.model.VariantIcon
 import com.richardluo.globalIconPack.ui.model.to
+import com.richardluo.globalIconPack.utils.Logger.TAG
 import com.richardluo.globalIconPack.utils.asType
 import com.richardluo.globalIconPack.utils.filter
 import com.richardluo.globalIconPack.utils.getOrNull
-import com.richardluo.globalIconPack.utils.logE
 import com.richardluo.globalIconPack.utils.runCatchingToast
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -70,12 +71,12 @@ class AppIconListVM(context: Application, iconsHolder: IconsHolder, appIcon: App
   val activityIcons =
     createFilteredIconsFlow(iconsHolder) {
       runCatching {
-          context.packageManager.getPackageInfo(
-            appIcon.info.componentName.packageName,
-            PackageManager.GET_ACTIVITIES,
-          )
-        }
-        .getOrNull { logE(it) }
+        context.packageManager.getPackageInfo(
+          appIcon.info.componentName.packageName,
+          PackageManager.GET_ACTIVITIES,
+        )
+      }
+        .getOrNull { Log.e(TAG, "", it) }
         ?.activities
         ?.map { ActivityCompInfo(context, it) } ?: emptyList()
     }
@@ -106,27 +107,26 @@ class AppIconListVM(context: Application, iconsHolder: IconsHolder, appIcon: App
   private fun createFilteredIconsFlow(
     iconsHolder: IconsHolder,
     getCompInfos: suspend () -> List<CompInfo>,
-  ) =
-    flow {
-        emit(null)
-        emit(getCompInfos().distinctBy { it.componentName.className })
-      }
-      .flowOn(Dispatchers.IO)
-      .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
-      .combine(iconsHolder.updateFlow) { iconInfos, _ ->
-        iconInfos?.let {
-          it.zip(iconsHolder.mapIconEntry(it.map { it.componentName })) { info, entry ->
-            info to entry
-          }
+  ) = flow {
+    emit(null)
+    emit(getCompInfos().distinctBy { it.componentName.className })
+  }
+    .flowOn(Dispatchers.IO)
+    .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
+    .combine(iconsHolder.updateFlow) { iconInfos, _ ->
+      iconInfos?.let {
+        it.zip(iconsHolder.mapIconEntry(it.map { it.componentName })) { info, entry ->
+          info to entry
         }
       }
-      .flowOn(Dispatchers.Default)
-      .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
-      .filter(snapshotFlow { searchText.value }) { (info), text ->
-        info.componentName.className.contains(text, ignoreCase = true) ||
-          info.label.contains(text, ignoreCase = true)
-      }
-      .stateIn(viewModelScope, SharingStarted.Lazily, null)
+    }
+    .flowOn(Dispatchers.Default)
+    .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
+    .filter(snapshotFlow { searchText.value }) { (info), text ->
+      info.componentName.className.contains(text, ignoreCase = true) ||
+        info.label.contains(text, ignoreCase = true)
+    }
+    .stateIn(viewModelScope, SharingStarted.Lazily, null)
 
   companion object {
     fun initializer(iconsHolder: IconsHolder, appCompIcon: AppCompIcon) =

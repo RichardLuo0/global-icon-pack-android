@@ -8,17 +8,19 @@ import com.richardluo.globalIconPack.utils.call
 import com.richardluo.globalIconPack.utils.classOf
 import com.richardluo.globalIconPack.utils.field
 import com.richardluo.globalIconPack.utils.getAs
-import com.richardluo.globalIconPack.utils.hook
+import com.richardluo.globalIconPack.utils.hookCompat
 import com.richardluo.globalIconPack.utils.method
-import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
+import io.github.libxposed.api.XposedInterface
+import io.github.libxposed.api.XposedModuleInterface
 
 object BypassCrossUserPermission {
   var gipUid = -1
 
-  fun onHookSystem(lpp: LoadPackageParam) {
+  context(xposed: XposedInterface)
+  fun onHookSystem(lpp: XposedModuleInterface.PackageReadyParam) {
     val computerEngineC = classOf("com.android.server.pm.ComputerEngine", lpp) ?: return
 
-    computerEngineC.allConstructors().hook {
+    computerEngineC.allConstructors().hookCompat {
       after {
         val mPackages =
           thisObject.javaClass.field("mPackages")?.getAs<Map<*, *>>(thisObject) ?: return@after
@@ -27,14 +29,14 @@ object BypassCrossUserPermission {
       }
     }
 
-    computerEngineC.allMethods("enforceCrossUserPermission").hook {
+    computerEngineC.allMethods("enforceCrossUserPermission").hookCompat {
       before {
         val callingUid = args.getOrNull(0).asType<Int>() ?: return@before
         if (gipUid == callingUid) result = null
       }
     }
 
-    computerEngineC.allMethods("getInstalledApplications").hook {
+    computerEngineC.allMethods("getInstalledApplications").hookCompat {
       before {
         val callingUid = args.getOrNull(2).asType<Int>() ?: return@before
         if (gipUid != callingUid) return@before
@@ -43,7 +45,7 @@ object BypassCrossUserPermission {
       }
     }
 
-    computerEngineC.allMethods("getPackageInfoInternal").hook {
+    computerEngineC.allMethods("getPackageInfoInternal").hookCompat {
       before {
         val filterCallingUid = args.getOrNull(3).asType<Int>() ?: return@before
         if (gipUid != filterCallingUid) return@before

@@ -31,26 +31,27 @@ import com.richardluo.globalIconPack.reflect.BaseIconFactory
 import com.richardluo.globalIconPack.reflect.Resources.getDrawableForDensityM
 import com.richardluo.globalIconPack.utils.HookBuilder
 import com.richardluo.globalIconPack.utils.IconHelper
+import com.richardluo.globalIconPack.utils.Logger.logD
 import com.richardluo.globalIconPack.utils.MonochromeDrawable
 import com.richardluo.globalIconPack.utils.allConstructors
 import com.richardluo.globalIconPack.utils.allMethods
 import com.richardluo.globalIconPack.utils.asType
-import com.richardluo.globalIconPack.utils.callOriginalMethod
 import com.richardluo.globalIconPack.utils.classOf
 import com.richardluo.globalIconPack.utils.field
 import com.richardluo.globalIconPack.utils.getAs
 import com.richardluo.globalIconPack.utils.highByte
 import com.richardluo.globalIconPack.utils.hook
+import com.richardluo.globalIconPack.utils.hookCompat
 import com.richardluo.globalIconPack.utils.isHighByte
-import com.richardluo.globalIconPack.utils.logD
 import com.richardluo.globalIconPack.utils.method
+import com.richardluo.globalIconPack.utils.proceed
 import com.richardluo.globalIconPack.utils.runSafe
 import com.richardluo.globalIconPack.utils.withHighByte
 import com.richardluo.globalIconPack.xposed.ReplaceIcon.Companion.ANDROID_DEFAULT
 import com.richardluo.globalIconPack.xposed.ReplaceIcon.Companion.IN_SC
 import com.richardluo.globalIconPack.xposed.ReplaceIcon.Companion.NOT_IN_SC
-import de.robv.android.xposed.XC_MethodHook.MethodHookParam
-import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
+import io.github.libxposed.api.XposedInterface
+import io.github.libxposed.api.XposedModuleInterface
 import java.util.Collections
 import java.util.WeakHashMap
 
@@ -69,10 +70,11 @@ class ReplaceIcon(
     const val SC_DEFAULT = 0x00000000
   }
 
-  override fun onHookPixelLauncher(lpp: LoadPackageParam) {
+  context(xposed: XposedInterface)
+  override fun onHookPixelLauncher(param: XposedModuleInterface.PackageReadyParam) {
     runSafe {
       // Replace icon in task description
-      val taskIconCache = classOf("com.android.quickstep.TaskIconCache", lpp) ?: return@runSafe
+      val taskIconCache = classOf("com.android.quickstep.TaskIconCache", param) ?: return@runSafe
       val getIconM =
         taskIconCache.method(
           "getIcon",
@@ -80,16 +82,15 @@ class ReplaceIcon(
           Int::class.javaPrimitiveType,
         ) ?: return@runSafe
 
-      if (forceActivityIconForTask) getIconM.hook { replace { null } }
+      if (forceActivityIconForTask) getIconM.hook { null }
       else {
         val tdBitmapSet = Collections.newSetFromMap<Bitmap>(WeakHashMap())
-        getIconM.hook {
-          before {
-            result = callOriginalMethod()
-            tdBitmapSet.add(result.asType() ?: return@before)
+        getIconM.hookCompat {
+          after {
+            tdBitmapSet.add(result.asType() ?: return@after)
           }
         }
-        taskIconCache.allMethods("getBitmapInfo").hook {
+        taskIconCache.allMethods("getBitmapInfo").hookCompat {
           before {
             val drawable = args[0].asType<BitmapDrawable>() ?: return@before
             if (tdBitmapSet.contains(drawable.bitmap)) {
@@ -107,22 +108,23 @@ class ReplaceIcon(
 
     runSafe {
       if (Build.VERSION.SDK_INT < Build.VERSION_CODES.BAKLAVA) return@runSafe
-      val iconOptions = BaseIconFactory.getIconOptionsClass(lpp) ?: return@runSafe
+      val iconOptions = BaseIconFactory.getIconOptionsClass(param) ?: return@runSafe
       val drawFullBleedF = iconOptions.field("drawFullBleed") ?: return@runSafe
-      BaseIconFactory.getClass(lpp)?.allMethods("createBadgedIconBitmap")?.hook {
+      BaseIconFactory.getClass(param)?.allMethods("createBadgedIconBitmap")?.hookCompat {
         before { drawFullBleedF.set(args[1], false) }
       }
     }
   }
 
-  override fun onHookApp(lpp: LoadPackageParam) {
+  context(xposed: XposedInterface)
+  override fun onHookApp(param: XposedModuleInterface.PackageReadyParam) {
     // Find the drawable corresponding to the replaced icon
-    getDrawableForDensityM?.hook {
+    getDrawableForDensityM?.hookCompat {
       before {
         val resId = args[0] as? Int ?: return@before
         val density = args[1] as? Int ?: return@before
         if (resId == android.R.drawable.sym_def_app_icon) {
-          result = callOriginalMethod<Drawable?>()?.let { getSC()?.genIconFrom(it) ?: it }
+          result = proceed<Drawable?>()?.let { getSC()?.genIconFrom(it) ?: it }
           return@before
         }
         result =
@@ -130,7 +132,7 @@ class ReplaceIcon(
             IN_SC -> getSC()?.getIcon(resId.withHighByte(SC_DEFAULT), density)
             NOT_IN_SC -> {
               args[0] = resId.withHighByte(ANDROID_DEFAULT)
-              var drawable = callOriginalMethod<Drawable?>()
+              var drawable = proceedWithArgs<Drawable?>()
 
               if (
                 forceMonochrome &&
@@ -149,7 +151,7 @@ class ReplaceIcon(
     }
 
     // ArchivedAppIcon
-    classOf("android.app.ApplicationPackageManager")?.allMethods("getArchivedAppIcon")?.hook {
+    classOf("android.app.ApplicationPackageManager")?.allMethods("getArchivedAppIcon")?.hookCompat {
       before {
         val packageName = args[0] as? String ?: return@before
         val sc = getSC() ?: return@before
@@ -169,18 +171,19 @@ class ReplaceIcon(
 
     // Generate shortcut icon
     if (shortcut)
-      LauncherApps::class.java.allMethods("getShortcutIconDrawable").hook {
+      LauncherApps::class.java.allMethods("getShortcutIconDrawable").hookCompat {
         before {
           val shortcut = args[0] as? ShortcutInfo ?: return@before
           val density = args[1] as? Int ?: return@before
           val sc = getSC() ?: return@before
           result =
             sc.getIconEntry(getComponentName(shortcut))?.let { sc.getIcon(it, density) }
-              ?: callOriginalMethod<Drawable?>()?.let { sc.genIconFrom(it) }
+              ?: proceed<Drawable?>()?.let { sc.genIconFrom(it) }
         }
       }
   }
 
+  context(xposed: XposedInterface)
   private fun hookSingleReplaceIcon() {
     fun HookBuilder.replaceIconHook() {
       after {
@@ -194,21 +197,21 @@ class ReplaceIcon(
       }
     }
 
-    ApplicationInfo::class.java.allConstructors().hook(HookBuilder::replaceIconHook)
-    ActivityInfo::class.java.allConstructors().hook(HookBuilder::replaceIconHook)
-    ServiceInfo::class.java.allConstructors().hook(HookBuilder::replaceIconHook)
-    ProviderInfo::class.java.allConstructors().hook(HookBuilder::replaceIconHook)
-    ResolveInfo::class.java.allConstructors().hook {
+    ApplicationInfo::class.java.allConstructors().hookCompat(HookBuilder::replaceIconHook)
+    ActivityInfo::class.java.allConstructors().hookCompat(HookBuilder::replaceIconHook)
+    ServiceInfo::class.java.allConstructors().hookCompat(HookBuilder::replaceIconHook)
+    ProviderInfo::class.java.allConstructors().hookCompat(HookBuilder::replaceIconHook)
+    ResolveInfo::class.java.allConstructors().hookCompat {
       after {
         runBlockReplaceIconResId {
           replaceIconInResolveInfo(thisObject.asType() ?: return@runBlockReplaceIconResId)
         }
       }
     }
-    PackageInfo::class.java.allConstructors().hook {
+    PackageInfo::class.java.allConstructors().hookCompat {
       before {
         runBlockReplaceIconResId {
-          result = callOriginalMethod()
+          result = proceed()
           val info = thisObject as? PackageInfo ?: return@runBlockReplaceIconResId
           val sc = getSC() ?: return@runBlockReplaceIconResId
           replaceIconInItemInfos(packageInfoTransform(info), sc)
@@ -218,14 +221,15 @@ class ReplaceIcon(
     }
   }
 
+  context(xposed: XposedInterface)
   private fun hookBatchReplaceIcon() {
-    Parcel::class.java.allMethods("readTypedList").hook {
+    Parcel::class.java.allMethods("readTypedList").hookCompat {
       batchReplaceIconHook(
         { args.getOrNull(1)?.let { batchReplacerMap[it] } },
         { args[0].asType() },
       )
     }
-    Parcel::class.java.allMethods("createTypedArray").hook {
+    Parcel::class.java.allMethods("createTypedArray").hookCompat {
       batchReplaceIconHook(
         { args.getOrNull(0)?.let { batchReplacerMap[it] } },
         { result.asType<Array<Any?>>()?.asIterable() },
@@ -234,13 +238,14 @@ class ReplaceIcon(
     hookParceledListSlice()
   }
 
+  context(xposed: XposedInterface)
   private fun hookPackageInfoCommonUtils() {
     val packageInfoCommonUtils =
       classOf("com.android.internal.pm.parsing.PackageInfoCommonUtils") ?: return
-    packageInfoCommonUtils.allMethods("generate").hook {
+    packageInfoCommonUtils.allMethods("generate").hookCompat {
       before {
         runBlockReplaceIconResId {
-          result = callOriginalMethod()
+          result = proceed()
           val info = result as? PackageInfo ?: return@runBlockReplaceIconResId
           val sc = getSC() ?: return@runBlockReplaceIconResId
           replaceIconInItemInfos(packageInfoTransform(info), sc)
@@ -261,22 +266,31 @@ class ReplaceIcon(
       }
     }
 
-    packageInfoCommonUtils.allMethods("generateApplicationInfo").hook(HookBuilder::replaceIconHook)
-    packageInfoCommonUtils.allMethods("generateActivityInfo").hook(HookBuilder::replaceIconHook)
-    packageInfoCommonUtils.allMethods("generateServiceInfo").hook(HookBuilder::replaceIconHook)
-    packageInfoCommonUtils.allMethods("generateProviderInfo").hook(HookBuilder::replaceIconHook)
+    packageInfoCommonUtils
+      .allMethods("generateApplicationInfo")
+      .hookCompat(HookBuilder::replaceIconHook)
+    packageInfoCommonUtils
+      .allMethods("generateActivityInfo")
+      .hookCompat(HookBuilder::replaceIconHook)
+    packageInfoCommonUtils
+      .allMethods("generateServiceInfo")
+      .hookCompat(HookBuilder::replaceIconHook)
+    packageInfoCommonUtils
+      .allMethods("generateProviderInfo")
+      .hookCompat(HookBuilder::replaceIconHook)
   }
 
+  context(xposed: XposedInterface)
   private fun hookParceledListSlice() {
     val baseParceledListSlice = classOf("android.content.pm.BaseParceledListSlice") ?: return
     val parceledListSlice = classOf("android.content.pm.ParceledListSlice") ?: return
     val mListF = baseParceledListSlice.field("mList") ?: return
     val replacer = ThreadLocal.withInitial<BatchReplacer?> { null }
-    baseParceledListSlice.allConstructors().hook {
+    baseParceledListSlice.allConstructors().hookCompat {
       before {
         runBlockReplaceIconResId {
           val sc = getSC() ?: return@runBlockReplaceIconResId
-          result = callOriginalMethod()
+          result = proceed()
           val list = mListF.getAs<List<Any?>?>(thisObject) ?: return@runBlockReplaceIconResId
           val curReplacer =
             replacer.get()
@@ -289,7 +303,7 @@ class ReplaceIcon(
       }
     }
     // BaseParceledListSlice constructor will call ParceledListSlice.readParcelableCreator
-    parceledListSlice.allMethods("readParcelableCreator").hook {
+    parceledListSlice.allMethods("readParcelableCreator").hookCompat {
       after {
         val curReplacer = batchReplacerMap[result] ?: return@after
         replacer.set(curReplacer)
@@ -325,15 +339,16 @@ private inline fun runBlockReplaceIconResId(crossinline block: () -> Unit) {
   blockReplaceIconResId.set(false)
 }
 
+context(xposed: XposedInterface)
 private inline fun HookBuilder.batchReplaceIconHook(
-  crossinline getReplacer: MethodHookParam.() -> BatchReplacer?,
-  crossinline getList: MethodHookParam.() -> Iterable<Any?>?,
+  crossinline getReplacer: HookBuilder.ChainProxy.() -> BatchReplacer?,
+  crossinline getList: HookBuilder.ChainProxy.() -> Iterable<Any?>?,
 ) {
   before {
     val replacer = getReplacer() ?: return@before
     runBlockReplaceIconResId {
       val sc = getSC() ?: return@runBlockReplaceIconResId
-      result = callOriginalMethod()
+      result = proceed()
       val list = getList() ?: return@runBlockReplaceIconResId
       replacer(list.asSequence(), sc)
       logD("Batch replaced: " + list.count())

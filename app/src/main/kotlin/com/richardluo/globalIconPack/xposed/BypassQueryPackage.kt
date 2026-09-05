@@ -5,16 +5,19 @@ import com.richardluo.globalIconPack.get
 import com.richardluo.globalIconPack.utils.WorldPreference
 import com.richardluo.globalIconPack.utils.allMethods
 import com.richardluo.globalIconPack.utils.classOf
-import com.richardluo.globalIconPack.utils.hook
-import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
+import com.richardluo.globalIconPack.utils.hookCompat
+import io.github.libxposed.api.XposedInterface
+import io.github.libxposed.api.XposedModuleInterface
 
 object BypassQueryPackage {
-  fun onHookSystem(lpp: LoadPackageParam) {
+  context(xposed: XposedInterface)
+  fun onHookSystem(param: XposedModuleInterface.PackageReadyParam) {
     val getPackageNameM =
-      classOf("com.android.server.pm.pkg.PackageState", lpp)?.getMethod("getPackageName") ?: return
-    classOf("com.android.server.pm.AppsFilterBase", lpp)
+      classOf("com.android.server.pm.pkg.PackageState", param)?.getMethod("getPackageName")
+        ?: return
+    classOf("com.android.server.pm.AppsFilterBase", param)
       ?.allMethods("shouldFilterApplication")
-      ?.hook {
+      ?.hookCompat {
         after {
           if (result == false) return@after
           val targetPkgSetting = args[3] ?: return@after

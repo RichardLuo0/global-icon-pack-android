@@ -3,6 +3,7 @@ package com.richardluo.globalIconPack.iconPack.source
 import android.content.ComponentName
 import android.graphics.drawable.Drawable
 import com.richardluo.globalIconPack.iconPack.model.IconEntry
+import io.github.libxposed.api.XposedInterface
 
 class EmptySource : Source {
 
@@ -12,11 +13,13 @@ class EmptySource : Source {
 
   override fun getIconEntry(id: Int): IconEntry? = null
 
+  context(xposed: XposedInterface)
   override fun getIconNotAdaptive(
     entry: IconEntry,
     iconDpi: Int,
   ): Drawable? = null
 
+  context(xposed: XposedInterface)
   override fun getIcon(
     name: String,
     iconDpi: Int,

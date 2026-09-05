@@ -47,6 +47,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -86,6 +87,8 @@ import com.richardluo.globalIconPack.ui.components.pinnedScrollBehaviorWithPager
 import com.richardluo.globalIconPack.ui.viewModel.MainVM
 import com.richardluo.globalIconPack.utils.AppPreference
 import com.richardluo.globalIconPack.utils.consumable
+import kotlin.time.Duration.Companion.seconds
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.launchIn
@@ -111,18 +114,27 @@ class MainActivity : ComponentActivity() {
     setContent {
       SampleTheme {
         val prefFlow = vm.prefFlow
-        if (prefFlow == null)
-          WarnDialog(
-            openState = remember { mutableStateOf(true) },
-            title = { OneLineText(getString(R.string.common_warning)) },
-            onOk = { finish() },
-            onCancel = { finish() },
-          ) {
-            Text(getString(R.string.warn_enableModule))
+        if (vm.sharedPrefFlow.collectAsState().value == null) {
+          var showWarn by remember { mutableStateOf(false) }
+
+          LaunchedEffect(Unit) {
+            delay(3.seconds)
+            showWarn = true
           }
-        else {
+
+          if (!showWarn) LoadingDialog()
+          else
+            WarnDialog(
+              openState = remember { mutableStateOf(true) },
+              title = { OneLineText(getString(R.string.common_warning)) },
+              onOk = { finish() },
+              onCancel = { finish() },
+            ) {
+              Text(getString(R.string.warn_enableModule))
+            }
+        } else {
           val setupDialogState = rememberSaveable {
-            mutableStateOf(AppPreference.get().get(AppPref.NEED_SETUP))
+            mutableStateOf(AppPreference.getInApp().get(AppPref.NEED_SETUP))
           }
           if (setupDialogState.value) SetUpDialog(setupDialogState, prefFlow)
           else ProvidePreferenceLocals(flow = prefFlow, myPreferenceTheme()) { SampleScreen() }
@@ -138,7 +150,10 @@ class MainActivity : ComponentActivity() {
 
   private fun applyIconPackIfNeeded(intent: Intent) {
     val prefFlow = vm.prefFlow
-    if (prefFlow != null && intent.action == "${BuildConfig.APPLICATION_ID}.APPLY_ICON_PACK") {
+    if (
+      vm.sharedPrefFlow.value != null &&
+        intent.action == "${BuildConfig.APPLICATION_ID}.APPLY_ICON_PACK"
+    ) {
       prefFlow.update {
         it.toMutablePreferences().apply {
           set(Pref.ICON_PACK.key, intent.getStringExtra("packageName"))
@@ -158,7 +173,7 @@ class MainActivity : ComponentActivity() {
     ) { pos, mode, dismiss ->
       ModeItem(pos, mode) {
         prefFlow.update { it.toMutablePreferences().apply { set(Pref.MODE.key, mode) } }
-        AppPreference.get().edit { putBoolean(AppPref.NEED_SETUP.key, false) }
+        AppPreference.getInApp().edit { putBoolean(AppPref.NEED_SETUP.key, false) }
         dismiss()
       }
     }

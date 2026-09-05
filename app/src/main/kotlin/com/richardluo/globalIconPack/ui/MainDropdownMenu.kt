@@ -1,6 +1,7 @@
 package com.richardluo.globalIconPack.ui
 
 import android.content.Intent
+import android.util.Log
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Code
 import androidx.compose.material.icons.outlined.Coffee
@@ -30,8 +31,8 @@ import com.richardluo.globalIconPack.ui.components.CustomSnackbarVisuals
 import com.richardluo.globalIconPack.ui.components.IconButtonWithTooltip
 import com.richardluo.globalIconPack.ui.components.MyDropdownMenu
 import com.richardluo.globalIconPack.ui.components.SnackbarType
+import com.richardluo.globalIconPack.utils.Logger.TAG
 import com.richardluo.globalIconPack.utils.WorldPreference
-import com.richardluo.globalIconPack.utils.log
 import com.richardluo.globalIconPack.utils.msg
 import com.topjohnwu.superuser.Shell
 import kotlinx.coroutines.launch
@@ -57,7 +58,7 @@ fun MainDropdownMenu(snackbarState: SnackbarHostState) {
           )
         else {
           val error = result.msg
-          log(error)
+          Log.e(TAG, error)
           snackbarState.showSnackbar(
             CustomSnackbarVisuals(
               SnackbarType.Error,
@@ -89,7 +90,7 @@ fun MainDropdownMenu(snackbarState: SnackbarHostState) {
       leadingIcon = {},
       text = { Text(stringResource(R.string.mainMenu_restartLauncher)) },
       onClick = {
-        val launcher = WorldPreference.get().get(Pref.PIXEL_LAUNCHER_PACKAGE)
+        val launcher = WorldPreference.getInApp().get(Pref.PIXEL_LAUNCHER_PACKAGE)
         runCommand("rm -f /data/data/$launcher/databases/app_icons.db && am force-stop $launcher")
       },
     )

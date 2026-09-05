@@ -1,14 +1,11 @@
 package com.richardluo.globalIconPack.utils
 
-import de.robv.android.xposed.XC_MethodHook
-import de.robv.android.xposed.XC_MethodHook.MethodHookParam
-import de.robv.android.xposed.XposedBridge
-import de.robv.android.xposed.XposedHelpers
-import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
+import com.richardluo.globalIconPack.utils.Logger.log
+import com.richardluo.globalIconPack.utils.Logger.logE
+import io.github.libxposed.api.XposedInterface
+import io.github.libxposed.api.XposedModuleInterface
 import java.lang.reflect.Executable
 import java.lang.reflect.Field
-import java.lang.reflect.InvocationTargetException
-import java.lang.reflect.Member
 import java.lang.reflect.Method
 
 private fun Method.match(methodName: String, parameterTypes: Array<out Class<*>?>) =
@@ -20,18 +17,15 @@ private fun Executable.match(parameterTypes: Array<out Class<*>?>) =
       expected == null || param.isAssignableFrom(expected)
     }
 
-inline fun <reified R> MethodHookParam.callOriginalMethod() =
-  runCatching { XposedBridge.invokeOriginalMethod(method, thisObject, args) as? R }
-    .getOrElse { throw if (it is InvocationTargetException) it.cause ?: it else it }
-
 inline fun <reified T> Field.getAs(thisObj: Any? = null) = get(thisObj) as? T
 
 inline fun <reified T> Method.call(thisObj: Any? = null, vararg param: Any?) =
   invoke(thisObj, *param) as? T
 
-fun classOf(name: String, lpp: LoadPackageParam? = null) =
-  runCatching { XposedHelpers.findClass(name, lpp?.classLoader) }
-    .getOrNull { log("No class $name is found") }
+fun classOf(name: String, param: XposedModuleInterface.PackageReadyParam? = null) = runCatching {
+  Class.forName(name, true, param?.classLoader)
+}
+  .getOrNull { log("No class $name is found") }
 
 fun Class<*>.method(name: String, vararg parameterTypes: Class<*>?) =
   (runCatching { getDeclaredMethod(name, *parameterTypes) }.getOrNull()
@@ -57,79 +51,112 @@ fun Class<*>.allConstructors(vararg parameterTypes: Class<*>?) =
     .apply { forEach { it.isAccessible = true } }
     .also { if (it.isEmpty()) log("No constructors are found on class ${this.name}") }
 
-fun Class<*>.field(name: String) =
-  runCatching {
-      var clazz: Class<*>? = this
-      while (clazz != null && clazz != Any::class.java) {
-        try {
-          return@runCatching clazz.getDeclaredField(name)
-        } catch (_: NoSuchFieldException) {
-          clazz = clazz.superclass
-        }
-      }
-      null
+fun Class<*>.field(name: String) = runCatching {
+  var clazz: Class<*>? = this
+  while (clazz != null && clazz != Any::class.java) {
+    try {
+      return@runCatching clazz.getDeclaredField(name)
+    } catch (_: NoSuchFieldException) {
+      clazz = clazz.superclass
     }
-    .getOrNull()
-    ?.apply { isAccessible = true }
-    .also { if (it == null) log("No field $name is found on class ${this.name}") }
+  }
+  null
+}
+  .getOrNull()
+  ?.apply { isAccessible = true }
+  .also { if (it == null) log("No field $name is found on class ${this.name}") }
 
-class HookBuilder : XC_MethodHook() {
-  private var beforeAction: (MethodHookParam.() -> Unit)? = null
-  private var afterAction: (MethodHookParam.() -> Unit)? = null
+inline fun <reified R> XposedInterface.Chain.proceed(): R? = proceed() as? R
 
-  fun before(block: MethodHookParam.() -> Unit) {
+class HookBuilder : XposedInterface.Hooker {
+  class ChainProxy(private val chain: XposedInterface.Chain) : XposedInterface.Chain by chain {
+    private var _result: Any? = null
+    var resultIsSet = false
+      private set
+
+    var result: Any?
+      get() = _result
+      set(value) {
+        resultIsSet = true
+        _result = value
+      }
+
+    @get:JvmName("getMutableArgs") val args = getArgs().toMutableList()
+
+    inline fun <reified R> proceedWithArgs(): R? =
+      proceedWith(thisObject, args.toTypedArray()) as? R
+  }
+
+  private var beforeAction: (ChainProxy.() -> Unit)? = null
+  private var afterAction: (ChainProxy.() -> Unit)? = null
+
+  fun before(block: ChainProxy.() -> Unit) {
     beforeAction = block
   }
 
-  fun after(block: MethodHookParam.() -> Unit) {
+  fun after(block: ChainProxy.() -> Unit) {
     afterAction = block
   }
 
-  inline fun replace(crossinline block: MethodHookParam.() -> Any?) = before {
-    runCatching { result = block() }.exceptionOrNull()?.also { throwable = it }
+  inline fun replace(crossinline block: XposedInterface.Chain.() -> Any?) = before {
+    result = block()
   }
 
-  override fun beforeHookedMethod(param: MethodHookParam) {
-    beforeAction?.invoke(param)
-  }
-
-  override fun afterHookedMethod(param: MethodHookParam) {
-    afterAction?.invoke(param)
+  override fun intercept(chain: XposedInterface.Chain): Any? {
+    val chainProxy = ChainProxy(chain)
+    beforeAction?.invoke(chainProxy)
+    if (!chainProxy.resultIsSet) chainProxy.result = chainProxy.proceedWithArgs()
+    afterAction?.invoke(chainProxy)
+    return chainProxy.result
   }
 }
 
-inline fun Executable.hook(crossinline block: HookBuilder.() -> Unit) =
-  runCatching { XposedBridge.hookMethod(this, HookBuilder().apply { block() }) }
-    .getOrNull { logE(it) }
-
-inline fun List<Executable>.hook(crossinline block: HookBuilder.() -> Unit) =
-  runCatching { map { XposedBridge.hookMethod(it, HookBuilder().apply { block() }) } }
-    .getOrNull { logE(it) }
-
-private val deoptimizeMethodM by lazy {
-  XposedBridge::class.java.method("deoptimizeMethod", Member::class.java)
+context(xposed: XposedInterface)
+fun Executable.hook(hooker: XposedInterface.Chain.() -> Any?) = runCatching {
+  xposed.hook(this).intercept { chain -> hooker(chain) }
 }
+  .getOrNull { logE(it) }
 
-fun Executable.deoptimize() = apply { deoptimizeMethodM?.invoke(null, this) }
+context(xposed: XposedInterface)
+fun List<Executable>.hook(hooker: XposedInterface.Chain.() -> Any?) = runCatching {
+  map { xposed.hook(it).intercept { chain -> hooker(chain) } }
+}
+  .getOrNull { logE(it) }
 
-fun List<Executable>.deoptimize() = apply { forEach { deoptimizeMethodM?.invoke(null, it) } }
+context(xposed: XposedInterface)
+inline fun Executable.hookCompat(crossinline block: HookBuilder.() -> Unit) = runCatching {
+  xposed.hook(this).intercept(HookBuilder().apply { block() })
+}
+  .getOrNull { logE(it) }
+
+context(xposed: XposedInterface)
+inline fun List<Executable>.hookCompat(crossinline block: HookBuilder.() -> Unit) = runCatching {
+  map { xposed.hook(it).intercept(HookBuilder().apply { block() }) }
+}
+  .getOrNull { logE(it) }
+
+context(xposed: XposedInterface)
+fun Executable.deoptimize() = apply { xposed.deoptimize(this) }
+
+context(xposed: XposedInterface)
+fun List<Executable>.deoptimize() = apply { forEach { xposed.deoptimize(it) } }
 
 interface TryHookResult<T> {
   val isDone: Boolean
   val result: T?
-  val unhookRegistry: List<XC_MethodHook.Unhook>
+  val unhookRegistry: List<XposedInterface.HookHandle>
 }
 
-class TryHookScope<T> : TryHookResult<T> {
+class TryHookScope<T>(xposed: XposedInterface) : TryHookResult<T>, XposedInterface by xposed {
   override var isDone = false
   override var result: T? = null
-  override val unhookRegistry = mutableListOf<XC_MethodHook.Unhook>()
+  override val unhookRegistry = mutableListOf<XposedInterface.HookHandle>()
 
-  fun XC_MethodHook.Unhook?.registerToScopeOrFail() {
+  fun XposedInterface.HookHandle?.registerToScopeOrFail() {
     this?.let { unhookRegistry.add(it) } ?: fail()
   }
 
-  fun List<XC_MethodHook.Unhook>?.registerToScopeOrFail() {
+  fun List<XposedInterface.HookHandle>?.registerToScopeOrFail() {
     if (isNullOrEmpty()) fail() else unhookRegistry.addAll(this)
   }
 
@@ -157,10 +184,15 @@ class TryHookScope<T> : TryHookResult<T> {
       unhookRegistry.clear()
     }
   }
+
+  override fun getApiVersion(): Int {
+    return super.getApiVersion()
+  }
 }
 
+context(xposed: XposedInterface)
 inline fun <T> tryHook(
   name: String = "tryHook",
   crossinline block: TryHookScope<T>.() -> Unit,
 ): TryHookScope<T> =
-  TryHookScope<T>().apply { block() }.also { if (!it.isDone) log("$name failed!") }
+  TryHookScope<T>(xposed).apply { block() }.also { if (!it.isDone) log("$name failed!") }

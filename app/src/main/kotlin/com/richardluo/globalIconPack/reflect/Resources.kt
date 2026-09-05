@@ -3,10 +3,10 @@ package com.richardluo.globalIconPack.reflect
 import android.content.res.Resources
 import android.content.res.Resources.Theme
 import android.graphics.drawable.Drawable
+import com.richardluo.globalIconPack.utils.Logger.logE
 import com.richardluo.globalIconPack.utils.getOrNull
-import com.richardluo.globalIconPack.utils.logE
 import com.richardluo.globalIconPack.utils.method
-import de.robv.android.xposed.XposedBridge
+import io.github.libxposed.api.XposedInterface
 import java.lang.reflect.Method
 
 object Resources {
@@ -21,6 +21,7 @@ object Resources {
       )
   }
 
+  context(xposed: XposedInterface)
   fun getDrawableForDensity(
     thisObj: Resources,
     resId: Int,
@@ -28,12 +29,16 @@ object Resources {
     theme: Theme?,
   ): Drawable? {
     return runCatching {
-        XposedBridge.invokeOriginalMethod(
-          getDrawableForDensityM,
+      xposed
+        .getInvoker(getDrawableForDensityM ?: return null)
+        .setType(XposedInterface.Invoker.Type.ORIGIN)
+        .invoke(
           thisObj,
-          arrayOf(resId, iconDpi, theme),
-        ) as Drawable
-      }
+          resId,
+          iconDpi,
+          theme,
+        ) as? Drawable
+    }
       .getOrNull { logE(it) }
   }
 }

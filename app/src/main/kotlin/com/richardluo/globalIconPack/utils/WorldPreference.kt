@@ -2,57 +2,46 @@
 
 package com.richardluo.globalIconPack.utils
 
-import android.annotation.SuppressLint
-import android.content.Context
 import android.content.SharedPreferences
 import com.richardluo.globalIconPack.BuildConfig
-import com.richardluo.globalIconPack.ui.MyApplication
-import de.robv.android.xposed.XSharedPreferences
-import java.io.File
+import com.richardluo.globalIconPack.ui.repo.XposedServiceRepo
+import io.github.libxposed.api.XposedInterface
+import io.github.libxposed.service.XposedService
 
 object WorldPreference {
   private lateinit var pref: SharedPreferences
   private const val NAME = BuildConfig.APPLICATION_ID + "_preferences"
 
+  context(xposed: XposedInterface)
   fun get(): SharedPreferences {
     if (!::pref.isInitialized) pref = getPref(NAME)
     return pref
   }
 
-  fun getFile() = getPrefFile(NAME)
+  fun getInApp(xposed: XposedService? = XposedServiceRepo.service.value): SharedPreferences {
+    if (!::pref.isInitialized) pref = getPrefInApp(xposed, NAME)
+    return pref
+  }
 }
 
 object AppPreference {
   private lateinit var pref: SharedPreferences
   private const val NAME = "app"
 
+  context(xposed: XposedInterface)
   fun get(): SharedPreferences {
     if (!::pref.isInitialized) pref = getPref(NAME)
     return pref
   }
 
-  fun getFile() = getPrefFile(NAME)
+  fun getInApp(xposed: XposedService? = XposedServiceRepo.service.value): SharedPreferences {
+    if (!::pref.isInitialized) pref = getPrefInApp(xposed, NAME)
+    return pref
+  }
 }
 
-@SuppressLint("WorldReadableFiles")
-@Suppress("KotlinConstantConditions")
-private fun getPref(name: String) =
-  if (isInMod)
-    XSharedPreferences(BuildConfig.APPLICATION_ID, name).also {
-      if (!it.file.canRead())
-        log("Pref can not be read. Plz open global icon pack at least once: " + it.file.path)
-    }
-  else
-    MyApplication.context.getSharedPreferences(
-      name,
-      if (BuildConfig.BUILD_TYPE == "debugApp") Context.MODE_PRIVATE
-      else Context.MODE_WORLD_READABLE,
-    )
+context(xposed: XposedInterface)
+private fun getPref(name: String) = xposed.getRemotePreferences(name)
 
-private val getSharedPreferencesPath by lazy {
-  Context::class.java.method("getSharedPreferencesPath", String::class.java)
-}
-
-private fun getPrefFile(name: String) =
-  if (isInMod) XSharedPreferences(BuildConfig.APPLICATION_ID, name).file
-  else getSharedPreferencesPath?.call<File>(MyApplication.context, name)
+private fun getPrefInApp(xposed: XposedService?, name: String) =
+  xposed?.getRemotePreferences(name) ?: throw Exception("Xposed service isn't currently available!")

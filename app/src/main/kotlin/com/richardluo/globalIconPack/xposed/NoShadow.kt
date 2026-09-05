@@ -10,57 +10,67 @@ import com.richardluo.globalIconPack.utils.classOf
 import com.richardluo.globalIconPack.utils.deoptimize
 import com.richardluo.globalIconPack.utils.field
 import com.richardluo.globalIconPack.utils.hook
+import com.richardluo.globalIconPack.utils.hookCompat
 import com.richardluo.globalIconPack.utils.method
 import com.richardluo.globalIconPack.utils.tryHook
-import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
+import io.github.libxposed.api.XposedInterface
+import io.github.libxposed.api.XposedModuleInterface
 
 class NoShadow : Hook {
 
-  override fun onHookPixelLauncher(lpp: LoadPackageParam) = removeIconShadow(lpp)
+  context(xposed: XposedInterface)
+  override fun onHookPixelLauncher(param: XposedModuleInterface.PackageReadyParam) =
+    removeIconShadow(param)
 
-  override fun onHookSystemUI(lpp: LoadPackageParam) {
+  context(xposed: XposedInterface)
+  override fun onHookSystemUI(param: XposedModuleInterface.PackageReadyParam) {
     // Remove bubble shadow
-    classOf("com.android.wm.shell.bubbles.BadgedImageView", lpp)
+    classOf("com.android.wm.shell.bubbles.BadgedImageView", param)
       ?.allConstructors()
       ?.deoptimize()
-      ?.hook { after { thisObject.asType<View>()?.outlineProvider = null } }
-    removeIconShadow(lpp)
+      ?.hookCompat { after { thisObject.asType<View>()?.outlineProvider = null } }
+    removeIconShadow(param)
   }
 
-  override fun onHookSettings(lpp: LoadPackageParam) = removeIconShadow(lpp)
+  context(xposed: XposedInterface)
+  override fun onHookSettings(param: XposedModuleInterface.PackageReadyParam) =
+    removeIconShadow(param)
 
-  private fun removeIconShadow(lpp: LoadPackageParam) {
+  context(xposed: XposedInterface)
+  private fun removeIconShadow(param: XposedModuleInterface.PackageReadyParam) {
     tryHook("removeIconShadow") {
       tryDo {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.BAKLAVA) return@tryDo fail()
         // Android 16 qpr2
-        val iconOptions = BaseIconFactory.getIconOptionsClass(lpp) ?: return@tryDo fail()
+        val iconOptions = BaseIconFactory.getIconOptionsClass(param) ?: return@tryDo fail()
         val addShadowsF = iconOptions.field("addShadows") ?: return@tryDo fail()
-        BaseIconFactory.getClass(lpp)
+        BaseIconFactory.getClass(param)
           ?.allMethods("createBadgedIconBitmap")
-          ?.hook { before { addShadowsF.set(args[1], false) } }
+          ?.hookCompat { before { addShadowsF.set(args[1], false) } }
           .registerToScopeOrFail()
       }
 
       tryDo {
         tryHook("remove LauncherIcons shadows") {
           tryDo {
-            classOf("android.util.LauncherIcons", lpp)
+            classOf("android.util.LauncherIcons", param)
               ?.allMethods("wrapIconDrawableWithShadow")
-              ?.hook { replace { args[0] } }
+              ?.hook { args[0] }
               .registerToScopeOrFail()
           }
           tryDo {
-            classOf("com.android.launcher3.Flags", lpp)
+            classOf("com.android.launcher3.Flags", param)
               ?.allMethods("enableLauncherIconShapes")
-              ?.hook { replace { false } }
+              ?.hook { false }
               .registerToScopeOrFail()
           }
         }
 
-        classOf("com.android.launcher3.icons.ShadowGenerator", lpp)?.method("addPathShadow")?.hook {
-          before { result = null }
-        }
+        classOf("com.android.launcher3.icons.ShadowGenerator", param)
+          ?.method("addPathShadow")
+          ?.hook {
+            null
+          }
       }
     }
   }

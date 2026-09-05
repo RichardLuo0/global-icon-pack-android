@@ -9,6 +9,7 @@ import android.graphics.drawable.Drawable
 import com.richardluo.globalIconPack.iconPack.model.IconEntry
 import com.richardluo.globalIconPack.iconPack.model.IconFallback
 import com.richardluo.globalIconPack.utils.IconHelper
+import io.github.libxposed.api.XposedInterface
 
 interface Source {
   fun getId(cn: ComponentName): Int?
@@ -19,13 +20,17 @@ interface Source {
 
   fun getIconEntry(cn: ComponentName) = getId(cn)?.let { getIconEntry(it) }
 
+  context(xposed: XposedInterface)
   fun getIconNotAdaptive(entry: IconEntry, iconDpi: Int = 0): Drawable?
 
+  context(xposed: XposedInterface)
   fun getIcon(entry: IconEntry, iconDpi: Int = 0) =
     getIconNotAdaptive(entry, iconDpi)?.let { IconHelper.makeAdaptive(it) }
 
+  context(xposed: XposedInterface)
   fun getIcon(id: Int, iconDpi: Int) = getIconEntry(id)?.let { getIcon(it, iconDpi) }
 
+  context(xposed: XposedInterface)
   fun getIcon(name: String, iconDpi: Int = 0): Drawable?
 
   fun genIconFrom(baseIcon: Drawable): Drawable

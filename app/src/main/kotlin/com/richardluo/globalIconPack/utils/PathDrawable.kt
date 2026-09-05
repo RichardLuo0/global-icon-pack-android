@@ -8,6 +8,7 @@ import android.graphics.Path
 import android.graphics.PixelFormat
 import android.graphics.Rect
 import android.graphics.drawable.Drawable
+import android.util.Log
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asAndroidColorFilter
@@ -16,6 +17,7 @@ import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.graphics.toArgb
 import androidx.core.graphics.PathParser
+import com.richardluo.globalIconPack.utils.Logger.TAG
 
 //  fill:
 //  -1 inverse fill
@@ -32,7 +34,7 @@ class PathDrawable(private val state: CState) : Drawable() {
   ) : this(
     Unit.runCatching { PathParser.createPathFromPathData(pathData) }
       .getOrElse {
-        logE(it)
+        Log.e(TAG, "", it)
         Path()
       },
     color,
@@ -84,7 +86,7 @@ class PathDrawable(private val state: CState) : Drawable() {
 
   @Deprecated("Deprecated in Java") override fun getOpacity() = PixelFormat.TRANSLUCENT
 
-  override fun getConstantState(): ConstantState? = state
+  override fun getConstantState(): ConstantState = state
 
   class CState(val path: Path, val color: Int, val fill: Int) : ConstantState() {
     init {

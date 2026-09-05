@@ -33,19 +33,6 @@
         android:theme="@style/Theme.Sample"
         tools:targetApi="tiramisu">
 
-        <meta-data
-            android:name="xposedmodule"
-            android:value="true" />
-        <meta-data
-            android:name="xposeddescription"
-            android:value="Apply icon pack globally" />
-        <meta-data
-            android:name="xposedminversion"
-            android:value="93" />
-        <meta-data
-            android:name="xposedscope"
-            android:resource="@array/xposedscope" />
-
         <activity
             android:name=".ui.MainActivity"
             android:exported="true"

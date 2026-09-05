@@ -17,88 +17,111 @@ import com.richardluo.globalIconPack.iconPack.IconPackUpdateReceiver
 import com.richardluo.globalIconPack.iconPack.KeepAliveService
 import com.richardluo.globalIconPack.iconPack.source.ShareSource
 import com.richardluo.globalIconPack.ui.repo.IconPackApps
+import com.richardluo.globalIconPack.ui.repo.XposedServiceRepo
 import com.richardluo.globalIconPack.utils.AppPreference
 import com.richardluo.globalIconPack.utils.ContextVM
 import com.richardluo.globalIconPack.utils.ILoadable
 import com.richardluo.globalIconPack.utils.Loadable
+import com.richardluo.globalIconPack.utils.MapPreferences
 import com.richardluo.globalIconPack.utils.SingletonManager.get
 import com.richardluo.globalIconPack.utils.WorldPreference
-import com.richardluo.globalIconPack.utils.getPreferenceFlow
+import com.richardluo.globalIconPack.utils.preferences
 import com.richardluo.globalIconPack.utils.runCatchingToast
 import com.richardluo.globalIconPack.utils.throwOnFail
 import com.topjohnwu.superuser.Shell
 import java.io.File
+import kotlin.Pair
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.distinctUntilChangedBy
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.launchIn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.stateIn
+import me.zhanghai.compose.preference.Preferences
 
 class MainVM(context: Application) : ContextVM(context), ILoadable by Loadable() {
   private val iconPackDB by get { IconPackDB(context) }
   // Hold a strong reference to icon pack cache so it never gets recycled before MainVM is destroyed
   private val iconPackCache = get { IconPackCache(context) }.value
 
-  val prefFlow = runCatching { WorldPreference.get() }.getOrNull()?.getPreferenceFlow()
+  val sharedPrefFlow =
+    XposedServiceRepo.service
+      .map {
+        it?.let {
+          context(it) {
+            runCatching { WorldPreference.getInApp() }.getOrNull()
+          }
+        }
+      }
+      .stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
+  val prefFlow =
+    MutableStateFlow<Preferences>(MapPreferences()).apply {
+      sharedPrefFlow.filterNotNull().onEach { value = it.preferences }.launchIn(viewModelScope)
+      onEach { sharedPrefFlow.value?.preferences = it }.launchIn(viewModelScope)
+    }
 
   init {
-    prefFlow?.run {
-      map { Pair(it.get(Pref.MODE), it.get(Pref.ICON_PACK)) }
-        .distinctUntilChanged()
-        .onEach { (mode, pack) ->
-          runLoading {
-            when (mode) {
-              MODE_SHARE -> {
-                KeepAliveService.stopForeground(context)
-                startOnBoot(false)
-                updateDBIfPackUpdated(true)
-                runCatchingToast(
-                  context,
-                  { context.getString(R.string.general_error_onShareMode) },
-                  {
-                    update { it.toMutablePreferences().apply { set(Pref.MODE.key, MODE_PROVIDER) } }
-                  },
-                ) {
-                  val shareDB = createShareDB()
-                  resetDBPermission(shareDB)
-                  updateDB(pack)
-                  AppPreference.get().edit { putString(AppPref.PATH.key, shareDB) }
-                }
-              }
-              MODE_PROVIDER -> {
-                KeepAliveService.startForeground(context)
-                startOnBoot(true)
-                updateDBIfPackUpdated(true)
-                runCatchingToast(
-                  context,
-                  onFailure = {
-                    // Revert to default database
-                    iconPackDB.migrate(AppPref.PATH.def) {}
-                    AppPreference.get().edit { remove(AppPref.PATH.key) }
-                  },
-                ) {
-                  resetDBPermission(AppPreference.get().get(AppPref.PATH))
-                }
+    prefFlow
+      .distinctUntilChangedBy { Pair(it.get(Pref.MODE), it.get(Pref.ICON_PACK)) }
+      .onEach { pref ->
+        val mode = pref.get(Pref.MODE)
+        val pack = pref.get(Pref.ICON_PACK)
+        runLoading {
+          when (mode) {
+            MODE_SHARE -> {
+              KeepAliveService.stopForeground(context)
+              startOnBoot(false)
+              updateDBIfPackUpdated(true)
+              runCatchingToast(
+                context,
+                { context.getString(R.string.general_error_onShareMode) },
+                {
+                  pref.toMutablePreferences().apply { set(Pref.MODE.key, MODE_PROVIDER) }
+                },
+              ) {
+                val shareDB = createShareDB()
+                resetDBPermission(shareDB)
                 updateDB(pack)
+                AppPreference.getInApp().edit { putString(AppPref.PATH.key, shareDB) }
               }
-              else -> {
-                KeepAliveService.stopForeground(context)
-                startOnBoot(false)
-                updateDBIfPackUpdated(false)
+            }
+            MODE_PROVIDER -> {
+              KeepAliveService.startForeground(context)
+              startOnBoot(true)
+              updateDBIfPackUpdated(true)
+              runCatchingToast(
+                context,
+                onFailure = {
+                  // Revert to default database
+                  iconPackDB.migrate(AppPref.PATH.def) {}
+                  AppPreference.getInApp().edit { remove(AppPref.PATH.key) }
+                },
+              ) {
+                resetDBPermission(AppPreference.getInApp().get(AppPref.PATH))
               }
+              updateDB(pack)
+            }
+            else -> {
+              KeepAliveService.stopForeground(context)
+              startOnBoot(false)
+              updateDBIfPackUpdated(false)
             }
           }
         }
-        .flowOn(Dispatchers.IO)
-        .launchIn(viewModelScope)
-    }
+      }
+      .flowOn(Dispatchers.IO)
+      .launchIn(viewModelScope)
   }
 
   private fun createShareDB(): String {
     val shareDB =
-      AppPreference.get().get(AppPref.PATH).takeIf { it.isShareDB() } ?: ShareSource.DATABASE_PATH
+      AppPreference.getInApp().get(AppPref.PATH).takeIf { it.isShareDB() }
+        ?: ShareSource.DATABASE_PATH
     val shareDBFile = File(shareDB)
     val parent = shareDBFile.parent
     if (!shareDBFile.exists()) {
@@ -124,14 +147,10 @@ class MainVM(context: Application) : ContextVM(context), ILoadable by Loadable()
     val parent = dbFile.parent!!
     if (dbFile.exists() && isAllFilesUsable(parent)) return
 
-    // Make sure the file exists and try to get its selinux context
-    AppPreference.get().edit(commit = true) {}
-    val prefPath = AppPreference.getFile()?.takeIf { it.exists() }?.path ?: ""
-
     Shell.cmd(
         "set -e",
         "if ! [ -f $db ]; then touch $db; fi",
-        "[ -n \"$prefPath\" ] && context=$(ls -Z $prefPath | cut -d: -f1-4) || context=\"u:object_r:magisk_file:s0\"",
+        "context=\"u:object_r:magisk_file:s0\"",
         $$"chown 9999:9999 $$parent && chmod 0777 $$parent && chcon $context $$parent",
         $$"for file in $$parent/*; do chown 9999:9999 $file && chmod 0666 $file && chcon $context $file; done",
       )

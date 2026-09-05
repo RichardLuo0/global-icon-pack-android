@@ -1,6 +1,6 @@
 package com.richardluo.globalIconPack.iconPack.source
 
-import android.app.AndroidAppHelper
+import android.app.Application
 import android.content.ComponentName
 import android.database.sqlite.SQLiteDatabase
 import android.graphics.drawable.Drawable
@@ -19,12 +19,17 @@ import com.richardluo.globalIconPack.iconPack.model.defaultIconPackConfig
 import com.richardluo.globalIconPack.iconPack.useFirstRow
 import com.richardluo.globalIconPack.iconPack.useMapToArray
 import com.richardluo.globalIconPack.utils.AppPreference
+import com.richardluo.globalIconPack.utils.Logger.logE
 import com.richardluo.globalIconPack.utils.getOrPut
-import com.richardluo.globalIconPack.utils.logE
+import io.github.libxposed.api.XposedInterface
 import java.util.Collections
 
-class ShareSource(pack: String, config: IconPackConfig = defaultIconPackConfig) :
-  Source, ResourceOwner(pack) {
+class ShareSource(
+  val context: Application,
+  xposed: XposedInterface,
+  pack: String,
+  config: IconPackConfig = defaultIconPackConfig,
+) : Source, ResourceOwner(context, pack) {
   companion object {
     const val DATABASE_PATH = "/data/misc/${BuildConfig.APPLICATION_ID}/iconPack.db"
   }
@@ -36,61 +41,67 @@ class ShareSource(pack: String, config: IconPackConfig = defaultIconPackConfig) 
   private val iconEntryList = Collections.synchronizedList(mutableListOf<IconResolver>())
 
   private val db =
-    IconPackDB(
-      AndroidAppHelper.currentApplication(),
-      AppPreference.get().getString(AppPref.PATH.key, DATABASE_PATH)!!,
-      SQLiteDatabase.OPEN_READONLY,
-    )
+    context(xposed) {
+      IconPackDB(
+        context,
+        AppPreference.get().getString(AppPref.PATH.key, DATABASE_PATH)!!,
+        SQLiteDatabase.OPEN_READONLY,
+      )
+    }
   private val resourcesMap = mutableMapOf<String, ResourceOwner>()
 
   init {
-    iconFallback =
-      if (config.iconFallback)
-        db.getFallbackSettings(pack).useFirstRow {
-          IconFallback(FallbackSettings.from(it.getBlob(0)), ::getIcon, config).orNullIfEmpty()
-        }
-      else null
+    context(xposed) {
+      iconFallback =
+        if (config.iconFallback)
+          db.getFallbackSettings(pack).useFirstRow {
+            IconFallback(FallbackSettings.from(it.getBlob(0)), { getIcon(it) }, config)
+              .orNullIfEmpty()
+          }
+        else null
+    }
   }
 
   override fun getId(cn: ComponentName) = getId(listOf(cn)).getOrNull(0)
 
-  override fun getId(cnList: List<ComponentName>) =
-    runCatching {
-        synchronized(indexMap) {
-          indexMap.getOrPut(cnList) { misses ->
-            db.getIcon(pack, misses, iconPackAsFallback).useMapToArray(misses.size) { i, c ->
-              val cn = misses[i]
-              if (c.getIntOrNull(GetIconCol.Fallback.ordinal) == 1 || cn.className.isEmpty()) {
-                // Is fallback
-                val cn = getComponentName(cn.packageName)
-                if (indexMap.contains(cn)) indexMap[cn]
-                else {
-                  iconEntryList.add(IconResolver.from(c))
-                  (iconEntryList.size - 1).also { indexMap[cn] = it }
-                }
-              } else {
-                iconEntryList.add(IconResolver.from(c))
-                iconEntryList.size - 1
-              }
+  override fun getId(cnList: List<ComponentName>) = runCatching {
+    synchronized(indexMap) {
+      indexMap.getOrPut(cnList) { misses ->
+        db.getIcon(pack, misses, iconPackAsFallback).useMapToArray(misses.size) { i, c ->
+          val cn = misses[i]
+          if (c.getIntOrNull(GetIconCol.Fallback.ordinal) == 1 || cn.className.isEmpty()) {
+            // Is fallback
+            val cn = getComponentName(cn.packageName)
+            if (indexMap.contains(cn)) indexMap[cn]
+            else {
+              iconEntryList.add(IconResolver.from(c))
+              (iconEntryList.size - 1).also { indexMap[cn] = it }
             }
+          } else {
+            iconEntryList.add(IconResolver.from(c))
+            iconEntryList.size - 1
           }
         }
       }
-      .getOrElse {
-        logE(it)
-        List(cnList.size) { null }
-      }
+    }
+  }
+    .getOrElse {
+      logE(it)
+      List(cnList.size) { null }
+    }
 
   override fun getIconEntry(id: Int): IconEntry? = iconEntryList.getOrNull(id)
 
+  context(xposed: XposedInterface)
   override fun getIconNotAdaptive(entry: IconEntry, iconDpi: Int) =
     if (entry is IconResolver) entry.getIcon(::getResourceOwner, iconDpi)
     else entry.getIcon { getIcon(it, iconDpi) }
 
+  context(xposed: XposedInterface)
   override fun getIcon(name: String, iconDpi: Int) = getIconByName(name, iconDpi)
 
   private fun getResourceOwner(pack: String) =
-    if (pack.isEmpty()) this else resourcesMap.getOrPut(pack) { ResourceOwner(pack) }
+    if (pack.isEmpty()) this else resourcesMap.getOrPut(pack) { ResourceOwner(context, pack) }
 
   override fun genIconFrom(baseIcon: Drawable) = genIconFrom(res, baseIcon, iconFallback)
 

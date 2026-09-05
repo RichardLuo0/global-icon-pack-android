@@ -1,5 +1,6 @@
 [libraries]
-api = { module = "de.robv.android.xposed:api", version = "82" }
+libxposed-api = { module = "io.github.libxposed:api", version = "102.0.0" }
+libxposed-service = { module = "io.github.libxposed:service", version = "102.0.0" }
 core-ktx = { group = "androidx.core", name = "core-ktx", version = "1.19.0" }
 activity = { group = "androidx.activity", name = "activity-compose", version = "1.13.0" }
 viewmodel = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose", version = "2.10.0" }

@@ -9,6 +9,7 @@ import android.content.res.Resources
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.Drawable.ConstantState
 import android.os.Build
+import android.util.Log
 import android.util.Xml
 import android.widget.Toast
 import androidx.annotation.CheckResult
@@ -27,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.richardluo.globalIconPack.BuildConfig
 import com.richardluo.globalIconPack.ui.MyApplication.Companion.context
+import com.richardluo.globalIconPack.utils.Logger.TAG
 import com.topjohnwu.superuser.Shell
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
@@ -79,6 +81,8 @@ infix fun String.rEqual(other: String): Boolean {
 infix fun String.rNEqual(other: String) = !rEqual(other)
 
 fun <T> Array<T>.rGet(i: Int) = getOrNull(if (i >= 0) i else size + i)
+
+fun <T> List<T>.rGet(i: Int) = getOrNull(if (i >= 0) i else size + i)
 
 fun <T> Array<T>.rSet(i: Int, obj: T) {
   val index = if (i >= 0) i else size + i
@@ -176,7 +180,7 @@ suspend inline fun <R> runCatchingToast(
       Result.failure(e)
     }
     .onFailure {
-      logE(it)
+      Log.e(TAG, "", it)
       withContext(Dispatchers.Main) {
         Toast.makeText(context, message(it), Toast.LENGTH_LONG).show()
       }
@@ -189,7 +193,7 @@ inline fun <R> runCatchingToastOnMain(
   block: () -> R,
 ) =
   runCatching(block).onFailure {
-    logE(it)
+    Log.e(TAG, "", it)
     Toast.makeText(context, message(it), Toast.LENGTH_LONG).show()
   }
 
@@ -316,11 +320,10 @@ fun <K, V, M : Map<K, V>> mapSaver(toOriginal: (Map<K, V>) -> M) =
 fun <K, V> Map<K, V>.toMutableStateMap() = SnapshotStateMap<K, V>().also { it.putAll(this.toMap()) }
 
 @SuppressLint("DiscouragedApi")
-fun parseXML(res: Resources, name: String, pack: String) =
-  runCatching {
-      res.getIdentifier(name, "xml", pack).takeIf { 0 != it }?.let { res.getXml(it) }
-        ?: XmlPullParserFactory.newInstance().newPullParser().apply {
-          setInput(res.assets.open("$name.xml"), Xml.Encoding.UTF_8.toString())
-        }
+fun parseXML(res: Resources, name: String, pack: String) = runCatching {
+  res.getIdentifier(name, "xml", pack).takeIf { 0 != it }?.let { res.getXml(it) }
+    ?: XmlPullParserFactory.newInstance().newPullParser().apply {
+      setInput(res.assets.open("$name.xml"), Xml.Encoding.UTF_8.toString())
     }
-    .getOrNull { logE(it) }
+}
+  .getOrNull { Log.e(TAG, "", it) }

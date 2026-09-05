@@ -5,15 +5,23 @@ import com.richardluo.globalIconPack.utils.allMethods
 import com.richardluo.globalIconPack.utils.classOf
 import com.richardluo.globalIconPack.utils.hook
 import com.richardluo.globalIconPack.utils.rGet
-import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
+import io.github.libxposed.api.XposedInterface
+import io.github.libxposed.api.XposedModuleInterface
 
 object BypassShortcutPermission {
-  fun onHookSystem(lpp: LoadPackageParam) {
-    classOf($$"com.android.server.pm.LauncherAppsService$LauncherAppsImpl", lpp)
+  context(xposed: XposedInterface)
+  fun onHookSystem(param: XposedModuleInterface.PackageReadyParam) {
+    classOf($$"com.android.server.pm.LauncherAppsService$LauncherAppsImpl", param)
       ?.allMethods("ensureShortcutPermission")
-      ?.hook { before { if (BuildConfig.APPLICATION_ID == args.rGet(-1)) result = null } }
-    classOf("com.android.server.pm.ShortcutService", lpp)
+      ?.hook {
+        if (BuildConfig.APPLICATION_ID == args.rGet(-1)) return@hook null
+        return@hook proceed()
+      }
+    classOf("com.android.server.pm.ShortcutService", param)
       ?.allMethods("canSeeAnyPinnedShortcut")
-      ?.hook { before { if (BuildConfig.APPLICATION_ID == args.getOrNull(0)) result = true } }
+      ?.hook {
+        if (BuildConfig.APPLICATION_ID == args.getOrNull(0)) return@hook true
+        return@hook proceed()
+      }
   }
 }

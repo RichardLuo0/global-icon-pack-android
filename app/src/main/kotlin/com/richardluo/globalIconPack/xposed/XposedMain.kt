@@ -1,25 +1,22 @@
 package com.richardluo.globalIconPack.xposed
 
-import com.richardluo.globalIconPack.BuildConfig
 import com.richardluo.globalIconPack.Pref
 import com.richardluo.globalIconPack.get
+import com.richardluo.globalIconPack.utils.Logger
 import com.richardluo.globalIconPack.utils.WorldPreference
-import de.robv.android.xposed.IXposedHookLoadPackage
-import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
+import io.github.libxposed.api.XposedModule
+import io.github.libxposed.api.XposedModuleInterface
+import java.lang.ref.WeakReference
 
-class XposedMain : IXposedHookLoadPackage {
-  override fun handleLoadPackage(lpp: LoadPackageParam) {
-    if (!lpp.isFirstApplication) return
+class XposedMain : XposedModule() {
+  override fun onPackageReady(param: XposedModuleInterface.PackageReadyParam) {
+    if (!param.isFirstPackage) return
+    Logger.xposed = WeakReference(this)
 
-    if (lpp.packageName == BuildConfig.APPLICATION_ID) {
-      BypassReflectRestrictions.onHookSelf(lpp)
-      return
-    }
-
-    if (lpp.packageName == "android") {
-      BypassShortcutPermission.onHookSystem(lpp)
-      BypassQueryPackage.onHookSystem(lpp)
-      BypassCrossUserPermission.onHookSystem(lpp)
+    if (param.packageName == "android") {
+      BypassShortcutPermission.onHookSystem(param)
+      BypassQueryPackage.onHookSystem(param)
+      BypassCrossUserPermission.onHookSystem(param)
       return
     }
 
@@ -38,14 +35,13 @@ class XposedMain : IXposedHookLoadPackage {
           CalendarAndClockHook(pref.get(Pref.CLOCK_USE_FALLBACK_MASK))
         else null,
       )
-
-    hookList.forEach { it.onHookApp(lpp) }
-    when (lpp.packageName) {
+    hookList.forEach { it.onHookApp(param) }
+    when (param.packageName) {
       "com.android.launcher3",
       Pref.PIXEL_LAUNCHER_PACKAGE.def,
-      pref.get(Pref.PIXEL_LAUNCHER_PACKAGE) -> hookList.forEach { it.onHookPixelLauncher(lpp) }
-      "com.android.systemui" -> hookList.forEach { it.onHookSystemUI(lpp) }
-      "com.android.settings" -> hookList.forEach { it.onHookSettings(lpp) }
+      pref.get(Pref.PIXEL_LAUNCHER_PACKAGE) -> hookList.forEach { it.onHookPixelLauncher(param) }
+      "com.android.systemui" -> hookList.forEach { with(it) { it.onHookSystemUI(param) } }
+      "com.android.settings" -> hookList.forEach { with(it) { it.onHookSettings(param) } }
     }
   }
 }

@@ -1,5 +1,6 @@
 package com.richardluo.globalIconPack.iconPack.source
 
+import android.app.Application
 import android.content.ComponentName
 import android.content.res.Resources
 import android.content.res.XmlResourceParser
@@ -14,14 +15,19 @@ import com.richardluo.globalIconPack.iconPack.model.IconPackConfig
 import com.richardluo.globalIconPack.iconPack.model.NormalIconEntry
 import com.richardluo.globalIconPack.iconPack.model.ResourceOwner
 import com.richardluo.globalIconPack.iconPack.model.defaultIconPackConfig
+import com.richardluo.globalIconPack.utils.Logger.logE
 import com.richardluo.globalIconPack.utils.get
-import com.richardluo.globalIconPack.utils.logE
 import com.richardluo.globalIconPack.utils.parseXML
 import com.richardluo.globalIconPack.utils.unflattenFromString
+import io.github.libxposed.api.XposedInterface
 import org.xmlpull.v1.XmlPullParser
 
-class LocalSource(pack: String, config: IconPackConfig = defaultIconPackConfig) :
-  Source, ResourceOwner(pack) {
+class LocalSource(
+  context: Application,
+  xposed: XposedInterface,
+  pack: String,
+  config: IconPackConfig = defaultIconPackConfig,
+) : Source, ResourceOwner(context, pack) {
   private val iconPackAsFallback = config.iconPackAsFallback
   private val iconFallback: IconFallback?
 
@@ -29,17 +35,19 @@ class LocalSource(pack: String, config: IconPackConfig = defaultIconPackConfig) 
   private val iconEntryList: List<IconEntry>
 
   init {
-    val info = loadIconPack(res, pack)
-    iconFallback =
-      if (config.iconFallback)
-        IconFallback(FallbackSettings(info), ::getIcon, config).orNullIfEmpty()
-      else null
-    var i = 0
-    iconEntryList =
-      info.iconEntryMap.map { (cn, entry) ->
-        indexMap[cn] = i++
-        entry
-      }
+    context(xposed) {
+      val info = loadIconPack(res, pack)
+      iconFallback =
+        if (config.iconFallback)
+          IconFallback(FallbackSettings(info), { getIcon(it) }, config).orNullIfEmpty()
+        else null
+      var i = 0
+      iconEntryList =
+        info.iconEntryMap.map { (cn, entry) ->
+          indexMap[cn] = i++
+          entry
+        }
+    }
   }
 
   override fun getId(cn: ComponentName) =
@@ -49,10 +57,12 @@ class LocalSource(pack: String, config: IconPackConfig = defaultIconPackConfig) 
 
   override fun getIconEntry(id: Int): IconEntry? = iconEntryList.getOrNull(id)
 
+  context(xposed: XposedInterface)
   override fun getIconNotAdaptive(entry: IconEntry, iconDpi: Int) = entry.getIcon {
     getIcon(it, iconDpi)
   }
 
+  context(xposed: XposedInterface)
   override fun getIcon(name: String, iconDpi: Int) = getIconById(getDrawableId(name), iconDpi)
 
   private fun getDrawableId(name: String) = getIdByName(name)

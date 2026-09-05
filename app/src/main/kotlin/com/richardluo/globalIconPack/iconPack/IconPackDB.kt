@@ -9,6 +9,7 @@ import android.database.MergeCursor
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteDatabase.OpenParams
 import android.os.Build
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.ui.util.fastJoinToString
 import com.richardluo.globalIconPack.AppPref
@@ -19,11 +20,10 @@ import com.richardluo.globalIconPack.iconPack.model.IconEntry.Type
 import com.richardluo.globalIconPack.ui.model.IconPack
 import com.richardluo.globalIconPack.ui.viewModel.IconPackCache
 import com.richardluo.globalIconPack.utils.AppPreference
+import com.richardluo.globalIconPack.utils.Logger.TAG
 import com.richardluo.globalIconPack.utils.SQLiteOpenHelper
 import com.richardluo.globalIconPack.utils.SingletonManager
 import com.richardluo.globalIconPack.utils.flowTrigger
-import com.richardluo.globalIconPack.utils.log
-import com.richardluo.globalIconPack.utils.logE
 import com.richardluo.globalIconPack.utils.tryEmit
 import java.io.ByteArrayInputStream
 import java.io.DataInputStream
@@ -34,7 +34,7 @@ import kotlinx.coroutines.withContext
 
 class IconPackDB(
   private val context: Application,
-  path: String = AppPreference.get().get(AppPref.PATH),
+  path: String = AppPreference.getInApp().get(AppPref.PATH),
   openFlags: Int = SQLiteDatabase.OPEN_READWRITE,
 ) :
   SQLiteOpenHelper(
@@ -46,14 +46,11 @@ class IconPackDB(
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) setJournalMode("MEMORY")
     },
   ) {
-  private val mIconsUpdateFlow = flowTrigger()
-  private val mModifiedUpdateFlow = flowTrigger()
-
   val iconsUpdateFlow: Flow<*>
-    get() = mIconsUpdateFlow
+    field = flowTrigger()
 
   val modifiedUpdateFlow: Flow<*>
-    get() = mModifiedUpdateFlow
+    field = flowTrigger()
 
   init {
     when (openFlags) {
@@ -71,8 +68,8 @@ class IconPackDB(
       if (!update(installedPacks)) return@transaction
       if (!update(iconPack)) return@transaction
       // Send update
-      log("Database: ${iconPack.pack} updated")
-      mIconsUpdateFlow.tryEmit()
+      Log.i(TAG, "Database: ${iconPack.pack} updated")
+      iconsUpdateFlow.tryEmit()
     }
   }
 
@@ -81,8 +78,8 @@ class IconPackDB(
       ensureTable()
       if (!update(iconPack)) return@transaction
       // Send update
-      log("Database: ${iconPack.pack} updated")
-      mIconsUpdateFlow.tryEmit()
+      Log.i(TAG, "Database: ${iconPack.pack} updated")
+      iconsUpdateFlow.tryEmit()
     }
   }
 
@@ -113,7 +110,7 @@ class IconPackDB(
       .getOrNull()
       ?.lastUpdateTime
     if (lastUpdateTime == null) {
-      log("can not get lastUpdateTime for $pack")
+      Log.i(TAG, "can not get lastUpdateTime for $pack")
       return false
     }
     // Is modified
@@ -189,7 +186,7 @@ class IconPackDB(
         "pack=?",
         arrayOf(pack),
       )
-      mModifiedUpdateFlow.tryEmit()
+      modifiedUpdateFlow.tryEmit()
     }
   }
 
@@ -343,7 +340,7 @@ class IconPackDB(
         SQLiteDatabase.CONFLICT_REPLACE,
       )
       setPackModified(pack)
-      mIconsUpdateFlow.tryEmit()
+      iconsUpdateFlow.tryEmit()
     }
   }
 
@@ -351,7 +348,7 @@ class IconPackDB(
     writableDatabase.transaction {
       delete(pt(pack), "packageName=? AND className=?", arrayOf(cn.packageName, cn.className))
       setPackModified(pack)
-      mIconsUpdateFlow.tryEmit()
+      iconsUpdateFlow.tryEmit()
     }
   }
 
@@ -362,8 +359,8 @@ class IconPackDB(
       insertIcons(this, pack, iconPack.iconEntryMap.asIterable())
       updateIconId(this, iconPack)
       setPackModified(pack, false)
-      mIconsUpdateFlow.tryEmit()
-      mModifiedUpdateFlow.tryEmit()
+      iconsUpdateFlow.tryEmit()
+      modifiedUpdateFlow.tryEmit()
     }
   }
 
@@ -377,14 +374,14 @@ class IconPackDB(
         iconPack.iconEntryMap.filter { it.key.packageName == packageName }.asIterable(),
       )
       updateIconId(this, iconPack, packageName)
-      mIconsUpdateFlow.tryEmit()
+      iconsUpdateFlow.tryEmit()
     }
   }
 
   fun clearPackage(iconPack: IconPack, packageName: String) {
     writableDatabase.transaction {
       delete(pt(iconPack.pack), "packageName=?", arrayOf(packageName))
-      mIconsUpdateFlow.tryEmit()
+      iconsUpdateFlow.tryEmit()
     }
   }
 
@@ -427,7 +424,7 @@ inline fun SQLiteDatabase.transaction(crossinline block: SQLiteDatabase.() -> Un
     block()
     setTransactionSuccessful()
   } catch (e: Exception) {
-    logE(e)
+    Log.e(TAG, "", e)
     throw e
   } finally {
     endTransaction()

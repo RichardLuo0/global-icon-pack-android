@@ -22,63 +22,66 @@ import com.richardluo.globalIconPack.utils.TryHookScope
 import com.richardluo.globalIconPack.utils.allMethods
 import com.richardluo.globalIconPack.utils.asType
 import com.richardluo.globalIconPack.utils.call
-import com.richardluo.globalIconPack.utils.callOriginalMethod
 import com.richardluo.globalIconPack.utils.classOf
 import com.richardluo.globalIconPack.utils.constructor
 import com.richardluo.globalIconPack.utils.field
 import com.richardluo.globalIconPack.utils.getAs
 import com.richardluo.globalIconPack.utils.hook
+import com.richardluo.globalIconPack.utils.hookCompat
 import com.richardluo.globalIconPack.utils.isHighByte
 import com.richardluo.globalIconPack.utils.method
+import com.richardluo.globalIconPack.utils.proceed
 import com.richardluo.globalIconPack.utils.tryHook
 import com.richardluo.globalIconPack.utils.withHighByte
 import com.richardluo.globalIconPack.xposed.ReplaceIcon.Companion.IN_SC
 import com.richardluo.globalIconPack.xposed.ReplaceIcon.Companion.SC_DEFAULT
-import de.robv.android.xposed.XC_MethodHook.MethodHookParam
-import de.robv.android.xposed.callbacks.XC_LoadPackage.LoadPackageParam
+import io.github.libxposed.api.XposedInterface
+import io.github.libxposed.api.XposedModuleInterface
 import java.util.Calendar
 
 class CalendarAndClockHook(private val clockUseFallbackMask: Boolean) : Hook {
   private val calendars = mutableSetOf<String>()
   private val clocks = mutableSetOf<String>()
 
-  override fun onHookPixelLauncher(lpp: LoadPackageParam) {
+context(xposed: XposedInterface)
+ override fun onHookPixelLauncher(param: XposedModuleInterface.PackageReadyParam) {
     tryHook("CalendarAndClockHook") {
       tryDo {
         val iconProvider =
-          classOf("com.android.launcher3.icons.IconProvider", lpp) ?: return@tryDo fail()
+          classOf("com.android.launcher3.icons.IconProvider", param) ?: return@tryDo fail()
         hookCollectCC(iconProvider)
         hookGetState(iconProvider)
 
         tryHook("hook calendar and clock change") {
-            tryDo { hookCCChange16QPR2(lpp) }
-            tryDo { hookCCChangePre16QPR2(lpp) }
+            tryDo { hookCCChange16QPR2(param) }
+            tryDo { hookCCChangePre16QPR2(param) }
           }
           .failOnFail()
       }
     }
   }
 
-  fun TryHookScope<Unit>.hookCCChange16QPR2(lpp: LoadPackageParam) {
+  fun TryHookScope<Unit>.hookCCChange16QPR2(param: XposedModuleInterface.PackageReadyParam) {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.BAKLAVA) fail()
 
     val iconChangeTracker =
-      classOf("com.android.launcher3.icons.IconChangeTracker", lpp) ?: return fail()
+      classOf("com.android.launcher3.icons.IconChangeTracker", param) ?: return fail()
     val changesF = iconChangeTracker.field("_changes") ?: return fail()
     val userCacheF = iconChangeTracker.field("userCache") ?: return fail()
 
     val dispatchValueF =
-      classOf("com.android.launcher3.util.MutableListenableStream", lpp)?.method("dispatchValue")
+      classOf("com.android.launcher3.util.MutableListenableStream", param)?.method("dispatchValue")
         ?: return fail()
     val packageUserKeyConstructor =
       classOf("com.android.launcher3.util.PackageUserKey")
         ?.constructor(String::class.java, UserHandle::class.java) ?: return fail()
 
     val getUserProfilesF =
-      classOf("com.android.launcher3.pm.UserCache", lpp)?.method("getUserProfiles") ?: return fail()
+      classOf("com.android.launcher3.pm.UserCache", param)?.method("getUserProfiles")
+        ?: return fail()
 
     val iconChangeTrackerReceiver =
-      classOf($$"com.android.launcher3.icons.IconChangeTracker$receiver$1", lpp) ?: return fail()
+      classOf($$"com.android.launcher3.icons.IconChangeTracker$receiver$1", param) ?: return fail()
     val iconChangeTrackerF = iconChangeTrackerReceiver.field($$"this$0") ?: return fail()
 
     fun changeClockIcon(changes: Any) {
@@ -100,7 +103,7 @@ class CalendarAndClockHook(private val clockUseFallbackMask: Boolean) : Hook {
 
     iconChangeTrackerReceiver
       .method("accept")
-      ?.hook {
+      ?.hookCompat {
         before {
           val iconChangeTracker = iconChangeTrackerF.get(thisObject) ?: return@before
           val changes = changesF.get(iconChangeTracker) ?: return@before
@@ -123,13 +126,14 @@ class CalendarAndClockHook(private val clockUseFallbackMask: Boolean) : Hook {
       .registerToScopeOrFail()
   }
 
-  fun TryHookScope<Unit>.hookCCChangePre16QPR2(lpp: LoadPackageParam) {
+  fun TryHookScope<Unit>.hookCCChangePre16QPR2(param: XposedModuleInterface.PackageReadyParam) {
     val iconChangeReceiver =
-      classOf($$"com.android.launcher3.icons.IconProvider$IconChangeReceiver", lpp) ?: return fail()
+      classOf($$"com.android.launcher3.icons.IconProvider$IconChangeReceiver", param)
+        ?: return fail()
     val mCallbackF = iconChangeReceiver.field("mCallback") ?: return fail()
 
     val onAppIconChangedM =
-      classOf($$"com.android.launcher3.icons.IconProvider$IconChangeListener", lpp)
+      classOf($$"com.android.launcher3.icons.IconProvider$IconChangeListener", param)
         ?.method("onAppIconChanged") ?: return fail()
 
     fun changeClockIcon(mCallback: Any) {
@@ -144,7 +148,7 @@ class CalendarAndClockHook(private val clockUseFallbackMask: Boolean) : Hook {
 
     iconChangeReceiver
       .allMethods("onReceive")
-      .hook {
+      .hookCompat {
         before {
           val context = args[0] as? Context ?: return@before
           val intent = args[1] as? Intent ?: return@before
@@ -171,9 +175,9 @@ class CalendarAndClockHook(private val clockUseFallbackMask: Boolean) : Hook {
     val mClock = iconProvider.field("mClock")
 
     // Collect calendar and clock packages
-    fun MethodHookParam.collectCCHook(pi: PackageItemInfo?, density: Int?): Drawable? {
-      val pi = pi ?: return callOriginalMethod()
-      val sc = getSC() ?: return callOriginalMethod()
+    fun XposedInterface.Chain.collectCCHook(pi: PackageItemInfo?, density: Int?): Drawable? {
+      val pi = pi ?: return proceed<Drawable>()
+      val sc = getSC() ?: return proceed<Drawable>()
       val packageName = pi.packageName
       val entry =
         if (pi.icon.isHighByte(IN_SC)) sc.getIconEntry(pi.icon.withHighByte(SC_DEFAULT)) else null
@@ -184,7 +188,7 @@ class CalendarAndClockHook(private val clockUseFallbackMask: Boolean) : Hook {
           mCalendar?.getAs<ComponentName>(thisObject)?.packageName -> calendars.add(packageName)
           mClock?.getAs<ComponentName>(thisObject)?.packageName -> clocks.add(packageName)
         }
-        return callOriginalMethod()
+        return proceed() as Drawable?
       }
 
       when (entry.type) {
@@ -196,7 +200,7 @@ class CalendarAndClockHook(private val clockUseFallbackMask: Boolean) : Hook {
           val oldClock = mClock?.getAs<ComponentName>(thisObject)
           return try {
             mClock?.set(thisObject, getComponentName(packageName))
-            callOriginalMethod<Drawable>()?.let {
+            proceed<Drawable>()?.let {
               if (clockUseFallbackMask) sc.maskIconFrom(it) else it
             }
           } finally {
@@ -218,18 +222,18 @@ class CalendarAndClockHook(private val clockUseFallbackMask: Boolean) : Hook {
               ApplicationInfo::class.java,
               Int::class.javaPrimitiveType,
             )
-            .hook { replace { collectCCHook(args[0].asType(), args[2].asType()) } }
+            .hook { collectCCHook(args[0].asType(), args[2].asType()) }
             .registerToScopeOrFail()
         }
 
         tryDo {
           iconProvider
             .allMethods("getIcon", ActivityInfo::class.java)
-            .hook { replace { collectCCHook(args[0].asType(), args.getOrNull(1).asType()) } }
+            .hookCompat { replace { collectCCHook(args[0].asType(), args.getOrNull(1).asType()) } }
             .registerToScopeOrFail()
           iconProvider
             .allMethods("getIcon", LauncherActivityInfo::class.java)
-            .hook {
+            .hookCompat {
               replace {
                 val activityInfo = args[0].asType<LauncherActivityInfo>()
                 val info =
@@ -255,20 +259,24 @@ class CalendarAndClockHook(private val clockUseFallbackMask: Boolean) : Hook {
           // packages, we must append the day offset ourselves.
           iconProvider
             .allMethods("getStateForApp", ApplicationInfo::class.java)
-            .hook {
+            .hookCompat {
               after {
                 val info = args[0].asType<ApplicationInfo>() ?: return@after
                 if (!calendars.contains(info.packageName)) return@after
                 val dayOffset = Calendar.getInstance().get(Calendar.DAY_OF_MONTH) - 1
                 val originalResult = result ?: return@after
-                result = when (originalResult) {
-                  is String -> "$originalResult $dayOffset"
-                  // PersistedItemState: call withAdditionalValues to append the day
-                  else -> originalResult.javaClass.method(
-                    "withAdditionalValues",
-                    Array<String>::class.java
-                  )?.invoke(originalResult, arrayOf(dayOffset.toString())) ?: originalResult
-                }
+                result =
+                  when (originalResult) {
+                    is String -> "$originalResult $dayOffset"
+                    // PersistedItemState: call withAdditionalValues to append the day
+                    else ->
+                      originalResult.javaClass
+                        .method(
+                          "withAdditionalValues",
+                          Array<String>::class.java,
+                        )
+                        ?.invoke(originalResult, arrayOf(dayOffset.toString())) ?: originalResult
+                  }
               }
             }
             .registerToScopeOrFail()
@@ -278,7 +286,7 @@ class CalendarAndClockHook(private val clockUseFallbackMask: Boolean) : Hook {
           // https://cs.android.com/android/platform/superproject/+/android15-qpr1-release:frameworks/libs/systemui/iconloaderlib/src/com/android/launcher3/icons/IconProvider.java;l=89
           iconProvider
             .allMethods("getSystemStateForPackage", String::class.java, String::class.java)
-            .hook {
+            .hookCompat {
               before {
                 val systemState = args[0].asType<String>()
                 result =

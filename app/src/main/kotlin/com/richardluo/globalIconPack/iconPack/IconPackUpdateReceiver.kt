@@ -22,7 +22,7 @@ class IconPackUpdateReceiver : BroadcastReceiver() {
 
     when (action) {
       Intent.ACTION_PACKAGE_REPLACED -> {
-        if (pack == WorldPreference.get().get(Pref.ICON_PACK))
+        if (pack == WorldPreference.getInApp().get(Pref.ICON_PACK))
           runCatchingToastOnMain(context) { iconPackDB.onIconPackChange(iconPackCache[pack]) }
       }
     }

@@ -5,12 +5,13 @@ import android.content.ContentValues
 import android.database.Cursor
 import android.net.Uri
 import android.os.StrictMode
+import android.util.Log
 import androidx.core.net.toUri
 import com.richardluo.globalIconPack.BuildConfig
 import com.richardluo.globalIconPack.ui.MyApplication
+import com.richardluo.globalIconPack.utils.Logger.TAG
 import com.richardluo.globalIconPack.utils.SingletonManager.get
 import com.richardluo.globalIconPack.utils.getOrNull
-import com.richardluo.globalIconPack.utils.logE
 import com.richardluo.globalIconPack.utils.unflattenFromString
 
 class IconPackProvider : ContentProvider() {
@@ -21,7 +22,7 @@ class IconPackProvider : ContentProvider() {
   }
 
   private val iconPackDB: IconPackDB? by get {
-    runCatching { IconPackDB(MyApplication.context) }.getOrNull { logE(it) }
+    runCatching { IconPackDB(MyApplication.context) }.getOrNull { Log.e(TAG, "", it) }
   }
 
   override fun onCreate() = true
@@ -37,22 +38,22 @@ class IconPackProvider : ContentProvider() {
     selectionArgs ?: return null
     return strictModeAllowThreadDiskReads {
       runCatching {
-          when (uri) {
-            FALLBACK ->
-              if (selectionArgs.isNotEmpty()) iconPackDB.getFallbackSettings(selectionArgs[0])
-              else null
-            ICON ->
-              if (selectionArgs.size >= 3) {
-                iconPackDB.getIcon(
-                  selectionArgs[0],
-                  selectionArgs.drop(2).mapNotNull { unflattenFromString(it) },
-                  selectionArgs[1].toBoolean(),
-                )
-              } else null
-            else -> null
-          }
+        when (uri) {
+          FALLBACK ->
+            if (selectionArgs.isNotEmpty()) iconPackDB.getFallbackSettings(selectionArgs[0])
+            else null
+          ICON ->
+            if (selectionArgs.size >= 3) {
+              iconPackDB.getIcon(
+                selectionArgs[0],
+                selectionArgs.drop(2).mapNotNull { unflattenFromString(it) },
+                selectionArgs[1].toBoolean(),
+              )
+            } else null
+          else -> null
         }
-        .getOrNull { logE(it) }
+      }
+        .getOrNull { Log.e(TAG, "", it) }
     }
   }
 

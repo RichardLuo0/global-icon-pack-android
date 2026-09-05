@@ -1,29 +1,39 @@
 package com.richardluo.globalIconPack.utils
 
-import android.app.AndroidAppHelper
 import android.util.Log
+import android.util.Log.ERROR
+import android.util.Log.INFO
 import com.richardluo.globalIconPack.BuildConfig
-import de.robv.android.xposed.XposedBridge
+import com.richardluo.globalIconPack.reflect.ActivityThread
+import io.github.libxposed.api.XposedInterface
+import java.lang.ref.WeakReference
 
-private const val TAG = "[Global Icon Pack]"
+object Logger {
+  var xposed: WeakReference<XposedInterface>? = null
 
-val currentPackageName: String by lazy { AndroidAppHelper.currentPackageName() }
+  const val TAG = "[Global Icon Pack]"
 
-fun log(text: String) {
-  if (isInMod) XposedBridge.log("$TAG $currentPackageName: $text")
-  else Log.i("LSPosed-Bridge", "$TAG $text")
-}
+  val currentPackageName: String by lazy { ActivityThread.currentPackageName() ?: "" }
 
-fun logE(text: String) {
-  if (isInMod) XposedBridge.log("$TAG $currentPackageName error: $text")
-  else Log.e("LSPosed-Bridge", "$TAG $text")
-}
+  fun log(text: String) {
+    val xposed = xposed?.get()
+    if (xposed != null) xposed.log(INFO, TAG, "$currentPackageName: $text") else Log.i(TAG, text)
+  }
 
-fun logE(t: Throwable) {
-  if (isInMod) XposedBridge.log("$TAG $currentPackageName error: ${t.stackTraceToString()}")
-  else Log.e("LSPosed-Bridge", "$TAG ${t.stackTraceToString()}")
-}
+  fun logE(text: String) {
+    val xposed = xposed?.get()
+    if (xposed != null) xposed.log(ERROR, TAG, "$currentPackageName error: $text")
+    else Log.e(TAG, text)
+  }
 
-fun logD(text: String) {
-  if (BuildConfig.DEBUG) log(text)
+  fun logE(t: Throwable) {
+    val xposed = xposed?.get()
+    if (xposed != null) xposed.log(ERROR, TAG, "$currentPackageName error", t)
+    else Log.e(TAG, "", t)
+  }
+
+  context(xposed: XposedInterface)
+  fun logD(text: String) {
+    if (BuildConfig.DEBUG) log(text)
+  }
 }
