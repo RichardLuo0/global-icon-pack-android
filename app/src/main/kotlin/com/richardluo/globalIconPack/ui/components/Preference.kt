@@ -313,7 +313,7 @@ fun MySliderPreference(
     initValue = valueToText(value),
     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
   ) {
-    onValueChange(textToValue(it))
+    onValueChange(textToValue(it.toString()))
   }
 }
 

@@ -21,7 +21,6 @@ import androidx.compose.material3.TooltipBox
 import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.ui.graphics.vector.ImageVector
 
 enum class IconButtonStyle {
@@ -62,14 +61,13 @@ fun IconButtonWithTooltip(
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun ClearIconButton(state: MutableState<String>, onClear: () -> Unit = {}) {
+fun ClearIconButton(text: CharSequence, onClear: () -> Unit = {}) {
   AnimatedVisibility(
-    state.value.isNotEmpty(),
+    text.isNotEmpty(),
     enter = fadeIn(MaterialTheme.motionScheme.fastEffectsSpec()),
     exit = fadeOut(MaterialTheme.motionScheme.fastEffectsSpec()),
   ) {
     IconButtonWithTooltip(Icons.Outlined.Clear, "Clear", IconButtonStyle.None) {
-      state.value = ""
       onClear()
     }
   }

@@ -12,14 +12,18 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
+wimport androidx.compose.foundation.text.input.TextFieldState
+import androidx.compose.foundation.text.input.clearText
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.SearchBarDefaults.inputFieldColors
+import androidx.compose.material3.SearchBarValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberSearchBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
@@ -45,7 +49,7 @@ import kotlinx.coroutines.flow.first
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RoundSearchBar(
-  state: MutableState<String>,
+  textFieldState: TextFieldState,
   placeHolder: String,
   modifier: Modifier = Modifier,
   trailingIcon: (@Composable RowScope.() -> Unit)? = null,
@@ -53,17 +57,20 @@ fun RoundSearchBar(
 ) {
   val focusManager = LocalFocusManager.current
   val focusRequester = remember { FocusRequester() }
+  val searchBarState = rememberSearchBarState(initialValue = SearchBarValue.Expanded)
+
   SearchBarDefaults.InputField(
-    query = state.value,
-    onQueryChange = { state.value = it },
+    textFieldState = textFieldState,
+    searchBarState = searchBarState,
     onSearch = { focusManager.clearFocus() },
-    expanded = true,
-    onExpandedChange = {},
     placeholder = { Text(placeHolder) },
     leadingIcon = leadingIcon,
     trailingIcon = {
       Row {
-        ClearIconButton(state) { focusRequester.requestFocus() }
+        ClearIconButton(textFieldState.text) {
+          textFieldState.clearText()
+          focusRequester.requestFocus()
+        }
         trailingIcon?.invoke(this)
       }
     },
@@ -84,7 +91,7 @@ fun RoundSearchBar(
 @Composable
 fun WithSearch(
   state: MutableState<Boolean> = rememberSaveable { mutableStateOf(false) },
-  searchText: MutableState<String>,
+  textFieldState: TextFieldState,
   placeHolder: String = stringResource(R.string.common_search),
   content: @Composable () -> Unit,
 ) {
@@ -110,7 +117,7 @@ fun WithSearch(
 
         fun closeSearchBar() {
           expand = false
-          searchText.value = ""
+          textFieldState.clearText()
           initialized = false
         }
 
@@ -120,19 +127,19 @@ fun WithSearch(
         LaunchedEffect(Unit) {
           snapshotFlow { imeVisibleState.value }
             .dropWhile { !it }
-            .first { !it && searchText.value.isEmpty() && expand }
+            .first { !it && textFieldState.text.isEmpty() && expand }
           closeSearchBar()
         }
 
         var willBeFocused by remember { mutableStateOf(true) }
 
         RoundSearchBar(
-          searchText,
+          textFieldState,
           placeHolder,
           modifier =
             Modifier.focusRequester(focusRequester).onFocusChanged { state ->
               if (state.hasFocus) willBeFocused = false
-              else if (!willBeFocused && searchText.value.isEmpty() && expand) closeSearchBar()
+              else if (!willBeFocused && textFieldState.text.isEmpty() && expand) closeSearchBar()
             },
         ) {
           IconButtonWithTooltip(

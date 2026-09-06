@@ -19,6 +19,7 @@ import androidx.compose.foundation.lazy.grid.LazyGridScope
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.foundation.text.input.clearText
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.Circle
@@ -65,6 +66,7 @@ import com.richardluo.globalIconPack.ui.repo.IconPackApps
 import com.richardluo.globalIconPack.ui.viewModel.IconChooserVM
 import com.richardluo.globalIconPack.ui.viewModel.emptyImageHolder
 import com.richardluo.globalIconPack.utils.getValue
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import me.zhanghai.compose.preference.Preference
@@ -83,7 +85,7 @@ fun IconChooserSheet(
 
   fun onDismissRequest() {
     vm.variantSheet = false
-    vm.searchText.value = ""
+    vm.searchText.clearText()
   }
 
   if (!vm.variantSheet) return
@@ -182,7 +184,7 @@ fun IconChooserSheet(
     Box(modifier = Modifier.nestedScroll(expandedScrollConnection).clearFocusOnScroll()) {
       val searchBarHeight = 72.dp
 
-      if (vm.searchText.value.isEmpty()) {
+      if (vm.searchText.text.isEmpty()) {
         val icons = vm.icons.getValue()
         val suggestIcons = vm.suggestIcons.getValue()
         val expandState = rememberSaveable { mutableStateOf(false) }
@@ -262,7 +264,7 @@ fun IconChooserSheet(
             {
               expandedScrollConnection.expanded = true
               scope.launch {
-                delay(100)
+                delay(100.milliseconds)
                 focusRequester.requestFocus()
               }
             },

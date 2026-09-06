@@ -1,5 +1,6 @@
 package com.richardluo.globalIconPack.ui.viewModel
 
+import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.graphics.ImageBitmap
@@ -41,15 +42,16 @@ class IconChooserVM(savedStateHandle: SavedStateHandle) : ViewModel() {
 
   private var suggestHint by savedStateHandle.saved { "" }
 
-  val icons =
-    snapshotFlow { iconPack }
-      .transform { iconPack ->
-        iconPack ?: return@transform
-        emit(null)
-        emit(iconPack.drawables.map { VariantPackIcon(iconPack, it) })
-      }
-      .flowOn(Dispatchers.IO)
-      .stateIn(viewModelScope, SharingStarted.Lazily, null)
+  val icons = snapshotFlow {
+    iconPack
+  }
+    .transform { iconPack ->
+      iconPack ?: return@transform
+      emit(null)
+      emit(iconPack.drawables.map { VariantPackIcon(iconPack, it) })
+    }
+    .flowOn(Dispatchers.IO)
+    .stateIn(viewModelScope, SharingStarted.Lazily, null)
 
   val suggestIcons =
     combineTransform(icons, snapshotFlow { compInfo }) { icons, iconInfo ->
@@ -77,10 +79,10 @@ class IconChooserVM(savedStateHandle: SavedStateHandle) : ViewModel() {
       .flowOn(Dispatchers.Default)
       .stateIn(viewModelScope, SharingStarted.Lazily, null)
 
-  val searchText = mutableStateOf("")
+  val searchText = TextFieldState()
   val filteredIcons =
     icons
-      .filter(snapshotFlow { searchText.value }) { icon, text ->
+      .filter(snapshotFlow { searchText.text }) { icon, text ->
         icon.entry.name.contains(text, ignoreCase = true)
       }
       .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)

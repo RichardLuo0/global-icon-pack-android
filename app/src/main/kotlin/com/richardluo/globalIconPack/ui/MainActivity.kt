@@ -33,6 +33,7 @@ import androidx.compose.material.icons.outlined.PhoneAndroid
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.FilledTonalToggleButton
 import androidx.compose.material3.FloatingToolbarDefaults
 import androidx.compose.material3.HorizontalFloatingToolbar
 import androidx.compose.material3.Icon
@@ -41,7 +42,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
-import androidx.compose.material3.TonalToggleButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -115,23 +115,27 @@ class MainActivity : ComponentActivity() {
       SampleTheme {
         val prefFlow = vm.prefFlow
         if (vm.sharedPrefFlow.collectAsState().value == null) {
-          var showWarn by remember { mutableStateOf(false) }
+          Scaffold(modifier = Modifier.fillMaxSize()) { contentPadding ->
+            Box(modifier = Modifier.padding(contentPadding)) {
+              var showWarn by remember { mutableStateOf(false) }
 
-          LaunchedEffect(Unit) {
-            delay(3.seconds)
-            showWarn = true
-          }
+              LaunchedEffect(Unit) {
+                delay(3.seconds)
+                showWarn = true
+              }
 
-          if (!showWarn) LoadingDialog()
-          else
-            WarnDialog(
-              openState = remember { mutableStateOf(true) },
-              title = { OneLineText(getString(R.string.common_warning)) },
-              onOk = { finish() },
-              onCancel = { finish() },
-            ) {
-              Text(getString(R.string.warn_enableModule))
+              if (!showWarn) LoadingDialog()
+              else
+                WarnDialog(
+                  openState = remember { mutableStateOf(true) },
+                  title = { OneLineText(getString(R.string.common_warning)) },
+                  onOk = { finish() },
+                  onCancel = { finish() },
+                ) {
+                  Text(getString(R.string.warn_enableModule))
+                }
             }
+          }
         } else {
           val setupDialogState = rememberSaveable {
             mutableStateOf(AppPreference.getInApp().get(AppPref.NEED_SETUP))
@@ -297,7 +301,7 @@ class MainActivity : ComponentActivity() {
           ) {
             pages.forEachIndexed { i, page ->
               val checked = pagerState.currentPage == i
-              TonalToggleButton(
+              FilledTonalToggleButton(
                 checked,
                 { coroutineScope.launch { pagerState.animateScrollToPage(i) } },
                 modifier = Modifier.padding(horizontal = 4.dp),

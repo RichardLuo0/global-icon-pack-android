@@ -80,6 +80,7 @@ import com.richardluo.globalIconPack.ui.state.rememberAutoFillState
 import com.richardluo.globalIconPack.ui.viewModel.IconVariantVM
 import com.richardluo.globalIconPack.utils.consumable
 import com.richardluo.globalIconPack.utils.getValue
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
@@ -168,7 +169,7 @@ class IconVariantActivity : ComponentActivity() {
                   onClick = {
                     lifecycleScope.launch {
                       vm.flipModified()
-                      delay(100)
+                      delay(100.milliseconds)
                       expand = false
                     }
                   },

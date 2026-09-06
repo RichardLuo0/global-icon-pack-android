@@ -10,8 +10,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.input.TextFieldLineLimits
+import androidx.compose.foundation.text.input.TextFieldState
+import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material3.AlertDialogDefaults
 import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Button
@@ -31,7 +33,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -39,10 +40,8 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 
@@ -180,8 +179,8 @@ fun TextFieldDialog(
   title: (@Composable () -> Unit)? = null,
   initValue: String = "",
   keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
-  trailingIcon: @Composable ((MutableState<String>) -> Unit)? = null,
-  onOk: (String) -> Unit,
+  trailingIcon: @Composable ((TextFieldState) -> Unit)? = null,
+  onOk: (CharSequence) -> Unit,
 ) {
   CustomDialog(openState, title = title) {
     TextFieldDialogContent(
@@ -202,53 +201,33 @@ fun TextFieldDialogContent(
   initValue: String = "",
   textStyle: TextStyle = LocalTextStyle.current,
   placeholder: @Composable (() -> Unit)? = null,
-  leadingIcon: @Composable ((MutableState<String>) -> Unit)? = null,
-  trailingIcon: @Composable ((MutableState<String>) -> Unit)? = null,
-  prefix: @Composable ((MutableState<String>) -> Unit)? = null,
-  suffix: @Composable ((MutableState<String>) -> Unit)? = null,
+  leadingIcon: @Composable ((TextFieldState) -> Unit)? = null,
+  trailingIcon: @Composable ((TextFieldState) -> Unit)? = null,
+  prefix: @Composable ((TextFieldState) -> Unit)? = null,
+  suffix: @Composable ((TextFieldState) -> Unit)? = null,
   keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
-  singleLine: Boolean = true,
-  maxLines: Int = if (singleLine) 1 else Int.MAX_VALUE,
-  minLines: Int = 1,
+  lineLimits: TextFieldLineLimits = TextFieldLineLimits.SingleLine,
   onCancel: () -> Unit,
-  onOk: (String) -> Unit,
+  onOk: (CharSequence) -> Unit,
 ) {
-  val state = remember {
-    mutableStateOf(TextFieldValue(initValue, selection = TextRange(initValue.length)))
-  }
-  val textState = remember {
-    object : MutableState<String> {
-      override var value: String
-        get() = state.value.text
-        set(value) {
-          state.value = TextFieldValue(value, selection = TextRange(value.length))
-        }
-
-      override fun component1() = value
-
-      override fun component2(): (String) -> Unit = { value = it }
-    }
-  }
+  val state = rememberTextFieldState(initValue)
   val focusRequester = remember { FocusRequester() }
 
   OutlinedTextField(
-    value = state.value,
-    onValueChange = { state.value = it },
+    state = state,
     modifier =
       Modifier.fillMaxWidth()
         .padding(horizontal = 24.dp, vertical = 8.dp)
         .focusRequester(focusRequester),
     textStyle = textStyle,
     placeholder = placeholder,
-    leadingIcon = leadingIcon?.let { { it(textState) } },
-    trailingIcon = trailingIcon?.let { { it(textState) } },
-    prefix = prefix?.let { { it(textState) } },
-    suffix = suffix?.let { { it(textState) } },
-    singleLine = singleLine,
-    maxLines = maxLines,
-    minLines = minLines,
+    leadingIcon = leadingIcon?.let { { it(state) } },
+    trailingIcon = trailingIcon?.let { { it(state) } },
+    prefix = prefix?.let { { it(state) } },
+    suffix = suffix?.let { { it(state) } },
+    lineLimits = lineLimits,
     keyboardOptions = keyboardOptions.copy(imeAction = ImeAction.Done),
-    keyboardActions = KeyboardActions { onOk(textState.value) },
+    onKeyboardAction = { onOk(state.text) },
   )
 
   LaunchedEffect(focusRequester) { focusRequester.requestFocus() }
@@ -256,7 +235,7 @@ fun TextFieldDialogContent(
   DialogButtonRow(
     arrayOf(
       CancelDialogButton(LocalContext.current) { onCancel() },
-      OkDialogButton(LocalContext.current) { onOk(textState.value) },
+      OkDialogButton(LocalContext.current) { onOk(state.text) },
     )
   )
 }

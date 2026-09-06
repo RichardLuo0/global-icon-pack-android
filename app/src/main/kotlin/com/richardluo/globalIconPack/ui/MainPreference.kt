@@ -24,6 +24,9 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.text.input.TextFieldLineLimits
+import androidx.compose.foundation.text.input.clearText
+import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Help
 import androidx.compose.material.icons.automirrored.outlined.Shortcut
@@ -385,8 +388,9 @@ object MainPreference {
         initValue = value,
       ) {
         runCatchingToastOnMain(context) {
-          if (PathParser.createPathFromPathData(it).isEmpty) throw Exception("Not a valid path!")
-          value = it
+          if (PathParser.createPathFromPathData(it.toString()).isEmpty)
+            throw Exception("Not a valid path!")
+          value = it.toString()
           dismiss()
         }
       }
@@ -420,7 +424,7 @@ object MainPreference {
         initValue = state.value.toHexString(),
         prefix = { Text("#") },
         leadingIcon = {
-          val color = runCatching { Color("#${it.value}".toColorInt()) }.getOrDefault(Color.White)
+          val color = runCatching { Color("#${it.text}".toColorInt()) }.getOrDefault(Color.White)
           Box(
             modifier =
               Modifier.size(24.dp).drawBehind {
@@ -428,7 +432,7 @@ object MainPreference {
               }
           )
         },
-        trailingIcon = { ClearIconButton(it) },
+        trailingIcon = { ClearIconButton(it.text) { it.clearText() } },
         onCancel = dismiss,
       ) {
         runCatchingToastOnMain(context) {
@@ -468,16 +472,15 @@ object MainPreference {
       ) { state, dismiss ->
         TextFieldDialogContent(
           initValue = state.value,
-          singleLine = false,
-          maxLines = 2,
+          lineLimits = TextFieldLineLimits.MultiLine(2),
           onCancel = dismiss,
           trailingIcon = {
             IconButtonWithTooltip(Icons.Outlined.Restore, "Restore", IconButtonStyle.None) {
-              it.value = Pref.PIXEL_LAUNCHER_PACKAGE.def
+              it.setTextAndPlaceCursorAtEnd(Pref.PIXEL_LAUNCHER_PACKAGE.def)
             }
           },
         ) {
-          state.value = it
+          state.value = it.toString()
           dismiss()
         }
       }

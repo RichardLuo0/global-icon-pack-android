@@ -155,7 +155,9 @@ suspend inline fun <K : Any, V : Any> LruCache<K, V>.getOrPut(
 @Composable fun <T> Flow<T>.getValue(init: T) = collectAsStateWithLifecycle(init).value
 
 @OptIn(FlowPreview::class)
-fun Flow<String>.debounceInput(delay: Long = 300L) = debounce { if (it.isEmpty()) 0L else delay }
+fun Flow<CharSequence>.debounceInput(delay: Long = 300L) = debounce {
+  if (it.isEmpty()) 0L else delay
+}
 
 fun flowTrigger() =
   MutableSharedFlow<Unit>(1, onBufferOverflow = BufferOverflow.DROP_OLDEST).apply { tryEmit(Unit) }
@@ -222,8 +224,8 @@ inline fun <K, reified V> MutableMap<K, V>.getOrPut(
 }
 
 inline fun <T> Flow<List<T>?>.filter(
-  searchText: Flow<String>,
-  crossinline predicate: (T, String) -> Boolean,
+  searchText: Flow<CharSequence>,
+  crossinline predicate: (T, CharSequence) -> Boolean,
 ) =
   combineTransform(searchText.debounceInput()) { items, text ->
       emit(null)

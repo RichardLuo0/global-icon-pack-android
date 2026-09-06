@@ -9,7 +9,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Process
 import android.util.Log
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.runtime.snapshotFlow
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -66,7 +66,7 @@ class AppIconListVM(context: Application, iconsHolder: IconsHolder, appIcon: App
       .flowOn(Dispatchers.IO)
       .stateIn(viewModelScope, SharingStarted.Lazily, null)
 
-  val searchText = mutableStateOf("")
+  val searchText = TextFieldState()
 
   val activityIcons =
     createFilteredIconsFlow(iconsHolder) {
@@ -122,7 +122,7 @@ class AppIconListVM(context: Application, iconsHolder: IconsHolder, appIcon: App
     }
     .flowOn(Dispatchers.Default)
     .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), null)
-    .filter(snapshotFlow { searchText.value }) { (info), text ->
+    .filter(snapshotFlow { searchText.text }) { (info), text ->
       info.componentName.className.contains(text, ignoreCase = true) ||
         info.label.contains(text, ignoreCase = true)
     }
