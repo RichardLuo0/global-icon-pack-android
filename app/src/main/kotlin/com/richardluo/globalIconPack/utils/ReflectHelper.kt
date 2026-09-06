@@ -84,7 +84,8 @@ class HookBuilder : XposedInterface.Hooker {
     @get:JvmName("getMutableArgs") val args = getArgs().toMutableList()
 
     inline fun <reified R> proceedWithArgs(): R? =
-      proceedWith(thisObject, args.toTypedArray()) as? R
+      if (thisObject != null) proceedWith(thisObject, args.toTypedArray()) as? R
+      else proceed(args.toTypedArray()) as? R
   }
 
   private var beforeAction: (ChainProxy.() -> Unit)? = null
