@@ -17,8 +17,9 @@ object BypassCrossUserPermission {
   var gipUid = -1
 
   context(xposed: XposedInterface)
-  fun onHookSystem(lpp: XposedModuleInterface.PackageReadyParam) {
-    val computerEngineC = classOf("com.android.server.pm.ComputerEngine", lpp) ?: return
+  fun onHookSystem(param: XposedModuleInterface.SystemServerStartingParam) {
+    val computerEngineC =
+      classOf("com.android.server.pm.ComputerEngine", param.classLoader) ?: return
 
     computerEngineC.allConstructors().hookCompat {
       after {

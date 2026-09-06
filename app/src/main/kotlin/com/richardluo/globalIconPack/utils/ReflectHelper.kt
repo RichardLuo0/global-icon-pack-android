@@ -22,8 +22,11 @@ inline fun <reified T> Field.getAs(thisObj: Any? = null) = get(thisObj) as? T
 inline fun <reified T> Method.call(thisObj: Any? = null, vararg param: Any?) =
   invoke(thisObj, *param) as? T
 
-fun classOf(name: String, param: XposedModuleInterface.PackageReadyParam? = null) = runCatching {
-  Class.forName(name, true, param?.classLoader)
+fun classOf(name: String, param: XposedModuleInterface.PackageReadyParam) =
+  classOf(name, param.classLoader)
+
+fun classOf(name: String, classLoader: ClassLoader? = null) = runCatching {
+  Class.forName(name, true, classLoader)
 }
   .getOrNull { log("No class $name is found") }
 

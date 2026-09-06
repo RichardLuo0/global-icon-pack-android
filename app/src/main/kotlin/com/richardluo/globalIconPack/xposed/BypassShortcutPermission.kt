@@ -10,14 +10,14 @@ import io.github.libxposed.api.XposedModuleInterface
 
 object BypassShortcutPermission {
   context(xposed: XposedInterface)
-  fun onHookSystem(param: XposedModuleInterface.PackageReadyParam) {
-    classOf($$"com.android.server.pm.LauncherAppsService$LauncherAppsImpl", param)
+  fun onHookSystem(param: XposedModuleInterface.SystemServerStartingParam) {
+    classOf($$"com.android.server.pm.LauncherAppsService$LauncherAppsImpl", param.classLoader)
       ?.allMethods("ensureShortcutPermission")
       ?.hook {
         if (BuildConfig.APPLICATION_ID == args.rGet(-1)) return@hook null
         return@hook proceed()
       }
-    classOf("com.android.server.pm.ShortcutService", param)
+    classOf("com.android.server.pm.ShortcutService", param.classLoader)
       ?.allMethods("canSeeAnyPinnedShortcut")
       ?.hook {
         if (BuildConfig.APPLICATION_ID == args.getOrNull(0)) return@hook true

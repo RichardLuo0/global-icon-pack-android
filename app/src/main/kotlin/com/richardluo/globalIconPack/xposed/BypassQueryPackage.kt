@@ -11,11 +11,11 @@ import io.github.libxposed.api.XposedModuleInterface
 
 object BypassQueryPackage {
   context(xposed: XposedInterface)
-  fun onHookSystem(param: XposedModuleInterface.PackageReadyParam) {
+  fun onHookSystem(param: XposedModuleInterface.SystemServerStartingParam) {
     val getPackageNameM =
-      classOf("com.android.server.pm.pkg.PackageState", param)?.getMethod("getPackageName")
-        ?: return
-    classOf("com.android.server.pm.AppsFilterBase", param)
+      classOf("com.android.server.pm.pkg.PackageState", param.classLoader)
+        ?.getMethod("getPackageName") ?: return
+    classOf("com.android.server.pm.AppsFilterBase", param.classLoader)
       ?.allMethods("shouldFilterApplication")
       ?.hookCompat {
         after {

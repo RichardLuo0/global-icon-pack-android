@@ -9,16 +9,18 @@ import io.github.libxposed.api.XposedModuleInterface
 import java.lang.ref.WeakReference
 
 class XposedMain : XposedModule() {
+  init {
+    Logger.xposed = WeakReference(this)
+  }
+
+  override fun onSystemServerStarting(param: XposedModuleInterface.SystemServerStartingParam) {
+    BypassShortcutPermission.onHookSystem(param)
+    BypassQueryPackage.onHookSystem(param)
+    BypassCrossUserPermission.onHookSystem(param)
+  }
+
   override fun onPackageReady(param: XposedModuleInterface.PackageReadyParam) {
     if (!param.isFirstPackage) return
-    Logger.xposed = WeakReference(this)
-
-    if (param.packageName == "android") {
-      BypassShortcutPermission.onHookSystem(param)
-      BypassQueryPackage.onHookSystem(param)
-      BypassCrossUserPermission.onHookSystem(param)
-      return
-    }
 
     val pref = WorldPreference.get()
     val hookList =
