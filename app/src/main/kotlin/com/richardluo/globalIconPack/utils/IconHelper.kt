@@ -41,7 +41,7 @@ object IconHelper {
             if (mask != null) super.draw(this) else super.drawClip(this)
           }
         }
-        .let { canvas.drawBitmap(it, null, bounds, paint) }
+        ?.let { canvas.drawBitmap(it, null, bounds, paint) }
     }
 
     override fun setAlpha(alpha: Int) {
@@ -101,7 +101,7 @@ object IconHelper {
     override fun draw(canvas: Canvas) {
       cache
         .getBitmap(bounds) { drawIcon(paint, bounds, back, upon, mask) { super.draw(this) } }
-        .let { canvas.drawBitmap(it, null, bounds, paint) }
+        ?.let { canvas.drawBitmap(it, null, bounds, paint) }
     }
 
     override fun setAlpha(alpha: Int) {
