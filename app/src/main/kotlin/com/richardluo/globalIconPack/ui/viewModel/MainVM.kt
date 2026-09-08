@@ -145,18 +145,26 @@ class MainVM(context: Application) : ContextVM(context), ILoadable by Loadable()
     if (!db.isShareDB()) return
     val dbFile = File(db)
     val parent = dbFile.parent!!
-    if (dbFile.exists() && isAllFilesUsable(parent)) return
+    // Not guarded by isAllFilesUsable(): the db is read by the hooked system processes, and this
+    // app can always read it regardless of whether they can, so its own access proves nothing.
 
     Shell.cmd(
         "set -e",
         "if ! [ -f $db ]; then touch $db; fi",
-        "context=\"u:object_r:lsposed_file:s0\"",
-        $$"chown 9999:9999 $$parent && chmod 0777 $$parent && chcon $context $$parent",
-        $$"for file in $$parent/*; do chown 9999:9999 $file && chmod 0666 $file && chcon $context $file; done",
+        // chcon accepts a type the running policy does not define and writes it anyway, leaving
+        // an unresolvable label that denies every domain. Frameworks also disagree on the name,
+        // so use the first type this policy actually knows rather than hardcoding one. The
+        // previously hardcoded type is tried first so setups it already works on are untouched.
+        $$"context=",
+        $$"for t in lsposed_file magisk_file xposed_data; do if echo -n \"u:object_r:$t:s0\" > /sys/fs/selinux/context 2>/dev/null; then context=\"u:object_r:$t:s0\"; break; fi; done",
+        $$"chown 9999:9999 $$parent && chmod 0777 $$parent",
+        $$"if [ -n \"$context\" ]; then chcon \"$context\" $$parent; fi",
+        $$"for file in $$parent/*; do chown 9999:9999 $file && chmod 0666 $file; if [ -n \"$context\" ]; then chcon \"$context\" $file; fi; done",
       )
       .exec()
       .throwOnFail("Database permission setting failed")
-    // Check again
+    // Check again. This only proves the db is not broken for this app, the hooked processes rely
+    // on the SELinux type above.
     if (!dbFile.exists() || !isAllFilesUsable(parent))
       throw Exception("Unable to read and write after resetting permission!")
   }
