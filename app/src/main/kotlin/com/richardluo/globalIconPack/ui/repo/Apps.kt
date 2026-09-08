@@ -4,6 +4,7 @@ import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import com.richardluo.globalIconPack.ui.MyApplication
 import com.richardluo.globalIconPack.ui.model.AppCompInfo
+import com.richardluo.globalIconPack.utils.Logger
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -23,13 +24,25 @@ object Apps {
         val userApps = mutableListOf<AppCompInfo>()
         val systemApps = mutableListOf<AppCompInfo>()
 
-        app.packageManager
-          .getInstalledApplications(PackageManager.MATCH_UNINSTALLED_PACKAGES)
-          .forEach { info ->
-            if ((info.flags and ApplicationInfo.FLAG_SYSTEM) == ApplicationInfo.FLAG_SYSTEM)
-              systemApps.add(AppCompInfo(app, info))
-            else userApps.add(AppCompInfo(app, info))
+        val pm = app.packageManager
+        // MATCH_ANY_USER is added to this query inside system server by
+        // BypassCrossUserPermission, so when that bypass stops working the call throws
+        // SecurityException and takes the whole process down from this flow. Retrying without
+        // MATCH_UNINSTALLED_PACKAGES would fail the same way, since the flag is not added here,
+        // so just degrade to an empty list.
+        val installed: List<ApplicationInfo> =
+          try {
+            pm.getInstalledApplications(PackageManager.MATCH_UNINSTALLED_PACKAGES)
+          } catch (e: Exception) {
+            Logger.logE(e)
+            emptyList()
           }
+
+        installed.forEach { info ->
+          if ((info.flags and ApplicationInfo.FLAG_SYSTEM) == ApplicationInfo.FLAG_SYSTEM)
+            systemApps.add(AppCompInfo(app, info))
+          else userApps.add(AppCompInfo(app, info))
+        }
 
         arrayOf(
           userApps.distinct().sortedBy { it.label },
