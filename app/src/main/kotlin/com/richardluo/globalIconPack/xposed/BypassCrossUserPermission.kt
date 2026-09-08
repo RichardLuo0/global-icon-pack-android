@@ -30,10 +30,17 @@ object BypassCrossUserPermission {
       }
     }
 
-    computerEngineC.allMethods("enforceCrossUserPermission").hookCompat {
-      before {
-        val callingUid = args.getOrNull(0).asType<Int>() ?: return@before
-        if (gipUid == callingUid) result = null
+    // API 37 inserted a leading int, so callingUid moved from the first to the second parameter.
+    // Both releases end the leading run of ints with userId and put callingUid right before it,
+    // so derive the index from the signature instead of assuming a position.
+    computerEngineC.allMethods("enforceCrossUserPermission").forEach { m ->
+      val uidIndex = m.parameterTypes.takeWhile { it == Int::class.javaPrimitiveType }.size - 2
+      if (uidIndex < 0) return@forEach
+      m.hookCompat {
+        before {
+          val callingUid = args.getOrNull(uidIndex).asType<Int>() ?: return@before
+          if (gipUid == callingUid) result = null
+        }
       }
     }
 
