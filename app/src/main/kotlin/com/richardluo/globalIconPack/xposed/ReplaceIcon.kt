@@ -118,36 +118,58 @@ class ReplaceIcon(
 
   context(xposed: XposedInterface)
   override fun onHookApp(param: XposedModuleInterface.PackageReadyParam) {
-    // Find the drawable corresponding to the replaced icon
-    getDrawableForDensityM?.hookCompat {
+    // Find the drawable corresponding to the replaced icon.
+    // The indexes point at the icon resource id and the density in the hooked method arguments,
+    // densityIndex is null when the method takes no density.
+    fun HookBuilder.replaceMarkedIconHook(resIdIndex: Int, densityIndex: Int?) {
       before {
-        val resId = args[0] as? Int ?: return@before
-        val density = args[1] as? Int ?: return@before
-        if (resId == android.R.drawable.sym_def_app_icon) {
-          result = proceed<Drawable?>()?.let { getSC()?.genIconFrom(it) ?: it }
-          return@before
-        }
-        result =
-          when (resId.highByte()) {
-            IN_SC -> getSC()?.getIcon(resId.withHighByte(SC_DEFAULT), density)
-            NOT_IN_SC -> {
-              args[0] = resId.withHighByte(ANDROID_DEFAULT)
-              var drawable = proceedWithArgs<Drawable?>()
-
-              if (
-                forceMonochrome &&
-                  Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-                  drawable is AdaptiveIconDrawable
-              )
-                drawable.monochrome?.let {
-                  drawable = MonochromeDrawable(thisObject.asType()!!, it)
-                }
-
-              drawable?.let { getSC()?.genIconFrom(it) ?: it }
-            }
-            else -> return@before
+        // Both hooked methods can sit in the same call chain, so proceeding from the outer one
+        // runs the inner one. Let only the outermost generate an icon, otherwise the fallback
+        // back, upon and mask would be applied twice.
+        if (replacingIcon.get() == true) return@before
+        val resId = args[resIdIndex] as? Int ?: return@before
+        replacingIcon.set(true)
+        try {
+          if (resId == android.R.drawable.sym_def_app_icon) {
+            result = proceed<Drawable?>()?.let { getSC()?.genIconFrom(it) ?: it }
+            return@before
           }
+          result =
+            when (resId.highByte()) {
+              IN_SC -> {
+                val density = densityIndex?.let { args[it] as? Int } ?: 0
+                getSC()?.getIcon(resId.withHighByte(SC_DEFAULT), density)
+              }
+              NOT_IN_SC -> {
+                args[resIdIndex] = resId.withHighByte(ANDROID_DEFAULT)
+                var drawable = proceedWithArgs<Drawable?>()
+
+                if (
+                  forceMonochrome &&
+                    Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                    drawable is AdaptiveIconDrawable
+                )
+                  drawable.monochrome?.let {
+                    drawable = MonochromeDrawable(thisObject.asType()!!, it)
+                  }
+
+                drawable?.let { getSC()?.genIconFrom(it) ?: it }
+              }
+              else -> return@before
+            }
+        } finally {
+          replacingIcon.set(false)
+        }
       }
+    }
+
+    getDrawableForDensityM?.hookCompat { replaceMarkedIconHook(0, 1) }
+
+    // Since API 37 ApplicationPackageManager resolves item icons through getDrawableInternal()
+    // instead of Resources.getDrawableForDensity(), so the marked res id never reaches the hook
+    // above and every icon outside the launcher falls back to sym_def_app_icon.
+    classOf("android.app.ApplicationPackageManager")?.allMethods("getDrawableInternal")?.hookCompat {
+      replaceMarkedIconHook(1, null)
     }
 
     // ArchivedAppIcon
@@ -331,6 +353,9 @@ private fun replaceIconInItemInfo(info: PackageItemInfo, id: Int?, sc: Source) {
 private typealias BatchReplacer = (seq: Sequence<Any?>, sc: Source) -> Unit
 
 private val blockReplaceIconResId = ThreadLocal.withInitial { false }
+
+// Keeps the drawable hooks from nesting, see replaceMarkedIconHook()
+private val replacingIcon = ThreadLocal.withInitial { false }
 
 private inline fun runBlockReplaceIconResId(crossinline block: () -> Unit) {
   if (blockReplaceIconResId.get() == true) return
