@@ -27,11 +27,9 @@ private class MonoForegroundDrawable(private val mono: Drawable, @ColorInt color
   private val monoBitmapCache = BitmapCache()
 
   override fun draw(canvas: Canvas) {
-    val monoBitmap =
-      monoBitmapCache.getBitmap(bounds) {
-        mono.draw(this)
-      }
-    canvas.drawBitmap(monoBitmap, null, bounds, paint)
+    monoBitmapCache
+      .getBitmap(bounds) { mono.draw(this) }
+      ?.let { canvas.drawBitmap(it, null, bounds, paint) }
   }
 
   override fun setAlpha(alpha: Int) {

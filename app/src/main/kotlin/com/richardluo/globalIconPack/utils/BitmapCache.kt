@@ -8,8 +8,9 @@ import androidx.core.graphics.createBitmap
 class BitmapCache {
   private var bitmap: Bitmap? = null
 
-  fun getBitmap(bounds: Rect, draw: Canvas.() -> Unit) =
-    if (
+  fun getBitmap(bounds: Rect, draw: Canvas.() -> Unit): Bitmap? =
+    if (bounds.isEmpty) null
+    else if (
       bitmap == null ||
         bitmap!!.getWidth() != bounds.width() ||
         bitmap!!.getHeight() != bounds.height()
