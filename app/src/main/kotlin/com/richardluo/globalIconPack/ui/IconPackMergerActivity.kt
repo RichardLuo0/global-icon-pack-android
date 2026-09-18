@@ -373,7 +373,7 @@ class IconPackMergerActivity : ComponentActivity() {
       Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.TopCenter) {
         LazyColumn(
           modifier = Modifier.widthIn(max = 400.dp).fillMaxHeight(),
-          contentPadding = contentPadding,
+          contentPadding = contentPadding.newPadding { top += 4.dp },
         ) {
           itemsIndexed(valueMap.toList()) { index, (pack, app) ->
             val selected = pack == vm.basePack
@@ -401,10 +401,7 @@ class IconPackMergerActivity : ComponentActivity() {
         LazyVerticalGrid(
           modifier = Modifier.fillMaxSize().padding(horizontal = 2.dp),
           contentPadding =
-            contentPadding
-              .consumable()
-              .apply { top += appFilterHeight + appFilterVPadding * 2 }
-              .consume(),
+            contentPadding.newPadding { top += appFilterHeight + appFilterVPadding * 2 },
           columns = GridCells.Adaptive(minSize = 74.dp),
         ) {
           items(icons, key = { it.info.componentName }) {
