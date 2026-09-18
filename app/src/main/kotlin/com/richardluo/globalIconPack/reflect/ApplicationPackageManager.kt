@@ -4,9 +4,12 @@ import android.content.pm.ApplicationInfo
 import android.content.pm.PackageInfo
 import android.content.pm.PackageManager
 import com.richardluo.globalIconPack.utils.call
+import com.richardluo.globalIconPack.utils.classOf
 import com.richardluo.globalIconPack.utils.method
 
 object ApplicationPackageManager {
+  val clazz by lazy { classOf("android.app.ApplicationPackageManager") }
+
   private val getInstalledApplicationsAsUserM by lazy {
     PackageManager::class
       .java

@@ -27,6 +27,7 @@ import androidx.core.graphics.drawable.toDrawable
 import com.richardluo.globalIconPack.iconPack.getSC
 import com.richardluo.globalIconPack.iconPack.source.Source
 import com.richardluo.globalIconPack.iconPack.source.getComponentName
+import com.richardluo.globalIconPack.reflect.ApplicationPackageManager
 import com.richardluo.globalIconPack.reflect.BaseIconFactory
 import com.richardluo.globalIconPack.reflect.Resources.getDrawableForDensityM
 import com.richardluo.globalIconPack.utils.HookBuilder
@@ -168,22 +169,18 @@ class ReplaceIcon(
     // Since API 37 ApplicationPackageManager resolves item icons through getDrawableInternal()
     // instead of Resources.getDrawableForDensity(), so the marked res id never reaches the hook
     // above and every icon outside the launcher falls back to sym_def_app_icon.
-    classOf("android.app.ApplicationPackageManager")?.allMethods("getDrawableInternal")?.hookCompat {
+    ApplicationPackageManager.clazz?.allMethods("getDrawableInternal")?.hookCompat {
       replaceMarkedIconHook(1, null)
     }
 
     // ArchivedAppIcon
-    classOf("android.app.ApplicationPackageManager")?.allMethods("getArchivedAppIcon")?.hookCompat {
+    ApplicationPackageManager.clazz?.allMethods("getArchivedAppIcon")?.hookCompat {
       before {
         val packageName = args[0] as? String ?: return@before
         val sc = getSC() ?: return@before
         val entry = sc.getIconEntry(getComponentName(packageName)) ?: return@before
         val icon = sc.getIcon(entry, 0)
-        if (icon != null) result = icon
-      }
-
-      after {
-        result = result.asType<Drawable>()?.let { getSC()?.genIconFrom(it) ?: it }
+        result = icon ?: result.asType<Drawable>()?.let { sc.genIconFrom(it) }
       }
     }
 
