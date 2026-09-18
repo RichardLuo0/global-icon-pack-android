@@ -6,6 +6,7 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.InteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -90,6 +91,7 @@ import com.richardluo.globalIconPack.ui.components.SampleTheme
 import com.richardluo.globalIconPack.ui.components.TextFieldDialog
 import com.richardluo.globalIconPack.ui.components.TextFieldDialogContent
 import com.richardluo.globalIconPack.ui.components.TwoLineText
+import com.richardluo.globalIconPack.ui.components.animatedShape
 import com.richardluo.globalIconPack.ui.components.dialogPreference
 import com.richardluo.globalIconPack.ui.components.listBottomItemShape
 import com.richardluo.globalIconPack.ui.components.listItemPadding
@@ -110,33 +112,37 @@ import me.zhanghai.compose.preference.LocalPreferenceTheme
 
 object MainPreference {
 
-  class ListModifiers(
-    val top: Modifier,
-    val middle: Modifier,
-    val bottom: Modifier,
-    val single: Modifier,
-  )
+  @Composable
+  private fun Modifier.topPreference(interactionSource: InteractionSource) =
+    padding(listItemPadding)
+      .animatedShape(listTopItemShape, interactionSource)
+      .background(MaterialTheme.colorScheme.surfaceContainerLow)
 
   @Composable
-  private fun createListModifiers(): ListModifiers {
-    val background = MaterialTheme.colorScheme.surfaceContainerLow
-    val itemModifier = Modifier.padding(listItemPadding)
-    return ListModifiers(
-      itemModifier.clip(listTopItemShape).background(background),
-      itemModifier.clip(listMiddleItemShape).background(background),
-      itemModifier.clip(listBottomItemShape).background(background),
-      itemModifier.clip(listSingleItemShape).background(background),
-    )
-  }
+  private fun Modifier.middlePreference(interactionSource: InteractionSource) =
+    padding(listItemPadding)
+      .animatedShape(listMiddleItemShape, interactionSource)
+      .background(MaterialTheme.colorScheme.surfaceContainerLow)
+
+  @Composable
+  private fun Modifier.bottomPreference(interactionSource: InteractionSource) =
+    padding(listItemPadding)
+      .animatedShape(listBottomItemShape, interactionSource)
+      .background(MaterialTheme.colorScheme.surfaceContainerLow)
+
+  @Composable
+  private fun Modifier.singlePreference(interactionSource: InteractionSource) =
+    padding(listItemPadding)
+      .animatedShape(listSingleItemShape, interactionSource)
+      .background(MaterialTheme.colorScheme.surfaceContainerLow)
 
   @Composable
   fun General(modifier: Modifier = Modifier, contentPadding: PaddingValues = PaddingValues(0.dp)) {
     val context = LocalContext.current
-    val listModifiers = createListModifiers()
 
     LazyColumn(modifier = modifier, contentPadding = contentPadding) {
       myListPreference(
-        modifier = listModifiers.top,
+        modifier = { Modifier.topPreference(it) },
         icon = { AnimatedContent(it) { Icon(modeToIcon(it), it) } },
         key = Pref.MODE.key,
         defaultValue = Pref.MODE.def,
@@ -147,7 +153,7 @@ object MainPreference {
         ModeItem(pos, value, value == currentValue, onClick)
       }
       mapListPreference(
-        modifier = listModifiers.middle,
+        modifier = { Modifier.middlePreference(it) },
         icon = { Icon(Icons.Outlined.Backpack, Pref.ICON_PACK.key) },
         key = Pref.ICON_PACK.key,
         defaultValue = Pref.ICON_PACK.def,
@@ -164,7 +170,7 @@ object MainPreference {
         IconPackItem(key, value, key == currentKey, pos.toShape(), onClick)
       }
       mySwitchPreference(
-        modifier = listModifiers.middle,
+        modifier = { Modifier.middlePreference(it) },
         icon = {},
         key = Pref.ICON_PACK_AS_FALLBACK.key,
         defaultValue = Pref.ICON_PACK_AS_FALLBACK.def,
@@ -172,21 +178,21 @@ object MainPreference {
         summary = { TwoLineText(stringResource(R.string.general_iconPackAsFallback_summary)) },
       )
       mySwitchPreference(
-        modifier = listModifiers.middle,
+        modifier = { Modifier.middlePreference(it) },
         icon = { Icon(Icons.AutoMirrored.Outlined.Shortcut, Pref.SHORTCUT.key) },
         key = Pref.SHORTCUT.key,
         defaultValue = Pref.SHORTCUT.def,
         title = { TwoLineText(stringResource(R.string.general_shortcut)) },
       )
       mySwitchPreference(
-        modifier = listModifiers.middle,
+        modifier = { Modifier.middlePreference(it) },
         icon = { Icon(Icons.Outlined.Contrast, Pref.FORCE_MONOCHROME.key) },
         key = Pref.FORCE_MONOCHROME.key,
         defaultValue = Pref.FORCE_MONOCHROME.def,
         title = { TwoLineText(stringResource(R.string.general_forceMonochrome)) },
       )
       myPreference(
-        modifier = listModifiers.bottom,
+        modifier = { Modifier.bottomPreference(it) },
         icon = { Icon(Icons.Outlined.Merge, "openMerger") },
         key = "openMerger",
         onClick = { context.startActivity(Intent(context, IconPackMergerActivity::class.java)) },
@@ -199,11 +205,10 @@ object MainPreference {
   @Composable
   fun IconPack(modifier: Modifier = Modifier, contentPadding: PaddingValues = PaddingValues(0.dp)) {
     val context = LocalContext.current
-    val listModifiers = createListModifiers()
 
     LazyColumn(modifier = modifier, contentPadding = contentPadding) {
       myPreference(
-        modifier = listModifiers.single,
+        modifier = { Modifier.singlePreference(it) },
         icon = { Icon(Icons.Outlined.Edit, "iconVariant") },
         key = "iconVariant",
         enabled = { it.get(Pref.MODE) != MODE_LOCAL && it.get(Pref.ICON_PACK).isNotEmpty() },
@@ -212,7 +217,7 @@ object MainPreference {
         summary = { TwoLineText(stringResource(R.string.iconPack_iconVariant_summary)) },
       )
       spacer()
-      fallbackPref(context, listModifiers)
+      fallbackPref(context)
     }
   }
 
@@ -237,15 +242,14 @@ object MainPreference {
   @Composable
   fun Fallback(modifier: Modifier = Modifier, state: LazyListState = rememberLazyListState()) {
     val context = LocalContext.current
-    val listModifiers = createListModifiers()
 
-    LazyColumn(modifier = modifier, state = state) { fallbackPref(context, listModifiers) }
+    LazyColumn(modifier = modifier, state = state) { fallbackPref(context) }
   }
 
   @OptIn(ExperimentalStdlibApi::class)
-  fun LazyListScope.fallbackPref(context: Context, listModifiers: ListModifiers) {
+  fun LazyListScope.fallbackPref(context: Context) {
     mySwitchPreference(
-      modifier = listModifiers.top,
+      modifier = { Modifier.topPreference(it) },
       icon = { Icon(Icons.Outlined.SettingsBackupRestore, Pref.ICON_FALLBACK.key) },
       key = Pref.ICON_FALLBACK.key,
       defaultValue = Pref.ICON_FALLBACK.def,
@@ -253,7 +257,7 @@ object MainPreference {
       summary = { TwoLineText(stringResource(R.string.iconPack_iconFallback_summary)) },
     )
     mySwitchPreference(
-      modifier = listModifiers.middle,
+      modifier = { Modifier.middlePreference(it) },
       icon = {},
       enabled = { it.get(Pref.ICON_FALLBACK) },
       key = Pref.SCALE_ONLY_FOREGROUND.key,
@@ -261,7 +265,7 @@ object MainPreference {
       title = { TwoLineText(stringResource(R.string.iconPack_scaleOnlyForeground)) },
     )
     mySwitchPreference(
-      modifier = listModifiers.middle,
+      modifier = { Modifier.middlePreference(it) },
       icon = {},
       enabled = { it.get(Pref.ICON_FALLBACK) },
       key = Pref.BACK_AS_ADAPTIVE_BACK.key,
@@ -269,7 +273,7 @@ object MainPreference {
       title = { TwoLineText(stringResource(R.string.iconPack_backAsAdaptiveBack)) },
     )
     mySliderPreference(
-      modifier = listModifiers.middle,
+      modifier = { Modifier.middlePreference(it) },
       icon = {},
       enabled = { it.get(Pref.ICON_FALLBACK) },
       key = Pref.NON_ADAPTIVE_SCALE.key,
@@ -281,7 +285,7 @@ object MainPreference {
       valueToText = { "%.2f".format(it) },
     )
     mySwitchPreference(
-      modifier = listModifiers.bottom,
+      modifier = { Modifier.bottomPreference(it) },
       icon = {},
       enabled = { it.get(Pref.ICON_FALLBACK) },
       key = Pref.CONVERT_TO_ADAPTIVE.key,
@@ -291,7 +295,7 @@ object MainPreference {
     )
     spacer()
     mySwitchPreference(
-      modifier = listModifiers.top,
+      modifier = { Modifier.topPreference(it) },
       icon = {},
       enabled = { it.get(Pref.ICON_FALLBACK) },
       key = Pref.OVERRIDE_ICON_FALLBACK.key,
@@ -300,7 +304,7 @@ object MainPreference {
       summary = { TwoLineText(stringResource(R.string.iconPack_overrideIconFallback_summary)) },
     )
     mySliderPreference(
-      modifier = listModifiers.middle,
+      modifier = { Modifier.middlePreference(it) },
       icon = { Icon(Icons.Outlined.PhotoSizeSelectSmall, Pref.ICON_PACK_SCALE.key) },
       enabled = { it.get(Pref.ICON_FALLBACK) && it.get(Pref.OVERRIDE_ICON_FALLBACK) },
       key = Pref.ICON_PACK_SCALE.key,
@@ -312,7 +316,7 @@ object MainPreference {
       valueToText = { "%.2f".format(it) },
     )
     dialogPreference(
-      modifier = listModifiers.middle,
+      modifier = { Modifier.middlePreference(it) },
       icon = { Icon(Icons.Outlined.ShapeLine, Pref.ICON_PACK_SHAPE.key) },
       enabled = { it.get(Pref.ICON_FALLBACK) && it.get(Pref.OVERRIDE_ICON_FALLBACK) },
       key = Pref.ICON_PACK_SHAPE.key,
@@ -396,7 +400,7 @@ object MainPreference {
       }
     }
     dialogPreference(
-      modifier = listModifiers.middle,
+      modifier = { Modifier.middlePreference(it) },
       icon = { Icon(Icons.Outlined.ColorLens, Pref.ICON_PACK_SHAPE.key) },
       enabled = {
         it.get(Pref.ICON_FALLBACK) &&
@@ -442,7 +446,7 @@ object MainPreference {
       }
     }
     mySwitchPreference(
-      modifier = listModifiers.bottom,
+      modifier = { Modifier.bottomPreference(it) },
       icon = { Icon(Icons.Outlined.FlipToFront, Pref.ICON_PACK_ENABLE_UPON.key) },
       enabled = { it.get(Pref.ICON_FALLBACK) && it.get(Pref.OVERRIDE_ICON_FALLBACK) },
       key = Pref.ICON_PACK_ENABLE_UPON.key,
@@ -453,11 +457,9 @@ object MainPreference {
 
   @Composable
   fun Pixel(modifier: Modifier = Modifier, contentPadding: PaddingValues = PaddingValues(0.dp)) {
-    val listModifiers = createListModifiers()
-
     LazyColumn(modifier = modifier, contentPadding = contentPadding) {
       dialogPreference(
-        modifier = listModifiers.top,
+        modifier = { Modifier.topPreference(it) },
         icon = { Icon(Icons.Outlined.Apps, Pref.PIXEL_LAUNCHER_PACKAGE.key) },
         key = Pref.PIXEL_LAUNCHER_PACKAGE.key,
         defaultValue = Pref.PIXEL_LAUNCHER_PACKAGE.def,
@@ -485,7 +487,7 @@ object MainPreference {
         }
       }
       mySwitchPreference(
-        modifier = listModifiers.bottom,
+        modifier = { Modifier.bottomPreference(it) },
         icon = {},
         key = Pref.NO_SHADOW.key,
         defaultValue = Pref.NO_SHADOW.def,
@@ -494,14 +496,14 @@ object MainPreference {
       )
       spacer()
       mySwitchPreference(
-        modifier = listModifiers.top,
+        modifier = { Modifier.topPreference(it) },
         icon = { Icon(Icons.Outlined.CalendarMonth, Pref.FORCE_LOAD_CLOCK_AND_CALENDAR.key) },
         key = Pref.FORCE_LOAD_CLOCK_AND_CALENDAR.key,
         defaultValue = Pref.FORCE_LOAD_CLOCK_AND_CALENDAR.def,
         title = { TwoLineText(stringResource(R.string.pixel_forceLoadClockAndCalendar)) },
       )
       mySwitchPreference(
-        modifier = listModifiers.middle,
+        modifier = { Modifier.middlePreference(it) },
         icon = {},
         enabled = { it.get(Pref.FORCE_LOAD_CLOCK_AND_CALENDAR) },
         key = Pref.CLOCK_USE_FALLBACK_MASK.key,
@@ -509,7 +511,7 @@ object MainPreference {
         title = { TwoLineText(stringResource(R.string.pixel_clockUseFallbackMask)) },
       )
       mySwitchPreference(
-        modifier = listModifiers.bottom,
+        modifier = { Modifier.bottomPreference(it) },
         icon = {},
         enabled = { it.get(Pref.FORCE_LOAD_CLOCK_AND_CALENDAR) },
         key = Pref.DISABLE_CLOCK_SECONDS.key,
@@ -518,7 +520,7 @@ object MainPreference {
       )
       spacer()
       mySwitchPreference(
-        modifier = listModifiers.single,
+        modifier = { Modifier.singlePreference(it) },
         icon = {},
         key = Pref.FORCE_ACTIVITY_ICON_FOR_TASK.key,
         defaultValue = Pref.FORCE_ACTIVITY_ICON_FOR_TASK.def,

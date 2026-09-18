@@ -1,7 +1,12 @@
 package com.richardluo.globalIconPack.ui.components
 
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.InteractionSource
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -13,20 +18,27 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CornerBasedShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MaterialTheme.shapes
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.richardluo.globalIconPack.R
 
@@ -86,6 +98,60 @@ fun ListItemPos.toShape() =
 val listItemPadding = PaddingValues(horizontal = 16.dp, vertical = 1.5.dp)
 
 @Composable
+fun Modifier.animatedShape(
+  shape: CornerBasedShape,
+  interactionSource: InteractionSource,
+): Modifier {
+  val isPressed by interactionSource.collectIsPressedAsState()
+  val target = if (isPressed) listMiddleItemShape else shape
+  val animationSpec = MaterialTheme.motionScheme.defaultEffectsSpec<Dp>()
+  val density = LocalDensity.current
+
+  val (targetTopStart, targetTopEnd, targetBottomEnd, targetBottomStart) =
+    remember(target, density) {
+      with(density) {
+        listOf(
+          target.topStart.toPx(Size.Unspecified, density).toDp(),
+          target.topEnd.toPx(Size.Unspecified, density).toDp(),
+          target.bottomEnd.toPx(Size.Unspecified, density).toDp(),
+          target.bottomStart.toPx(Size.Unspecified, density).toDp(),
+        )
+      }
+    }
+
+  val topStart by
+    animateDpAsState(
+      targetTopStart,
+      animationSpec,
+      label = "topStart",
+    )
+  val topEnd by
+    animateDpAsState(
+      targetTopEnd,
+      animationSpec,
+      label = "topEnd",
+    )
+  val bottomEnd by
+    animateDpAsState(
+      targetBottomEnd,
+      animationSpec,
+      label = "bottomEnd",
+    )
+  val bottomStart by
+    animateDpAsState(
+      targetBottomStart,
+      animationSpec,
+      label = "bottomStart",
+    )
+
+  return clip(
+    remember(topStart, topEnd, bottomEnd, bottomStart) {
+      RoundedCornerShape(topStart, topEnd, bottomEnd, bottomStart)
+    }
+  )
+}
+
+@Composable
 fun ListItem(
   leading: @Composable (() -> Unit)? = null,
   headline: @Composable () -> Unit,
@@ -95,13 +161,15 @@ fun ListItem(
   padding: PaddingValues = listItemPadding,
   onClick: (() -> Unit)? = null,
 ) {
+  val interactionSource = remember { MutableInteractionSource() }
+
   Box(
     modifier =
       Modifier.fillMaxWidth()
         .padding(padding)
         .then(
           shape?.let {
-            Modifier.clip(it)
+            Modifier.animatedShape(shape, interactionSource)
               .background(
                 if (selected) MaterialTheme.colorScheme.primaryFixedDim
                 else MaterialTheme.colorScheme.surfaceContainerLow
@@ -109,8 +177,15 @@ fun ListItem(
           } ?: Modifier
         )
         .then(
-          onClick?.let { Modifier.selectable(selected, true, Role.RadioButton, onClick = onClick) }
-            ?: Modifier
+          onClick?.let {
+            Modifier.selectable(
+              selected,
+              true,
+              Role.RadioButton,
+              interactionSource,
+              onClick = onClick,
+            )
+          } ?: Modifier.clickable(interactionSource, ripple()) {}
         )
         .padding(horizontal = 12.dp, vertical = 10.dp)
   ) {
@@ -168,10 +243,9 @@ fun ListItemContent(
       val leadingWidth = leading.minIntrinsicWidth(estimatedHeight)
 
       var newOtherWidth = constraints.maxWidth - leadingWidth
-      val otherPlaceables =
-        others.map {
-          it.measure(constraints.copy(maxWidth = newOtherWidth)).also { newOtherWidth -= it.width }
-        }
+      val otherPlaceables = others.map {
+        it.measure(constraints.copy(maxWidth = newOtherWidth)).also { newOtherWidth -= it.width }
+      }
       val height = otherPlaceables.maxOf { it.height }
       val leadingPlaceable =
         leading.measure(constraints.copy(maxWidth = leadingWidth, maxHeight = height))

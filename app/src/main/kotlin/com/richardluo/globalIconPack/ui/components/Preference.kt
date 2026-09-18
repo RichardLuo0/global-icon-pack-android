@@ -1,6 +1,7 @@
 package com.richardluo.globalIconPack.ui.components
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.InteractionSource
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -22,6 +23,7 @@ import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.SideEffect
@@ -57,25 +59,31 @@ fun ProvideMyPreferenceTheme(
 
 val LocalPreferenceLock = compositionLocalOf { false }
 
-fun LazyListScope.myPreference(
+inline fun LazyListScope.myPreference(
   key: String,
-  title: @Composable () -> Unit,
-  modifier: Modifier = Modifier.fillMaxWidth(),
-  enabled: (Preferences) -> Boolean = { true },
-  icon: @Composable (() -> Unit)? = null,
-  summary: @Composable (() -> Unit)? = null,
-  widgetContainer: @Composable (() -> Unit)? = null,
-  onClick: (() -> Unit)? = null,
+  noinline title: @Composable () -> Unit,
+  crossinline modifier: @Composable (InteractionSource) -> Modifier = { Modifier.fillMaxWidth() },
+  crossinline enabled: (Preferences) -> Boolean = { true },
+  noinline icon: @Composable (() -> Unit)? = null,
+  noinline summary: @Composable (() -> Unit)? = null,
+  noinline widgetContainer: @Composable (() -> Unit)? = null,
+  noinline onClick: (() -> Unit)? = null,
 ) {
   item(key = key, contentType = "MyPreference") {
+    val interactionSource = remember { MutableInteractionSource() }
     Preference(
       title = title,
-      modifier = modifier,
+      modifier =
+        modifier(interactionSource)
+          .then(
+            onClick?.let {
+              Modifier.clickable(interactionSource, ripple(), onClick = onClick)
+            } ?: Modifier
+          ),
       enabled = enabled(LocalPreferenceFlow.current.getValue()),
       icon = icon,
       summary = summary,
       widgetContainer = widgetContainer,
-      onClick = onClick,
     )
   }
 }
@@ -85,7 +93,7 @@ inline fun <T> LazyListScope.myListPreference(
   defaultValue: T,
   values: List<T>,
   crossinline title: @Composable (T) -> Unit,
-  modifier: Modifier = Modifier.fillMaxWidth(),
+  crossinline modifier: @Composable (InteractionSource) -> Modifier = { Modifier.fillMaxWidth() },
   crossinline rememberState: @Composable () -> MutableState<T> = {
     rememberPreferenceState(key, defaultValue)
   },
@@ -110,15 +118,23 @@ inline fun <T> LazyListScope.myListPreference(
         dismiss()
       }
     }
+    val interactionSource = remember { MutableInteractionSource() }
+    val enabled = !LocalPreferenceLock.current && enabled(LocalPreferenceFlow.current.getValue())
     Preference(
       title = title,
-      modifier = modifier,
-      enabled = !LocalPreferenceLock.current && enabled(LocalPreferenceFlow.current.getValue()),
+      modifier =
+        modifier(interactionSource)
+          .then(
+            if (enabled)
+              Modifier.clickable(interactionSource, ripple()) {
+                openSelector.value = true
+              }
+            else Modifier
+          ),
+      enabled = enabled,
       icon = icon?.let { { it(value) } },
       summary = summary?.let { { it(value) } },
-    ) {
-      openSelector.value = true
-    }
+    )
   }
 }
 
@@ -127,7 +143,7 @@ inline fun <T, U> LazyListScope.mapListPreference(
   defaultValue: T,
   crossinline getValueMap: @Composable () -> Map<T, U>?,
   crossinline title: @Composable (T) -> Unit,
-  modifier: Modifier = Modifier.fillMaxWidth(),
+  crossinline modifier: @Composable (InteractionSource) -> Modifier = { Modifier.fillMaxWidth() },
   crossinline rememberState: @Composable () -> MutableState<T> = {
     rememberPreferenceState(key, defaultValue)
   },
@@ -153,15 +169,23 @@ inline fun <T, U> LazyListScope.mapListPreference(
         dismiss()
       }
     }
+    val interactionSource = remember { MutableInteractionSource() }
+    val enabled = !LocalPreferenceLock.current && enabled(LocalPreferenceFlow.current.getValue())
     Preference(
       title = title,
-      modifier = modifier,
-      enabled = !LocalPreferenceLock.current && enabled(LocalPreferenceFlow.current.getValue()),
+      modifier =
+        modifier(interactionSource)
+          .then(
+            if (enabled)
+              Modifier.clickable(interactionSource, ripple()) {
+                openSelector.value = true
+              }
+            else Modifier
+          ),
+      enabled = enabled,
       icon = icon?.let { { it(valueKey) } },
       summary = summary?.let { { it(valueKey, valueMap?.get(valueKey)) } },
-    ) {
-      openSelector.value = true
-    }
+    )
   }
 }
 
@@ -169,7 +193,7 @@ inline fun <T> LazyListScope.dialogPreference(
   key: String,
   defaultValue: T,
   crossinline title: @Composable (T) -> Unit,
-  modifier: Modifier = Modifier.fillMaxWidth(),
+  crossinline modifier: @Composable (InteractionSource) -> Modifier = { Modifier.fillMaxWidth() },
   crossinline rememberState: @Composable () -> MutableState<T> = {
     rememberPreferenceState(key, defaultValue)
   },
@@ -184,15 +208,23 @@ inline fun <T> LazyListScope.dialogPreference(
     val title = @Composable { title(value) }
     val openDialog = rememberSaveable { mutableStateOf(false) }
     CustomDialog(openDialog, title = title) { content(state) { openDialog.value = false } }
+    val interactionSource = remember { MutableInteractionSource() }
+    val enabled = !LocalPreferenceLock.current && enabled(LocalPreferenceFlow.current.getValue())
     Preference(
       title = title,
-      modifier = modifier,
-      enabled = !LocalPreferenceLock.current && enabled(LocalPreferenceFlow.current.getValue()),
+      modifier =
+        modifier(interactionSource)
+          .then(
+            if (enabled)
+              Modifier.clickable(interactionSource, ripple()) {
+                openDialog.value = true
+              }
+            else Modifier
+          ),
+      enabled = enabled,
       icon = icon?.let { { it(value) } },
       summary = summary?.let { { it(value) } },
-    ) {
-      openDialog.value = true
-    }
+    )
   }
 }
 
@@ -200,7 +232,7 @@ inline fun LazyListScope.mySliderPreference(
   key: String,
   defaultValue: Float,
   noinline title: @Composable (Float) -> Unit,
-  modifier: Modifier = Modifier.fillMaxWidth(),
+  crossinline modifier: @Composable (InteractionSource) -> Modifier = { Modifier.fillMaxWidth() },
   noinline rememberState: @Composable () -> MutableState<Float> = {
     rememberPreferenceState(key, defaultValue)
   },
@@ -220,13 +252,15 @@ inline fun LazyListScope.mySliderPreference(
     var value by state
     val sliderState = rememberSliderState(value)
     var sliderValue by sliderState
+    val interactionSource = remember { MutableInteractionSource() }
     MySliderPreference(
       value = value,
       onValueChange = { value = it },
       sliderValue = sliderValue,
       onSliderValueChange = { sliderValue = it },
       title = { title(sliderValue) },
-      modifier = modifier,
+      modifier = modifier(interactionSource),
+      interactionSource = interactionSource,
       valueRange = valueRange,
       valueSteps = valueSteps,
       enabled = !LocalPreferenceLock.current && enabled(LocalPreferenceFlow.current.getValue()),
@@ -247,6 +281,7 @@ fun MySliderPreference(
   onSliderValueChange: (Float) -> Unit,
   title: @Composable () -> Unit,
   modifier: Modifier = Modifier,
+  interactionSource: MutableInteractionSource? = null,
   valueRange: ClosedFloatingPointRange<Float> = 0f..1f,
   valueSteps: Int = 0,
   enabled: Boolean = true,
@@ -266,7 +301,10 @@ fun MySliderPreference(
 
   Preference(
     title = title,
-    modifier = if (enabled) modifier.clickable { dialogState.value = true } else modifier,
+    modifier =
+      modifier.clickable(enabled, interactionSource = interactionSource) {
+        dialogState.value = true
+      },
     enabled = enabled,
     icon = icon,
     summary = {
@@ -321,7 +359,7 @@ inline fun LazyListScope.mySwitchPreference(
   key: String,
   defaultValue: Boolean,
   crossinline title: @Composable (Boolean) -> Unit,
-  modifier: Modifier = Modifier.fillMaxWidth(),
+  crossinline modifier: @Composable (InteractionSource) -> Modifier = { Modifier.fillMaxWidth() },
   crossinline rememberState: @Composable () -> MutableState<Boolean> = {
     rememberPreferenceState(key, defaultValue)
   },
@@ -332,10 +370,12 @@ inline fun LazyListScope.mySwitchPreference(
   item(key = key, contentType = "MySwitchPreference") {
     val state = rememberState()
     val value by state
+    val interactionSource = remember { MutableInteractionSource() }
     MySwitchPreference(
       state = state,
       title = { title(value) },
-      modifier = modifier,
+      modifier = modifier(interactionSource),
+      interactionSource = interactionSource,
       enabled = !LocalPreferenceLock.current && enabled(LocalPreferenceFlow.current.getValue()),
       icon = icon?.let { { it(value) } },
       summary = summary?.let { { it(value) } },
@@ -348,6 +388,7 @@ fun MySwitchPreference(
   state: MutableState<Boolean>,
   title: @Composable () -> Unit,
   modifier: Modifier = Modifier,
+  interactionSource: MutableInteractionSource? = null,
   enabled: Boolean = true,
   icon: @Composable (() -> Unit)? = null,
   summary: @Composable (() -> Unit)? = null,
@@ -355,7 +396,7 @@ fun MySwitchPreference(
   var value by state
   Preference(
     title = title,
-    modifier = modifier.toggleable(value, enabled, Role.Switch) { value = it },
+    modifier = modifier.toggleable(value, enabled, Role.Switch, interactionSource) { value = it },
     enabled = enabled,
     icon = icon,
     summary = summary,
