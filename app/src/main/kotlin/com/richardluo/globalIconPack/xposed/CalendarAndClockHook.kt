@@ -73,7 +73,7 @@ context(xposed: XposedInterface)
       classOf("com.android.launcher3.util.MutableListenableStream", param)?.method("dispatchValue")
         ?: return fail()
     val packageUserKeyConstructor =
-      classOf("com.android.launcher3.util.PackageUserKey")
+      classOf("com.android.launcher3.util.PackageUserKey", param)
         ?.constructor(String::class.java, UserHandle::class.java) ?: return fail()
 
     val getUserProfilesF =
