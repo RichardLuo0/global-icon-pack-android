@@ -79,7 +79,7 @@ class MainVM(context: Application) : ContextVM(context), ILoadable by Loadable()
               updateDBIfPackUpdated(true)
               runCatchingToast(
                 context,
-                { context.getString(R.string.general_error_onShareMode) },
+                { context.getString(R.string.general_error_onShareMode) + ":" + it.message },
                 {
                   pref.toMutablePreferences().apply { set(Pref.MODE.key, MODE_PROVIDER) }
                 },
@@ -156,7 +156,7 @@ class MainVM(context: Application) : ContextVM(context), ILoadable by Loadable()
         // so use the first type this policy actually knows rather than hardcoding one. The
         // previously hardcoded type is tried first so setups it already works on are untouched.
         $$"context=",
-        $$"for t in lsposed_file magisk_file xposed_data; do if echo -n \"u:object_r:$t:s0\" > /sys/fs/selinux/context 2>/dev/null; then context=\"u:object_r:$t:s0\"; break; fi; done",
+        $$"for t in gip_file lsposed_file xposed_data magisk_file; do if echo -n \"u:object_r:$t:s0\" > /sys/fs/selinux/context 2>/dev/null; then context=\"u:object_r:$t:s0\"; break; fi; done",
         $$"chown 9999:9999 $$parent && chmod 0777 $$parent",
         $$"if [ -n \"$context\" ]; then chcon \"$context\" $$parent; fi",
         $$"for file in $$parent/*; do chown 9999:9999 $file && chmod 0666 $file; if [ -n \"$context\" ]; then chcon \"$context\" $file; fi; done",
