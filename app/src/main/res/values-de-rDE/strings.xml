@@ -17,6 +17,7 @@
     <string name="general_iconPackAsFallback">Rückfall-Symbolpaket</string>
     <string name="general_iconPackAsFallback_summary">Symbolpaket verwenden, auch wenn Klassenname nicht übereinstimmt.</string>
     <string name="general_shortcut">Symbole für Verknüpfungen generieren</string>
+    <string name="general_forceMonochrome">Monochrom erzwingen</string>
     <string name="general_mergeIconPack">Symbol-Paket zusammenführen</string>
     <string name="general_mergeIconPack_summary">Erstelle ein neues Icon-Paket aus verschiedenen Symbol-Paketen.</string>
     <string name="general_error_onShareMode">Wenn ein Fehler im share Modus existiert das sollten sie zum Provider Modus wechseln.</string>

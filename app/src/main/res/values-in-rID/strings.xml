@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools" tools:ignore="MissingTranslation">
-    <string name="appName">Global Icon Pack</string>
+    <string name="appName">Paket Ikon Global</string>
     <string name="warn_enableModule">Pastikan modul Xposed telah diaktifkan terlebih dahulu.</string>
-    <string name="info_iconPackApplied">Paket ikon telah diterapkan. Silakan klik “Restart XXX” secara manual.</string>
+    <string name="info_iconPackApplied">Paket ikon telah diterapkan. Silakan klik “Muat ulang XXX” secara manual.</string>
     <string name="setup_chooseMode">Pilih Mode</string>
     <string name="general_settings">Umum</string>
     <string name="general_mode">Mode</string>
@@ -30,13 +30,14 @@
     <string name="iconPack_iconPackEnableUpon">Aktifkan latar depan</string>
     <string name="pixel_settings">Piksel</string>
     <string name="pixel_pixelLauncherPackage">Nama paket peluncur</string>
-    <string name="pixel_forceLoadClockAndCalendar">Muat paksa ikon jam dan kalender </string>
+    <string name="pixel_forceLoadClockAndCalendar">Muat paksa jam dan ikon kalender</string>
     <string name="pixel_disableClockSeconds">Matikan detik jam</string>
     <string name="pixel_forceActivityIconForTask">Muat paksa ikon aktivitas untuk tugas</string>
     <string name="mainMenu_restartSystemUI">Mulai ulang SystemUI</string>
-    <string name="mainMenu_restartOthers">Mulai Ulang Lainnya</string>
+    <string name="mainMenu_restartOthers">Mulai ulang Lainnya</string>
+    <string name="mainMenu_openCrowdin">Bantuan terkait pelokalan</string>
     <string name="mainMenu_openGithub">Github</string>
-    <string name="mainMenu_buyMeACoffee">Beliin aku kopi</string>
+    <string name="mainMenu_buyMeACoffee">Belikan aku kopi</string>
     <string name="mainMenu_info_restarted">Muat ulang berhasil</string>
     <string name="common_settings_locked">Terkunci</string>
     <string name="common_settings_unlocked">Terbuka</string>
@@ -46,14 +47,14 @@
     <string name="common_search">Pencarian</string>
     <string name="common_options">Opsi</string>
     <string name="common_empty">Kosong</string>
-    <string name="icons_restoreDefault">Balikin ke setelan awal</string>
+    <string name="icons_restoreDefault">Kembalikan ke setelan awal</string>
     <string name="icons_clearAll">Bersihkan semua</string>
     <string name="icons_warn_restoreDefault">Apakah kamu yakin ingin mengembalikan ikon ke setelan awal?</string>
     <string name="icons_filter_user">Pengguna aplikasi</string>
     <string name="icons_filter_system">Sistem aplikasi</string>
-    <string name="appIconList_activities">Aktifitas</string>
+    <string name="appIconList_activities">Aktivitas</string>
     <string name="appIconList_shortcuts">Pintasan</string>
-    <string name="iconVariant_menu_modified">Dimodifikasi</string>
+    <string name="iconVariant_menu_modified">Memodifikasi</string>
     <string name="iconVariant_menu_export">Ekspor</string>
     <string name="iconVariant_info_exported">Paket ikon berhasil di ekspor.</string>
     <string name="iconVariant_menu_import">Impor</string>
@@ -65,8 +66,9 @@
     <string name="merger_newPack_Name">Nama paket baru</string>
     <string name="merger_newPack_Package">Paket kemasan baru</string>
     <string name="merger_newPack_installedAppsOnly">Hasilkan ikon hanya untuk aplikasi yang sudah terpasang</string>
-    <string name="merger_nextStep">Step berikutnya</string>
+    <string name="merger_nextStep">Langkah berikutnya</string>
     <string name="merger_done">Berhasil</string>
+    <string name="merger_error_needEmptyFolder">Diperlukan sebuah folder kosong!</string>
     <string name="iconChooser_originalIcon">Ikon asli</string>
     <string name="iconChooser_suggestedIcons">Ikon yang disarankan</string>
     <string name="iconChooser_allIcons">Semua ikon</string>
