@@ -283,6 +283,7 @@ class IconPackDB(
     val iconPackCache = SingletonManager.get { IconPackCache(context) }.value
     val packTable = pt(iconPack.pack)
     val updateId = db.compileStatement("UPDATE $packTable SET id=? WHERE ROWID=?")
+    val staleRowIds = mutableListOf<Long>()
     db
       .query(
         packTable,
@@ -305,7 +306,11 @@ class IconPackDB(
               if (pack.isNotEmpty()) iconPackCache[pack] else iconPack,
             )
           if (id == null) {
-            db.delete(packTable, "ROWID=?", arrayOf(rowId.toString()))
+            // Deleting here would shrink the result set this cursor is still walking:
+            // SQLiteCursor caches the row count from the first window fill and re-runs the
+            // query on every refill, so a shrunken result set makes the next read throw.
+            // Collect and delete once the cursor is closed.
+            staleRowIds.add(rowId.toLong())
             return@use
           }
           updateId.apply {
@@ -316,6 +321,16 @@ class IconPackDB(
           }
         }
       }
+    if (staleRowIds.isNotEmpty()) {
+      val deleteId = db.compileStatement("DELETE FROM $packTable WHERE ROWID=?")
+      staleRowIds.forEach {
+        deleteId.apply {
+          clearBindings()
+          bindLong(1, it)
+          execute()
+        }
+      }
+    }
   }
 
   fun insertOrUpdateIcon(
