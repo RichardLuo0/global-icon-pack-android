@@ -178,9 +178,9 @@ class ReplaceIcon(
       before {
         val packageName = args[0] as? String ?: return@before
         val sc = getSC() ?: return@before
-        val entry = sc.getIconEntry(getComponentName(packageName)) ?: return@before
-        val icon = sc.getIcon(entry, 0)
-        result = icon ?: result.asType<Drawable>()?.let { sc.genIconFrom(it) }
+        result =
+          sc.getIconEntry(getComponentName(packageName))?.let { sc.getIcon(it, 0) }
+            ?: proceed<Drawable?>()?.let { sc.genIconFrom(it) }
       }
     }
 
