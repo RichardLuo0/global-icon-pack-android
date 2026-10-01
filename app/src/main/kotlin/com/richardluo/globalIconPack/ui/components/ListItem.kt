@@ -101,9 +101,10 @@ val listItemPadding = PaddingValues(horizontal = 16.dp, vertical = 1.5.dp)
 fun Modifier.animatedShape(
   shape: CornerBasedShape,
   interactionSource: InteractionSource,
+  targetShape: CornerBasedShape = listSingleItemShape,
 ): Modifier {
   val isPressed by interactionSource.collectIsPressedAsState()
-  val target = if (isPressed) listMiddleItemShape else shape
+  val target = if (isPressed) targetShape else shape
   val animationSpec = MaterialTheme.motionScheme.defaultEffectsSpec<Dp>()
   val density = LocalDensity.current
 
