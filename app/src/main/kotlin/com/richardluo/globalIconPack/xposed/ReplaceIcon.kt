@@ -16,7 +16,6 @@ import android.content.pm.ResolveInfo
 import android.content.pm.ServiceInfo
 import android.content.pm.ShortcutInfo
 import android.graphics.Bitmap
-import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.drawable.AdaptiveIconDrawable
 import android.graphics.drawable.BitmapDrawable
@@ -35,11 +34,11 @@ import com.richardluo.globalIconPack.utils.HookBuilder
 import com.richardluo.globalIconPack.utils.IconHelper
 import com.richardluo.globalIconPack.utils.Logger.logD
 import com.richardluo.globalIconPack.utils.MonochromeDrawable
+import com.richardluo.globalIconPack.utils.UnClipAdaptiveIconDrawable
 import com.richardluo.globalIconPack.utils.allConstructors
 import com.richardluo.globalIconPack.utils.allMethods
 import com.richardluo.globalIconPack.utils.asType
 import com.richardluo.globalIconPack.utils.classOf
-import com.richardluo.globalIconPack.utils.deoptimize
 import com.richardluo.globalIconPack.utils.field
 import com.richardluo.globalIconPack.utils.getAs
 import com.richardluo.globalIconPack.utils.highByte
@@ -111,53 +110,12 @@ class ReplaceIcon(
 
     runSafe {
       if (Build.VERSION.SDK_INT < Build.VERSION_CODES.BAKLAVA) return@runSafe
-      val baseIconFactory = BaseIconFactory.getClass(param) ?: return@runSafe
-      val drawFullBleedF = BaseIconFactory.getIconOptionsClass(param)?.field("drawFullBleed")
-        ?: return@runSafe
-      val iconF =
-        classOf("com.android.launcher3.icons.BitmapInfo", param)?.field("icon") ?: return@runSafe
-      val placeholderColor =
-        classOf("com.android.systemui.plugins.DarkIconDispatcher", param)
-          ?.field("DEFAULT_INVERSE_ICON_TINT")
-          ?.getAs<Int>()
-          ?: return@runSafe
-
-      // Let the launcher shape the icons it renders.
-      //
-      // The full bleed path is what makes that possible, because it tags the generated bitmap
-      // with FULL_BLEED, and both consumers of that flag insist on it before applying the icon
-      // shape: ItemInfoWithIcon.supportsCustomShapes() on the workspace, and FloatingIconView
-      // for the launch and close transitions. Turning full bleed off (see 561d823) left every
-      // icon clipped by the system mask instead of the shape chosen in the launcher settings,
-      // and the transitions fell back to ThemeManager.DEFAULT_SHAPE_DELEGATE, which resolves
-      // the system mask again instead of the icon state.
-      //
-      // Full bleed also fills the whole bitmap with an opaque placeholder before compositing
-      // the layers, which is what made the icons look like they had a black background. An
-      // adaptive icon is composited out of its own layers, so that placeholder is covered for
-      // every icon that has a background and merely visible through the transparent corners of
-      // the others: drop it and tell the bitmap afterwards that it still has transparent
-      // corners, so that nothing mistakes it for a bitmap that covers its tile.
-      //
-      // Anything else, the clock and the other icons the launcher builds on its own, still
-      // relies on that placeholder, and keeps the old behavior.
-      val fillingBitmap = ThreadLocal.withInitial { false }
-      Canvas::class.java.allMethods("drawColor").deoptimize().hookCompat {
+      val iconOptions = BaseIconFactory.getIconOptionsClass(param) ?: return@runSafe
+      val drawFullBleedF = iconOptions.field("drawFullBleed") ?: return@runSafe
+      BaseIconFactory.getClass(param)?.allMethods("createBadgedIconBitmap")?.hookCompat {
         before {
-          if (fillingBitmap.get() == true && args[0] == placeholderColor)
-            args[0] = Color.TRANSPARENT
-        }
-      }
-      baseIconFactory.allMethods("createBadgedIconBitmap").hookCompat {
-        before {
-          val shapeable = args[0].canBeShaped()
-          fillingBitmap.set(shapeable)
-          drawFullBleedF.set(args[1], if (shapeable) null else false)
-        }
-        after {
-          val filled = fillingBitmap.get() == true
-          fillingBitmap.set(false)
-          if (filled) result?.let { iconF.getAs<Bitmap>(it)?.setHasAlpha(true) }
+          args[0].asType<UnClipAdaptiveIconDrawable>() ?: return@before
+          drawFullBleedF.set(args[1], false)
         }
       }
     }
@@ -179,14 +137,14 @@ class ReplaceIcon(
         try {
           if (resId == android.R.drawable.sym_def_app_icon) {
             result =
-              proceed<Drawable?>()?.let { getSC()?.genIconFrom(it)?.markFromIconPack() ?: it }
+              proceed<Drawable?>()?.let { getSC()?.genIconFrom(it) ?: it }
             return@before
           }
           result =
             when (resId.highByte()) {
               IN_SC -> {
                 val density = densityIndex?.let { args[it] as? Int } ?: 0
-                getSC()?.getIcon(resId.withHighByte(SC_DEFAULT), density)?.markFromIconPack()
+                getSC()?.getIcon(resId.withHighByte(SC_DEFAULT), density)
               }
               NOT_IN_SC -> {
                 args[resIdIndex] = resId.withHighByte(ANDROID_DEFAULT)
@@ -201,7 +159,7 @@ class ReplaceIcon(
                     drawable = MonochromeDrawable(thisObject.asType()!!, it)
                   }
 
-                drawable?.let { getSC()?.genIconFrom(it)?.markFromIconPack() ?: it }
+                drawable?.let { getSC()?.genIconFrom(it) ?: it }
               }
               else -> return@before
             }
@@ -228,7 +186,6 @@ class ReplaceIcon(
         result =
           sc.getIconEntry(getComponentName(packageName))?.let { sc.getIcon(it, 0) }
             ?: proceed<Drawable?>()?.let { sc.genIconFrom(it) }
-        (result as? Drawable)?.markFromIconPack()
       }
     }
 
@@ -246,7 +203,6 @@ class ReplaceIcon(
           result =
             sc.getIconEntry(getComponentName(shortcut))?.let { sc.getIcon(it, density) }
               ?: proceed<Drawable?>()?.let { sc.genIconFrom(it) }
-          (result as? Drawable)?.markFromIconPack()
         }
       }
   }
@@ -402,18 +358,6 @@ private val blockReplaceIconResId = ThreadLocal.withInitial { false }
 
 // Keeps the drawable hooks from nesting, see replaceMarkedIconHook()
 private val replacingIcon = ThreadLocal.withInitial { false }
-
-// The drawables the icon pack provided, so that the launcher can tell them apart from the
-// icons the system and the launcher generate on their own.
-private val iconPackDrawables = Collections.newSetFromMap<Any>(WeakHashMap())
-
-private fun Drawable.markFromIconPack() = apply { iconPackDrawables.add(this) }
-
-// The full bleed path composites the layers of an adaptive icon as they are and leaves the
-// shape to the delegate that draws it, so the launcher can shape it, no matter which icon
-// pack the drawable came from, or whether there is an icon pack for it at all.
-private fun Any?.canBeShaped() =
-  this is AdaptiveIconDrawable || (this != null && iconPackDrawables.contains(this))
 
 private inline fun runBlockReplaceIconResId(crossinline block: () -> Unit) {
   if (blockReplaceIconResId.get() == true) return
