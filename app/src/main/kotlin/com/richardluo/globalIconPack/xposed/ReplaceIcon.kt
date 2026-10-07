@@ -136,8 +136,7 @@ class ReplaceIcon(
         replacingIcon.set(true)
         try {
           if (resId == android.R.drawable.sym_def_app_icon) {
-            result =
-              proceed<Drawable?>()?.let { getSC()?.genIconFrom(it) ?: it }
+            result = proceed<Drawable?>()?.let { getSC()?.genIconFrom(it) ?: it }
             return@before
           }
           result =

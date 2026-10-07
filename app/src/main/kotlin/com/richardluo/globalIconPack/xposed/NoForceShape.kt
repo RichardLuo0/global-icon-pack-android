@@ -18,8 +18,8 @@ import io.github.libxposed.api.XposedModuleInterface
 
 class NoForceShape(private val drawWholeIconForTransparentBackgroundInSplashScreen: Boolean) :
   Hook {
-context(xposed: XposedInterface)
- override fun onHookSystemUI(param: XposedModuleInterface.PackageReadyParam) {
+  context(xposed: XposedInterface)
+  override fun onHookSystemUI(param: XposedModuleInterface.PackageReadyParam) {
     // Draw the whole icon even if the background is transparent
     // https://cs.android.com/android/platform/superproject/+/android15-qpr1-release:frameworks/base/libs/WindowManager/Shell/src/com/android/wm/shell/startingsurface/SplashscreenContentDrawer.java;l=676
     if (drawWholeIconForTransparentBackgroundInSplashScreen) {
@@ -68,9 +68,7 @@ context(xposed: XposedInterface)
    * caller in SplashscreenContentDrawer, so nothing else changes. Unlike the constructor it also
    * survives optimization, being an override of the ColorTester interface.
    */
-  private fun TryHookScope<Unit>.hookBgColorTester(
-    param: XposedModuleInterface.PackageReadyParam
-  ) {
+  private fun TryHookScope<Unit>.hookBgColorTester(param: XposedModuleInterface.PackageReadyParam) {
     val colorTester =
       classOf(
         $$"com.android.wm.shell.startingsurface.SplashscreenContentDrawer$DrawableColorTester",
@@ -79,10 +77,10 @@ context(xposed: XposedInterface)
     // AOSP spells the wrapper getDominateColor(); it can reach us as getDominantColor(), the name
     // the ColorTester interface uses, once the two have been merged.
     val getDominantColorM =
-      colorTester.declaredMethods.firstOrNull {
-        it.parameterCount == 0 &&
-          (it.name == "getDominateColor" || it.name == "getDominantColor")
-      }
+      colorTester.declaredMethods
+        .firstOrNull {
+          it.parameterCount == 0 && (it.name == "getDominateColor" || it.name == "getDominantColor")
+        }
         ?.apply { isAccessible = true } ?: return fail()
     colorTester
       .allMethods("isComplexColor")
@@ -96,8 +94,8 @@ context(xposed: XposedInterface)
       .registerToScopeOrFail()
   }
 
-context(xposed: XposedInterface)
- override fun onHookSettings(param: XposedModuleInterface.PackageReadyParam) {
+  context(xposed: XposedInterface)
+  override fun onHookSettings(param: XposedModuleInterface.PackageReadyParam) {
     // Fix accessibility
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.VANILLA_ICE_CREAM) return
     classOf("com.android.settings.Utils", param)
