@@ -11,3 +11,5 @@ local.properties
 /keystore.properties
 /.kotlin/*
 /app/release/*
+/.android/
+/.gradle-home/
