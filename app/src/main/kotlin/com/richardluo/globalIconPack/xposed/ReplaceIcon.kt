@@ -34,6 +34,7 @@ import com.richardluo.globalIconPack.utils.HookBuilder
 import com.richardluo.globalIconPack.utils.IconHelper
 import com.richardluo.globalIconPack.utils.Logger.logD
 import com.richardluo.globalIconPack.utils.MonochromeDrawable
+import com.richardluo.globalIconPack.utils.UnClipAdaptiveIconDrawable
 import com.richardluo.globalIconPack.utils.allConstructors
 import com.richardluo.globalIconPack.utils.allMethods
 import com.richardluo.globalIconPack.utils.asType
@@ -112,7 +113,10 @@ class ReplaceIcon(
       val iconOptions = BaseIconFactory.getIconOptionsClass(param) ?: return@runSafe
       val drawFullBleedF = iconOptions.field("drawFullBleed") ?: return@runSafe
       BaseIconFactory.getClass(param)?.allMethods("createBadgedIconBitmap")?.hookCompat {
-        before { drawFullBleedF.set(args[1], false) }
+        before {
+          args[0].asType<UnClipAdaptiveIconDrawable>() ?: return@before
+          drawFullBleedF.set(args[1], false)
+        }
       }
     }
   }
@@ -132,7 +136,8 @@ class ReplaceIcon(
         replacingIcon.set(true)
         try {
           if (resId == android.R.drawable.sym_def_app_icon) {
-            result = proceed<Drawable?>()?.let { getSC()?.genIconFrom(it) ?: it }
+            result =
+              proceed<Drawable?>()?.let { getSC()?.genIconFrom(it) ?: it }
             return@before
           }
           result =
