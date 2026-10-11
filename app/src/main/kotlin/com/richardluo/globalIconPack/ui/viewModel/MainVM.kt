@@ -20,6 +20,7 @@ import com.richardluo.globalIconPack.ui.repo.IconPackApps
 import com.richardluo.globalIconPack.ui.repo.XposedServiceRepo
 import com.richardluo.globalIconPack.utils.AppPreference
 import com.richardluo.globalIconPack.utils.ContextVM
+import com.richardluo.globalIconPack.utils.DBPath
 import com.richardluo.globalIconPack.utils.ILoadable
 import com.richardluo.globalIconPack.utils.Loadable
 import com.richardluo.globalIconPack.utils.MapPreferences
@@ -88,6 +89,7 @@ class MainVM(context: Application) : ContextVM(context), ILoadable by Loadable()
                 resetDBPermission(shareDB)
                 updateDB(pack)
                 AppPreference.getInApp().edit { putString(AppPref.PATH.key, shareDB) }
+                DBPath.save(context, shareDB)
               }
             }
             MODE_PROVIDER -> {
@@ -100,6 +102,7 @@ class MainVM(context: Application) : ContextVM(context), ILoadable by Loadable()
                   // Revert to default database
                   iconPackDB.migrate(AppPref.PATH.def) {}
                   AppPreference.getInApp().edit { remove(AppPref.PATH.key) }
+                  DBPath.save(context, AppPref.PATH.def)
                 },
               ) {
                 resetDBPermission(AppPreference.getInApp().get(AppPref.PATH))
