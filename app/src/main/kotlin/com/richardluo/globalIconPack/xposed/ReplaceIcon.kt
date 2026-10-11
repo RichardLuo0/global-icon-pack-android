@@ -402,19 +402,21 @@ private fun ResolveInfo.getComponentInfo(): ComponentInfo? {
   return null
 }
 
-fun itemInfosTransform(seq: Sequence<Any?>) = seq.mapNotNull { it.asType<PackageItemInfo>() }
+private fun itemInfosTransform(seq: Sequence<Any?>) = seq.mapNotNull {
+  it.asType<PackageItemInfo>()
+}
 
-fun componentInfosTransform(seq: Sequence<Any?>) =
+private fun componentInfosTransform(seq: Sequence<Any?>) =
   itemInfosTransform(seq) + seq.mapNotNull { it.asType<ComponentInfo>()?.applicationInfo }
 
-fun packageInfoTransform(pi: PackageInfo) = sequence {
+private fun packageInfoTransform(pi: PackageInfo) = sequence {
   pi.applicationInfo?.let { yield(it) }
   pi.activities?.let { yieldAll(componentInfosTransform(it.asSequence())) }
   pi.services?.let { yieldAll(componentInfosTransform(it.asSequence())) }
   pi.providers?.let { yieldAll(componentInfosTransform(it.asSequence())) }
 }
 
-fun resolveInfoReplacer(seq: Sequence<Any?>, sc: Source) {
+private fun resolveInfoReplacer(seq: Sequence<Any?>, sc: Source) {
   val riSeq = seq.mapNotNull { it.asType<ResolveInfo>() }
   replaceIconInItemInfos(componentInfosTransform(riSeq.map { it.getComponentInfo() }), sc)
   riSeq.forEach(::replaceIconInResolveInfo)

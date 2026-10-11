@@ -32,7 +32,6 @@ object Logger {
     else Log.e(TAG, "", t)
   }
 
-  context(xposed: XposedInterface)
   fun logD(text: String) {
     if (BuildConfig.DEBUG) log(text)
   }
