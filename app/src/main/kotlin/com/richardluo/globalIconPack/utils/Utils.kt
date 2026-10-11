@@ -120,6 +120,9 @@ val isInMod by lazy {
   currentProcessName != BuildConfig.APPLICATION_ID
 }
 
+/** Whether the current thread is handling a binder call from another process. */
+fun isInBinderCall() = android.os.Binder.getCallingPid() != android.os.Process.myPid()
+
 fun String.ifNotEmpty(block: (String) -> String) = if (isNotEmpty()) block(this) else this
 
 operator fun XmlPullParser.get(key: String): String? = this.getAttributeValue(null, key)

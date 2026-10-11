@@ -2,7 +2,11 @@ package com.richardluo.globalIconPack.iconPack.source
 
 import android.app.Application
 import android.content.ComponentName
+import android.content.ContentProviderClient
+import android.database.Cursor
 import android.graphics.drawable.Drawable
+import android.net.Uri
+import android.os.RemoteException
 import androidx.core.database.getIntOrNull
 import com.richardluo.globalIconPack.iconPack.IconPackDB.GetIconCol
 import com.richardluo.globalIconPack.iconPack.IconPackProvider
@@ -19,6 +23,7 @@ import com.richardluo.globalIconPack.utils.call
 import com.richardluo.globalIconPack.utils.classOf
 import com.richardluo.globalIconPack.utils.getOrPut
 import com.richardluo.globalIconPack.utils.getOrPutNullable
+import com.richardluo.globalIconPack.utils.isInBinderCall
 import com.richardluo.globalIconPack.utils.method
 import io.github.libxposed.api.XposedInterface
 import java.lang.reflect.Method
@@ -27,6 +32,8 @@ import java.util.Collections
 private var waitingForBootCompleted = true
 
 private var getSystemPropertyM: Method? = null
+
+private class ProviderNotReady : Exception()
 
 class RemoteSource(
   val context: Application,
@@ -43,6 +50,11 @@ class RemoteSource(
   private val contentResolver = context.contentResolver
   private val resourcesMap = mutableMapOf<String, ResourceOwner>()
 
+  // Keep the provider acquired, so queries don't wait for its process to start again. See getSC()
+  // for why a binder thread must never wait for that.
+  @Volatile private var client: ContentProviderClient? = null
+  private val clientLock = Any()
+
   init {
     context(xposed) {
       if (getSystemPropertyM == null)
@@ -57,8 +69,7 @@ class RemoteSource(
 
       iconFallback =
         if (config.iconFallback)
-          contentResolver
-            .query(IconPackProvider.FALLBACK, null, null, arrayOf(pack), null)
+          query(acquireClient(), IconPackProvider.FALLBACK, arrayOf(pack))
             ?.useFirstRow {
               IconFallback(FallbackSettings.from(it.getBlob(0)), { getIcon(it) }, config)
                 .orNullIfEmpty()
@@ -67,16 +78,49 @@ class RemoteSource(
     }
   }
 
+  // Must not be called while holding indexMap, binder threads can wait on it.
+  private fun acquireClient(): ContentProviderClient {
+    client?.let {
+      return it
+    }
+    if (isInBinderCall()) throw ProviderNotReady()
+    return synchronized(clientLock) {
+      client
+        ?: contentResolver
+          .acquireUnstableContentProviderClient(IconPackProvider.AUTHORITIES)
+          ?.also { client = it }
+        ?: throw ProviderNotReady()
+    }
+  }
+
+  private fun query(
+    client: ContentProviderClient,
+    uri: Uri,
+    selectionArgs: Array<String>,
+  ): Cursor? =
+    try {
+      client.query(uri, null, null, selectionArgs, null)
+    } catch (_: RemoteException) {
+      // The provider's process died. Don't cache this miss, acquire it again on the next query.
+      synchronized(clientLock) { if (this.client === client) this.client = null }
+      client.close()
+      throw ProviderNotReady()
+    }
+
   override fun getId(cn: ComponentName) =
+    try {
+      getIdOrThrow(acquireClient(), cn)
+    } catch (_: ProviderNotReady) {
+      null
+    }
+
+  private fun getIdOrThrow(client: ContentProviderClient, cn: ComponentName) =
     synchronized(indexMap) {
       indexMap.getOrPutNullable(cn) {
-        contentResolver
-          .query(
+        query(
+            client,
             IconPackProvider.ICON,
-            null,
-            null,
             arrayOf(pack, iconPackAsFallback.toString(), cn.flattenToString()),
-            null,
           )
           ?.useFirstRow { c ->
             val entry = IconResolver.from(c)
@@ -90,19 +134,23 @@ class RemoteSource(
     }
 
   override fun getId(cnList: List<ComponentName>) =
+    try {
+      getIdOrThrow(acquireClient(), cnList)
+    } catch (_: ProviderNotReady) {
+      List(cnList.size) { null }
+    }
+
+  private fun getIdOrThrow(client: ContentProviderClient, cnList: List<ComponentName>) =
     synchronized(indexMap) {
       indexMap.getOrPut(cnList) { misses ->
-        contentResolver
-          .query(
+        query(
+            client,
             IconPackProvider.ICON,
-            null,
-            null,
             arrayOf(
               pack,
               iconPackAsFallback.toString(),
               *misses.map { it.flattenToString() }.toTypedArray(),
             ),
-            null,
           )
           ?.useMapToArray(misses.size) { i, c ->
             val cn = misses[i]
