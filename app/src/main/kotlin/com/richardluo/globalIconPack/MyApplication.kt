@@ -1,4 +1,4 @@
-package com.richardluo.globalIconPack.ui
+package com.richardluo.globalIconPack
 
 import android.annotation.SuppressLint
 import android.app.Application

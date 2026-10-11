@@ -11,7 +11,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.compose.SavedStateHandleSaveableApi
 import androidx.lifecycle.viewmodel.compose.saveable
 import com.richardluo.globalIconPack.iconPack.model.CalendarIconEntry
-import com.richardluo.globalIconPack.ui.MyApplication
+import com.richardluo.globalIconPack.MyApplication
 import com.richardluo.globalIconPack.ui.components.ImageHolder
 import com.richardluo.globalIconPack.ui.model.CompInfo
 import com.richardluo.globalIconPack.ui.model.IconPack

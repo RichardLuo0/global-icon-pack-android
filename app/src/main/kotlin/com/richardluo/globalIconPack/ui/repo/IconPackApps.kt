@@ -2,7 +2,7 @@ package com.richardluo.globalIconPack.ui.repo
 
 import android.content.Intent
 import android.graphics.drawable.Drawable
-import com.richardluo.globalIconPack.ui.MyApplication
+import com.richardluo.globalIconPack.MyApplication
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope

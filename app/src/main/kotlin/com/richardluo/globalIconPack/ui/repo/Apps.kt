@@ -2,7 +2,7 @@ package com.richardluo.globalIconPack.ui.repo
 
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
-import com.richardluo.globalIconPack.ui.MyApplication
+import com.richardluo.globalIconPack.MyApplication
 import com.richardluo.globalIconPack.ui.model.AppCompInfo
 import com.richardluo.globalIconPack.utils.Logger
 import kotlinx.coroutines.DelicateCoroutinesApi

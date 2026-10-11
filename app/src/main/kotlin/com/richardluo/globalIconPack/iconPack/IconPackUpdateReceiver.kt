@@ -5,7 +5,7 @@ import android.content.Context
 import android.content.Intent
 import com.richardluo.globalIconPack.Pref
 import com.richardluo.globalIconPack.get
-import com.richardluo.globalIconPack.ui.MyApplication
+import com.richardluo.globalIconPack.MyApplication
 import com.richardluo.globalIconPack.ui.viewModel.IconPackCache
 import com.richardluo.globalIconPack.utils.SingletonManager.get
 import com.richardluo.globalIconPack.utils.WorldPreference

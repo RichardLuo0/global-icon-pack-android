@@ -27,9 +27,11 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.richardluo.globalIconPack.BuildConfig
-import com.richardluo.globalIconPack.ui.MyApplication.Companion.context
+import com.richardluo.globalIconPack.MyApplication.Companion.context
 import com.richardluo.globalIconPack.utils.Logger.TAG
 import com.topjohnwu.superuser.Shell
+import kotlin.properties.ReadOnlyProperty
+import kotlin.reflect.KProperty
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
@@ -329,3 +331,18 @@ fun parseXML(res: Resources, name: String, pack: String) = runCatching {
     }
 }
   .getOrNull { Log.e(TAG, "", it) }
+
+class RetryLazy<T : Any>(private val initializer: () -> T?) : ReadOnlyProperty<Any?, T?> {
+  @Volatile private var value: T? = null
+
+  override fun getValue(thisRef: Any?, property: KProperty<*>): T? {
+    value?.let {
+      return it
+    }
+    return synchronized(this) {
+      value ?: initializer()?.also { value = it }
+    }
+  }
+}
+
+fun <T : Any> retryLazy(initializer: () -> T?) = RetryLazy(initializer)

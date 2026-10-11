@@ -1,5 +1,6 @@
 package com.richardluo.globalIconPack.xposed
 
+import com.richardluo.globalIconPack.BuildConfig
 import com.richardluo.globalIconPack.Pref
 import com.richardluo.globalIconPack.get
 import com.richardluo.globalIconPack.utils.Logger
@@ -21,6 +22,7 @@ class XposedMain : XposedModule() {
 
   override fun onPackageReady(param: XposedModuleInterface.PackageReadyParam) {
     if (!param.isFirstPackage) return
+    if (param.packageName == BuildConfig.APPLICATION_ID) return
 
     val pref = WorldPreference.get()
     val hookList =

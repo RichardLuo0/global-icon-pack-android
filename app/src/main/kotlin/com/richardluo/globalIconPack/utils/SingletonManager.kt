@@ -8,10 +8,17 @@ object SingletonManager {
   private val cache = WeakHashMap<Class<*>, SoftReference<Any>>()
 
   @Suppress("UNCHECKED_CAST")
-  fun <T> get(clazz: Class<T>, create: () -> T) = lazy {
+  fun <T> tryGet(clazz: Class<T>, create: () -> T) =
     synchronized(cache) {
       cache[clazz]?.get() as T? ?: create().also { cache[clazz] = SoftReference(it) }
     }
+
+  inline fun <reified T> tryGet(
+    noinline create: () -> T = { T::class.java.getConstructor().newInstance() }
+  ) = tryGet(T::class.java, create)
+
+  fun <T> get(clazz: Class<T>, create: () -> T) = lazy {
+    tryGet(clazz, create)
   }
 
   inline fun <reified T> get(

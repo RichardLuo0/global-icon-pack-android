@@ -15,7 +15,7 @@ import com.richardluo.globalIconPack.iconPack.model.defaultIconPackConfig
 import com.richardluo.globalIconPack.iconPack.model.withConfig
 import com.richardluo.globalIconPack.iconPack.source.getComponentName
 import com.richardluo.globalIconPack.iconPack.source.loadIconPack
-import com.richardluo.globalIconPack.ui.MyApplication
+import com.richardluo.globalIconPack.MyApplication
 import com.richardluo.globalIconPack.ui.viewModel.IconPackCache
 import com.richardluo.globalIconPack.utils.AXMLEditor
 import com.richardluo.globalIconPack.utils.IconHelper

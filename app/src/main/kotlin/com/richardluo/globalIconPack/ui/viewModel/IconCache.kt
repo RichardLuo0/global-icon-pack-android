@@ -12,7 +12,7 @@ import com.richardluo.globalIconPack.R
 import com.richardluo.globalIconPack.iconPack.model.IconEntry
 import com.richardluo.globalIconPack.iconPack.model.IconFallback
 import com.richardluo.globalIconPack.iconPack.model.IconPackConfig
-import com.richardluo.globalIconPack.ui.MyApplication
+import com.richardluo.globalIconPack.MyApplication
 import com.richardluo.globalIconPack.ui.components.StaticImageHolder
 import com.richardluo.globalIconPack.ui.model.ActivityCompInfo
 import com.richardluo.globalIconPack.ui.model.AppCompInfo

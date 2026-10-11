@@ -8,10 +8,11 @@ import android.os.StrictMode
 import android.util.Log
 import androidx.core.net.toUri
 import com.richardluo.globalIconPack.BuildConfig
-import com.richardluo.globalIconPack.ui.MyApplication
 import com.richardluo.globalIconPack.utils.Logger.TAG
-import com.richardluo.globalIconPack.utils.SingletonManager.get
+import com.richardluo.globalIconPack.utils.SingletonManager.tryGet
+import com.richardluo.globalIconPack.utils.asType
 import com.richardluo.globalIconPack.utils.getOrNull
+import com.richardluo.globalIconPack.utils.retryLazy
 import com.richardluo.globalIconPack.utils.unflattenFromString
 
 class IconPackProvider : ContentProvider() {
@@ -21,8 +22,11 @@ class IconPackProvider : ContentProvider() {
     val FALLBACK = "content://$AUTHORITIES/FALLBACK".toUri()
   }
 
-  private val iconPackDB: IconPackDB? by get {
-    runCatching { IconPackDB(MyApplication.context) }.getOrNull { Log.e(TAG, "", it) }
+  private val iconPackDB: IconPackDB? by retryLazy {
+    tryGet {
+      runCatching { IconPackDB(context?.applicationContext.asType() ?: return@runCatching null) }
+        .getOrNull { Log.e(TAG, "", it) }
+    }
   }
 
   override fun onCreate() = true
