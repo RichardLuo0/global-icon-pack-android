@@ -14,17 +14,38 @@ import com.richardluo.globalIconPack.reflect.ActivityThread
 import com.richardluo.globalIconPack.utils.Logger.log
 import com.richardluo.globalIconPack.utils.Logger.logE
 import com.richardluo.globalIconPack.utils.WorldPreference
+import com.richardluo.globalIconPack.utils.isInBinderCall
 import io.github.libxposed.api.XposedInterface
+import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.concurrent.thread
 
 @Volatile private var sc: Source? = null
+private val initializingAsync = AtomicBoolean(false)
 
 context(xposed: XposedInterface)
 fun getSC(): Source? {
-  if (sc == null) {
-    synchronized(Source::class) {
-      if (sc == null) {
-        initSC()
+  sc?.let {
+    return it
+  }
+  // Creating a source may wait for IconPackProvider's process to start. A binder thread must not
+  // wait for it (or for the lock below): if it is handling a oneway call to ApplicationThread, the
+  // system's notifyContentProviderPublishStatus() is queued behind that call, so the wait never ends
+  // and the process freezes for 20s (a SystemUI ANR on every boot). Initialize in the background
+  // instead and skip this call.
+  if (isInBinderCall()) {
+    if (initializingAsync.compareAndSet(false, true))
+      thread(name = "GIP-InitSource") {
+        try {
+          synchronized(Source::class) { if (sc == null) initSC() }
+        } finally {
+          initializingAsync.set(false)
+        }
       }
+    return null
+  }
+  synchronized(Source::class) {
+    if (sc == null) {
+      initSC()
     }
   }
   return sc
