@@ -46,6 +46,12 @@ class XposedMain : XposedModule() {
       pref.get(Pref.PIXEL_LAUNCHER_PACKAGE) -> hookList.forEach { it.onHookPixelLauncher(param) }
       "com.android.systemui" -> hookList.forEach { with(it) { it.onHookSystemUI(param) } }
       "com.android.settings" -> hookList.forEach { with(it) { it.onHookSettings(param) } }
+      // Samsung One UI 9 launcher (One UI Home 18.x / Android 17, Galaxy S26 series).
+      // The app drawer loads icons via LauncherApps.getActivityList -> LauncherActivityInfo.getIcon,
+      // bypassing all standard GIP hooks.  ApplicationPackageManager.getDrawableInternal is also
+      // absent in Samsung Android 17 builds, so the marked-icon drawable hook never fires.
+      // SamsungOneUI9AppDrawerHook intercepts both paths to fix app-drawer icons.
+      "com.sec.android.app.launcher" -> SamsungOneUI9AppDrawerHook().onHookSamsungLauncher(param)
     }
   }
 }
