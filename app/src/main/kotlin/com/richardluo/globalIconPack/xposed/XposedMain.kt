@@ -41,7 +41,7 @@ class XposedMain : XposedModule() {
       )
     hookList.forEach { it.onHookApp(param) }
     if (param.packageName == "com.sec.android.app.launcher") {
-      SamsungOneUI9AppDrawerHook().onHookSamsungLauncher(param)
+      SamsungLauncherHook().onHookSamsungLauncher(param)
       return
     }
 

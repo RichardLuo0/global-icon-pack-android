@@ -8,6 +8,7 @@ import android.content.pm.LauncherApps
 import android.content.pm.PackageManager
 import com.richardluo.globalIconPack.iconPack.getSC
 import com.richardluo.globalIconPack.utils.Logger.log
+import com.richardluo.globalIconPack.utils.Logger.logD
 import com.richardluo.globalIconPack.utils.allMethods
 import com.richardluo.globalIconPack.utils.classOf
 import com.richardluo.globalIconPack.utils.field
@@ -21,18 +22,28 @@ import io.github.libxposed.api.XposedInterface
 import io.github.libxposed.api.XposedModuleInterface
 
 /**
- * Samsung One UI 9 / Android 17 (API 37) icon replacement hook for One UI Home.
+ * Samsung One UI (One UI Home / com.sec.android.app.launcher) icon replacement hook.
  *
- * Covers:
- * 1. App Drawer (All Apps)
- * 2. Recents / Background apps ("close all apps" overview screen)
- * 3. Honeyspace wrappers & Samsung proprietary icon tray framework
+ * Supports Samsung One UI 9 / Android 17 (and earlier versions).
+ *
+ * ## Architecture
+ * Samsung One UI does not use standard AOSP `LauncherActivityInfo.getIcon()` or
+ * `ApplicationPackageManager.getDrawableInternal()`. Instead, it uses:
+ *
+ * 1. **Proprietary icon tray APIs**: `semGet*IconForIconTray` on `LauncherActivityInfo`
+ *    and `PackageManager`.
+ * 2. **Honeyspace framework**: `LauncherActivityInfoWrapper.semGetBadgedIconForIconTray`,
+ *    `PackageManagerWrapper.getActivityIconForIconTray`, and
+ *    `LiveIconSupplier.getIconFromLauncherApps`.
+ * 3. **Recents / Overview task list**: `TaskView.setIconData` and `DeskTaskView` in
+ *    `com.honeyspace.ui.honeypots.tasklist`.
+ * 4. **Batch activity lists**: `LauncherApps.getActivityList` and `LauncherApps.resolveActivity`.
  */
-class SamsungOneUI9AppDrawerHook : Hook {
+class SamsungLauncherHook : Hook {
 
     context(xposed: XposedInterface)
     fun onHookSamsungLauncher(param: XposedModuleInterface.PackageReadyParam) {
-        log("SamsungOneUI9: installing launcher & recents hooks for ${param.packageName}")
+        log("SamsungLauncher: installing hooks for ${param.packageName}")
         hookLauncherActivityInfo()
         hookPackageManager()
         hookLauncherApps()
@@ -47,6 +58,7 @@ class SamsungOneUI9AppDrawerHook : Hook {
     context(xposed: XposedInterface)
     private fun hookLauncherActivityInfo() {
         runSafe {
+            // Samsung's proprietary icon tray method on LauncherActivityInfo
             LauncherActivityInfo::class.java.allMethods("semGetBadgedIconForIconTray").hookCompat {
                 before {
                     val info = thisObject as? LauncherActivityInfo ?: return@before
@@ -56,13 +68,14 @@ class SamsungOneUI9AppDrawerHook : Hook {
                     val density = args.getOrNull(0) as? Int ?: 0
                     val drawable = with(xposed) { sc.getIcon(id, density) } ?: return@before
                     result = drawable
-                    log("SamsungOneUI9: served icon for ${componentName.flattenToShortString()} via LAI.semGetBadgedIconForIconTray ✓")
+                    logD("SamsungLauncher: served icon for ${componentName.flattenToShortString()} via LAI.semGetBadgedIconForIconTray")
                 }
             }
-            log("SamsungOneUI9: hooked LauncherActivityInfo.semGetBadgedIconForIconTray ✓")
+            log("SamsungLauncher: hooked LauncherActivityInfo.semGetBadgedIconForIconTray ✓")
         }
 
         runSafe {
+            // Standard AOSP getIcon fallback
             LauncherActivityInfo::class.java.allMethods("getIcon").hookCompat {
                 before {
                     val info = thisObject as? LauncherActivityInfo ?: return@before
@@ -72,13 +85,14 @@ class SamsungOneUI9AppDrawerHook : Hook {
                     val density = args.getOrNull(0) as? Int ?: 0
                     val drawable = with(xposed) { sc.getIcon(id, density) } ?: return@before
                     result = drawable
-                    log("SamsungOneUI9: served icon for ${componentName.flattenToShortString()} via LAI.getIcon ✓")
+                    logD("SamsungLauncher: served icon for ${componentName.flattenToShortString()} via LAI.getIcon")
                 }
             }
-            log("SamsungOneUI9: hooked LauncherActivityInfo.getIcon ✓")
+            log("SamsungLauncher: hooked LauncherActivityInfo.getIcon ✓")
         }
 
         runSafe {
+            // Standard AOSP getBadgedIcon fallback
             LauncherActivityInfo::class.java.allMethods("getBadgedIcon").hookCompat {
                 before {
                     val info = thisObject as? LauncherActivityInfo ?: return@before
@@ -88,10 +102,10 @@ class SamsungOneUI9AppDrawerHook : Hook {
                     val density = args.getOrNull(0) as? Int ?: 0
                     val drawable = with(xposed) { sc.getIcon(id, density) } ?: return@before
                     result = drawable
-                    log("SamsungOneUI9: served icon for ${componentName.flattenToShortString()} via LAI.getBadgedIcon ✓")
+                    logD("SamsungLauncher: served icon for ${componentName.flattenToShortString()} via LAI.getBadgedIcon")
                 }
             }
-            log("SamsungOneUI9: hooked LauncherActivityInfo.getBadgedIcon ✓")
+            log("SamsungLauncher: hooked LauncherActivityInfo.getBadgedIcon ✓")
         }
     }
 
@@ -114,7 +128,7 @@ class SamsungOneUI9AppDrawerHook : Hook {
                         val density = args.getOrNull(1) as? Int ?: 0
                         val drawable = with(xposed) { sc.getIcon(id, density) } ?: return@before
                         result = drawable
-                        log("SamsungOneUI9: served icon for ${componentName.flattenToShortString()} via ${targetClass.simpleName}.semGetActivityIconForIconTray ✓")
+                        logD("SamsungLauncher: served icon for ${componentName.flattenToShortString()} via ${targetClass.simpleName}.semGetActivityIconForIconTray")
                     }
                 }
             }
@@ -133,7 +147,7 @@ class SamsungOneUI9AppDrawerHook : Hook {
                         val density = args.getOrNull(1) as? Int ?: 0
                         val drawable = with(xposed) { sc.getIcon(id, density) } ?: return@before
                         result = drawable
-                        log("SamsungOneUI9: served icon for ${componentName.packageName} via ${targetClass.simpleName}.semGetApplicationIconForIconTray ✓")
+                        logD("SamsungLauncher: served icon for ${componentName.packageName} via ${targetClass.simpleName}.semGetApplicationIconForIconTray")
                     }
                 }
             }
@@ -146,7 +160,7 @@ class SamsungOneUI9AppDrawerHook : Hook {
                         val id = sc.getId(componentName) ?: return@before
                         val drawable = with(xposed) { sc.getIcon(id, 0) } ?: return@before
                         result = drawable
-                        log("SamsungOneUI9: served icon for ${componentName.flattenToShortString()} via ${targetClass.simpleName}.getActivityIcon ✓")
+                        logD("SamsungLauncher: served icon for ${componentName.flattenToShortString()} via ${targetClass.simpleName}.getActivityIcon")
                     }
                 }
             }
@@ -160,13 +174,13 @@ class SamsungOneUI9AppDrawerHook : Hook {
                             val id = resId and 0x00ffffff
                             val drawable = with(xposed) { sc.getIcon(id, 0) } ?: return@before
                             result = drawable
-                            log("SamsungOneUI9: served marked icon 0x${Integer.toHexString(resId)} via ${targetClass.simpleName}.getDrawable ✓")
+                            logD("SamsungLauncher: served marked icon 0x${Integer.toHexString(resId)} via ${targetClass.simpleName}.getDrawable")
                         }
                     }
                 }
             }
         }
-        log("SamsungOneUI9: hooked PackageManager methods ✓")
+        log("SamsungLauncher: hooked PackageManager methods ✓")
     }
 
     // -----------------------------------------------------------------------------------------
@@ -188,10 +202,10 @@ class SamsungOneUI9AppDrawerHook : Hook {
                         val id = ids.getOrNull(i) ?: return@forEachIndexed
                         if (stampActivityInfoIcon(info, id)) stamped++
                     }
-                    log("SamsungOneUI9: stamped $stamped/${list.size} icons via getActivityList")
+                    logD("SamsungLauncher: stamped $stamped/${list.size} icons via getActivityList")
                 }
             }
-            log("SamsungOneUI9: hooked LauncherApps.getActivityList ✓")
+            log("SamsungLauncher: hooked LauncherApps.getActivityList ✓")
         }
 
         runSafe {
@@ -204,7 +218,7 @@ class SamsungOneUI9AppDrawerHook : Hook {
                     stampActivityInfoIcon(info, id)
                 }
             }
-            log("SamsungOneUI9: hooked LauncherApps.resolveActivity ✓")
+            log("SamsungLauncher: hooked LauncherApps.resolveActivity ✓")
         }
     }
 
@@ -226,10 +240,10 @@ class SamsungOneUI9AppDrawerHook : Hook {
                     val density = args.getOrNull(1) as? Int ?: 0
                     val drawable = with(xposed) { sc.getIcon(id, density) } ?: return@before
                     result = drawable
-                    log("SamsungOneUI9: served icon for ${componentName.flattenToShortString()} via LAIWrapper.semGetBadgedIconForIconTray ✓")
+                    logD("SamsungLauncher: served icon for ${componentName.flattenToShortString()} via LAIWrapper.semGetBadgedIconForIconTray")
                 }
             }
-            if (laiWrapper != null) log("SamsungOneUI9: hooked LauncherActivityInfoWrapper ✓")
+            if (laiWrapper != null) log("SamsungLauncher: hooked LauncherActivityInfoWrapper ✓")
         }
 
         // PackageManagerWrapper.getActivityIconForIconTray(Context, ComponentName, int)
@@ -243,10 +257,10 @@ class SamsungOneUI9AppDrawerHook : Hook {
                     val density = args.getOrNull(2) as? Int ?: 0
                     val drawable = with(xposed) { sc.getIcon(id, density) } ?: return@before
                     result = drawable
-                    log("SamsungOneUI9: served icon for ${componentName.flattenToShortString()} via PMWrapper.getActivityIconForIconTray ✓")
+                    logD("SamsungLauncher: served icon for ${componentName.flattenToShortString()} via PMWrapper.getActivityIconForIconTray")
                 }
             }
-            if (pmWrapper != null) log("SamsungOneUI9: hooked PackageManagerWrapper ✓")
+            if (pmWrapper != null) log("SamsungLauncher: hooked PackageManagerWrapper ✓")
         }
 
         // LiveIconSupplier$Companion.getIconFromLauncherApps(Context, ComponentKey)
@@ -261,10 +275,10 @@ class SamsungOneUI9AppDrawerHook : Hook {
                     val id = sc.getId(componentName) ?: return@before
                     val drawable = with(xposed) { sc.getIcon(id, 0) } ?: return@before
                     result = drawable
-                    log("SamsungOneUI9: served icon for ${componentName.flattenToShortString()} via LiveIconSupplier.getIconFromLauncherApps ✓")
+                    logD("SamsungLauncher: served icon for ${componentName.flattenToShortString()} via LiveIconSupplier.getIconFromLauncherApps")
                 }
             }
-            if (liveIconSupplier != null) log("SamsungOneUI9: hooked LiveIconSupplier.getIconFromLauncherApps ✓")
+            if (liveIconSupplier != null) log("SamsungLauncher: hooked LiveIconSupplier.getIconFromLauncherApps ✓")
         }
     }
 
@@ -289,10 +303,10 @@ class SamsungOneUI9AppDrawerHook : Hook {
                     val id = sc.getId(componentName) ?: return@before
                     val customDrawable = with(xposed) { sc.getIcon(id, 0) } ?: return@before
                     args[0] = customDrawable
-                    log("SamsungOneUI9: replaced Recents TaskView icon for ${componentName.flattenToShortString()} ✓")
+                    logD("SamsungLauncher: replaced Recents TaskView icon for ${componentName.flattenToShortString()}")
                 }
             }
-            if (taskViewClass != null) log("SamsungOneUI9: hooked TaskView.setIconData for Recents ✓")
+            if (taskViewClass != null) log("SamsungLauncher: hooked TaskView.setIconData for Recents ✓")
         }
 
         runSafe {
@@ -309,10 +323,10 @@ class SamsungOneUI9AppDrawerHook : Hook {
                     headerIconView?.javaClass?.allMethods("setIconData")?.forEach {
                         it.invoke(headerIconView, customDrawable)
                     }
-                    log("SamsungOneUI9: replaced DeskTaskView header icon for $pkg ✓")
+                    logD("SamsungLauncher: replaced DeskTaskView header icon for $pkg")
                 }
             }
-            if (deskTaskViewClass != null) log("SamsungOneUI9: hooked DeskTaskView for Recents ✓")
+            if (deskTaskViewClass != null) log("SamsungLauncher: hooked DeskTaskView for Recents ✓")
         }
     }
 

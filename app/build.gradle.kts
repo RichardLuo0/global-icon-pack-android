@@ -33,12 +33,20 @@ extensions.configure<ApplicationExtension> {
     testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
   }
 
+  val keystoreFile = file("${project.rootDir}/keystore.properties")
+  val keystoreProps =
+    if (keystoreFile.exists()) {
+      Properties().apply { load(FileInputStream(keystoreFile)) }
+    } else null
+
   signingConfigs {
-    // Release uses the auto-generated debug keystore so anyone can build without a
-    // separate keystore.properties / keystore file.  Replace with your own signing
-    // config when publishing to production.
-    getByName("debug") {
-      // Uses the default Android debug keystore – no extra setup required.
+    if (keystoreProps != null) {
+      create("release") {
+        keyAlias = keystoreProps["keyAlias"].toString()
+        keyPassword = keystoreProps["keyPassword"].toString()
+        storeFile = file(keystoreProps["storeFile"].toString())
+        storePassword = keystoreProps["storePassword"].toString()
+      }
     }
   }
 
@@ -47,7 +55,7 @@ extensions.configure<ApplicationExtension> {
       isMinifyEnabled = true
       isShrinkResources = true
       proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
-      signingConfig = signingConfigs.getByName("debug")
+      signingConfig = signingConfigs.findByName("release") ?: signingConfigs.getByName("debug")
     }
     create("debugApp") {
       isDebuggable = true
