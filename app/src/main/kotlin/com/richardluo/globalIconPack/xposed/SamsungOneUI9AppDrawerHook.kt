@@ -105,7 +105,7 @@ class SamsungOneUI9AppDrawerHook : Hook {
                 }
             }
             logD("SamsungOneUI9: hooked LauncherApps.getActivityList ✓")
-        } ?: logD("SamsungOneUI9: WARN – could not hook LauncherApps.getActivityList")
+        }
     }
 
     // -----------------------------------------------------------------------------------------
@@ -138,7 +138,7 @@ class SamsungOneUI9AppDrawerHook : Hook {
                 }
             }
             logD("SamsungOneUI9: hooked LauncherActivityInfo.getIcon ✓")
-        } ?: logD("SamsungOneUI9: WARN – could not hook LauncherActivityInfo.getIcon")
+        }
     }
 
     // -----------------------------------------------------------------------------------------
