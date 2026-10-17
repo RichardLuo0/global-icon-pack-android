@@ -20,16 +20,16 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
+import androidx.compose.material3.SliderState
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberSliderState
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -238,8 +238,12 @@ inline fun LazyListScope.mySliderPreference(
   },
   valueRange: ClosedFloatingPointRange<Float> = 0f..1f,
   valueSteps: Int = 0,
-  crossinline rememberSliderState: @Composable (Float) -> MutableState<Float> = {
-    remember { mutableFloatStateOf(it) }
+  crossinline rememberSliderState: @Composable (Float) -> SliderState = {
+    rememberSliderState(
+      value = it,
+      steps = valueSteps,
+      trackRange = valueRange,
+    )
   },
   crossinline enabled: (Preferences) -> Boolean = { true },
   noinline icon: @Composable ((Float) -> Unit)? = null,
@@ -251,18 +255,14 @@ inline fun LazyListScope.mySliderPreference(
     val state = rememberState()
     var value by state
     val sliderState = rememberSliderState(value)
-    var sliderValue by sliderState
+    val sliderValue = sliderState.value
     val interactionSource = remember { MutableInteractionSource() }
     MySliderPreference(
-      value = value,
+      state = sliderState,
       onValueChange = { value = it },
-      sliderValue = sliderValue,
-      onSliderValueChange = { sliderValue = it },
       title = { title(sliderValue) },
       modifier = modifier(interactionSource),
       interactionSource = interactionSource,
-      valueRange = valueRange,
-      valueSteps = valueSteps,
       enabled = !LocalPreferenceLock.current && enabled(LocalPreferenceFlow.current.getValue()),
       icon = icon?.let { { it(sliderValue) } },
       summary = summary?.let { { it(sliderValue) } },
@@ -275,28 +275,17 @@ inline fun LazyListScope.mySliderPreference(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MySliderPreference(
-  value: Float,
+  state: SliderState,
   onValueChange: (Float) -> Unit,
-  sliderValue: Float,
-  onSliderValueChange: (Float) -> Unit,
   title: @Composable () -> Unit,
   modifier: Modifier = Modifier,
   interactionSource: MutableInteractionSource? = null,
-  valueRange: ClosedFloatingPointRange<Float> = 0f..1f,
-  valueSteps: Int = 0,
   enabled: Boolean = true,
   icon: @Composable (() -> Unit)? = null,
   summary: @Composable (() -> Unit)? = null,
   valueToText: (Float) -> String = { it.toString() },
   textToValue: (String) -> Float = { it.toFloat() },
 ) {
-  var lastValue by remember { mutableFloatStateOf(value) }
-  SideEffect {
-    if (value != lastValue) {
-      onSliderValueChange(value)
-      lastValue = value
-    }
-  }
   val dialogState = remember { mutableStateOf(false) }
 
   Preference(
@@ -310,25 +299,17 @@ fun MySliderPreference(
     summary = {
       Column {
         summary?.invoke()
-        // onValueChangeFinished() may be invoked before a recomposition has
-        // happened for onValueChange(), for example in the clicking case, so make
-        // onValueChange() share the latest value to onValueChangeFinished().
-        var latestSliderValue = sliderValue
+
         val interactionSource = remember { MutableInteractionSource() }
         Slider(
-          value = sliderValue,
-          onValueChange = {
-            onSliderValueChange(it)
-            latestSliderValue = it
-          },
+          state = state,
+          onValueChange = { state.value = it },
           enabled = enabled,
-          valueRange = valueRange,
-          steps = valueSteps,
-          onValueChangeFinished = { onValueChange(latestSliderValue) },
+          onValueChangeFinished = { onValueChange(state.value) },
           interactionSource = interactionSource,
           thumb = {
             Label(
-              label = { PlainTooltip(content = { Text(valueToText(sliderValue)) }) },
+              label = { PlainTooltip(content = { Text(valueToText(state.value)) }) },
               interactionSource = interactionSource,
               content =
                 @Composable {
@@ -348,10 +329,12 @@ fun MySliderPreference(
   TextFieldDialog(
     dialogState,
     title = title,
-    initValue = valueToText(value),
+    initValue = valueToText(state.value),
     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
   ) {
-    onValueChange(textToValue(it.toString()))
+    val value = textToValue(it.toString())
+    onValueChange(value)
+    state.value = value
   }
 }
 
