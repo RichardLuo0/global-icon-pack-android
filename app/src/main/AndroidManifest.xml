@@ -67,6 +67,14 @@
             android:directBootAware="true"
             android:exported="true"
             tools:ignore="ExportedContentProvider" />
+        <provider
+            android:name="io.github.libxposed.service.XposedProvider"
+            android:authorities="com.richardluo.globalIconPack.XposedService"
+            android:directBootAware="true"
+            android:exported="true"
+            tools:ignore="ExportedContentProvider"
+            tools:replace="android:directBootAware" />
+
         <service
             android:name=".iconPack.KeepAliveService"
             android:directBootAware="true"

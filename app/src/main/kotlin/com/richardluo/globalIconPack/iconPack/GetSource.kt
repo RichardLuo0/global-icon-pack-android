@@ -5,6 +5,7 @@ import com.richardluo.globalIconPack.MODE_SHARE
 import com.richardluo.globalIconPack.Pref
 import com.richardluo.globalIconPack.get
 import com.richardluo.globalIconPack.iconPack.model.IconPackConfig
+import com.richardluo.globalIconPack.iconPack.source.BootNotCompleted
 import com.richardluo.globalIconPack.iconPack.source.EmptySource
 import com.richardluo.globalIconPack.iconPack.source.LocalSource
 import com.richardluo.globalIconPack.iconPack.source.RemoteSource
@@ -29,9 +30,9 @@ fun getSC(): Source? {
   }
   // Creating a source may wait for IconPackProvider's process to start. A binder thread must not
   // wait for it (or for the lock below): if it is handling a oneway call to ApplicationThread, the
-  // system's notifyContentProviderPublishStatus() is queued behind that call, so the wait never ends
-  // and the process freezes for 20s (a SystemUI ANR on every boot). Initialize in the background
-  // instead and skip this call.
+  // system's notifyContentProviderPublishStatus() is queued behind that call, so the wait never
+  // ends and the process freezes for 20s (a SystemUI ANR on every boot). Initialize in the
+  // background instead and skip this call.
   if (isInBinderCall()) {
     if (initializingAsync.compareAndSet(false, true))
       thread(name = "GIP-InitSource") {
@@ -65,7 +66,13 @@ private fun initSC() {
       } else
         when (pref.get(Pref.MODE)) {
           MODE_SHARE -> ShareSource(context, xposed, pack, config)
-          MODE_PROVIDER -> RemoteSource(context, xposed, pack, config)
+          MODE_PROVIDER ->
+            try {
+              RemoteSource(context, xposed, pack, config)
+            } catch (e: BootNotCompleted) {
+              log(e.message.orEmpty())
+              return
+            }
           else -> LocalSource(context, xposed, pack, config)
         }
   }

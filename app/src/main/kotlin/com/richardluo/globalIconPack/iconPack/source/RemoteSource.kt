@@ -33,6 +33,8 @@ private var waitingForBootCompleted = true
 
 private var getSystemPropertyM: Method? = null
 
+class BootNotCompleted : Exception("Boot is not completed. The remote service isn't ready.")
+
 private class ProviderNotReady : Exception()
 
 class RemoteSource(
@@ -64,16 +66,15 @@ class RemoteSource(
         waitingForBootCompleted &&
           getSystemPropertyM?.call<String?>(null, "sys.boot_completed") != "1"
       )
-        throw Exception("Boot is not completed. The remote service isn't ready.")
+        throw BootNotCompleted()
       waitingForBootCompleted = false
 
       iconFallback =
         if (config.iconFallback)
-          query(acquireClient(), IconPackProvider.FALLBACK, arrayOf(pack))
-            ?.useFirstRow {
-              IconFallback(FallbackSettings.from(it.getBlob(0)), { getIcon(it) }, config)
-                .orNullIfEmpty()
-            }
+          query(acquireClient(), IconPackProvider.FALLBACK, arrayOf(pack))?.useFirstRow {
+            IconFallback(FallbackSettings.from(it.getBlob(0)), { getIcon(it) }, config)
+              .orNullIfEmpty()
+          }
         else null
     }
   }
