@@ -29,9 +29,10 @@ This module is designed to extend the icon packs throughout the entire system.
 ## Installation
 1. Install the apk. 
 2. Select apps in lsposed. It should work for most apps/launchers, depending on the api they use.
-3. Open Global Icon Pack, choose an icon pack.
-4. If you are using a launcher other than pixel launcher, change the launcher package name on the third page.
-5. Open the three dot menu, click each of `Restart xxx`. (This will require root permission)
+3. Grant root permission.
+4. Open Global Icon Pack, choose an icon pack.
+5. If you are using a launcher other than pixel launcher, change the launcher package name on the third page.
+6. Open the three dot menu, click each of `Restart xxx`.
 
 ## Notes
 ### Modes
