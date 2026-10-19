@@ -5,7 +5,6 @@ import androidx.compose.material.icons.outlined.Android
 import androidx.compose.material.icons.outlined.InstallMobile
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ButtonGroup
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -24,7 +23,6 @@ val appFilterHeight =
     ButtonDefaults.MinHeight +
     ButtonDefaults.ContentPadding.calculateBottomPadding()
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun AppFilterButtonGroup(modifier: Modifier = Modifier, typeState: MutableState<Type>) {
   val buttons =

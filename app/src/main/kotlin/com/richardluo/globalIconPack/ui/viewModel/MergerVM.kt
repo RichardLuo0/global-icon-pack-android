@@ -39,6 +39,7 @@ import com.richardluo.globalIconPack.utils.map
 import com.richardluo.globalIconPack.utils.mapSaver
 import com.richardluo.globalIconPack.utils.runCatchingToast
 import com.richardluo.globalIconPack.utils.toMutableStateMap
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
@@ -83,7 +84,7 @@ class MergerVM(context: Application, savedStateHandle: SavedStateHandle) :
   private val iconPackConfigFlow =
     optionsFlow
       .drop(1)
-      .debounce(300L)
+      .debounce(300L.milliseconds)
       .map { IconPackConfig(it) }
       .distinctUntilChanged()
       .onEach {
@@ -202,14 +203,12 @@ class MergerVM(context: Application, savedStateHandle: SavedStateHandle) :
 
   fun createIconPack(uri: Uri, onSuccess: () -> Unit) {
     val iconPack = baseIconPack ?: return
-    val newPackName =
-      newPackName.ifEmpty {
-        return
-      }
-    val newPackPackage =
-      newPackPackage.ifEmpty {
-        return
-      }
+    val newPackName = newPackName.ifEmpty {
+      return
+    }
+    val newPackPackage = newPackPackage.ifEmpty {
+      return
+    }
 
     viewModelScope.launch(Dispatchers.Default) {
       creatingApkProgress = Progress(info = "preparing")

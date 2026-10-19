@@ -7,7 +7,6 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Clear
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -29,7 +28,7 @@ enum class IconButtonStyle {
   Filled,
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun IconButtonWithTooltip(
   icon: ImageVector,
@@ -59,7 +58,6 @@ fun IconButtonWithTooltip(
   }
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun ClearIconButton(text: CharSequence, onClear: () -> Unit = {}) {
   AnimatedVisibility(

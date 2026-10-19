@@ -43,8 +43,8 @@ class CalendarAndClockHook(private val clockUseFallbackMask: Boolean) : Hook {
   private val calendars = mutableSetOf<String>()
   private val clocks = mutableSetOf<String>()
 
-context(xposed: XposedInterface)
- override fun onHookPixelLauncher(param: XposedModuleInterface.PackageReadyParam) {
+  context(xposed: XposedInterface)
+  override fun onHookPixelLauncher(param: XposedModuleInterface.PackageReadyParam) {
     tryHook("CalendarAndClockHook") {
       tryDo {
         val iconProvider =

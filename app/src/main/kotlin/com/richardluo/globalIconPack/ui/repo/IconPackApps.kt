@@ -40,8 +40,7 @@ object IconPackApps {
           "com.novalauncher.THEME",
           "org.adw.launcher.THEMES",
         )
-        .map { action -> pm.queryIntentActivities(Intent(action), 0) }
-        .flatten()
+        .flatMap { action -> pm.queryIntentActivities(Intent(action), 0) }
         .associate { info ->
           val ai = info.activityInfo.applicationInfo
           ai.packageName to IconPackApp(ai.loadLabel(pm).toString(), ai.loadIcon(pm))

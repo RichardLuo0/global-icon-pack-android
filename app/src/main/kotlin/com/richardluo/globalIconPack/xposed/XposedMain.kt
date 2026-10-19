@@ -44,8 +44,8 @@ class XposedMain : XposedModule() {
       "com.android.launcher3",
       Pref.PIXEL_LAUNCHER_PACKAGE.def,
       pref.get(Pref.PIXEL_LAUNCHER_PACKAGE) -> hookList.forEach { it.onHookPixelLauncher(param) }
-      "com.android.systemui" -> hookList.forEach { with(it) { it.onHookSystemUI(param) } }
-      "com.android.settings" -> hookList.forEach { with(it) { it.onHookSettings(param) } }
+      "com.android.systemui" -> hookList.forEach { it.onHookSystemUI(param) }
+      "com.android.settings" -> hookList.forEach { it.onHookSettings(param) }
     }
   }
 }

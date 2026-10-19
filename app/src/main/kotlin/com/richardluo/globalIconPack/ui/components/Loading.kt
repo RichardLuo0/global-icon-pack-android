@@ -18,7 +18,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun LoadingDialog(progress: Float? = null, text: String? = null) {
   CustomDialog(
@@ -43,7 +42,6 @@ fun LoadingCircle(modifier: Modifier = Modifier.fillMaxSize()) {
 }
 
 @SuppressLint("ModifierParameter")
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun LoadingLine(modifier: Modifier = Modifier.fillMaxWidth(), progress: Float? = null) {
   if (progress != null) LinearWavyProgressIndicator(modifier = modifier, progress = { progress })

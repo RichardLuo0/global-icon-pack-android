@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CornerBasedShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MaterialTheme.shapes
@@ -60,7 +59,6 @@ enum class ListItemPos {
   }
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 val listTopItemShape
   @Composable
   get() =
@@ -69,11 +67,9 @@ val listTopItemShape
       bottomEnd = shapes.extraSmall.bottomEnd,
     )
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 val listMiddleItemShape
   @Composable get() = shapes.extraSmall
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 val listBottomItemShape
   @Composable
   get() =
@@ -82,7 +78,6 @@ val listBottomItemShape
       topEnd = shapes.extraSmall.topEnd,
     )
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 val listSingleItemShape
   @Composable get() = shapes.largeIncreased
 

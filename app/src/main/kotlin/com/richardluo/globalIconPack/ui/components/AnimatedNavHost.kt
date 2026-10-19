@@ -2,7 +2,6 @@ package com.richardluo.globalIconPack.ui.components
 
 import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.AnimatedContentTransitionScope.SlideDirection
-import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.core.Spring
@@ -31,10 +30,8 @@ import androidx.navigation3.ui.NavDisplay
 import androidx.navigationevent.NavigationEvent
 import kotlin.reflect.KClass
 
-@OptIn(ExperimentalSharedTransitionApi::class)
 val LocalSharedTransitionScope = compositionLocalOf<SharedTransitionScope?> { null }
 
-@OptIn(ExperimentalSharedTransitionApi::class)
 val LocalBackStack = compositionLocalOf<NavBackStack<NavKey>?> { null }
 
 class AnimatedEntryProviderScope<T : NavKey>(val provider: EntryProviderScope<T>) {
@@ -68,7 +65,6 @@ class AnimatedEntryProviderScope<T : NavKey>(val provider: EntryProviderScope<T>
   }
 }
 
-@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun AnimatedNavHost(vararg init: NavKey, builder: AnimatedEntryProviderScope<NavKey>.() -> Unit) {
   SharedTransitionLayout {
@@ -127,7 +123,6 @@ private fun AnimatedContentTransitionScope<*>.slideOut(
   )
 
 @Composable
-@OptIn(ExperimentalSharedTransitionApi::class)
 fun Modifier.sharedBounds(key: Any) =
   with(LocalSharedTransitionScope.current) {
     if (this == null) return@with this@sharedBounds

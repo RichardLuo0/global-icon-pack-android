@@ -3,7 +3,6 @@ package com.richardluo.globalIconPack.ui.components
 import androidx.compose.animation.core.AnimationSpec
 import androidx.compose.animation.core.DecayAnimationSpec
 import androidx.compose.foundation.pager.PagerState
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.TopAppBarScrollBehavior
 import androidx.compose.material3.TopAppBarState
 import androidx.compose.material3.rememberTopAppBarState
@@ -17,7 +16,6 @@ import androidx.compose.ui.unit.Velocity
 
 object EmptyNestedScrollConnection : NestedScrollConnection
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun pinnedScrollBehaviorWithPager(
   pagerState: PagerState,

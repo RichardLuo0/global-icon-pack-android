@@ -19,8 +19,6 @@ import androidx.compose.material3.BasicAlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ButtonShapes
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
@@ -45,7 +43,6 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.DialogProperties
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CustomDialog(
   modifier: Modifier = Modifier,
@@ -128,7 +125,6 @@ class CancelDialogButton(context: Context, onClick: () -> Unit) :
 class OkDialogButton(context: Context, onClick: () -> Unit) :
   DialogButton(context.getString(android.R.string.ok), ButtonType.Filled, onClick)
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun DialogButtonRow(buttons: Array<DialogButton> = emptyArray()) {
   if (buttons.isEmpty()) return
@@ -146,7 +142,6 @@ fun DialogButtonRow(buttons: Array<DialogButton> = emptyArray()) {
   }
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun DialogButton(button: DialogButton, shapes: ButtonShapes = ButtonDefaults.shapes()) {
   when (button.type) {

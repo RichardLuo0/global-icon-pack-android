@@ -16,7 +16,6 @@ import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.clearText
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.SearchBarDefaults.inputFieldColors
@@ -46,7 +45,6 @@ import com.richardluo.globalIconPack.R
 import kotlinx.coroutines.flow.dropWhile
 import kotlinx.coroutines.flow.first
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RoundSearchBar(
   textFieldState: TextFieldState,
@@ -87,7 +85,7 @@ fun RoundSearchBar(
   )
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun WithSearch(
   state: MutableState<Boolean> = rememberSaveable { mutableStateOf(false) },
