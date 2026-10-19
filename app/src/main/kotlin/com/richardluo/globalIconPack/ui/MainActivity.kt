@@ -301,7 +301,7 @@ class MainActivity : ComponentActivity() {
               FilledTonalToggleButton(
                 checked,
                 { coroutineScope.launch { pagerState.animateScrollToPage(i) } },
-                modifier = Modifier.padding(horizontal = 4.dp),
+                modifier = Modifier.padding(horizontal = 6.dp),
               ) {
                 Icon(page.icon, contentDescription = page.name)
                 AnimatedVisibility(
