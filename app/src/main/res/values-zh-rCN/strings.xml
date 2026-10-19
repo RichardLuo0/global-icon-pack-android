@@ -5,6 +5,9 @@
     <string name="info_iconPackApplied">图标包已应用。请手动点击“重启XXX”。</string>
     <string name="setup_chooseMode">请选择一种模式</string>
     <string name="general_settings">常规</string>
+    <string name="general_rootStatus">Root 状态</string>
+    <string name="general_rootStatus_rooted">已经获取 Root。</string>
+    <string name="general_rootStatus_notRooted">需要 Root 来启用共享模式，重启启动器等。</string>
     <string name="general_mode">模式</string>
     <string name="general_mode_shareMode">共享模式</string>
     <string name="general_mode_shareMode_summary">从位于 /data/misc/com.\u200Brichardluo.\u200BglobalIconPack 的共享数据库加载。某些系统上 SELinux 可能会阻止访问。</string>

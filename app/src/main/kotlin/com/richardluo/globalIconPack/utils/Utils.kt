@@ -30,6 +30,7 @@ import com.richardluo.globalIconPack.BuildConfig
 import com.richardluo.globalIconPack.MyApplication.Companion.context
 import com.richardluo.globalIconPack.utils.Logger.TAG
 import com.topjohnwu.superuser.Shell
+import java.io.File
 import kotlin.properties.ReadOnlyProperty
 import kotlin.reflect.KProperty
 import kotlinx.coroutines.Deferred
@@ -349,3 +350,8 @@ class RetryLazy<T : Any>(private val initializer: () -> T?) : ReadOnlyProperty<A
 }
 
 fun <T : Any> retryLazy(initializer: () -> T?) = RetryLazy(initializer)
+
+fun isAppGrantedRoot() =
+  System.getenv("PATH")?.split(File.pathSeparator)?.any { dir ->
+    dir.isNotEmpty() && File(dir, "su").canExecute()
+  } ?: false

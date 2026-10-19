@@ -3,10 +3,12 @@ package com.richardluo.globalIconPack.ui
 import android.content.Context
 import android.content.Intent
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.InteractionSource
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -39,6 +41,8 @@ import androidx.compose.material.icons.outlined.Contrast
 import androidx.compose.material.icons.outlined.CropOriginal
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.FlipToFront
+import androidx.compose.material.icons.outlined.Key
+import androidx.compose.material.icons.outlined.KeyOff
 import androidx.compose.material.icons.outlined.Memory
 import androidx.compose.material.icons.outlined.Merge
 import androidx.compose.material.icons.outlined.PhotoSizeSelectSmall
@@ -48,10 +52,13 @@ import androidx.compose.material.icons.outlined.SettingsRemote
 import androidx.compose.material.icons.outlined.ShapeLine
 import androidx.compose.material.icons.outlined.Share
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -107,8 +114,11 @@ import com.richardluo.globalIconPack.ui.components.toShape
 import com.richardluo.globalIconPack.ui.repo.IconPackApps
 import com.richardluo.globalIconPack.utils.DrawablePainter
 import com.richardluo.globalIconPack.utils.PathDrawable
+import com.richardluo.globalIconPack.utils.isAppGrantedRoot
 import com.richardluo.globalIconPack.utils.runCatchingToastOnMain
 import me.zhanghai.compose.preference.LocalPreferenceTheme
+import me.zhanghai.compose.preference.Preference
+import me.zhanghai.compose.preference.ProvidePreferenceLocals
 
 object MainPreference {
 
@@ -141,6 +151,76 @@ object MainPreference {
     val context = LocalContext.current
 
     LazyColumn(modifier = modifier, contentPadding = contentPadding) {
+      item(key = "rootStatus", contentType = "RootStatusPreference") {
+        var rooted by remember { mutableStateOf(isAppGrantedRoot()) }
+        val interactionSource = remember { MutableInteractionSource() }
+
+        fun refreshRoot() {
+          rooted = isAppGrantedRoot()
+        }
+
+        Crossfade(rooted) {
+          if (it)
+            Preference(
+              title = {
+                CompositionLocalProvider(
+                  LocalContentColor provides MaterialTheme.colorScheme.onPrimaryContainer
+                ) {
+                  TwoLineText(stringResource(R.string.general_rootStatus))
+                }
+              },
+              modifier =
+                Modifier.singlePreference(interactionSource)
+                  .background(MaterialTheme.colorScheme.primaryContainer)
+                  .clickable(interactionSource, ripple(), onClick = ::refreshRoot),
+              enabled = true,
+              icon = {
+                Icon(
+                  Icons.Outlined.Key,
+                  "rootStatus",
+                  tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                )
+              },
+              summary = {
+                CompositionLocalProvider(
+                  LocalContentColor provides MaterialTheme.colorScheme.onPrimaryContainer
+                ) {
+                  TwoLineText(stringResource(R.string.general_rootStatus_rooted))
+                }
+              },
+            )
+          else
+            Preference(
+              title = {
+                CompositionLocalProvider(
+                  LocalContentColor provides MaterialTheme.colorScheme.onErrorContainer
+                ) {
+                  TwoLineText(stringResource(R.string.general_rootStatus))
+                }
+              },
+              modifier =
+                Modifier.singlePreference(interactionSource)
+                  .background(MaterialTheme.colorScheme.errorContainer)
+                  .clickable(interactionSource, ripple(), onClick = ::refreshRoot),
+              enabled = true,
+              icon = {
+                Icon(
+                  Icons.Outlined.KeyOff,
+                  "rootStatus",
+                  tint = MaterialTheme.colorScheme.onErrorContainer,
+                )
+              },
+              summary = {
+                CompositionLocalProvider(
+                  LocalContentColor provides MaterialTheme.colorScheme.onErrorContainer
+                ) {
+                  TwoLineText(stringResource(R.string.general_rootStatus_notRooted))
+                }
+              },
+            )
+        }
+      }
+      spacer()
       myListPreference(
         modifier = { Modifier.topPreference(it) },
         icon = { AnimatedContent(it) { Icon(modeToIcon(it), it) } },
@@ -246,7 +326,6 @@ object MainPreference {
     LazyColumn(modifier = modifier, state = state) { fallbackPref(context) }
   }
 
-  @OptIn(ExperimentalStdlibApi::class)
   fun LazyListScope.fallbackPref(context: Context) {
     mySwitchPreference(
       modifier = { Modifier.topPreference(it) },
@@ -575,17 +654,27 @@ object MainPreference {
 @Preview(showBackground = true)
 @Composable
 private fun GeneralPreview() {
-  SampleTheme { ProvideMyPreferenceTheme { MainPreference.General() } }
+  SampleTheme {
+    ProvideMyPreferenceTheme {
+      ProvidePreferenceLocals {
+        MainPreference.General()
+      }
+    }
+  }
 }
 
 @Preview(showBackground = true)
 @Composable
 private fun IconPackPreview() {
-  SampleTheme { ProvideMyPreferenceTheme { MainPreference.IconPack() } }
+  SampleTheme {
+    ProvideMyPreferenceTheme { ProvidePreferenceLocals { MainPreference.IconPack() } }
+  }
 }
 
 @Preview(showBackground = true)
 @Composable
 private fun PixelPreview() {
-  SampleTheme { ProvideMyPreferenceTheme { MainPreference.Pixel() } }
+  SampleTheme {
+    ProvideMyPreferenceTheme { ProvidePreferenceLocals { MainPreference.Pixel() } }
+  }
 }
