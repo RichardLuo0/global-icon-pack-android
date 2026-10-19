@@ -33,6 +33,7 @@ class XposedMain : XposedModule() {
           pref.get(Pref.NON_ADAPTIVE_SCALE),
           pref.get(Pref.FORCE_MONOCHROME),
         ),
+        DayNightRefresh(),
         NoForceShape(true),
         if (pref.get(Pref.NO_SHADOW)) NoShadow() else null,
         if (pref.get(Pref.FORCE_LOAD_CLOCK_AND_CALENDAR))

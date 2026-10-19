@@ -5,6 +5,8 @@ import android.graphics.drawable.Drawable
 import com.richardluo.globalIconPack.iconPack.model.IconEntry
 import io.github.libxposed.api.XposedInterface
 
+import android.content.res.Configuration
+
 class EmptySource : Source {
 
   override fun getId(cn: ComponentName): Int? = null
@@ -28,4 +30,8 @@ class EmptySource : Source {
   override fun genIconFrom(baseIcon: Drawable): Drawable = baseIcon
 
   override fun maskIconFrom(baseIcon: Drawable): Drawable = baseIcon
+
+  override fun updateConfiguration(config: Configuration) {}
+
+  override fun reloadResources() {}
 }
