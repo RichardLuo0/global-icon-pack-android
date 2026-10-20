@@ -1,10 +1,12 @@
 package com.richardluo.globalIconPack.iconPack
 
+import android.content.res.Configuration
 import com.richardluo.globalIconPack.MODE_PROVIDER
 import com.richardluo.globalIconPack.MODE_SHARE
 import com.richardluo.globalIconPack.Pref
 import com.richardluo.globalIconPack.get
 import com.richardluo.globalIconPack.iconPack.model.IconPackConfig
+import com.richardluo.globalIconPack.iconPack.model.ResourceOwner
 import com.richardluo.globalIconPack.iconPack.source.BootNotCompleted
 import com.richardluo.globalIconPack.iconPack.source.EmptySource
 import com.richardluo.globalIconPack.iconPack.source.LocalSource
@@ -77,4 +79,12 @@ private fun initSC() {
         }
   }
     .onFailure { logE(it) }
+}
+
+fun updateSourceConfiguration(config: Configuration) {
+  sc?.updateConfiguration(config)
+}
+
+fun reloadSourceResources() {
+  sc?.reloadResources()
 }

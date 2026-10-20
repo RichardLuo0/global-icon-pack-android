@@ -2,6 +2,7 @@ package com.richardluo.globalIconPack.iconPack.source
 
 import android.app.Application
 import android.content.ComponentName
+import android.content.res.Configuration
 import android.database.sqlite.SQLiteDatabase
 import android.graphics.drawable.Drawable
 import androidx.core.database.getIntOrNull
@@ -26,22 +27,23 @@ import java.util.Collections
 
 class ShareSource(
   val context: Application,
-  xposed: XposedInterface,
+  private val xp: XposedInterface,
   pack: String,
-  config: IconPackConfig = defaultIconPackConfig,
+  private val config: IconPackConfig = defaultIconPackConfig,
 ) : Source, ResourceOwner(context, pack) {
   companion object {
     const val DATABASE_PATH = "/data/misc/${BuildConfig.APPLICATION_ID}/iconPack.db"
   }
 
   private val iconPackAsFallback = config.iconPackAsFallback
-  private val iconFallback: IconFallback?
+  private var iconFallback: IconFallback? = null
+  private var fallbackSettings: FallbackSettings? = null
 
   private val indexMap = mutableMapOf<ComponentName, Int?>()
   private val iconEntryList = Collections.synchronizedList(mutableListOf<IconResolver>())
 
   private val db =
-    context(xposed) {
+    context(xp) {
       IconPackDB(
         context,
         AppPreference.get().getString(AppPref.PATH.key, DATABASE_PATH)!!,
@@ -51,12 +53,13 @@ class ShareSource(
   private val resourcesMap = mutableMapOf<String, ResourceOwner>()
 
   init {
-    context(xposed) {
+    context(xp) {
       iconFallback =
         if (config.iconFallback)
           db.getFallbackSettings(pack).useFirstRow {
-            IconFallback(FallbackSettings.from(it.getBlob(0)), { getIcon(it) }, config)
-              .orNullIfEmpty()
+            val settings = FallbackSettings.from(it.getBlob(0))
+            fallbackSettings = settings
+            IconFallback(settings, { getIcon(it) }, config).orNullIfEmpty()
           }
         else null
     }
@@ -101,7 +104,32 @@ class ShareSource(
   override fun getIcon(name: String, iconDpi: Int) = getIconByName(name, iconDpi)
 
   private fun getResourceOwner(pack: String) =
-    if (pack.isEmpty()) this else resourcesMap.getOrPut(pack) { ResourceOwner(context, pack) }
+    if (pack.isEmpty()) this
+    else synchronized(resourcesMap) {
+      resourcesMap.getOrPut(pack) { ResourceOwner(context, pack) }
+    }
+
+  override fun updateConfiguration(config: Configuration) {
+    super<ResourceOwner>.updateConfiguration(config)
+    synchronized(resourcesMap) {
+      resourcesMap.values.forEach { it.updateConfiguration(config) }
+    }
+  }
+
+  override fun reloadResources() {
+    super<ResourceOwner>.reloadResources()
+    synchronized(resourcesMap) {
+      resourcesMap.values.forEach { it.reloadResources() }
+    }
+    fallbackSettings?.let {
+      context(xp) {
+        iconFallback =
+          if (config.iconFallback)
+            IconFallback(it, { getIcon(it) }, config).orNullIfEmpty()
+          else null
+      }
+    }
+  }
 
   override fun genIconFrom(baseIcon: Drawable) = genIconFrom(res, baseIcon, iconFallback)
 

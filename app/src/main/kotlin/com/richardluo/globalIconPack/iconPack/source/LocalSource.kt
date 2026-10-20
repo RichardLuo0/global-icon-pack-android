@@ -24,22 +24,24 @@ import org.xmlpull.v1.XmlPullParser
 
 class LocalSource(
   context: Application,
-  xposed: XposedInterface,
+  private val xp: XposedInterface,
   pack: String,
-  config: IconPackConfig = defaultIconPackConfig,
-) : Source, ResourceOwner(context, pack) {
+  private val config: IconPackConfig = defaultIconPackConfig,
+) : ResourceOwner(context, pack), Source {
   private val iconPackAsFallback = config.iconPackAsFallback
-  private val iconFallback: IconFallback?
+  private var iconFallback: IconFallback? = null
+  private lateinit var fallbackSettings: FallbackSettings
 
   private val indexMap = mutableMapOf<ComponentName, Int>()
   private val iconEntryList: List<IconEntry>
 
   init {
-    context(xposed) {
+    context(xp) {
       val info = loadIconPack(res, pack)
+      fallbackSettings = FallbackSettings(info)
       iconFallback =
         if (config.iconFallback)
-          IconFallback(FallbackSettings(info), { getIcon(it) }, config).orNullIfEmpty()
+          IconFallback(fallbackSettings, { getIcon(it) }, config).orNullIfEmpty()
         else null
       var i = 0
       iconEntryList =
@@ -47,6 +49,18 @@ class LocalSource(
           indexMap[cn] = i++
           entry
         }
+    }
+  }
+
+  override fun reloadResources() {
+    super.reloadResources()
+    if (::fallbackSettings.isInitialized) {
+      context(xp) {
+        iconFallback =
+          if (config.iconFallback)
+            IconFallback(fallbackSettings, { getIcon(it) }, config).orNullIfEmpty()
+          else null
+      }
     }
   }
 

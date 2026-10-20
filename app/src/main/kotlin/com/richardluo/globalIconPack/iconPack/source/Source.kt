@@ -4,6 +4,7 @@ import android.content.ComponentName
 import android.content.pm.ApplicationInfo
 import android.content.pm.PackageItemInfo
 import android.content.pm.ShortcutInfo
+import android.content.res.Configuration
 import android.content.res.Resources
 import android.graphics.drawable.Drawable
 import com.richardluo.globalIconPack.iconPack.model.IconEntry
@@ -36,6 +37,10 @@ interface Source {
   fun genIconFrom(baseIcon: Drawable): Drawable
 
   fun maskIconFrom(baseIcon: Drawable): Drawable
+
+  fun updateConfiguration(config: Configuration)
+
+  fun reloadResources()
 }
 
 fun genIconFrom(res: Resources, baseIcon: Drawable, iconFallback: IconFallback?) =
