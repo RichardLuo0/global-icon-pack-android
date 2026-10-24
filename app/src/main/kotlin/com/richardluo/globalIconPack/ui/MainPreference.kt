@@ -45,6 +45,7 @@ import androidx.compose.material.icons.outlined.Key
 import androidx.compose.material.icons.outlined.KeyOff
 import androidx.compose.material.icons.outlined.Memory
 import androidx.compose.material.icons.outlined.Merge
+import androidx.compose.material.icons.outlined.ModeNight
 import androidx.compose.material.icons.outlined.PhotoSizeSelectSmall
 import androidx.compose.material.icons.outlined.Restore
 import androidx.compose.material.icons.outlined.SettingsBackupRestore
@@ -605,6 +606,15 @@ object MainPreference {
         defaultValue = Pref.FORCE_ACTIVITY_ICON_FOR_TASK.def,
         title = { TwoLineText(stringResource(R.string.pixel_forceActivityIconForTask)) },
         summary = { TwoLineText(stringResource(R.string.pixel_forceActivityIconForTask_summary)) },
+      )
+      spacer()
+      mySwitchPreference(
+        modifier = { Modifier.singlePreference(it) },
+        icon = { Icon(Icons.Outlined.ModeNight, Pref.RELOAD_ICON_ON_THEME_CHANGE.key) },
+        key = Pref.RELOAD_ICON_ON_THEME_CHANGE.key,
+        defaultValue = Pref.RELOAD_ICON_ON_THEME_CHANGE.def,
+        title = { TwoLineText(stringResource(R.string.pixel_reloadIconOnThemeChange)) },
+        summary = { TwoLineText(stringResource(R.string.pixel_reloadIconOnThemeChange_summary)) },
       )
     }
   }

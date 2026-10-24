@@ -45,13 +45,13 @@ fun Class<*>.constructor(vararg parameterTypes: Class<*>?) =
 fun Class<*>.allMethods(methodName: String, vararg parameterTypes: Class<*>?) =
   declaredMethods
     .filter { it.match(methodName, parameterTypes) }
-    .apply { forEach { it.isAccessible = true } }
+    .onEach { it.isAccessible = true }
     .also { if (it.isEmpty()) log("No methods $methodName are found on class ${this.name}") }
 
 fun Class<*>.allConstructors(vararg parameterTypes: Class<*>?) =
   declaredConstructors
     .filter { it.match(parameterTypes) }
-    .apply { forEach { it.isAccessible = true } }
+    .onEach { it.isAccessible = true }
     .also { if (it.isEmpty()) log("No constructors are found on class ${this.name}") }
 
 fun Class<*>.field(name: String) = runCatching {
@@ -70,6 +70,29 @@ fun Class<*>.field(name: String) = runCatching {
   .also { if (it == null) log("No field $name is found on class ${this.name}") }
 
 inline fun <reified R> XposedInterface.Chain.proceed(): R? = proceed() as? R
+
+context(xposed: XposedInterface)
+fun Executable.hook(hooker: XposedInterface.Chain.() -> Any?) = runCatching {
+  xposed.hook(this).intercept { chain -> hooker(chain) }
+}
+  .getOrNull { logE(it) }
+
+context(xposed: XposedInterface)
+fun List<Executable>.hook(hooker: XposedInterface.Chain.() -> Any?) = runCatching {
+  map { xposed.hook(it).intercept { chain -> hooker(chain) } }
+}
+  .getOrNull { logE(it) }
+
+fun XposedInterface.Chain.before(hooker: XposedInterface.Chain.() -> Unit): Any? {
+  hooker(this)
+  return proceed()
+}
+
+fun XposedInterface.Chain.after(hooker: XposedInterface.Chain.(Any?) -> Unit): Any? {
+  val result = proceed()
+  hooker(this, result)
+  return result
+}
 
 class HookBuilder : XposedInterface.Hooker {
   class ChainProxy(private val chain: XposedInterface.Chain) : XposedInterface.Chain by chain {
@@ -116,18 +139,6 @@ class HookBuilder : XposedInterface.Hooker {
 }
 
 context(xposed: XposedInterface)
-fun Executable.hook(hooker: XposedInterface.Chain.() -> Any?) = runCatching {
-  xposed.hook(this).intercept { chain -> hooker(chain) }
-}
-  .getOrNull { logE(it) }
-
-context(xposed: XposedInterface)
-fun List<Executable>.hook(hooker: XposedInterface.Chain.() -> Any?) = runCatching {
-  map { xposed.hook(it).intercept { chain -> hooker(chain) } }
-}
-  .getOrNull { logE(it) }
-
-context(xposed: XposedInterface)
 inline fun Executable.hookCompat(crossinline block: HookBuilder.() -> Unit) = runCatching {
   xposed.hook(this).intercept(HookBuilder().apply { block() })
 }
@@ -143,7 +154,7 @@ context(xposed: XposedInterface)
 fun Executable.deoptimize() = apply { xposed.deoptimize(this) }
 
 context(xposed: XposedInterface)
-fun List<Executable>.deoptimize() = apply { forEach { xposed.deoptimize(it) } }
+fun List<Executable>.deoptimize() = onEach { xposed.deoptimize(it) }
 
 interface TryHookResult<T> {
   val isDone: Boolean

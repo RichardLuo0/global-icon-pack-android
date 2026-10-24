@@ -38,6 +38,7 @@ class XposedMain : XposedModule() {
         if (pref.get(Pref.FORCE_LOAD_CLOCK_AND_CALENDAR))
           CalendarAndClockHook(pref.get(Pref.CLOCK_USE_FALLBACK_MASK))
         else null,
+        if (pref.get(Pref.RELOAD_ICON_ON_THEME_CHANGE)) ReloadIconOnThemeChange() else null,
       )
     hookList.forEach { it.onHookApp(param) }
     when (param.packageName) {

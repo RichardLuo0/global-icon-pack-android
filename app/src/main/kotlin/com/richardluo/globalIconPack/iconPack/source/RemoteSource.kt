@@ -38,7 +38,7 @@ class BootNotCompleted : Exception("Boot is not completed. The remote service is
 private class ProviderNotReady : Exception()
 
 class RemoteSource(
-  val context: Application,
+  context: Application,
   xposed: XposedInterface,
   pack: String,
   config: IconPackConfig = defaultIconPackConfig,

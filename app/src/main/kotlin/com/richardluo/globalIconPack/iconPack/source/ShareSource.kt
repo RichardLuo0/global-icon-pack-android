@@ -25,7 +25,7 @@ import io.github.libxposed.api.XposedInterface
 import java.util.Collections
 
 class ShareSource(
-  val context: Application,
+  context: Application,
   xposed: XposedInterface,
   pack: String,
   config: IconPackConfig = defaultIconPackConfig,

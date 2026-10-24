@@ -54,7 +54,9 @@
     <string name="pixel_clockUseFallbackMask">Clock uses fallback mask</string>
     <string name="pixel_disableClockSeconds">Disable clock seconds</string>
     <string name="pixel_forceActivityIconForTask">Force load activity icon for task</string>
-    <string name="pixel_forceActivityIconForTask_summary">Some apps set an task icon when running. Force load activity icon no matter what.</string>
+    <string name="pixel_forceActivityIconForTask_summary">Some apps set a task icon when running. Force load activity icon no matter what.</string>
+    <string name="pixel_reloadIconOnThemeChange">Reload icon on theme change</string>
+    <string name="pixel_reloadIconOnThemeChange_summary">E.g. day/night mode change.</string>
 
     <string name="mainMenu_restartSystemUI">Restart SystemUI</string>
     <string name="mainMenu_restartLauncher">Clear DB &amp; Restart Pixel Launcher</string>
