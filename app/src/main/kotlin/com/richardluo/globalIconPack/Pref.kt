@@ -37,6 +37,7 @@ object Pref {
   val CLOCK_USE_FALLBACK_MASK = "clockUseFallbackMask" defaultTo false
   val DISABLE_CLOCK_SECONDS = "disableClockSeconds" defaultTo true
   val FORCE_ACTIVITY_ICON_FOR_TASK = "forceActivityIconForTask" defaultTo false
+  val RELOAD_ICON_ON_MODE_CHANGE = "reloadIconOnModeChange" defaultTo false
 }
 
 object AppPref {
