@@ -5,6 +5,9 @@
     <string name="info_iconPackApplied">圖示包已應用。請手動點選「重啟 XXX」。</string>
     <string name="setup_chooseMode">選擇模式</string>
     <string name="general_settings">總體</string>
+    <string name="general_rootStatus">Root 状态</string>
+    <string name="general_rootStatus_rooted">已获取 Root 权限。</string>
+    <string name="general_rootStatus_notRooted">需要 Root 来启用共享模式，重启启动器等。</string>
     <string name="general_mode">模式</string>
     <string name="general_mode_shareMode">分享模式</string>
     <string name="general_mode_shareMode_summary">从位于 /data/misc/com.\u200Brichardluo.\u200BglobalIconPack 的共享数据库加载。某些系统上 SELinux 可能会阻止访问。</string>
@@ -48,7 +51,9 @@
     <string name="pixel_clockUseFallbackMask">时钟使用回退遮罩</string>
     <string name="pixel_disableClockSeconds">禁用时钟秒数</string>
     <string name="pixel_forceActivityIconForTask">强制为任务加载 activity 图标</string>
-    <string name="pixel_forceActivityIconForTask_summary">某些应用在运行时设置任务图标。无论怎样强制加载 activity 图标。</string>
+    <string name="pixel_forceActivityIconForTask_summary">某些应用在运行时设置任务图标。无论如何强制加载 activity 图标。</string>
+    <string name="pixel_reloadIconOnThemeChange">主题更改时重新加载图标</string>
+    <string name="pixel_reloadIconOnThemeChange_summary">例如，日间/夜间模式改变。</string>
     <string name="mainMenu_restartSystemUI">重啟系統 UI</string>
     <string name="mainMenu_restartLauncher">清除 DB &amp; 重啟 Pixel 啟動器</string>
     <string name="mainMenu_restartOthers">重啟其他app</string>

@@ -47,7 +47,7 @@
     <string name="pixel_clockUseFallbackMask">Часы используют запасную маску</string>
     <string name="pixel_disableClockSeconds">Отключить секунды часов</string>
     <string name="pixel_forceActivityIconForTask">Принудительная загрузка иконки активности</string>
-    <string name="pixel_forceActivityIconForTask_summary">Некоторые приложения устанавливают значок задачи при запуске</string>
+    <string name="pixel_forceActivityIconForTask_summary">Некоторые приложения устанавливают значок задачи при запуске.</string>
     <string name="mainMenu_restartSystemUI">Перезапустить SystemUI</string>
     <string name="mainMenu_restartLauncher">Очистить бд &amp; перезапустить Pixel Launcher</string>
     <string name="mainMenu_restartOthers">Перезапустить остальное</string>

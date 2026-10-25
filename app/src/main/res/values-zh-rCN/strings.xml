@@ -6,7 +6,7 @@
     <string name="setup_chooseMode">请选择一种模式</string>
     <string name="general_settings">常规</string>
     <string name="general_rootStatus">Root 状态</string>
-    <string name="general_rootStatus_rooted">已经获取 Root。</string>
+    <string name="general_rootStatus_rooted">已获取 Root 权限。</string>
     <string name="general_rootStatus_notRooted">需要 Root 来启用共享模式，重启启动器等。</string>
     <string name="general_mode">模式</string>
     <string name="general_mode_shareMode">共享模式</string>
@@ -51,7 +51,9 @@
     <string name="pixel_clockUseFallbackMask">时钟使用回退遮罩</string>
     <string name="pixel_disableClockSeconds">禁用时钟秒数</string>
     <string name="pixel_forceActivityIconForTask">强制为任务加载 activity 图标</string>
-    <string name="pixel_forceActivityIconForTask_summary">某些应用在运行时设置任务图标。无论怎样强制加载 activity 图标。</string>
+    <string name="pixel_forceActivityIconForTask_summary">某些应用在运行时设置任务图标。无论如何强制加载 activity 图标。</string>
+    <string name="pixel_reloadIconOnThemeChange">主题更改时重新加载图标</string>
+    <string name="pixel_reloadIconOnThemeChange_summary">例如，日间/夜间模式改变。</string>
     <string name="mainMenu_restartSystemUI">重启系统UI</string>
     <string name="mainMenu_restartLauncher">清除DB &amp; 重启 Pixel 启动器</string>
     <string name="mainMenu_restartOthers">重启其他 app</string>
