@@ -9,11 +9,15 @@ import io.github.libxposed.api.XposedInterface
 import java.lang.ref.WeakReference
 
 object Logger {
-  var xposed: WeakReference<XposedInterface>? = null
+  private var xposed: WeakReference<XposedInterface>? = null
 
   const val TAG = "[Global Icon Pack]"
 
   val currentPackageName: String by lazy { ActivityThread.currentPackageName() ?: "" }
+
+  fun init(xposed: XposedInterface) {
+    this.xposed = WeakReference(xposed)
+  }
 
   fun log(text: String) {
     val xposed = xposed?.get()

@@ -7,11 +7,10 @@ import com.richardluo.globalIconPack.utils.Logger
 import com.richardluo.globalIconPack.utils.WorldPreference
 import io.github.libxposed.api.XposedModule
 import io.github.libxposed.api.XposedModuleInterface
-import java.lang.ref.WeakReference
 
 class XposedMain : XposedModule() {
   init {
-    Logger.xposed = WeakReference(this)
+    Logger.init(this)
   }
 
   override fun onSystemServerStarting(param: XposedModuleInterface.SystemServerStartingParam) {
