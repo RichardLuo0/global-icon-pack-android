@@ -3,10 +3,10 @@ package com.richardluo.globalIconPack.iconPack
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import com.richardluo.globalIconPack.MyApplication
 import com.richardluo.globalIconPack.Pref
 import com.richardluo.globalIconPack.get
-import com.richardluo.globalIconPack.MyApplication
-import com.richardluo.globalIconPack.ui.viewModel.IconPackCache
+import com.richardluo.globalIconPack.ui.viewModel.createIconPackCacheWithThemeAware
 import com.richardluo.globalIconPack.utils.SingletonManager.get
 import com.richardluo.globalIconPack.utils.WorldPreference
 import com.richardluo.globalIconPack.utils.runCatchingToastOnMain
@@ -14,7 +14,7 @@ import kotlin.getValue
 
 class IconPackUpdateReceiver : BroadcastReceiver() {
   private val iconPackDB by get { IconPackDB(MyApplication.context) }
-  private val iconPackCache by get { IconPackCache(MyApplication.context) }
+  private val iconPackCache by get { createIconPackCacheWithThemeAware(MyApplication.context) }
 
   override fun onReceive(context: Context, intent: Intent) {
     val action = intent.action ?: return

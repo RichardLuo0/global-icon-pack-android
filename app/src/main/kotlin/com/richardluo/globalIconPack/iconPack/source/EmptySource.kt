@@ -6,6 +6,7 @@ import com.richardluo.globalIconPack.iconPack.model.IconEntry
 import io.github.libxposed.api.XposedInterface
 
 class EmptySource : Source {
+  override fun updateResources() {}
 
   override fun getId(cn: ComponentName): Int? = null
 
@@ -25,7 +26,9 @@ class EmptySource : Source {
     iconDpi: Int,
   ): Drawable? = null
 
+  context(xposed: XposedInterface)
   override fun genIconFrom(baseIcon: Drawable): Drawable = baseIcon
 
+  context(xposed: XposedInterface)
   override fun maskIconFrom(baseIcon: Drawable): Drawable = baseIcon
 }

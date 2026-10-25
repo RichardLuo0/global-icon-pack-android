@@ -351,6 +351,31 @@ class RetryLazy<T : Any>(private val initializer: () -> T?) : ReadOnlyProperty<A
 
 fun <T : Any> retryLazy(initializer: () -> T?) = RetryLazy(initializer)
 
+class ResettableLazy<T>(private val block: () -> T) : ReadOnlyProperty<Any?, T> {
+
+  @Volatile private var cached: Any? = UNSET
+
+  @Suppress("UNCHECKED_CAST")
+  fun get(): T {
+    val c = cached
+    if (c !== UNSET) return c as T
+    return synchronized(this) {
+      val c2 = cached
+      if (c2 !== UNSET) c2 as T else block().also { cached = it }
+    }
+  }
+
+  fun reset() {
+    cached = UNSET
+  }
+
+  override fun getValue(thisRef: Any?, property: KProperty<*>): T = get()
+
+  private object UNSET
+}
+
+fun <T> resettableLazy(block: () -> T) = ResettableLazy(block)
+
 fun isAppGrantedRoot() =
   System.getenv("PATH")?.split(File.pathSeparator)?.any { dir ->
     dir.isNotEmpty() && File(dir, "su").canExecute()

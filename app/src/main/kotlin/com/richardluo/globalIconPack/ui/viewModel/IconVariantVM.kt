@@ -62,8 +62,8 @@ import org.xmlpull.v1.XmlPullParserFactory
 
 class IconVariantVM(context: Application) :
   ContextVM(context), IAppsFilter by AppsFilter(), IconsHolder, ILoadable by Loadable() {
-  private val iconPackCache by get { IconPackCache(context) }
-  private val iconCache by get { IconCache(context) }
+  private val iconPackCache by get { createIconPackCacheWithThemeAware(context) }
+  private val iconCache by get { createIconCacheWithThemeAware(context) }
   private val fallbackIconCache = IconCache(context)
   private val iconPackDB by get { IconPackDB(context) }
 
@@ -101,6 +101,14 @@ class IconVariantVM(context: Application) :
       .map { iconPackDB.isPackModified(pack) }
       .flowOn(Dispatchers.IO)
       .stateIn(viewModelScope, SharingStarted.Lazily, false)
+
+  init {
+    fallbackIconCache.registerClearOnThemeChange()
+  }
+
+  override fun onCleared() {
+    fallbackIconCache.unregisterClearOnThemeChange()
+  }
 
   fun getIconEntry(cnList: List<ComponentName>) =
     iconPackDB

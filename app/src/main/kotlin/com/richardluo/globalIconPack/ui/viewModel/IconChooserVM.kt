@@ -30,8 +30,8 @@ import kotlinx.coroutines.flow.transform
 @OptIn(SavedStateHandleSaveableApi::class)
 class IconChooserVM(savedStateHandle: SavedStateHandle) : ViewModel() {
   private val context = MyApplication.context
-  private val iconPackCache by get { IconPackCache(context) }
-  private val iconCache by get { IconCache(context) }
+  private val iconPackCache by get { createIconPackCacheWithThemeAware(context) }
+  private val iconCache by get { createIconCacheWithThemeAware(context) }
 
   var variantSheet by savedStateHandle.saveable { mutableStateOf(false) }
   var iconPack by savedStateHandle.saveable { mutableStateOf<IconPack?>(null) }

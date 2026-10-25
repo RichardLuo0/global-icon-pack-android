@@ -60,8 +60,8 @@ import me.zhanghai.compose.preference.Preferences
 @OptIn(SavedStateHandleSaveableApi::class)
 class MergerVM(context: Application, savedStateHandle: SavedStateHandle) :
   ContextVM(context), IAppsFilter by AppsFilter(), IconsHolder, ILoadable by Loadable() {
-  private val iconPackCache by get { IconPackCache(context) }
-  private val iconCache by get { IconCache(context) }
+  private val iconPackCache by get { createIconPackCacheWithThemeAware(context) }
+  private val iconCache by get { createIconCacheWithThemeAware(context) }
   private val fallbackIconCache = IconCache(context)
 
   var baseIconPack by savedStateHandle.saveable { mutableStateOf<IconPack?>(null) }
@@ -113,6 +113,14 @@ class MergerVM(context: Application, savedStateHandle: SavedStateHandle) :
 
   val filteredIconsFlow =
     createFilteredIconsFlow(icons).stateIn(viewModelScope, SharingStarted.Eagerly, null)
+
+  init {
+    fallbackIconCache.registerClearOnThemeChange()
+  }
+
+  override fun onCleared() {
+    fallbackIconCache.unregisterClearOnThemeChange()
+  }
 
   private fun getIconEntry(cn: ComponentName): IconEntryWithPack? {
     return if (changedIcons.containsKey(cn)) changedIcons[cn]

@@ -1,15 +1,15 @@
 package com.richardluo.globalIconPack.xposed
 
 import android.content.pm.ApplicationInfo
-import android.content.res.Configuration
 import com.richardluo.globalIconPack.reflect.ActivityThread
-import com.richardluo.globalIconPack.reflect.Resources
 import com.richardluo.globalIconPack.utils.Logger.logD
+import com.richardluo.globalIconPack.utils.ThemeSig
 import com.richardluo.globalIconPack.utils.after
 import com.richardluo.globalIconPack.utils.allMethods
 import com.richardluo.globalIconPack.utils.asType
 import com.richardluo.globalIconPack.utils.before
 import com.richardluo.globalIconPack.utils.classOf
+import com.richardluo.globalIconPack.utils.currentThemeSig
 import com.richardluo.globalIconPack.utils.field
 import com.richardluo.globalIconPack.utils.hook
 import com.richardluo.globalIconPack.utils.method
@@ -19,30 +19,20 @@ import io.github.libxposed.api.XposedModuleInterface
 import java.lang.reflect.Method
 import java.util.WeakHashMap
 
-private data class ThemeSig(val night: Int, val seq: Int)
-
-private fun currentSig(): ThemeSig? {
-  val c = ActivityThread.currentApplication()?.resources?.configuration ?: return null
-  return ThemeSig(
-    c.uiMode and Configuration.UI_MODE_NIGHT_MASK,
-    Resources.getAssetsSeq(c) ?: 0,
-  )
-}
-
 class ReloadIconOnThemeChange : Hook {
 
   private class LoadIcon(
     val method: Method,
     val thisObj: Any?,
     val args: Array<out Any?>,
-    var sig: ThemeSig? = currentSig(),
+    var themeSig: ThemeSig? = ActivityThread.currentApplication()?.let { currentThemeSig(it) },
   ) {
     operator fun invoke(): Any? = method(thisObj, *args)
 
-    fun isNewTheme(): Boolean {
-      val newSig = currentSig()
-      if (sig == newSig) return false
-      sig = newSig
+    fun needUpdate(): Boolean {
+      val newSig = ActivityThread.currentApplication()?.let { currentThemeSig(it) }
+      if (themeSig == newSig) return false
+      themeSig = newSig
       return true
     }
   }
@@ -110,7 +100,7 @@ class ReloadIconOnThemeChange : Hook {
       .hook {
         return@hook before {
           val loadIcon = bitmapPackageNameMap[thisObject] ?: return@before
-          if (!loadIcon.isNewTheme()) return@before
+          if (!loadIcon.needUpdate()) return@before
 
           iconF.set(
             thisObject,

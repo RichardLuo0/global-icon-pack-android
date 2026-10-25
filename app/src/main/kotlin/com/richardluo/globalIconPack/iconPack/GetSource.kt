@@ -1,5 +1,7 @@
 package com.richardluo.globalIconPack.iconPack
 
+import android.content.ComponentCallbacks
+import android.content.res.Configuration
 import com.richardluo.globalIconPack.MODE_PROVIDER
 import com.richardluo.globalIconPack.MODE_SHARE
 import com.richardluo.globalIconPack.Pref
@@ -75,6 +77,15 @@ private fun initSC() {
             }
           else -> LocalSource(context, xposed, pack, config)
         }
+    context.registerComponentCallbacks(
+      object : ComponentCallbacks {
+        override fun onConfigurationChanged(newConfig: Configuration) {
+          sc?.updateResources()
+        }
+
+        @Deprecated("Deprecated in Java") override fun onLowMemory() {}
+      }
+    )
   }
     .onFailure { logE(it) }
 }

@@ -46,7 +46,7 @@ import me.zhanghai.compose.preference.Preferences
 class MainVM(context: Application) : ContextVM(context), ILoadable by Loadable() {
   private val iconPackDB by get { IconPackDB(context) }
   // Hold a strong reference to icon pack cache so it never gets recycled before MainVM is destroyed
-  private val iconPackCache = get { IconPackCache(context) }.value
+  private val iconPackCache = get { createIconPackCacheWithThemeAware(context) }.value
 
   val sharedPrefFlow =
     XposedServiceRepo.service

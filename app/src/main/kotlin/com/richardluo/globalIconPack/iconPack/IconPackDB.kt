@@ -18,7 +18,7 @@ import com.richardluo.globalIconPack.iconPack.model.FallbackSettings
 import com.richardluo.globalIconPack.iconPack.model.IconEntry
 import com.richardluo.globalIconPack.iconPack.model.IconEntry.Type
 import com.richardluo.globalIconPack.ui.model.IconPack
-import com.richardluo.globalIconPack.ui.viewModel.IconPackCache
+import com.richardluo.globalIconPack.ui.viewModel.createIconPackCacheWithThemeAware
 import com.richardluo.globalIconPack.utils.AppPreference
 import com.richardluo.globalIconPack.utils.Logger.TAG
 import com.richardluo.globalIconPack.utils.SQLiteOpenHelper
@@ -280,7 +280,7 @@ class IconPackDB(
   }
 
   private fun updateIconId(db: SQLiteDatabase, iconPack: IconPack, packageName: String? = null) {
-    val iconPackCache = SingletonManager.get { IconPackCache(context) }.value
+    val iconPackCache = SingletonManager.get { createIconPackCacheWithThemeAware(context) }.value
     val packTable = pt(iconPack.pack)
     val updateId = db.compileStatement("UPDATE $packTable SET id=? WHERE ROWID=?")
     val staleRowIds = mutableListOf<Long>()
@@ -424,7 +424,7 @@ class IconPackDB(
       }
       throw Exception("Old version < 7!")
     } else if (oldVersion < 8) {
-      val iconPackCache = SingletonManager.get { IconPackCache(context) }.value
+      val iconPackCache = SingletonManager.get { createIconPackCacheWithThemeAware(context) }.value
       db.foreachPackTable {
         db.execSQL("ALTER TABLE '$it' ADD COLUMN id INTEGER NOT NULL DEFAULT 0")
         updateIconId(db, iconPackCache[it.removePrefix("pack/")])

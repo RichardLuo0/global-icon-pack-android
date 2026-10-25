@@ -10,15 +10,17 @@ import android.os.RemoteException
 import androidx.core.database.getIntOrNull
 import com.richardluo.globalIconPack.iconPack.IconPackDB.GetIconCol
 import com.richardluo.globalIconPack.iconPack.IconPackProvider
+import com.richardluo.globalIconPack.iconPack.model.FallbackOwner
 import com.richardluo.globalIconPack.iconPack.model.FallbackSettings
 import com.richardluo.globalIconPack.iconPack.model.IconEntry
-import com.richardluo.globalIconPack.iconPack.model.IconFallback
 import com.richardluo.globalIconPack.iconPack.model.IconPackConfig
 import com.richardluo.globalIconPack.iconPack.model.IconResolver
 import com.richardluo.globalIconPack.iconPack.model.ResourceOwner
 import com.richardluo.globalIconPack.iconPack.model.defaultIconPackConfig
 import com.richardluo.globalIconPack.iconPack.useFirstRow
 import com.richardluo.globalIconPack.iconPack.useMapToArray
+import com.richardluo.globalIconPack.utils.Logger.logD
+import com.richardluo.globalIconPack.utils.ThemeColorMonitor
 import com.richardluo.globalIconPack.utils.call
 import com.richardluo.globalIconPack.utils.classOf
 import com.richardluo.globalIconPack.utils.getOrPut
@@ -44,18 +46,20 @@ class RemoteSource(
   config: IconPackConfig = defaultIconPackConfig,
 ) : Source, ResourceOwner(context, pack) {
   private val iconPackAsFallback = config.iconPackAsFallback
-  private val iconFallback: IconFallback?
 
   private val indexMap = mutableMapOf<ComponentName, Int?>()
   private val iconEntryList = Collections.synchronizedList(mutableListOf<IconResolver>())
 
   private val contentResolver = context.contentResolver
-  private val resourcesMap = mutableMapOf<String, ResourceOwner>()
-
   // Keep the provider acquired, so queries don't wait for its process to start again. See getSC()
   // for why a binder thread must never wait for that.
   @Volatile private var client: ContentProviderClient? = null
   private val clientLock = Any()
+  private val resourcesMap = mutableMapOf<String, ResourceOwner>()
+
+  private val fallbackOwner: FallbackOwner
+
+  private val themeColorMonitor = ThemeColorMonitor(context)
 
   init {
     context(xposed) {
@@ -69,13 +73,24 @@ class RemoteSource(
         throw BootNotCompleted()
       waitingForBootCompleted = false
 
-      iconFallback =
-        if (config.iconFallback)
+      fallbackOwner =
+        FallbackOwner(
+          config,
           query(acquireClient(), IconPackProvider.FALLBACK, arrayOf(pack))?.useFirstRow {
-            IconFallback(FallbackSettings.from(it.getBlob(0)), { getIcon(it) }, config)
-              .orNullIfEmpty()
-          }
-        else null
+            FallbackSettings.from(it.getBlob(0))
+          },
+        ) {
+          getIcon(it)
+        }
+    }
+  }
+
+  override fun updateResources() {
+    themeColorMonitor.update {
+      res = context.packageManager.getResourcesForApplication(pack)
+      resourcesMap.clear()
+      fallbackOwner.rebuild()
+      logD("resource updated")
     }
   }
 
@@ -184,8 +199,11 @@ class RemoteSource(
   private fun getResourceOwner(pack: String) =
     if (pack.isEmpty()) this else resourcesMap.getOrPut(pack) { ResourceOwner(context, pack) }
 
-  override fun genIconFrom(baseIcon: Drawable) = genIconFrom(res, baseIcon, iconFallback)
+  context(xposed: XposedInterface)
+  override fun genIconFrom(baseIcon: Drawable) =
+    genIconFrom(res, baseIcon, fallbackOwner.iconFallback)
 
+  context(xposed: XposedInterface)
   override fun maskIconFrom(baseIcon: Drawable) =
-    maskIconFrom(res, baseIcon, iconFallback?.iconMasks)
+    maskIconFrom(res, baseIcon, fallbackOwner.iconFallback?.iconMasks)
 }

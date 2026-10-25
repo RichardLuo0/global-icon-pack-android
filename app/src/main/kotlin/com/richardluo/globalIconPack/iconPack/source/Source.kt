@@ -12,6 +12,8 @@ import com.richardluo.globalIconPack.utils.IconHelper
 import io.github.libxposed.api.XposedInterface
 
 interface Source {
+  fun updateResources()
+
   fun getId(cn: ComponentName): Int?
 
   fun getId(cnList: List<ComponentName>): List<Int?>
@@ -33,8 +35,10 @@ interface Source {
   context(xposed: XposedInterface)
   fun getIcon(name: String, iconDpi: Int = 0): Drawable?
 
+  context(xposed: XposedInterface)
   fun genIconFrom(baseIcon: Drawable): Drawable
 
+  context(xposed: XposedInterface)
   fun maskIconFrom(baseIcon: Drawable): Drawable
 }
 

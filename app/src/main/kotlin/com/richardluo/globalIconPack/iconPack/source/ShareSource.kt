@@ -9,9 +9,9 @@ import com.richardluo.globalIconPack.AppPref
 import com.richardluo.globalIconPack.BuildConfig
 import com.richardluo.globalIconPack.iconPack.IconPackDB
 import com.richardluo.globalIconPack.iconPack.IconPackDB.GetIconCol
+import com.richardluo.globalIconPack.iconPack.model.FallbackOwner
 import com.richardluo.globalIconPack.iconPack.model.FallbackSettings
 import com.richardluo.globalIconPack.iconPack.model.IconEntry
-import com.richardluo.globalIconPack.iconPack.model.IconFallback
 import com.richardluo.globalIconPack.iconPack.model.IconPackConfig
 import com.richardluo.globalIconPack.iconPack.model.IconResolver
 import com.richardluo.globalIconPack.iconPack.model.ResourceOwner
@@ -19,7 +19,9 @@ import com.richardluo.globalIconPack.iconPack.model.defaultIconPackConfig
 import com.richardluo.globalIconPack.iconPack.useFirstRow
 import com.richardluo.globalIconPack.iconPack.useMapToArray
 import com.richardluo.globalIconPack.utils.AppPreference
+import com.richardluo.globalIconPack.utils.Logger.logD
 import com.richardluo.globalIconPack.utils.Logger.logE
+import com.richardluo.globalIconPack.utils.ThemeColorMonitor
 import com.richardluo.globalIconPack.utils.getOrPut
 import io.github.libxposed.api.XposedInterface
 import java.util.Collections
@@ -35,7 +37,6 @@ class ShareSource(
   }
 
   private val iconPackAsFallback = config.iconPackAsFallback
-  private val iconFallback: IconFallback?
 
   private val indexMap = mutableMapOf<ComponentName, Int?>()
   private val iconEntryList = Collections.synchronizedList(mutableListOf<IconResolver>())
@@ -50,15 +51,30 @@ class ShareSource(
     }
   private val resourcesMap = mutableMapOf<String, ResourceOwner>()
 
+  private val fallbackOwner: FallbackOwner
+
+  private val themeColorMonitor = ThemeColorMonitor(context)
+
   init {
-    context(xposed) {
-      iconFallback =
-        if (config.iconFallback)
-          db.getFallbackSettings(pack).useFirstRow {
-            IconFallback(FallbackSettings.from(it.getBlob(0)), { getIcon(it) }, config)
-              .orNullIfEmpty()
-          }
-        else null
+    fallbackOwner =
+      FallbackOwner(
+        config,
+        db.getFallbackSettings(pack).useFirstRow {
+          FallbackSettings.from(it.getBlob(0))
+        },
+      ) {
+        context(xposed) {
+          getIcon(it)
+        }
+      }
+  }
+
+  override fun updateResources() {
+    themeColorMonitor.update {
+      res = context.packageManager.getResourcesForApplication(pack)
+      resourcesMap.clear()
+      fallbackOwner.rebuild()
+      logD("resource updated")
     }
   }
 
@@ -103,8 +119,11 @@ class ShareSource(
   private fun getResourceOwner(pack: String) =
     if (pack.isEmpty()) this else resourcesMap.getOrPut(pack) { ResourceOwner(context, pack) }
 
-  override fun genIconFrom(baseIcon: Drawable) = genIconFrom(res, baseIcon, iconFallback)
+  context(xposed: XposedInterface)
+  override fun genIconFrom(baseIcon: Drawable) =
+    genIconFrom(res, baseIcon, fallbackOwner.iconFallback)
 
+  context(xposed: XposedInterface)
   override fun maskIconFrom(baseIcon: Drawable) =
-    maskIconFrom(res, baseIcon, iconFallback?.iconMasks)
+    maskIconFrom(res, baseIcon, fallbackOwner.iconFallback?.iconMasks)
 }

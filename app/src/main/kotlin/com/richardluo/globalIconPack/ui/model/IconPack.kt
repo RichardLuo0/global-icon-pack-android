@@ -1,11 +1,13 @@
 package com.richardluo.globalIconPack.ui.model
 
 import android.annotation.SuppressLint
+import android.app.Application
 import android.content.ComponentName
 import android.content.res.Resources
 import android.graphics.drawable.Drawable
 import android.os.Parcel
 import android.os.Parcelable
+import com.richardluo.globalIconPack.MyApplication
 import com.richardluo.globalIconPack.iconPack.model.FallbackSettings
 import com.richardluo.globalIconPack.iconPack.model.IconEntry
 import com.richardluo.globalIconPack.iconPack.model.IconFallback
@@ -15,15 +17,17 @@ import com.richardluo.globalIconPack.iconPack.model.defaultIconPackConfig
 import com.richardluo.globalIconPack.iconPack.model.withConfig
 import com.richardluo.globalIconPack.iconPack.source.getComponentName
 import com.richardluo.globalIconPack.iconPack.source.loadIconPack
-import com.richardluo.globalIconPack.MyApplication
-import com.richardluo.globalIconPack.ui.viewModel.IconPackCache
+import com.richardluo.globalIconPack.ui.viewModel.createIconPackCacheWithThemeAware
 import com.richardluo.globalIconPack.utils.AXMLEditor
 import com.richardluo.globalIconPack.utils.IconHelper
 import com.richardluo.globalIconPack.utils.IconPackCreator.ApkBuilder
+import com.richardluo.globalIconPack.utils.Logger.logD
 import com.richardluo.globalIconPack.utils.SingletonManager.get
+import com.richardluo.globalIconPack.utils.ThemeColorMonitor
 import com.richardluo.globalIconPack.utils.get
 import com.richardluo.globalIconPack.utils.isHighByte
 import com.richardluo.globalIconPack.utils.parseXML
+import com.richardluo.globalIconPack.utils.resettableLazy
 import kotlin.getValue
 import kotlinx.parcelize.Parceler
 import kotlinx.parcelize.Parcelize
@@ -32,14 +36,27 @@ import org.xmlpull.v1.XmlPullParser
 private class IconEntryWithId(val entry: IconEntry, val id: Int) : IconEntry by entry
 
 @Parcelize
-class IconPack(val pack: String, val res: Resources) : Parcelable {
+class IconPack(val context: Application, val pack: String) : Parcelable {
+  var res = context.packageManager.getResourcesForApplication(pack)
   val info by lazy { loadIconPack(res, pack) }
-  val iconFallback by lazy {
+  val iconFallbackLazy = resettableLazy {
     IconFallback(FallbackSettings(info), ::getIcon, defaultIconPackConfig).orNullIfEmpty()
   }
+  val iconFallback by iconFallbackLazy
+
   val iconEntryMap by lazy { info.iconEntryMap }
 
   private val idCache = mutableMapOf<String, Int>()
+
+  private val themeColorMonitor = ThemeColorMonitor(context)
+
+  fun updateResources() {
+    themeColorMonitor.update {
+      res = context.packageManager.getResourcesForApplication(pack)
+      iconFallbackLazy.reset()
+      logD("resources updated")
+    }
+  }
 
   fun getIconEntry(cn: ComponentName, iconPackAsFallback: Boolean = false) =
     (iconEntryMap[cn]
@@ -169,7 +186,7 @@ class IconPack(val pack: String, val res: Resources) : Parcelable {
         iconFallback.withConfig(config)?.orNullIfEmpty(),
       )
 
-    private val iconPackCache by get { IconPackCache(MyApplication.context) }
+    private val iconPackCache by get { createIconPackCacheWithThemeAware(MyApplication.context) }
 
     override fun IconPack.write(parcel: Parcel, flags: Int) {
       parcel.writeString(pack)

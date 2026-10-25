@@ -8,14 +8,16 @@ import android.graphics.drawable.Drawable
 import com.richardluo.globalIconPack.iconPack.model.CalendarIconEntry
 import com.richardluo.globalIconPack.iconPack.model.ClockIconEntry
 import com.richardluo.globalIconPack.iconPack.model.ClockMetadata
+import com.richardluo.globalIconPack.iconPack.model.FallbackOwner
 import com.richardluo.globalIconPack.iconPack.model.FallbackSettings
 import com.richardluo.globalIconPack.iconPack.model.IconEntry
-import com.richardluo.globalIconPack.iconPack.model.IconFallback
 import com.richardluo.globalIconPack.iconPack.model.IconPackConfig
 import com.richardluo.globalIconPack.iconPack.model.NormalIconEntry
 import com.richardluo.globalIconPack.iconPack.model.ResourceOwner
 import com.richardluo.globalIconPack.iconPack.model.defaultIconPackConfig
+import com.richardluo.globalIconPack.utils.Logger.logD
 import com.richardluo.globalIconPack.utils.Logger.logE
+import com.richardluo.globalIconPack.utils.ThemeColorMonitor
 import com.richardluo.globalIconPack.utils.get
 import com.richardluo.globalIconPack.utils.parseXML
 import com.richardluo.globalIconPack.utils.unflattenFromString
@@ -29,24 +31,32 @@ class LocalSource(
   config: IconPackConfig = defaultIconPackConfig,
 ) : Source, ResourceOwner(context, pack) {
   private val iconPackAsFallback = config.iconPackAsFallback
-  private val iconFallback: IconFallback?
 
   private val indexMap = mutableMapOf<ComponentName, Int>()
   private val iconEntryList: List<IconEntry>
 
+  private val fallbackOwner: FallbackOwner
+
+  private val themeColorMonitor = ThemeColorMonitor(context)
+
   init {
     context(xposed) {
       val info = loadIconPack(res, pack)
-      iconFallback =
-        if (config.iconFallback)
-          IconFallback(FallbackSettings(info), { getIcon(it) }, config).orNullIfEmpty()
-        else null
+      fallbackOwner = FallbackOwner(config, FallbackSettings(info)) { getIcon(it) }
       var i = 0
       iconEntryList =
         info.iconEntryMap.map { (cn, entry) ->
           indexMap[cn] = i++
           entry
         }
+    }
+  }
+
+  override fun updateResources() {
+    themeColorMonitor.update {
+      res = context.packageManager.getResourcesForApplication(pack)
+      fallbackOwner.rebuild()
+      logD("resource updated")
     }
   }
 
@@ -63,14 +73,24 @@ class LocalSource(
   }
 
   context(xposed: XposedInterface)
-  override fun getIcon(name: String, iconDpi: Int) = getIconById(getDrawableId(name), iconDpi)
+  override fun getIcon(name: String, iconDpi: Int): Drawable? {
+    updateResources()
+    return getIconById(getDrawableId(name), iconDpi)
+  }
 
   private fun getDrawableId(name: String) = getIdByName(name)
 
-  override fun genIconFrom(baseIcon: Drawable) = genIconFrom(res, baseIcon, iconFallback)
+  context(xposed: XposedInterface)
+  override fun genIconFrom(baseIcon: Drawable): Drawable {
+    updateResources()
+    return genIconFrom(res, baseIcon, fallbackOwner.iconFallback)
+  }
 
-  override fun maskIconFrom(baseIcon: Drawable) =
-    maskIconFrom(res, baseIcon, iconFallback?.iconMasks)
+  context(xposed: XposedInterface)
+  override fun maskIconFrom(baseIcon: Drawable): Drawable {
+    updateResources()
+    return maskIconFrom(res, baseIcon, fallbackOwner.iconFallback?.iconMasks)
+  }
 }
 
 interface IconPackInfo {

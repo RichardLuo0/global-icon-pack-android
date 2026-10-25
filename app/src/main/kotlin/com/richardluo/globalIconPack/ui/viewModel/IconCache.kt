@@ -1,7 +1,9 @@
 package com.richardluo.globalIconPack.ui.viewModel
 
 import android.app.Application
+import android.content.ComponentCallbacks2
 import android.content.ComponentName
+import android.content.res.Configuration
 import android.graphics.drawable.Drawable
 import androidx.collection.LruCache
 import androidx.compose.ui.graphics.ImageBitmap
@@ -19,6 +21,8 @@ import com.richardluo.globalIconPack.ui.model.AppCompInfo
 import com.richardluo.globalIconPack.ui.model.CompInfo
 import com.richardluo.globalIconPack.ui.model.IconEntryWithPack
 import com.richardluo.globalIconPack.ui.model.IconPack
+import com.richardluo.globalIconPack.utils.ThemeSig
+import com.richardluo.globalIconPack.utils.currentThemeSig
 import com.richardluo.globalIconPack.utils.getOrPut
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
@@ -31,7 +35,7 @@ private class BitmapLruCache<K : Any>(bytes: Long) :
     value.asAndroidBitmap().allocationByteCount / 1024
 }
 
-class IconCache(private val context: Application, factor: Int = 4) {
+class IconCache(private val context: Application, factor: Int = 4) : ComponentCallbacks2 {
   private val bitmapCache = BitmapLruCache<String>(Runtime.getRuntime().maxMemory() / factor)
   private val taskMap = mutableMapOf<String, Deferred<ImageBitmap>>()
 
@@ -95,6 +99,29 @@ class IconCache(private val context: Application, factor: Int = 4) {
       }
     }
 
+  private var themeSig: ThemeSig? = currentThemeSig(context)
+
+  override fun onConfigurationChanged(newConfig: Configuration) {
+    val newSig = currentThemeSig(context)
+    if (themeSig == newSig) return
+    themeSig = newSig
+    clear()
+  }
+
+  override fun onTrimMemory(level: Int) {
+    if (level >= ComponentCallbacks2.TRIM_MEMORY_BACKGROUND) clear()
+  }
+
+  @Deprecated("Deprecated in Java") override fun onLowMemory() {}
+
+  fun registerClearOnThemeChange() {
+    context.registerComponentCallbacks(this)
+  }
+
+  fun unregisterClearOnThemeChange() {
+    context.unregisterComponentCallbacks(this)
+  }
+
   fun clear() {
     bitmapCache.evictAll()
   }
@@ -111,3 +138,8 @@ val emptyImageBitmap by lazy {
 }
 
 val emptyImageHolder by lazy { StaticImageHolder(emptyImageBitmap) }
+
+fun createIconCacheWithThemeAware(context: Application, factor: Int = 4) =
+  IconCache(context, factor).apply {
+    registerClearOnThemeChange()
+  }
