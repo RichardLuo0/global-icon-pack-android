@@ -80,10 +80,6 @@ class CalendarAndClockHook(private val clockUseFallbackMask: Boolean) : Hook {
       classOf("com.android.launcher3.pm.UserCache", param)?.method("getUserProfiles")
         ?: return fail()
 
-    val iconChangeTrackerReceiver =
-      classOf($$"com.android.launcher3.icons.IconChangeTracker$receiver$1", param) ?: return fail()
-    val iconChangeTrackerF = iconChangeTrackerReceiver.field($$"this$0") ?: return fail()
-
     fun changeClockIcon(changes: Any) {
       for (clock in clocks) dispatchValueF.invoke(
         changes,
@@ -101,29 +97,54 @@ class CalendarAndClockHook(private val clockUseFallbackMask: Boolean) : Hook {
       }
     }
 
-    iconChangeTrackerReceiver
-      .method("accept")
-      ?.hookCompat {
-        before {
-          val iconChangeTracker = iconChangeTrackerF.get(thisObject) ?: return@before
-          val changes = changesF.get(iconChangeTracker) ?: return@before
-          val userCache = userCacheF.get(iconChangeTracker) ?: return@before
-          val intent = args[0] as? Intent ?: return@before
-          when (intent.action) {
-            ACTION_TIMEZONE_CHANGED -> {
-              changeClockIcon(changes)
-              changeCalendarIcon(changes, userCache)
-              result = null
-            }
-            ACTION_DATE_CHANGED,
-            ACTION_TIME_CHANGED -> {
-              changeCalendarIcon(changes, userCache)
-              result = null
-            }
-          }
+    fun changeIconWithIntent(intent: Intent, iconChangeTracker: Any): Boolean {
+      val changes = changesF.get(iconChangeTracker) ?: return false
+      val userCache = userCacheF.get(iconChangeTracker) ?: return false
+      when (intent.action) {
+        ACTION_TIMEZONE_CHANGED -> {
+          changeClockIcon(changes)
+          changeCalendarIcon(changes, userCache)
+          return true
+        }
+        ACTION_DATE_CHANGED,
+        ACTION_TIME_CHANGED -> {
+          changeCalendarIcon(changes, userCache)
+          return true
         }
       }
-      .registerToScopeOrFail()
+      return false
+    }
+
+    tryHook("IconChangeTracker") {
+        tryDo {
+          iconChangeTracker
+            .method("handleIntent")
+            ?.hook {
+              val intent = args[0] as? Intent
+              if (intent != null && changeIconWithIntent(intent, thisObject)) return@hook null
+              return@hook proceed()
+            }
+            .registerToScopeOrFail()
+        }
+        tryDo {
+          val iconChangeTrackerReceiver =
+            classOf($$"com.android.launcher3.icons.IconChangeTracker$receiver$1", param)
+              ?: return@tryDo fail()
+          val iconChangeTrackerF =
+            iconChangeTrackerReceiver.field($$"this$0") ?: return@tryDo fail()
+          iconChangeTrackerReceiver
+            .method("accept")
+            ?.hookCompat {
+              before {
+                val iconChangeTracker = iconChangeTrackerF.get(thisObject) ?: return@before
+                val intent = args[0] as? Intent ?: return@before
+                if (changeIconWithIntent(intent, iconChangeTracker)) result = null
+              }
+            }
+            .registerToScopeOrFail()
+        }
+      }
+      .failOnFail()
   }
 
   fun TryHookScope<Unit>.hookCCChangePre16QPR2(param: XposedModuleInterface.PackageReadyParam) {
