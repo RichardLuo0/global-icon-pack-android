@@ -1,5 +1,6 @@
 package com.richardluo.globalIconPack.reflect
 
+import android.graphics.drawable.Drawable
 import com.richardluo.globalIconPack.utils.call
 import com.richardluo.globalIconPack.utils.classOf
 import com.richardluo.globalIconPack.utils.method
@@ -11,6 +12,7 @@ object BaseIconFactory {
   private var iconOptionsClazz: Class<*>? = null
 
   private var getNormalizer: Method? = null
+  private var createBadgedIconBitmapM: Method? = null
 
   fun getClass(param: XposedModuleInterface.PackageReadyParam) =
     clazz ?: classOf("com.android.launcher3.icons.BaseIconFactory", param).also { clazz = it }
@@ -25,4 +27,12 @@ object BaseIconFactory {
     if (getNormalizer == null) getNormalizer = getClass(param)?.method("getNormalizer")
     return getNormalizer?.call(factory)
   }
+
+  fun getCreateBadgedIconBitmapM(param: XposedModuleInterface.PackageReadyParam) =
+    createBadgedIconBitmapM
+      ?: getClass(param)
+        ?.method("createBadgedIconBitmap", Drawable::class.java, getIconOptionsClass(param))
+        .also {
+          createBadgedIconBitmapM = it
+        }
 }

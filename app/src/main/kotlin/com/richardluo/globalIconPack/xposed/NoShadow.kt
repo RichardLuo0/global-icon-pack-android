@@ -44,8 +44,7 @@ class NoShadow : Hook {
         // Android 16 qpr2
         val iconOptions = BaseIconFactory.getIconOptionsClass(param) ?: return@tryDo fail()
         val addShadowsF = iconOptions.field("addShadows") ?: return@tryDo fail()
-        BaseIconFactory.getClass(param)
-          ?.allMethods("createBadgedIconBitmap")
+        BaseIconFactory.getCreateBadgedIconBitmapM(param)
           ?.hookCompat { before { addShadowsF.set(args[1], false) } }
           .registerToScopeOrFail()
       }

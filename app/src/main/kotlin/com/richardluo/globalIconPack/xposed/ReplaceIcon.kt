@@ -112,7 +112,7 @@ class ReplaceIcon(
       if (Build.VERSION.SDK_INT < Build.VERSION_CODES.BAKLAVA) return@runSafe
       val iconOptions = BaseIconFactory.getIconOptionsClass(param) ?: return@runSafe
       val drawFullBleedF = iconOptions.field("drawFullBleed") ?: return@runSafe
-      BaseIconFactory.getClass(param)?.allMethods("createBadgedIconBitmap")?.hookCompat {
+      BaseIconFactory.getCreateBadgedIconBitmapM(param)?.hookCompat {
         before {
           args[0].asType<UnClipAdaptiveIconDrawable>() ?: return@before
           drawFullBleedF.set(args[1], false)
