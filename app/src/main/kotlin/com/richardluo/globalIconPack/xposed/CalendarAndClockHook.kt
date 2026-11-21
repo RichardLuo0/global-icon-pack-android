@@ -61,7 +61,10 @@ class CalendarAndClockHook(private val clockUseFallbackMask: Boolean) : Hook {
     }
   }
 
-  fun TryHookScope<Unit>.hookCCChange16QPR2(param: XposedModuleInterface.PackageReadyParam) {
+  context(xposed: XposedInterface)
+  fun TryHookScope<Unit>.TryDoScope.hookCCChange16QPR2(
+    param: XposedModuleInterface.PackageReadyParam,
+  ) {
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.BAKLAVA) fail()
 
     val iconChangeTracker =
@@ -147,7 +150,10 @@ class CalendarAndClockHook(private val clockUseFallbackMask: Boolean) : Hook {
       .failOnFail()
   }
 
-  fun TryHookScope<Unit>.hookCCChangePre16QPR2(param: XposedModuleInterface.PackageReadyParam) {
+  context(xposed: XposedInterface)
+  fun TryHookScope<Unit>.TryDoScope.hookCCChangePre16QPR2(
+    param: XposedModuleInterface.PackageReadyParam,
+  ) {
     val iconChangeReceiver =
       classOf($$"com.android.launcher3.icons.IconProvider$IconChangeReceiver", param)
         ?: return fail()
@@ -191,7 +197,8 @@ class CalendarAndClockHook(private val clockUseFallbackMask: Boolean) : Hook {
       .registerToScopeOrFail()
   }
 
-  private fun TryHookScope<Unit>.hookCollectCC(iconProvider: Class<*>) {
+  context(xposed: XposedInterface)
+  fun TryHookScope<Unit>.TryDoScope.hookCollectCC(iconProvider: Class<*>) {
     val mCalendar = iconProvider.field("mCalendar")
     val mClock = iconProvider.field("mClock")
 
@@ -269,7 +276,8 @@ class CalendarAndClockHook(private val clockUseFallbackMask: Boolean) : Hook {
       .failOnFail()
   }
 
-  private fun TryHookScope<Unit>.hookGetState(iconProvider: Class<*>) {
+  context(xposed: XposedInterface)
+  fun TryHookScope<Unit>.TryDoScope.hookGetState(iconProvider: Class<*>) {
     // Change calendar state so it updates
     tryHook("hookGetState") {
         tryDo {

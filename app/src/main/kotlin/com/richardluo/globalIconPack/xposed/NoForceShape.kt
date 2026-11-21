@@ -34,7 +34,10 @@ class NoForceShape(private val drawWholeIconForTransparentBackgroundInSplashScre
    * Patch IconColor after it is constructed. Preferred, because it changes nothing else, but it
    * only works while the constructor still exists as a method.
    */
-  private fun TryHookScope<Unit>.hookIconColor(param: XposedModuleInterface.PackageReadyParam) {
+  context(xposed: XposedInterface)
+  private fun TryHookScope<Unit>.TryDoScope.hookIconColor(
+    param: XposedModuleInterface.PackageReadyParam
+  ) {
     val iconColor =
       classOf(
         $$"com.android.wm.shell.startingsurface.SplashscreenContentDrawer$ColorCache$IconColor",
@@ -68,7 +71,10 @@ class NoForceShape(private val drawWholeIconForTransparentBackgroundInSplashScre
    * caller in SplashscreenContentDrawer, so nothing else changes. Unlike the constructor it also
    * survives optimization, being an override of the ColorTester interface.
    */
-  private fun TryHookScope<Unit>.hookBgColorTester(param: XposedModuleInterface.PackageReadyParam) {
+  context(xposed: XposedInterface)
+  private fun TryHookScope<Unit>.TryDoScope.hookBgColorTester(
+    param: XposedModuleInterface.PackageReadyParam
+  ) {
     val colorTester =
       classOf(
         $$"com.android.wm.shell.startingsurface.SplashscreenContentDrawer$DrawableColorTester",

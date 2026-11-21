@@ -162,36 +162,38 @@ interface TryHookResult<T> {
   val unhookRegistry: List<XposedInterface.HookHandle>
 }
 
-class TryHookScope<T>(xposed: XposedInterface) : TryHookResult<T>, XposedInterface by xposed {
+class TryHookScope<T> : TryHookResult<T> {
   override var isDone = false
   override var result: T? = null
   override val unhookRegistry = mutableListOf<XposedInterface.HookHandle>()
 
-  fun XposedInterface.HookHandle?.registerToScopeOrFail() {
-    this?.let { unhookRegistry.add(it) } ?: fail()
+  inner class TryDoScope {
+    fun XposedInterface.HookHandle?.registerToScopeOrFail() {
+      this?.let { unhookRegistry.add(it) } ?: fail()
+    }
+
+    fun List<XposedInterface.HookHandle>?.registerToScopeOrFail() {
+      if (isNullOrEmpty()) fail() else unhookRegistry.addAll(this)
+    }
+
+    fun fail() {
+      throw Exception("try hook failed")
+    }
+
+    fun <T> T?.failOnNull() {
+      if (this == null) fail()
+    }
+
+    fun <T> TryHookResult<T>.failOnFail() {
+      if (!isDone) fail()
+      this@TryHookScope.unhookRegistry.addAll(this.unhookRegistry)
+    }
   }
 
-  fun List<XposedInterface.HookHandle>?.registerToScopeOrFail() {
-    if (isNullOrEmpty()) fail() else unhookRegistry.addAll(this)
-  }
-
-  fun fail() {
-    throw Exception("try hook failed")
-  }
-
-  fun <T> T?.failOnNull() {
-    if (this == null) fail()
-  }
-
-  fun <T> TryHookResult<T>.failOnFail() {
-    if (!isDone) fail()
-    this@TryHookScope.unhookRegistry.addAll(this.unhookRegistry)
-  }
-
-  fun tryDo(block: () -> T) {
+  fun tryDo(block: TryDoScope.() -> T) {
     if (isDone) return
     try {
-      result = block()
+      result = TryDoScope().run { block() }
       isDone = true
     } catch (_: Exception) {
       unhookRegistry.forEach { it.unhook() }
@@ -199,15 +201,10 @@ class TryHookScope<T>(xposed: XposedInterface) : TryHookResult<T>, XposedInterfa
       unhookRegistry.clear()
     }
   }
-
-  override fun getApiVersion(): Int {
-    return super.getApiVersion()
-  }
 }
 
-context(xposed: XposedInterface)
 inline fun <T> tryHook(
-  name: String = "tryHook",
+  name: String,
   crossinline block: TryHookScope<T>.() -> Unit,
-): TryHookScope<T> =
-  TryHookScope<T>(xposed).apply { block() }.also { if (!it.isDone) log("$name failed!") }
+): TryHookResult<T> =
+  TryHookScope<T>().apply { block() }.also { if (!it.isDone) log("$name failed!") }
