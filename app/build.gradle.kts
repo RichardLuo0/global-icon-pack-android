@@ -82,14 +82,6 @@ extensions.configure<ApplicationExtension> {
 
 kotlin { compilerOptions { jvmTarget = JvmTarget.JVM_17 } }
 
-tasks.register("printVersion") {
-  description = "printVersion"
-  doLast {
-    val androidExt = project.extensions.getByType(ApplicationExtension::class.java)
-    println(androidExt.defaultConfig.versionName)
-  }
-}
-
 dependencies {
   compileOnly(libs.libxposed.api)
   implementation(libs.libxposed.service)

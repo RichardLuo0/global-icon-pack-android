@@ -41,9 +41,9 @@ jobs:
       - name: Save version
         id: save_version
         run: |
-          VERSION_NAME=$(./gradlew printVersion -q)
-          echo "VERSION_NAME=$VERSION_NAME" >> $GITHUB_OUTPUT
-          LATEST_TAG=$(gh release view --json tagName -q .tagName)
+          VERSION_NAME=$(awk -F= '/^majorVersion=/{major=$2} /^minorVersion=/{minor=$2} /^patchVersion=/{patch=$2} END{print major"."minor"."patch}' version.properties)
+          echo "VERSION_NAME=$VERSION_NAME" >> "$GITHUB_OUTPUT"
+          LATEST_TAG=$(gh release view --json tagName -q .tagName || true)
           echo "LATEST_TAG=$LATEST_TAG" >> "$GITHUB_OUTPUT"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
