@@ -24,6 +24,8 @@ import kotlin.concurrent.thread
 
 @Volatile private var sc: Source? = null
 private val initializingAsync = AtomicBoolean(false)
+// `Source::class` creates a new KClass wrapper on every use, so it can't serve as a lock.
+private val initLock = Any()
 
 context(xposed: XposedInterface)
 fun getSC(): Source? {
@@ -35,24 +37,32 @@ fun getSC(): Source? {
   // system's notifyContentProviderPublishStatus() is queued behind that call, so the wait never
   // ends and the process freezes for 20s (a SystemUI ANR on every boot). Initialize in the
   // background instead and skip this call.
-  if (isInBinderCall()) {
+  // The same applies inside ActivityThread.acquireProvider(): it holds the provider's lock while
+  // unparceling ProviderInfo, and creating a source reads Settings (via SQLiteDatabase), which
+  // can deadlock with a thread that holds a Settings lock and waits for the same provider.
+  if (isInBinderCall() || isAcquiringProvider()) {
     if (initializingAsync.compareAndSet(false, true))
       thread(name = "GIP-InitSource") {
         try {
-          synchronized(Source::class) { if (sc == null) initSC() }
+          synchronized(initLock) { if (sc == null) initSC() }
         } finally {
           initializingAsync.set(false)
         }
       }
     return null
   }
-  synchronized(Source::class) {
+  synchronized(initLock) {
     if (sc == null) {
       initSC()
     }
   }
   return sc
 }
+
+private fun isAcquiringProvider() =
+  Thread.currentThread().stackTrace.any {
+    it.methodName == "acquireProvider" && it.className == "android.app.ActivityThread"
+  }
 
 context(xposed: XposedInterface)
 private fun initSC() {
